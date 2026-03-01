@@ -361,7 +361,7 @@ export default function PhotoGraphCanvas({
     const drag = d3
       .drag<HTMLCanvasElement, SimNode>()
       .container(() => canvas)
-      .subject((event: CanvasInputEvent) => hitNode(event, canvas) ?? undefined)
+      .subject((event: CanvasInputEvent) => hitNode(event, canvas) ?? null)
       .on("start", (event: d3.D3DragEvent<HTMLCanvasElement, SimNode, SimNode>) => {
         const simulation = simRef.current;
         if (!simulation) return;
