@@ -85,9 +85,9 @@ const GRAPH_CONFIG = {
 };
 
 const overlayControlClass =
-  "cursor-pointer bg-white/30 px-1.5 backdrop-blur-[2px]";
+  "cursor-pointer  px-1.5 backdrop-blur-[2px]";
 const overlayPanelClass =
-  "absolute left-[1vmin] top-[1vmin] z-[5] space-y-2 bg-white/30 p-1.5 text-center backdrop-blur-[2px]";
+  "absolute left-[1vmin] top-[1vmin] z-[5] space-y-2 p-1.5 text-center backdrop-blur-[2px]";
 const overlayTextClass = "m-0 p-0 text-xs";
 const sliderClass =
   "accent-grey-800 range-sm h-1 rounded-full bg-white/50 border-none";
@@ -268,7 +268,7 @@ export default function PhotoGraphCanvas({
     distMaxMult: 1,
   });
 
-  const [menuOpen, setMenuOpen] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [hideConnections, setHideConnections] = useState(false);
   const [chargeMult, setChargeMult] = useState(1);
   const [distMinMult, setDistMinMult] = useState(1);
@@ -1011,22 +1011,24 @@ export default function PhotoGraphCanvas({
         </div>
       )}
 
+
       {inspectUrl && (
         <div
           onClick={() => setInspectUrl(null)}
           className={`absolute left-1/2 top-1/2 z-10 flex h-[70vh] w-[70vw] -translate-x-1/2 -translate-y-1/2 items-center justify-center ${inspectOverlayClass} backdrop-blur-sm`}
           // TODO: add colour swatches to inspect view
           // TODO: add pinterest/save button to inspect view ???
+          // TODO: add fadein/out animations and fade the other ui elements while doing so through the flex container holding all of them.
         >
           <button
             onClick={(event) => {
               event.stopPropagation();
               setInspectUrl(null);
             }}
-            className={`absolute right-[2%] top-[2%] flex h-8 w-8 items-center justify-center ${overlayControlClass}`}
+            className={`absolute mx-2 my-2 right-0 top-0 flex h-8 w-8 items-center justify-center cursor-pointer`}
             aria-label="Close image inspection"
           >
-            X
+            <X className="h-4 w-4" />
           </button>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
