@@ -776,6 +776,7 @@ export default function PhotoGraphCanvas({
   const progressPct = imageProgress.total
     ? Math.round((imageProgress.loaded / imageProgress.total) * 100)
     : 0;
+    // TODO: make this fade between colours instead of hard switching.
   const alphaColor = alpha < 0.01 ? "green" : "red";
 
   return (
