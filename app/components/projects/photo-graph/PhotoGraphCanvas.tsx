@@ -1,21 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
-import { ArrowRightFromLine } from "lucide-react";
 import { X } from "lucide-react";
-import { Menu } from "lucide-react";
-import { Maximize } from "lucide-react";
 
 import {
   buildOptimizedImageUrl,
   computeTargetImageWidth,
   shouldUpgradeWidth,
 } from "@/app/components/projects/photo-graph/imageOptimizer";
+import ProjectViewControls from "@/app/components/projects/project-view-controls";
 import { storage } from "@/app/components/projects/photo-graph/firebaseClient";
 import { getDownloadURL, ref } from "firebase/storage";
 // TODO: add metadata to inspection view
@@ -75,7 +72,7 @@ const GRAPH_CONFIG = {
   viewportBufferRatio: 0.15,
 };
 
-const overlayControlClass = "cursor-pointer  px-1.5 backdrop-blur-[2px]";
+const overlayControlClass = "cursor-pointer px-1.5 backdrop-blur-[2px]";
 const overlayPanelClass =
   "absolute left-[1vmin] top-[1vmin] z-[5] space-y-2 p-1.5 text-center backdrop-blur-[2px]";
 const overlayTextClass = "m-0 p-0 text-xs";
@@ -969,48 +966,16 @@ export default function PhotoGraphCanvas({
     <div
       className={`static h-full w-full transition-colors ${canvasThemeClass}`}
     >
-      <nav className="absolute left-[1vmin] right-[1vmin] top-[1vmin] z-5 flex h-8 items-center">
-        {!menuOpen && (
-          <button
-            onClick={() => setMenuOpen(true)}
-            className={`flex h-8 w-8 items-center justify-center rounded-md ${overlayControlClass} ${overlayToneClass}`}
-            aria-label="Open graph controls"
-          >
-            <Menu className="h-4 w-4" />
-          </button>
-        )}
-
-        <div className="ml-auto flex h-full items-center gap-2">
-          <button
-            onClick={() => setDarkMode((current) => !current)}
-            className={`flex h-8 w-8 items-center justify-center rounded-full ${overlayControlClass} ${overlayToneClass}`}
-            aria-label={
-              darkMode ? "Switch to light mode" : "Switch to dark mode"
-            }
-            aria-pressed={darkMode}
-          >
-            {darkMode ? "◐" : "◑"}
-          </button>
-
-          {isFullPageRoute ? (
-            <Link
-              href="/"
-              className={`flex h-8 w-8 items-center justify-center rounded-md ${overlayControlClass} ${overlayToneClass}`}
-              aria-label="Back to home"
-            >
-              <ArrowRightFromLine className="h-4 w-4" />
-            </Link>
-          ) : (
-            <Link
-              href="/components/projects/photo-graph"
-              className={`flex h-8 w-8 items-center justify-center rounded-md ${overlayControlClass} ${overlayToneClass}`}
-              aria-label="Expand project to full page"
-            >
-              <Maximize className="h-4 w-4" />
-            </Link>
-          )}
-        </div>
-      </nav>
+      <ProjectViewControls
+        menuOpen={menuOpen}
+        onOpenMenu={() => setMenuOpen(true)}
+        isFullPage={isFullPageRoute}
+        darkMode={darkMode}
+        onToggleDarkMode={() => setDarkMode((current) => !current)}
+        toneClass={overlayToneClass}
+        expandHref="/components/projects/photo-graph"
+        exitHref="/"
+      />
 
       {menuOpen && (
         <div
