@@ -25,8 +25,6 @@ const firebaseConfig = {
 
 const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const storage = getStorage(firebaseApp);
-
-// TODO: add dark mode support with minimalist toggle in top right 
 // TODO: add metadata to inspection view
 
 // TODO: find a way to generate json edge data when new images added.
@@ -248,6 +246,7 @@ export default function PhotoGraphCanvas({
   const settleTimeoutRef = useRef<number | null>(null);
   const upgradeTimeoutRef = useRef<number | null>(null);
   const alphaRef = useRef({ value: 1, updatedAt: 0 });
+  const darkModeRef = useRef(false);
   const controlsRef = useRef({
     hideConnections: false,
     chargeMult: 1,
@@ -262,6 +261,7 @@ export default function PhotoGraphCanvas({
   const [distMaxMult, setDistMaxMult] = useState(1);
   const [alpha, setAlpha] = useState(1);
   const [inspectUrl, setInspectUrl] = useState<string | null>(null);
+  const [darkMode, setDarkMode] = useState(false);
 
   const syncAlpha = () => {
     const simAlpha = simRef.current?.alpha() ?? 0;
@@ -288,9 +288,10 @@ export default function PhotoGraphCanvas({
 
     const transform = transformRef.current;
     const dpr = dprRef.current;
+    const isDarkMode = darkModeRef.current;
     context.setTransform(transform.k * dpr, 0, 0, transform.k * dpr, transform.x * dpr, transform.y * dpr);
 
-    context.strokeStyle = "#000";
+    context.strokeStyle = isDarkMode ? "rgba(255, 255, 255, 0.72)" : "#000";
     context.lineWidth = 3;
 
     for (const link of linksRef.current) {
@@ -320,7 +321,7 @@ export default function PhotoGraphCanvas({
         continue;
       }
 
-      context.fillStyle = "#ffffff46";
+      context.fillStyle = isDarkMode ? "rgba(255, 255, 255, 0.12)" : "#ffffff46";
       context.fillRect(x, y, node.w, node.h);
     }
 
@@ -634,6 +635,26 @@ export default function PhotoGraphCanvas({
   };
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const updateTheme = (isDark: boolean) => {
+      darkModeRef.current = isDark;
+      setDarkMode(isDark);
+    };
+
+    updateTheme(mediaQuery.matches);
+
+    const handleChange = (event: MediaQueryListEvent) => updateTheme(event.matches);
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  useEffect(() => {
+    darkModeRef.current = darkMode;
+    requestRender();
+  }, [darkMode]);
+
+  useEffect(() => {
     let disposed = false;
     const abortController = new AbortController();
     const canvas = canvasRef.current;
@@ -767,21 +788,37 @@ export default function PhotoGraphCanvas({
 
   // TODO: make this fade between colours instead of hard switching.
   const alphaColorClass = alpha < 0.01 ? "text-green-600" : "text-red-600";
+  const canvasThemeClass = darkMode ? "bg-neutral-950 text-neutral-100" : "bg-stone-100 text-neutral-950";
+  const overlayToneClass = darkMode
+    ? "border border-white/10 bg-black/35 text-neutral-100"
+    : "border border-black/10 bg-white/35 text-neutral-950";
+  const inspectOverlayClass = darkMode ? "bg-black/75 text-neutral-100" : "bg-white/75 text-neutral-950";
 
   return (
-    <div className="m-0 h-screen w-screen overflow-hidden">
-      <Link
-        href="/"
-        className={`absolute right-[1vmin] top-[1vmin] z-[5] text-center ${overlayControlClass}`}
-        aria-label="Back to home"
-      >
-        ==&gt;
-      </Link>
+    <div className={`m-0 h-screen w-screen overflow-hidden transition-colors ${canvasThemeClass}`}>
+      <div className="absolute right-[1vmin] top-[1vmin] z-5 flex items-center gap-2">
+        <button
+          onClick={() => setDarkMode((current) => !current)}
+          className={`${overlayControlClass} ${overlayToneClass} h-8 min-w-8 rounded-full px-2 text-sm leading-none`}
+          aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+          aria-pressed={darkMode}
+        >
+          {darkMode ? "◐" : "◑"}
+        </button>
+
+        <Link
+          href="/"
+          className={`text-center ${overlayControlClass} ${overlayToneClass}`}
+          aria-label="Back to home"
+        >
+          ==&gt;
+        </Link>
+      </div>
 
       {!menuOpen && (
         <button
           onClick={() => setMenuOpen(true)}
-          className={`absolute left-[1vmin] top-[1vmin] z-[5] ${overlayControlClass}`}
+          className={`absolute left-[1vmin] top-[1vmin] z-5 ${overlayControlClass} ${overlayToneClass}`}
           aria-label="Open graph controls"
         >
           ☰
@@ -789,7 +826,7 @@ export default function PhotoGraphCanvas({
       )}
 
       {menuOpen && (
-        <div className={overlayPanelClass}>
+        <div className={`${overlayPanelClass} ${overlayToneClass}`}>
           <button
             onClick={() => setMenuOpen(false)}
             className={`absolute right-[2%] top-[2%] ${overlayControlClass}`}
@@ -849,7 +886,7 @@ export default function PhotoGraphCanvas({
       {inspectUrl && (
         <div
           onClick={() => setInspectUrl(null)}
-          className="absolute left-1/2 top-1/2 z-10 flex h-[70vh] w-[70vw] -translate-x-1/2 -translate-y-1/2 items-center justify-center bg-white/75 backdrop-blur-sm"
+          className={`absolute left-1/2 top-1/2 z-10 flex h-[70vh] w-[70vw] -translate-x-1/2 -translate-y-1/2 items-center justify-center ${inspectOverlayClass} backdrop-blur-sm`}
           // TODO: add colour swatches to inspect view
           // TODO: add pinterest/save button to inspect view ???
         >
