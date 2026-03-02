@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
         pathname: "/portfolio-site-firebase-41fab.firebasestorage.app/**",
       },
     ],
+    minimumCacheTTL: 60*60*24*14, // 14 days
   },
 };
 

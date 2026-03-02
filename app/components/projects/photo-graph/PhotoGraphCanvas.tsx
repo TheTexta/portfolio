@@ -4,11 +4,9 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
-import { ArrowRightFromLine } from 'lucide-react';
-import { X } from 'lucide-react';
-import { Menu } from 'lucide-react';
-
-
+import { ArrowRightFromLine } from "lucide-react";
+import { X } from "lucide-react";
+import { Menu } from "lucide-react";
 
 import {
   buildOptimizedImageUrl,
@@ -91,7 +89,8 @@ const overlayControlClass =
 const overlayPanelClass =
   "absolute left-[1vmin] top-[1vmin] z-[5] space-y-2 bg-white/30 p-1.5 text-center backdrop-blur-[2px]";
 const overlayTextClass = "m-0 p-0 text-xs";
-const sliderClass = "m-2.5 h-[3px] select-none";
+const sliderClass =
+  "accent-grey-800 range-sm h-1 rounded-full bg-white/50 border-none";
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
@@ -105,9 +104,15 @@ function resolveNodeId(node: RawNode, index: number) {
   return String(node.id ?? index + 1);
 }
 
-async function resolveNodeSourceUrl(node: RawNode, id: string, imageBasePath: string) {
+async function resolveNodeSourceUrl(
+  node: RawNode,
+  id: string,
+  imageBasePath: string,
+) {
   if (node.url) return node.url;
-  return getDownloadURL(ref(storage, `${imageBasePath.replace(/\/$/, "")}/${id}.png`));
+  return getDownloadURL(
+    ref(storage, `${imageBasePath.replace(/\/$/, "")}/${id}.png`),
+  );
 }
 
 function sizeNodeFromImage(node: SimNode, image: HTMLImageElement) {
@@ -134,7 +139,7 @@ async function buildGraph(data: RawNode[], imageBasePath: string) {
       const box = clamp(
         Math.round((entry.scale ?? 0.5) * GRAPH_CONFIG.baseBox),
         GRAPH_CONFIG.minBox,
-        GRAPH_CONFIG.maxBox
+        GRAPH_CONFIG.maxBox,
       );
 
       return {
@@ -146,7 +151,7 @@ async function buildGraph(data: RawNode[], imageBasePath: string) {
         x: (Math.random() - 0.5) * 50,
         y: (Math.random() - 0.5) * 50,
       };
-    })
+    }),
   );
 
   const nodeMap = new Map(nodes.map((node) => [node.id, node]));
@@ -155,7 +160,9 @@ async function buildGraph(data: RawNode[], imageBasePath: string) {
   for (const [index, entry] of data.entries()) {
     const sourceId = resolveNodeId(entry, index);
 
-    for (const [targetId, rawValue] of Object.entries(entry.correlations ?? {})) {
+    for (const [targetId, rawValue] of Object.entries(
+      entry.correlations ?? {},
+    )) {
       if (sourceId === targetId) continue;
       if (!nodeMap.has(sourceId) || !nodeMap.has(targetId)) continue;
 
@@ -216,7 +223,7 @@ function isNodeVisible(
   node: SimNode,
   transform: d3.ZoomTransform,
   viewportWidth: number,
-  viewportHeight: number
+  viewportHeight: number,
 ) {
   const bufferX = viewportWidth * GRAPH_CONFIG.viewportBufferRatio;
   const bufferY = viewportHeight * GRAPH_CONFIG.viewportBufferRatio;
@@ -244,7 +251,9 @@ export default function PhotoGraphCanvas({
   const pendingWidthsRef = useRef<Map<string, Set<number>>>(new Map());
   const errorLogRef = useRef<Set<string>>(new Set());
   const simRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null);
-  const zoomRef = useRef<d3.ZoomBehavior<HTMLCanvasElement, unknown> | null>(null);
+  const zoomRef = useRef<d3.ZoomBehavior<HTMLCanvasElement, unknown> | null>(
+    null,
+  );
   const transformRef = useRef(d3.zoomIdentity);
   const dprRef = useRef(1);
   const frameRef = useRef<number | null>(null);
@@ -273,12 +282,18 @@ export default function PhotoGraphCanvas({
     const now = performance.now();
     const { value, updatedAt } = alphaRef.current;
 
-    if (Math.abs(simAlpha - value) < 0.01 && now - updatedAt < 120 && simAlpha >= 0.01) {
+    if (
+      Math.abs(simAlpha - value) < 0.01 &&
+      now - updatedAt < 120 &&
+      simAlpha >= 0.01
+    ) {
       return;
     }
 
     alphaRef.current = { value: simAlpha, updatedAt: now };
-    setAlpha((current) => (Math.abs(current - simAlpha) < 0.01 ? current : simAlpha));
+    setAlpha((current) =>
+      Math.abs(current - simAlpha) < 0.01 ? current : simAlpha,
+    );
   };
 
   const paint = () => {
@@ -294,7 +309,14 @@ export default function PhotoGraphCanvas({
     const transform = transformRef.current;
     const dpr = dprRef.current;
     const isDarkMode = darkModeRef.current;
-    context.setTransform(transform.k * dpr, 0, 0, transform.k * dpr, transform.x * dpr, transform.y * dpr);
+    context.setTransform(
+      transform.k * dpr,
+      0,
+      0,
+      transform.k * dpr,
+      transform.x * dpr,
+      transform.y * dpr,
+    );
 
     context.strokeStyle = isDarkMode ? "rgba(255, 255, 255, 0.72)" : "#000";
     context.lineWidth = 3;
@@ -326,7 +348,9 @@ export default function PhotoGraphCanvas({
         continue;
       }
 
-      context.fillStyle = isDarkMode ? "rgba(255, 255, 255, 0.12)" : "#ffffff46";
+      context.fillStyle = isDarkMode
+        ? "rgba(255, 255, 255, 0.12)"
+        : "#ffffff46";
       context.fillRect(x, y, node.w, node.h);
     }
 
@@ -343,7 +367,10 @@ export default function PhotoGraphCanvas({
     });
   };
 
-  const getWorldPoint = (event: CanvasInputEvent, canvas: HTMLCanvasElement) => {
+  const getWorldPoint = (
+    event: CanvasInputEvent,
+    canvas: HTMLCanvasElement,
+  ) => {
     const point = d3.pointer(event, canvas) as [number, number];
     return transformRef.current.invert(point) as [number, number];
   };
@@ -356,7 +383,12 @@ export default function PhotoGraphCanvas({
       const x = (node.x ?? 0) - node.w / 2;
       const y = (node.y ?? 0) - node.h / 2;
 
-      if (mouseX >= x && mouseX <= x + node.w && mouseY >= y && mouseY <= y + node.h) {
+      if (
+        mouseX >= x &&
+        mouseX <= x + node.w &&
+        mouseY >= y &&
+        mouseY <= y + node.h
+      ) {
         return node;
       }
     }
@@ -382,7 +414,9 @@ export default function PhotoGraphCanvas({
     const minDistance = GRAPH_CONFIG.distMin * currentControls.distMinMult;
     const maxDistance = GRAPH_CONFIG.distMax * currentControls.distMaxMult;
 
-    const linkForce = simulation.force("link") as d3.ForceLink<SimNode, SimLink> | undefined;
+    const linkForce = simulation.force("link") as
+      | d3.ForceLink<SimNode, SimLink>
+      | undefined;
     if (linkForce) {
       linkForce.distance((link) => {
         const value = link._baseValue ?? link.value ?? 0;
@@ -390,7 +424,9 @@ export default function PhotoGraphCanvas({
       });
     }
 
-    const chargeForce = simulation.force("charge") as d3.ForceManyBody<SimNode> | undefined;
+    const chargeForce = simulation.force("charge") as
+      | d3.ForceManyBody<SimNode>
+      | undefined;
     chargeForce?.strength(currentControls.chargeMult * GRAPH_CONFIG.charge);
   };
 
@@ -413,10 +449,15 @@ export default function PhotoGraphCanvas({
 
   const syncPendingRequestWidth = (node: SimNode) => {
     const widths = pendingWidthsRef.current.get(node.id);
-    node.requestedWidth = widths && widths.size ? Math.max(...widths) : undefined;
+    node.requestedWidth =
+      widths && widths.size ? Math.max(...widths) : undefined;
   };
 
-  const trackPendingWidth = (node: SimNode, width: number, pending: boolean) => {
+  const trackPendingWidth = (
+    node: SimNode,
+    width: number,
+    pending: boolean,
+  ) => {
     const current = pendingWidthsRef.current.get(node.id) ?? new Set<number>();
 
     if (pending) {
@@ -433,14 +474,20 @@ export default function PhotoGraphCanvas({
   };
 
   const refreshNodeAfterImageLoad = () => {
-    const collideForce = simRef.current?.force("collide") as d3.ForceCollide<SimNode> | undefined;
+    const collideForce = simRef.current?.force("collide") as
+      | d3.ForceCollide<SimNode>
+      | undefined;
     collideForce?.initialize?.(nodesRef.current);
 
     nudgeSimulation(0.08, 220);
     requestRender();
   };
 
-  const applyOptimizedImage = (node: SimNode, image: HTMLImageElement, loadedWidth: number) => {
+  const applyOptimizedImage = (
+    node: SimNode,
+    image: HTMLImageElement,
+    loadedWidth: number,
+  ) => {
     if (!shouldUpgradeWidth(node.loadedWidth, loadedWidth)) {
       return;
     }
@@ -473,7 +520,11 @@ export default function PhotoGraphCanvas({
   const getNodeTargetWidth = (node: SimNode) =>
     computeTargetImageWidth(node, transformRef.current.k, dprRef.current);
 
-  const loadNodeImage = async (node: SimNode, targetWidth: number, signal: AbortSignal) => {
+  const loadNodeImage = async (
+    node: SimNode,
+    targetWidth: number,
+    signal: AbortSignal,
+  ) => {
     if (signal.aborted) return;
     if (!shouldUpgradeWidth(node.loadedWidth, targetWidth)) return;
     if ((node.requestedWidth ?? 0) >= targetWidth) return;
@@ -482,7 +533,10 @@ export default function PhotoGraphCanvas({
 
     try {
       try {
-        const optimizedUrl = buildOptimizedImageUrl(node.sourceUrl, targetWidth);
+        const optimizedUrl = buildOptimizedImageUrl(
+          node.sourceUrl,
+          targetWidth,
+        );
         const optimizedImage = await loadImage(optimizedUrl, signal);
         if (signal.aborted) return;
         applyOptimizedImage(node, optimizedImage, targetWidth);
@@ -506,7 +560,7 @@ export default function PhotoGraphCanvas({
   const runNodeQueue = async (
     nodes: SimNode[],
     signal: AbortSignal,
-    resolveWidth: (node: SimNode) => number
+    resolveWidth: (node: SimNode) => number,
   ) => {
     if (!nodes.length) return;
 
@@ -523,7 +577,10 @@ export default function PhotoGraphCanvas({
     };
 
     await Promise.all(
-      Array.from({ length: Math.min(GRAPH_CONFIG.imageConcurrency, nodes.length) }, () => worker())
+      Array.from(
+        { length: Math.min(GRAPH_CONFIG.imageConcurrency, nodes.length) },
+        () => worker(),
+      ),
     );
   };
 
@@ -541,13 +598,16 @@ export default function PhotoGraphCanvas({
 
     const transform = transformRef.current;
     const visibleNodes = nodesRef.current.filter((node) =>
-      isNodeVisible(node, transform, viewportWidth, viewportHeight)
+      isNodeVisible(node, transform, viewportWidth, viewportHeight),
     );
 
     await runNodeQueue(visibleNodes, signal, getNodeTargetWidth);
   };
 
-  const scheduleUpgradePass = (signal: AbortSignal, delay = GRAPH_CONFIG.upgradeDebounceMs) => {
+  const scheduleUpgradePass = (
+    signal: AbortSignal,
+    delay = GRAPH_CONFIG.upgradeDebounceMs,
+  ) => {
     if (upgradeTimeoutRef.current !== null) {
       window.clearTimeout(upgradeTimeoutRef.current);
     }
@@ -558,7 +618,10 @@ export default function PhotoGraphCanvas({
     }, delay);
   };
 
-  const bindInteractions = (canvas: HTMLCanvasElement, onZoomOrPan: () => void) => {
+  const bindInteractions = (
+    canvas: HTMLCanvasElement,
+    onZoomOrPan: () => void,
+  ) => {
     const selection = d3.select(canvas);
 
     const zoom = d3
@@ -582,40 +645,55 @@ export default function PhotoGraphCanvas({
       .drag<HTMLCanvasElement, SimNode>()
       .container(() => canvas)
       .subject((event: CanvasInputEvent) => hitNode(event, canvas) ?? null)
-      .on("start", (event: d3.D3DragEvent<HTMLCanvasElement, SimNode, SimNode>) => {
-        const simulation = simRef.current;
-        if (!simulation) return;
+      .on(
+        "start",
+        (event: d3.D3DragEvent<HTMLCanvasElement, SimNode, SimNode>) => {
+          const simulation = simRef.current;
+          if (!simulation) return;
 
-        canvas.style.cursor = "grabbing";
-        if (!event.active) simulation.alphaTarget(0.35).restart();
+          canvas.style.cursor = "grabbing";
+          if (!event.active) simulation.alphaTarget(0.35).restart();
 
-        const [mouseX, mouseY] = getWorldPoint(event.sourceEvent as CanvasInputEvent, canvas);
-        event.subject._grab = {
-          dx: (event.subject.x ?? 0) - mouseX,
-          dy: (event.subject.y ?? 0) - mouseY,
-        };
-        event.subject.fx = event.subject.x;
-        event.subject.fy = event.subject.y;
-      })
-      .on("drag", (event: d3.D3DragEvent<HTMLCanvasElement, SimNode, SimNode>) => {
-        const [mouseX, mouseY] = getWorldPoint(event.sourceEvent as CanvasInputEvent, canvas);
-        const grab = event.subject._grab ?? { dx: 0, dy: 0 };
+          const [mouseX, mouseY] = getWorldPoint(
+            event.sourceEvent as CanvasInputEvent,
+            canvas,
+          );
+          event.subject._grab = {
+            dx: (event.subject.x ?? 0) - mouseX,
+            dy: (event.subject.y ?? 0) - mouseY,
+          };
+          event.subject.fx = event.subject.x;
+          event.subject.fy = event.subject.y;
+        },
+      )
+      .on(
+        "drag",
+        (event: d3.D3DragEvent<HTMLCanvasElement, SimNode, SimNode>) => {
+          const [mouseX, mouseY] = getWorldPoint(
+            event.sourceEvent as CanvasInputEvent,
+            canvas,
+          );
+          const grab = event.subject._grab ?? { dx: 0, dy: 0 };
 
-        event.subject.fx = mouseX + grab.dx;
-        event.subject.fy = mouseY + grab.dy;
-        requestRender();
-      })
-      .on("end", (event: d3.D3DragEvent<HTMLCanvasElement, SimNode, SimNode>) => {
-        canvas.style.cursor = "default";
+          event.subject.fx = mouseX + grab.dx;
+          event.subject.fy = mouseY + grab.dy;
+          requestRender();
+        },
+      )
+      .on(
+        "end",
+        (event: d3.D3DragEvent<HTMLCanvasElement, SimNode, SimNode>) => {
+          canvas.style.cursor = "default";
 
-        if (!event.active) {
-          simRef.current?.alphaTarget(0);
-        }
+          if (!event.active) {
+            simRef.current?.alphaTarget(0);
+          }
 
-        event.subject.fx = null;
-        event.subject.fy = null;
-        delete event.subject._grab;
-      });
+          event.subject.fx = null;
+          event.subject.fy = null;
+          delete event.subject._grab;
+        },
+      );
 
     selection.call(drag);
 
@@ -648,7 +726,8 @@ export default function PhotoGraphCanvas({
 
     updateTheme(mediaQuery.matches);
 
-    const handleChange = (event: MediaQueryListEvent) => updateTheme(event.matches);
+    const handleChange = (event: MediaQueryListEvent) =>
+      updateTheme(event.matches);
     mediaQuery.addEventListener("change", handleChange);
 
     return () => mediaQuery.removeEventListener("change", handleChange);
@@ -665,7 +744,8 @@ export default function PhotoGraphCanvas({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const scheduleCurrentUpgradePass = () => scheduleUpgradePass(abortController.signal);
+    const scheduleCurrentUpgradePass = () =>
+      scheduleUpgradePass(abortController.signal);
 
     const resize = () => {
       dprRef.current = window.devicePixelRatio || 1;
@@ -682,7 +762,10 @@ export default function PhotoGraphCanvas({
       scheduleCurrentUpgradePass();
     };
 
-    const cleanupInteractions = bindInteractions(canvas, scheduleCurrentUpgradePass);
+    const cleanupInteractions = bindInteractions(
+      canvas,
+      scheduleCurrentUpgradePass,
+    );
     resize();
     window.addEventListener("resize", resize);
 
@@ -715,19 +798,30 @@ export default function PhotoGraphCanvas({
               .id((node) => node.id)
               .distance((link) => {
                 const value = link._baseValue ?? link.value ?? 0;
-                return GRAPH_CONFIG.distMin + (1 - value) * (GRAPH_CONFIG.distMax - GRAPH_CONFIG.distMin);
+                return (
+                  GRAPH_CONFIG.distMin +
+                  (1 - value) * (GRAPH_CONFIG.distMax - GRAPH_CONFIG.distMin)
+                );
               })
-              .strength((link) => 0.15 + 0.85 * (link._baseValue ?? link.value ?? 0))
+              .strength(
+                (link) => 0.15 + 0.85 * (link._baseValue ?? link.value ?? 0),
+              ),
           )
-          .force("charge", d3.forceManyBody<SimNode>().strength(GRAPH_CONFIG.charge))
+          .force(
+            "charge",
+            d3.forceManyBody<SimNode>().strength(GRAPH_CONFIG.charge),
+          )
           .force("x", d3.forceX<SimNode>().strength(0.03))
           .force("y", d3.forceY<SimNode>().strength(0.09))
           .force(
             "collide",
             d3
               .forceCollide<SimNode>()
-              .radius((node) => Math.max(node.w, node.h) / 2 + GRAPH_CONFIG.collidePad)
-              .iterations(3)
+              .radius(
+                (node) =>
+                  Math.max(node.w, node.h) / 2 + GRAPH_CONFIG.collidePad,
+              )
+              .iterations(3),
           )
           .on("tick", requestRender);
 
@@ -794,12 +888,15 @@ export default function PhotoGraphCanvas({
   // TODO: make this fade between colours instead of hard switching.
   const alphaColorClass = alpha < 0.01 ? "text-green-600" : "text-red-600";
 
-
-  const canvasThemeClass = darkMode ? "bg-neutral-950 text-neutral-100" : "bg-stone-100 text-neutral-950";
+  const canvasThemeClass = darkMode
+    ? "bg-neutral-950 text-neutral-100"
+    : "bg-stone-100 text-neutral-950";
   const overlayToneClass = darkMode
     ? "border border-white/10 bg-black/35 text-neutral-100"
     : "border border-black/10 bg-white/35 text-neutral-950";
-  const inspectOverlayClass = darkMode ? "bg-black/75 text-neutral-100" : "bg-white/75 text-neutral-950";
+  const inspectOverlayClass = darkMode
+    ? "bg-black/75 text-neutral-100"
+    : "bg-white/75 text-neutral-950";
 
   return (
     <div className={`h-full w-full transition-colors ${canvasThemeClass}`}>
@@ -818,7 +915,9 @@ export default function PhotoGraphCanvas({
           <button
             onClick={() => setDarkMode((current) => !current)}
             className={`flex h-8 w-8 items-center justify-center rounded-full ${overlayControlClass} ${overlayToneClass}`}
-            aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={
+              darkMode ? "Switch to light mode" : "Switch to dark mode"
+            }
             aria-pressed={darkMode}
           >
             {darkMode ? "◐" : "◑"}
@@ -835,24 +934,29 @@ export default function PhotoGraphCanvas({
       </nav>
 
       {menuOpen && (
-        <div className={`${overlayPanelClass} ${overlayToneClass}`}>
+        <div
+          className={`rounded-md  select-none ${overlayPanelClass} ${overlayToneClass}`}
+        >
           <div className="w-full flex items-start">
             <div className="flex-1 text-center">
-              <p className={overlayTextClass}>Simulation Alpha:</p>
-              <p className={`${overlayTextClass} ${alphaColorClass}`}>{alpha.toFixed(3)}</p>
+              <p className={`mx-  2 ${overlayTextClass}`}>Simulation Alpha</p>
+              <p className={`${overlayTextClass} ${alphaColorClass}`}>
+                {alpha.toFixed(3)}
+              </p>
             </div>
 
             <button
               onClick={() => setMenuOpen(false)}
-              className={`ml-auto m-0 flex h-5 w-5 items-center justify-center ${overlayControlClass}`}
+              className={`ml-auto m-0 flex rounded-md h-7 w-7 items-center justify-center ${overlayControlClass}`}
               aria-label="Close graph controls"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </button>
-
           </div>
 
-          <label className={`flex items-center justify-center gap-1 ${overlayTextClass}`}>
+          <label
+            className={`flex items-center justify-center gap-1 ${overlayTextClass}`}
+          >
             Hide Connections{" "}
             <input
               type="checkbox"
@@ -871,7 +975,9 @@ export default function PhotoGraphCanvas({
             onChange={(event) => setChargeMult(Number(event.target.value))}
             className={sliderClass}
           />
-          <p className={overlayTextClass}>Charge Mult: {chargeMult.toFixed(2)}</p>
+          <p className={overlayTextClass}>
+            Charge Mult: {chargeMult.toFixed(2)}
+          </p>
 
           <input
             type="range"
@@ -879,10 +985,14 @@ export default function PhotoGraphCanvas({
             max={500}
             step="any"
             value={distMinMult / 0.1}
-            onChange={(event) => setDistMinMult(Number(event.target.value) * 0.1)}
+            onChange={(event) =>
+              setDistMinMult(Number(event.target.value) * 0.1)
+            }
             className={sliderClass}
           />
-          <p className={overlayTextClass}>Dist Min Mult: {distMinMult.toFixed(2)}</p>
+          <p className={overlayTextClass}>
+            Dist Min Mult: {distMinMult.toFixed(2)}
+          </p>
 
           <input
             type="range"
@@ -890,10 +1000,14 @@ export default function PhotoGraphCanvas({
             max={50}
             step="any"
             value={distMaxMult / 0.1}
-            onChange={(event) => setDistMaxMult(Number(event.target.value) * 0.1)}
+            onChange={(event) =>
+              setDistMaxMult(Number(event.target.value) * 0.1)
+            }
             className={sliderClass}
           />
-          <p className={overlayTextClass}>Dist Max Mult: {distMaxMult.toFixed(2)}</p>
+          <p className={overlayTextClass}>
+            Dist Max Mult: {distMaxMult.toFixed(2)}
+          </p>
         </div>
       )}
 
@@ -901,8 +1015,8 @@ export default function PhotoGraphCanvas({
         <div
           onClick={() => setInspectUrl(null)}
           className={`absolute left-1/2 top-1/2 z-10 flex h-[70vh] w-[70vw] -translate-x-1/2 -translate-y-1/2 items-center justify-center ${inspectOverlayClass} backdrop-blur-sm`}
-        // TODO: add colour swatches to inspect view
-        // TODO: add pinterest/save button to inspect view ???
+          // TODO: add colour swatches to inspect view
+          // TODO: add pinterest/save button to inspect view ???
         >
           <button
             onClick={(event) => {

@@ -1,4 +1,11 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-accent: #2563eb;
+}
+
 body {
   @apply bg-gray-100 text-gray-800 dark:bg-black dark:text-gray-100;
 }
