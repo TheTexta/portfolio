@@ -3,6 +3,29 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
+import { Analytics } from "@vercel/analytics/next"
+
+
+import {
+  buildOptimizedImageUrl,
+  computeTargetImageWidth,
+  shouldUpgradeWidth,
+} from "@/app/components/photo-graph/imageOptimizer";
+import { getApp, getApps, initializeApp } from "firebase/app";
+import { getDownloadURL, getStorage, ref } from "firebase/storage";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCJcaZDccPEycNq8063Ziz5X0fr11U1TdI",
+  authDomain: "portfolio-site-firebase-41fab.firebaseapp.com",
+  projectId: "portfolio-site-firebase-41fab",
+  storageBucket: "portfolio-site-firebase-41fab.firebasestorage.app",
+  messagingSenderId: "274306939095",
+  appId: "1:274306939095:web:a5389c279fd8cbf31c1892",
+  measurementId: "G-YMW53LSD8L",
+};
+
+const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const storage = getStorage(firebaseApp);
 
 type RawNode = {
   id?: string | number;
@@ -15,9 +38,12 @@ type RawNode = {
 type SimNode = d3.SimulationNodeDatum & {
   id: string;
   colour?: string;
-  url: string;
+  sourceUrl: string;
   w: number;
   h: number;
+  loadedWidth?: number;
+  requestedWidth?: number;
+  hasInitialImage?: boolean;
   fx?: number | null;
   fy?: number | null;
   _grab?: { dx: number; dy: number };
@@ -37,6 +63,8 @@ type PhotoGraphCanvasProps = {
   imageBasePath?: string;
 };
 
+const DEFAULT_IMAGE_BASE_PATH = "photography-images";
+
 const GRAPH_CONFIG = {
   baseBox: 220,
   minBox: 64,
@@ -47,6 +75,8 @@ const GRAPH_CONFIG = {
   charge: -420,
   zoomExtent: [0.25, 4] as [number, number],
   imageConcurrency: 5,
+  upgradeDebounceMs: 120,
+  viewportBufferRatio: 0.15,
 };
 
 const OVERLAY_BG = "rgba(255, 255, 255, 0.274)";
@@ -60,10 +90,13 @@ function isAbortError(error: unknown) {
   return error instanceof DOMException && error.name === "AbortError";
 }
 
-function resolveNodeUrl(node: RawNode, id: string, imageBasePath: string) {
+function resolveNodeId(node: RawNode, index: number) {
+  return String(node.id ?? index + 1);
+}
+
+async function resolveNodeSourceUrl(node: RawNode, id: string, imageBasePath: string) {
   if (node.url) return node.url;
-  const normalizedBasePath = imageBasePath.replace(/\/$/, "");
-  return `${normalizedBasePath}/${id}.png`;
+  return getDownloadURL(ref(storage, `${imageBasePath.replace(/\/$/, "")}/${id}.png`));
 }
 
 function sizeNodeFromImage(node: SimNode, image: HTMLImageElement) {
@@ -83,31 +116,33 @@ function sizeNodeFromImage(node: SimNode, image: HTMLImageElement) {
   node.w = GRAPH_CONFIG.baseBox * aspect;
 }
 
-function buildGraph(data: RawNode[], imageBasePath: string) {
-  const nodes: SimNode[] = data.map((entry, index) => {
-    const id = String(entry.id ?? index + 1);
-    const box = clamp(
-      Math.round((entry.scale ?? 0.5) * GRAPH_CONFIG.baseBox),
-      GRAPH_CONFIG.minBox,
-      GRAPH_CONFIG.maxBox
-    );
+async function buildGraph(data: RawNode[], imageBasePath: string) {
+  const nodes: SimNode[] = await Promise.all(
+    data.map(async (entry, index) => {
+      const id = resolveNodeId(entry, index);
+      const box = clamp(
+        Math.round((entry.scale ?? 0.5) * GRAPH_CONFIG.baseBox),
+        GRAPH_CONFIG.minBox,
+        GRAPH_CONFIG.maxBox
+      );
 
-    return {
-      id,
-      colour: entry.colour,
-      url: resolveNodeUrl(entry, id, imageBasePath),
-      w: box,
-      h: box,
-      x: (Math.random() - 0.5) * 50,
-      y: (Math.random() - 0.5) * 50,
-    };
-  });
+      return {
+        id,
+        colour: entry.colour,
+        sourceUrl: await resolveNodeSourceUrl(entry, id, imageBasePath),
+        w: box,
+        h: box,
+        x: (Math.random() - 0.5) * 50,
+        y: (Math.random() - 0.5) * 50,
+      };
+    })
+  );
 
   const nodeMap = new Map(nodes.map((node) => [node.id, node]));
   const links: SimLink[] = [];
 
-  for (const entry of data) {
-    const sourceId = String(entry.id);
+  for (const [index, entry] of data.entries()) {
+    const sourceId = resolveNodeId(entry, index);
 
     for (const [targetId, rawValue] of Object.entries(entry.correlations ?? {})) {
       if (sourceId === targetId) continue;
@@ -166,20 +201,44 @@ function loadImage(url: string, signal: AbortSignal) {
   });
 }
 
+function isNodeVisible(
+  node: SimNode,
+  transform: d3.ZoomTransform,
+  viewportWidth: number,
+  viewportHeight: number
+) {
+  const bufferX = viewportWidth * GRAPH_CONFIG.viewportBufferRatio;
+  const bufferY = viewportHeight * GRAPH_CONFIG.viewportBufferRatio;
+  const halfWidth = (node.w * transform.k) / 2;
+  const halfHeight = (node.h * transform.k) / 2;
+  const screenX = (node.x ?? 0) * transform.k + transform.x;
+  const screenY = (node.y ?? 0) * transform.k + transform.y;
+
+  return (
+    screenX + halfWidth >= -bufferX &&
+    screenX - halfWidth <= viewportWidth + bufferX &&
+    screenY + halfHeight >= -bufferY &&
+    screenY - halfHeight <= viewportHeight + bufferY
+  );
+}
+
 export default function PhotoGraphCanvas({
   graphUrl = "/portfolioTable.json",
-  imageBasePath = "/assets/images/portfolio",
+  imageBasePath = DEFAULT_IMAGE_BASE_PATH,
 }: PhotoGraphCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const nodesRef = useRef<SimNode[]>([]);
   const linksRef = useRef<SimLink[]>([]);
   const imagesRef = useRef<Map<string, HTMLImageElement>>(new Map());
+  const pendingWidthsRef = useRef<Map<string, Set<number>>>(new Map());
+  const errorLogRef = useRef<Set<string>>(new Set());
   const simRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null);
   const zoomRef = useRef<d3.ZoomBehavior<HTMLCanvasElement, unknown> | null>(null);
   const transformRef = useRef(d3.zoomIdentity);
   const dprRef = useRef(1);
   const frameRef = useRef<number | null>(null);
   const settleTimeoutRef = useRef<number | null>(null);
+  const upgradeTimeoutRef = useRef<number | null>(null);
   const alphaRef = useRef({ value: 1, updatedAt: 0 });
   const controlsRef = useRef({
     hideConnections: false,
@@ -339,7 +398,166 @@ export default function PhotoGraphCanvas({
     }, settleDelay);
   };
 
-  const bindInteractions = (canvas: HTMLCanvasElement) => {
+  const markInitialImageLoaded = (node: SimNode) => {
+    if (node.hasInitialImage) return;
+
+    node.hasInitialImage = true;
+    setImageProgress((current) => ({
+      loaded: current.loaded + 1,
+      total: current.total,
+    }));
+  };
+
+  const syncPendingRequestWidth = (node: SimNode) => {
+    const widths = pendingWidthsRef.current.get(node.id);
+    node.requestedWidth = widths && widths.size ? Math.max(...widths) : undefined;
+  };
+
+  const trackPendingWidth = (node: SimNode, width: number, pending: boolean) => {
+    const current = pendingWidthsRef.current.get(node.id) ?? new Set<number>();
+
+    if (pending) {
+      current.add(width);
+      pendingWidthsRef.current.set(node.id, current);
+    } else {
+      current.delete(width);
+      if (!current.size) {
+        pendingWidthsRef.current.delete(node.id);
+      }
+    }
+
+    syncPendingRequestWidth(node);
+  };
+
+  const refreshNodeAfterImageLoad = () => {
+    const collideForce = simRef.current?.force("collide") as d3.ForceCollide<SimNode> | undefined;
+    collideForce?.initialize?.(nodesRef.current);
+
+    nudgeSimulation(0.08, 220);
+    requestRender();
+  };
+
+  const applyOptimizedImage = (node: SimNode, image: HTMLImageElement, loadedWidth: number) => {
+    if (!shouldUpgradeWidth(node.loadedWidth, loadedWidth)) {
+      return;
+    }
+
+    sizeNodeFromImage(node, image);
+    node.loadedWidth = loadedWidth;
+    imagesRef.current.set(node.id, image);
+    markInitialImageLoaded(node);
+    refreshNodeAfterImageLoad();
+  };
+
+  const applyFallbackImage = (node: SimNode, image: HTMLImageElement) => {
+    if (imagesRef.current.has(node.id)) {
+      return;
+    }
+
+    sizeNodeFromImage(node, image);
+    node.loadedWidth = 0;
+    imagesRef.current.set(node.id, image);
+    markInitialImageLoaded(node);
+    refreshNodeAfterImageLoad();
+  };
+
+  const logNodeImageError = (node: SimNode, error: unknown) => {
+    const errorKey = node.id;
+    if (errorLogRef.current.has(errorKey)) return;
+
+    errorLogRef.current.add(errorKey);
+    console.error(`Failed to load image for node ${node.id}`, error);
+  };
+
+  const getNodeTargetWidth = (node: SimNode) =>
+    computeTargetImageWidth(node, transformRef.current.k, dprRef.current);
+
+  const loadNodeImage = async (node: SimNode, targetWidth: number, signal: AbortSignal) => {
+    if (signal.aborted) return;
+    if (!shouldUpgradeWidth(node.loadedWidth, targetWidth)) return;
+    if ((node.requestedWidth ?? 0) >= targetWidth) return;
+
+    trackPendingWidth(node, targetWidth, true);
+
+    try {
+      try {
+        const optimizedUrl = buildOptimizedImageUrl(node.sourceUrl, targetWidth);
+        const optimizedImage = await loadImage(optimizedUrl, signal);
+        if (signal.aborted) return;
+        applyOptimizedImage(node, optimizedImage, targetWidth);
+      } catch (error) {
+        if (isAbortError(error)) return;
+
+        try {
+          const fallbackImage = await loadImage(node.sourceUrl, signal);
+          if (signal.aborted) return;
+          applyFallbackImage(node, fallbackImage);
+        } catch (fallbackError) {
+          if (isAbortError(fallbackError)) return;
+          logNodeImageError(node, fallbackError);
+        }
+      }
+    } finally {
+      trackPendingWidth(node, targetWidth, false);
+    }
+  };
+
+  const runNodeQueue = async (
+    nodes: SimNode[],
+    signal: AbortSignal,
+    resolveWidth: (node: SimNode) => number
+  ) => {
+    if (!nodes.length) return;
+
+    let index = 0;
+
+    const worker = async () => {
+      while (!signal.aborted) {
+        const node = nodes[index];
+        index += 1;
+        if (!node) return;
+
+        await loadNodeImage(node, resolveWidth(node), signal);
+      }
+    };
+
+    await Promise.all(
+      Array.from({ length: Math.min(GRAPH_CONFIG.imageConcurrency, nodes.length) }, () => worker())
+    );
+  };
+
+  const preloadImages = async (signal: AbortSignal) => {
+    await runNodeQueue(nodesRef.current, signal, getNodeTargetWidth);
+  };
+
+  const upgradeVisibleImages = async (signal: AbortSignal) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const viewportWidth = canvas.clientWidth;
+    const viewportHeight = canvas.clientHeight;
+    if (!viewportWidth || !viewportHeight) return;
+
+    const transform = transformRef.current;
+    const visibleNodes = nodesRef.current.filter((node) =>
+      isNodeVisible(node, transform, viewportWidth, viewportHeight)
+    );
+
+    await runNodeQueue(visibleNodes, signal, getNodeTargetWidth);
+  };
+
+  const scheduleUpgradePass = (signal: AbortSignal, delay = GRAPH_CONFIG.upgradeDebounceMs) => {
+    if (upgradeTimeoutRef.current !== null) {
+      window.clearTimeout(upgradeTimeoutRef.current);
+    }
+
+    upgradeTimeoutRef.current = window.setTimeout(() => {
+      upgradeTimeoutRef.current = null;
+      void upgradeVisibleImages(signal);
+    }, delay);
+  };
+
+  const bindInteractions = (canvas: HTMLCanvasElement, onZoomOrPan: () => void) => {
     const selection = d3.select(canvas);
 
     const zoom = d3
@@ -353,6 +571,7 @@ export default function PhotoGraphCanvas({
       .on("zoom", (event: d3.D3ZoomEvent<HTMLCanvasElement, unknown>) => {
         transformRef.current = event.transform;
         requestRender();
+        onZoomOrPan();
       });
 
     zoomRef.current = zoom;
@@ -401,7 +620,7 @@ export default function PhotoGraphCanvas({
 
     const handleClick = (event: MouseEvent) => {
       const node = hitNode(event, canvas);
-      if (node) setInspectUrl(node.url);
+      if (node) setInspectUrl(node.sourceUrl);
     };
 
     const handleMouseMove = (event: MouseEvent) => {
@@ -419,55 +638,13 @@ export default function PhotoGraphCanvas({
     };
   };
 
-  const preloadImages = async (signal: AbortSignal) => {
-    const nodes = nodesRef.current;
-    if (!nodes.length) return;
-
-    let index = 0;
-
-    const worker = async () => {
-      while (!signal.aborted) {
-        const node = nodes[index];
-        index += 1;
-        if (!node) return;
-
-        try {
-          const image = await loadImage(node.url, signal);
-          if (signal.aborted) return;
-
-          sizeNodeFromImage(node, image);
-          imagesRef.current.set(node.id, image);
-
-          const collideForce = simRef.current?.force("collide") as d3.ForceCollide<SimNode> | undefined;
-          collideForce?.initialize?.(nodesRef.current);
-
-          nudgeSimulation(0.08, 220);
-          requestRender();
-        } catch (error) {
-          if (!isAbortError(error)) {
-            console.error(error);
-          }
-        } finally {
-          if (!signal.aborted) {
-            setImageProgress((current) => ({
-              loaded: current.loaded + 1,
-              total: current.total,
-            }));
-          }
-        }
-      }
-    };
-
-    await Promise.all(
-      Array.from({ length: Math.min(GRAPH_CONFIG.imageConcurrency, nodes.length) }, () => worker())
-    );
-  };
-
   useEffect(() => {
     let disposed = false;
     const abortController = new AbortController();
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    const scheduleCurrentUpgradePass = () => scheduleUpgradePass(abortController.signal);
 
     const resize = () => {
       dprRef.current = window.devicePixelRatio || 1;
@@ -481,9 +658,10 @@ export default function PhotoGraphCanvas({
       canvas.style.height = `${height}px`;
 
       requestRender();
+      scheduleCurrentUpgradePass();
     };
 
-    const cleanupInteractions = bindInteractions(canvas);
+    const cleanupInteractions = bindInteractions(canvas, scheduleCurrentUpgradePass);
     resize();
     window.addEventListener("resize", resize);
 
@@ -501,10 +679,12 @@ export default function PhotoGraphCanvas({
         const data = (await response.json()) as RawNode[];
         if (disposed) return;
 
-        const { nodes, links } = buildGraph(data, imageBasePath);
+        const { nodes, links } = await buildGraph(data, imageBasePath);
         nodesRef.current = nodes;
         linksRef.current = links;
         imagesRef.current = new Map();
+        pendingWidthsRef.current = new Map();
+        errorLogRef.current = new Set();
         setImageProgress({ loaded: 0, total: nodes.length });
 
         const simulation = d3
@@ -539,6 +719,7 @@ export default function PhotoGraphCanvas({
         requestRender();
 
         await preloadImages(abortController.signal);
+        scheduleUpgradePass(abortController.signal, 0);
       } catch (error) {
         if (!isAbortError(error)) {
           console.error(error);
@@ -546,7 +727,7 @@ export default function PhotoGraphCanvas({
       }
     };
 
-    init();
+    void init();
 
     return () => {
       disposed = true;
@@ -563,6 +744,11 @@ export default function PhotoGraphCanvas({
       if (settleTimeoutRef.current !== null) {
         window.clearTimeout(settleTimeoutRef.current);
         settleTimeoutRef.current = null;
+      }
+
+      if (upgradeTimeoutRef.current !== null) {
+        window.clearTimeout(upgradeTimeoutRef.current);
+        upgradeTimeoutRef.current = null;
       }
 
       simRef.current?.stop();
@@ -802,6 +988,7 @@ export default function PhotoGraphCanvas({
           display: "block",
         }}
       />
+      <Analytics />
     </div>
   );
 }
