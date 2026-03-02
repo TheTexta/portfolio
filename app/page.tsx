@@ -1,5 +1,11 @@
-import PhotoGraphCanvas from "@/app/components/projects/photo-graph/PhotoGraphCanvas";
+import aboutSection from "@/app/components/about/about";
+import Link from "next/link";
 
 export default function Page() {
-  return <PhotoGraphCanvas />;
+  return (
+    <>
+      {aboutSection()}
+      <Link href="components/projects/photo-graph">Photo Graph</Link>
+    </>
+  );
 }

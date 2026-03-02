@@ -83,8 +83,12 @@ const GRAPH_CONFIG = {
   viewportBufferRatio: 0.15,
 };
 
-const OVERLAY_BG = "rgba(255, 255, 255, 0.274)";
-const MODAL_BG = "rgba(255, 255, 255, 0.742)";
+const overlayControlClass =
+  "cursor-pointer bg-white/30 px-1.5 text-base text-inherit backdrop-blur-[2px]";
+const overlayPanelClass =
+  "absolute left-[1vmin] top-[1vmin] z-[5] space-y-2 bg-white/30 p-1.5 text-center backdrop-blur-[2px]";
+const overlayTextClass = "m-0 p-0 text-xs";
+const sliderClass = "m-2.5 h-[3px] select-none";
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
@@ -258,7 +262,6 @@ export default function PhotoGraphCanvas({
   const [distMaxMult, setDistMaxMult] = useState(1);
   const [alpha, setAlpha] = useState(1);
   const [inspectUrl, setInspectUrl] = useState<string | null>(null);
-  const [imageProgress, setImageProgress] = useState({ loaded: 0, total: 0 });
 
   const syncAlpha = () => {
     const simAlpha = simRef.current?.alpha() ?? 0;
@@ -402,16 +405,6 @@ export default function PhotoGraphCanvas({
     }, settleDelay);
   };
 
-  const markInitialImageLoaded = (node: SimNode) => {
-    if (node.hasInitialImage) return;
-
-    node.hasInitialImage = true;
-    setImageProgress((current) => ({
-      loaded: current.loaded + 1,
-      total: current.total,
-    }));
-  };
-
   const syncPendingRequestWidth = (node: SimNode) => {
     const widths = pendingWidthsRef.current.get(node.id);
     node.requestedWidth = widths && widths.size ? Math.max(...widths) : undefined;
@@ -449,7 +442,6 @@ export default function PhotoGraphCanvas({
     sizeNodeFromImage(node, image);
     node.loadedWidth = loadedWidth;
     imagesRef.current.set(node.id, image);
-    markInitialImageLoaded(node);
     refreshNodeAfterImageLoad();
   };
 
@@ -461,7 +453,6 @@ export default function PhotoGraphCanvas({
     sizeNodeFromImage(node, image);
     node.loadedWidth = 0;
     imagesRef.current.set(node.id, image);
-    markInitialImageLoaded(node);
     refreshNodeAfterImageLoad();
   };
 
@@ -689,8 +680,6 @@ export default function PhotoGraphCanvas({
         imagesRef.current = new Map();
         pendingWidthsRef.current = new Map();
         errorLogRef.current = new Set();
-        setImageProgress({ loaded: 0, total: nodes.length });
-
         const simulation = d3
           .forceSimulation<SimNode>(nodes)
           .force(
@@ -776,30 +765,15 @@ export default function PhotoGraphCanvas({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chargeMult, distMinMult, distMaxMult]);
 
-  const progressVisible = imageProgress.total > 0 && imageProgress.loaded < imageProgress.total;
-  const progressPct = imageProgress.total
-    ? Math.round((imageProgress.loaded / imageProgress.total) * 100)
-    : 0;
-    // TODO: make this fade between colours instead of hard switching.
-  const alphaColor = alpha < 0.01 ? "green" : "red";
+  // TODO: make this fade between colours instead of hard switching.
+  const alphaColorClass = alpha < 0.01 ? "text-green-600" : "text-red-600";
 
   return (
-    <div style={{ margin: 0, overflow: "hidden" }}>
+    <div className="m-0 h-screen w-screen overflow-hidden">
       <Link
         href="/"
-        style={{
-          position: "absolute",
-          right: "min(1vw, 1vh)",
-          top: "min(1vw, 1vh)",
-          paddingLeft: "0.3rem",
-          paddingRight: "0.3rem",
-          fontSize: "1rem",
-          textAlign: "center",
-          backgroundColor: OVERLAY_BG,
-          border: "none",
-          cursor: "pointer",
-          zIndex: 5,
-        }}
+        className={`absolute right-[1vmin] top-[1vmin] z-[5] text-center ${overlayControlClass}`}
+        aria-label="Back to home"
       >
         ==&gt;
       </Link>
@@ -807,64 +781,35 @@ export default function PhotoGraphCanvas({
       {!menuOpen && (
         <button
           onClick={() => setMenuOpen(true)}
-          style={{
-            position: "absolute",
-            left: "min(1vw, 1vh)",
-            top: "min(1vw, 1vh)",
-            paddingLeft: "0.3rem",
-            paddingRight: "0.3rem",
-            fontSize: "1rem",
-            backgroundColor: OVERLAY_BG,
-            border: "none",
-            cursor: "pointer",
-            zIndex: 5,
-          }}
+          className={`absolute left-[1vmin] top-[1vmin] z-[5] ${overlayControlClass}`}
+          aria-label="Open graph controls"
         >
           ☰
         </button>
       )}
 
       {menuOpen && (
-        <div
-          style={{
-            position: "absolute",
-            top: "min(1vw, 1vh)",
-            left: "min(1vw, 1vh)",
-            backgroundColor: OVERLAY_BG,
-            textAlign: "center",
-            zIndex: 5,
-            padding: 6,
-          }}
-        >
+        <div className={overlayPanelClass}>
           <button
             onClick={() => setMenuOpen(false)}
-            style={{
-              position: "absolute",
-              right: "2%",
-              top: "2%",
-              paddingLeft: "0.3rem",
-              paddingRight: "0.3rem",
-              fontSize: "1rem",
-              backgroundColor: OVERLAY_BG,
-              border: "none",
-              cursor: "pointer",
-            }}
+            className={`absolute right-[2%] top-[2%] ${overlayControlClass}`}
+            aria-label="Close graph controls"
           >
             X
           </button>
 
-          <p style={{ margin: 0, padding: 0, fontSize: "0.8rem" }}>Simulation Alpha:</p>
-          <p style={{ margin: 0, padding: 0, fontSize: "0.8rem", color: alphaColor }}>{alpha.toFixed(3)}</p>
+          <p className={overlayTextClass}>Simulation Alpha:</p>
+          <p className={`${overlayTextClass} ${alphaColorClass}`}>{alpha.toFixed(3)}</p>
 
-          <p style={{ margin: 0, padding: 0, fontSize: "0.8rem" }}>
+          <label className={`flex items-center justify-center gap-1 ${overlayTextClass}`}>
             Hide Connections{" "}
             <input
               type="checkbox"
               checked={hideConnections}
               onChange={(event) => setHideConnections(event.target.checked)}
-              style={{ height: 10, margin: 0 }}
+              className="m-0 h-2.5"
             />
-          </p>
+          </label>
 
           <input
             type="range"
@@ -873,9 +818,9 @@ export default function PhotoGraphCanvas({
             step="any"
             value={chargeMult}
             onChange={(event) => setChargeMult(Number(event.target.value))}
-            style={{ userSelect: "none", height: 3, margin: 10 }}
+            className={sliderClass}
           />
-          <p style={{ margin: 0, padding: 0, fontSize: "0.8rem" }}>Charge Mult: {chargeMult.toFixed(2)}</p>
+          <p className={overlayTextClass}>Charge Mult: {chargeMult.toFixed(2)}</p>
 
           <input
             type="range"
@@ -884,9 +829,9 @@ export default function PhotoGraphCanvas({
             step="any"
             value={distMinMult / 0.1}
             onChange={(event) => setDistMinMult(Number(event.target.value) * 0.1)}
-            style={{ userSelect: "none", height: 3, margin: 10 }}
+            className={sliderClass}
           />
-          <p style={{ margin: 0, padding: 0, fontSize: "0.8rem" }}>Dist Min Mult: {distMinMult.toFixed(2)}</p>
+          <p className={overlayTextClass}>Dist Min Mult: {distMinMult.toFixed(2)}</p>
 
           <input
             type="range"
@@ -895,48 +840,26 @@ export default function PhotoGraphCanvas({
             step="any"
             value={distMaxMult / 0.1}
             onChange={(event) => setDistMaxMult(Number(event.target.value) * 0.1)}
-            style={{ userSelect: "none", height: 3, margin: 10 }}
+            className={sliderClass}
           />
-          <p style={{ margin: 0, padding: 0, fontSize: "0.8rem" }}>Dist Max Mult: {distMaxMult.toFixed(2)}</p>
+          <p className={overlayTextClass}>Dist Max Mult: {distMaxMult.toFixed(2)}</p>
         </div>
       )}
 
       {inspectUrl && (
         <div
           onClick={() => setInspectUrl(null)}
-          style={{
-            position: "absolute",
-            width: "70vw",
-            height: "70vh",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            zIndex: 10,
-            backgroundColor: MODAL_BG,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+          className="absolute left-1/2 top-1/2 z-10 flex h-[70vh] w-[70vw] -translate-x-1/2 -translate-y-1/2 items-center justify-center bg-white/75 backdrop-blur-sm"
           // TODO: add colour swatches to inspect view
           // TODO: add pinterest/save button to inspect view ???
-
         >
           <button
             onClick={(event) => {
               event.stopPropagation();
               setInspectUrl(null);
             }}
-            style={{
-              position: "absolute",
-              right: "2%",
-              top: "2%",
-              paddingLeft: "0.3rem",
-              paddingRight: "0.3rem",
-              fontSize: "1rem",
-              backgroundColor: OVERLAY_BG,
-              border: "none",
-              cursor: "pointer",
-            }}
+            className={`absolute right-[2%] top-[2%] ${overlayControlClass}`}
+            aria-label="Close image inspection"
           >
             X
           </button>
@@ -944,57 +867,15 @@ export default function PhotoGraphCanvas({
           <img
             src={inspectUrl}
             alt=""
-            style={{ maxWidth: "90%", maxHeight: "90%" }}
+            className="max-h-[90%] max-w-[90%]"
             onClick={(event) => event.stopPropagation()}
           />
         </div>
       )}
 
-      {progressVisible && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: "1vh",
-            left: "1vw",
-            width: "max(20vw, 33vh)",
-            height: "1vh",
-            backgroundColor: "rgba(255,255,255,0)",
-            zIndex: 6,
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "black",
-              width: `${progressPct}%`,
-              height: "20%",
-              position: "relative",
-            }}
-          />
-          <span
-            style={{
-              position: "absolute",
-              left: "50%",
-              top: "50%",
-              transform: "translate(-50%, -50%)",
-              fontSize: "0.65rem",
-              color: "white",
-              pointerEvents: "none",
-            }}
-          >
-            {progressPct}%
-          </span>
-        </div>
-      )}
-
       <canvas
         ref={canvasRef}
-        style={{
-          height: "100%",
-          width: "100%",
-          margin: 0,
-          imageRendering: "pixelated",
-          display: "block",
-        }}
+        className="block h-full w-full m-0 [image-rendering:pixelated]"
       />
     </div>
   );
