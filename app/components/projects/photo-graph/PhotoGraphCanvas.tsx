@@ -4,6 +4,11 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
+import { ArrowRightFromLine } from 'lucide-react';
+import { X } from 'lucide-react';
+import { Menu } from 'lucide-react';
+
+
 
 import {
   buildOptimizedImageUrl,
@@ -82,7 +87,7 @@ const GRAPH_CONFIG = {
 };
 
 const overlayControlClass =
-  "cursor-pointer bg-white/30 px-1.5 text-base text-inherit backdrop-blur-[2px]";
+  "cursor-pointer bg-white/30 px-1.5 backdrop-blur-[2px]";
 const overlayPanelClass =
   "absolute left-[1vmin] top-[1vmin] z-[5] space-y-2 bg-white/30 p-1.5 text-center backdrop-blur-[2px]";
 const overlayTextClass = "m-0 p-0 text-xs";
@@ -788,6 +793,8 @@ export default function PhotoGraphCanvas({
 
   // TODO: make this fade between colours instead of hard switching.
   const alphaColorClass = alpha < 0.01 ? "text-green-600" : "text-red-600";
+
+
   const canvasThemeClass = darkMode ? "bg-neutral-950 text-neutral-100" : "bg-stone-100 text-neutral-950";
   const overlayToneClass = darkMode
     ? "border border-white/10 bg-black/35 text-neutral-100"
@@ -795,48 +802,55 @@ export default function PhotoGraphCanvas({
   const inspectOverlayClass = darkMode ? "bg-black/75 text-neutral-100" : "bg-white/75 text-neutral-950";
 
   return (
-    <div className={`m-0 h-screen w-screen overflow-hidden transition-colors ${canvasThemeClass}`}>
-      <div className="absolute right-[1vmin] top-[1vmin] z-5 flex items-center gap-2">
-        <button
-          onClick={() => setDarkMode((current) => !current)}
-          className={`${overlayControlClass} ${overlayToneClass} h-8 min-w-8 rounded-full px-2 text-sm leading-none`}
-          aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-          aria-pressed={darkMode}
-        >
-          {darkMode ? "◐" : "◑"}
-        </button>
+    <div className={`h-full w-full transition-colors ${canvasThemeClass}`}>
+      <nav className="absolute left-[1vmin] right-[1vmin] top-[1vmin] z-[5] flex h-8 items-center">
+        {!menuOpen && (
+          <button
+            onClick={() => setMenuOpen(true)}
+            className={`flex h-8 w-8 items-center justify-center rounded-md ${overlayControlClass} ${overlayToneClass}`}
+            aria-label="Open graph controls"
+          >
+            <Menu className="h-4 w-4" />
+          </button>
+        )}
 
-        <Link
-          href="/"
-          className={`text-center ${overlayControlClass} ${overlayToneClass}`}
-          aria-label="Back to home"
-        >
-          ==&gt;
-        </Link>
-      </div>
+        <div className="ml-auto flex h-full items-center gap-2">
+          <button
+            onClick={() => setDarkMode((current) => !current)}
+            className={`flex h-8 w-8 items-center justify-center rounded-full ${overlayControlClass} ${overlayToneClass}`}
+            aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+            aria-pressed={darkMode}
+          >
+            {darkMode ? "◐" : "◑"}
+          </button>
 
-      {!menuOpen && (
-        <button
-          onClick={() => setMenuOpen(true)}
-          className={`absolute left-[1vmin] top-[1vmin] z-5 ${overlayControlClass} ${overlayToneClass}`}
-          aria-label="Open graph controls"
-        >
-          ☰
-        </button>
-      )}
+          <Link
+            href="/"
+            className={`flex h-8 w-8 items-center justify-center rounded-md ${overlayControlClass} ${overlayToneClass}`}
+            aria-label="Back to home"
+          >
+            <ArrowRightFromLine className="h-4 w-4" />
+          </Link>
+        </div>
+      </nav>
 
       {menuOpen && (
         <div className={`${overlayPanelClass} ${overlayToneClass}`}>
-          <button
-            onClick={() => setMenuOpen(false)}
-            className={`absolute right-[2%] top-[2%] ${overlayControlClass}`}
-            aria-label="Close graph controls"
-          >
-            X
-          </button>
+          <div className="w-full flex items-start">
+            <div className="flex-1 text-center">
+              <p className={overlayTextClass}>Simulation Alpha:</p>
+              <p className={`${overlayTextClass} ${alphaColorClass}`}>{alpha.toFixed(3)}</p>
+            </div>
 
-          <p className={overlayTextClass}>Simulation Alpha:</p>
-          <p className={`${overlayTextClass} ${alphaColorClass}`}>{alpha.toFixed(3)}</p>
+            <button
+              onClick={() => setMenuOpen(false)}
+              className={`ml-auto m-0 flex h-5 w-5 items-center justify-center ${overlayControlClass}`}
+              aria-label="Close graph controls"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+          </div>
 
           <label className={`flex items-center justify-center gap-1 ${overlayTextClass}`}>
             Hide Connections{" "}
@@ -887,15 +901,15 @@ export default function PhotoGraphCanvas({
         <div
           onClick={() => setInspectUrl(null)}
           className={`absolute left-1/2 top-1/2 z-10 flex h-[70vh] w-[70vw] -translate-x-1/2 -translate-y-1/2 items-center justify-center ${inspectOverlayClass} backdrop-blur-sm`}
-          // TODO: add colour swatches to inspect view
-          // TODO: add pinterest/save button to inspect view ???
+        // TODO: add colour swatches to inspect view
+        // TODO: add pinterest/save button to inspect view ???
         >
           <button
             onClick={(event) => {
               event.stopPropagation();
               setInspectUrl(null);
             }}
-            className={`absolute right-[2%] top-[2%] ${overlayControlClass}`}
+            className={`absolute right-[2%] top-[2%] flex h-8 w-8 items-center justify-center ${overlayControlClass}`}
             aria-label="Close image inspection"
           >
             X

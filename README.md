@@ -21,6 +21,7 @@ The current app is centered around an interactive photography project called `Ph
 - D3.js
 - Firebase Storage
 - ESLint + Prettier
+- Lucide React
 
 ## Routes
 
