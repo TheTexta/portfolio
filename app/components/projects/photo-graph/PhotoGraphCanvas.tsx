@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { Analytics } from "@vercel/analytics/next"
 
 
 import {
   buildOptimizedImageUrl,
   computeTargetImageWidth,
   shouldUpgradeWidth,
-} from "@/app/components/photo-graph/imageOptimizer";
+} from "@/app/components/projects/photo-graph/imageOptimizer";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getDownloadURL, getStorage, ref } from "firebase/storage";
 
@@ -26,6 +25,11 @@ const firebaseConfig = {
 
 const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const storage = getStorage(firebaseApp);
+
+// TODO: add dark mode support with minimalist toggle in top right 
+// TODO: add metadata to inspection view
+
+// TODO: find a way to generate json edge data when new images added.
 
 type RawNode = {
   id?: string | number;
@@ -913,6 +917,9 @@ export default function PhotoGraphCanvas({
             alignItems: "center",
             justifyContent: "center",
           }}
+          // TODO: add colour swatches to inspect view
+          // TODO: add pinterest/save button to inspect view ???
+
         >
           <button
             onClick={(event) => {
@@ -989,7 +996,6 @@ export default function PhotoGraphCanvas({
           display: "block",
         }}
       />
-      <Analytics />
     </div>
   );
 }
