@@ -1,33 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
 import { ArrowRightFromLine } from "lucide-react";
 import { X } from "lucide-react";
 import { Menu } from "lucide-react";
+import { Maximize } from "lucide-react";
 
 import {
   buildOptimizedImageUrl,
   computeTargetImageWidth,
   shouldUpgradeWidth,
 } from "@/app/components/projects/photo-graph/imageOptimizer";
-import { getApp, getApps, initializeApp } from "firebase/app";
-import { getDownloadURL, getStorage, ref } from "firebase/storage";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCJcaZDccPEycNq8063Ziz5X0fr11U1TdI",
-  authDomain: "portfolio-site-firebase-41fab.firebaseapp.com",
-  projectId: "portfolio-site-firebase-41fab",
-  storageBucket: "portfolio-site-firebase-41fab.firebasestorage.app",
-  messagingSenderId: "274306939095",
-  appId: "1:274306939095:web:a5389c279fd8cbf31c1892",
-  measurementId: "G-YMW53LSD8L",
-};
-
-const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const storage = getStorage(firebaseApp);
+import { storage } from "@/app/components/projects/photo-graph/firebaseClient";
+import { getDownloadURL, ref } from "firebase/storage";
 // TODO: add metadata to inspection view
 
 // TODO: find a way to generate json edge data when new images added.
@@ -79,13 +69,13 @@ const GRAPH_CONFIG = {
   distMax: 1600,
   charge: -420,
   zoomExtent: [0.25, 4] as [number, number],
+  initialZoom: 0.8, // <-- add this
   imageConcurrency: 5,
   upgradeDebounceMs: 120,
   viewportBufferRatio: 0.15,
 };
 
-const overlayControlClass =
-  "cursor-pointer  px-1.5 backdrop-blur-[2px]";
+const overlayControlClass = "cursor-pointer  px-1.5 backdrop-blur-[2px]";
 const overlayPanelClass =
   "absolute left-[1vmin] top-[1vmin] z-[5] space-y-2 p-1.5 text-center backdrop-blur-[2px]";
 const overlayTextClass = "m-0 p-0 text-xs";
@@ -240,6 +230,13 @@ function isNodeVisible(
   );
 }
 
+function getNodeTopLeft(node: SimNode) {
+  return {
+    x: (node.x ?? 0) - node.w / 2,
+    y: (node.y ?? 0) - node.h / 2,
+  };
+}
+
 export default function PhotoGraphCanvas({
   graphUrl = "/portfolioTable.json",
   imageBasePath = DEFAULT_IMAGE_BASE_PATH,
@@ -277,7 +274,7 @@ export default function PhotoGraphCanvas({
   const [inspectUrl, setInspectUrl] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useState(false);
 
-  const syncAlpha = () => {
+  const syncAlpha = useCallback(() => {
     const simAlpha = simRef.current?.alpha() ?? 0;
     const now = performance.now();
     const { value, updatedAt } = alphaRef.current;
@@ -294,9 +291,9 @@ export default function PhotoGraphCanvas({
     setAlpha((current) =>
       Math.abs(current - simAlpha) < 0.01 ? current : simAlpha,
     );
-  };
+  }, []);
 
-  const paint = () => {
+  const paint = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas || !canvas.width) return;
 
@@ -339,8 +336,7 @@ export default function PhotoGraphCanvas({
     context.globalAlpha = 1;
 
     for (const node of nodesRef.current) {
-      const x = (node.x ?? 0) - node.w / 2;
-      const y = (node.y ?? 0) - node.h / 2;
+      const { x, y } = getNodeTopLeft(node);
       const image = imagesRef.current.get(node.id);
 
       if (image) {
@@ -356,57 +352,75 @@ export default function PhotoGraphCanvas({
 
     context.restore();
     syncAlpha();
-  };
+  }, [syncAlpha]);
 
-  const requestRender = () => {
+  const requestRender = useCallback(() => {
     if (frameRef.current !== null) return;
 
     frameRef.current = window.requestAnimationFrame(() => {
       frameRef.current = null;
       paint();
     });
-  };
+  }, [paint]);
 
-  const getWorldPoint = (
-    event: CanvasInputEvent,
-    canvas: HTMLCanvasElement,
-  ) => {
-    const point = d3.pointer(event, canvas) as [number, number];
-    return transformRef.current.invert(point) as [number, number];
-  };
+  const getWorldPoint = useCallback(
+    (event: CanvasInputEvent, canvas: HTMLCanvasElement) => {
+      const point = d3.pointer(event, canvas) as [number, number];
+      return transformRef.current.invert(point) as [number, number];
+    },
+    [],
+  );
 
-  const hitNode = (event: CanvasInputEvent, canvas: HTMLCanvasElement) => {
-    const [mouseX, mouseY] = getWorldPoint(event, canvas);
+  const hitNode = useCallback(
+    (event: CanvasInputEvent, canvas: HTMLCanvasElement) => {
+      const [mouseX, mouseY] = getWorldPoint(event, canvas);
 
-    for (let index = nodesRef.current.length - 1; index >= 0; index -= 1) {
-      const node = nodesRef.current[index];
-      const x = (node.x ?? 0) - node.w / 2;
-      const y = (node.y ?? 0) - node.h / 2;
+      for (let index = nodesRef.current.length - 1; index >= 0; index -= 1) {
+        const node = nodesRef.current[index];
+        const { x, y } = getNodeTopLeft(node);
 
-      if (
-        mouseX >= x &&
-        mouseX <= x + node.w &&
-        mouseY >= y &&
-        mouseY <= y + node.h
-      ) {
-        return node;
+        if (
+          mouseX >= x &&
+          mouseX <= x + node.w &&
+          mouseY >= y &&
+          mouseY <= y + node.h
+        ) {
+          return node;
+        }
       }
+
+      return null;
+    },
+    [getWorldPoint],
+  );
+
+  const applyInitialZoom = useCallback((canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    const initialTransform = d3.zoomIdentity
+      .translate(rect.width / 2, rect.height / 2)
+      .scale(GRAPH_CONFIG.initialZoom);
+
+    transformRef.current = initialTransform;
+    const zoomBehavior = zoomRef.current;
+    if (zoomBehavior) {
+      d3.select(canvas).call(zoomBehavior.transform, initialTransform);
     }
+  }, []);
 
-    return null;
-  };
+  const applyConnectionVisibility = useCallback(
+    (hidden: boolean) => {
+      for (const link of linksRef.current) {
+        const baseValue = link._baseValue ?? link.value ?? 0;
+        link._baseValue = baseValue;
+        link.value = hidden ? 0 : baseValue;
+      }
 
-  const applyConnectionVisibility = (hidden: boolean) => {
-    for (const link of linksRef.current) {
-      const baseValue = link._baseValue ?? link.value ?? 0;
-      link._baseValue = baseValue;
-      link.value = hidden ? 0 : baseValue;
-    }
+      requestRender();
+    },
+    [requestRender],
+  );
 
-    requestRender();
-  };
-
-  const updateSimulationForces = () => {
+  const updateSimulationForces = useCallback(() => {
     const simulation = simRef.current;
     if (!simulation) return;
 
@@ -428,52 +442,55 @@ export default function PhotoGraphCanvas({
       | d3.ForceManyBody<SimNode>
       | undefined;
     chargeForce?.strength(currentControls.chargeMult * GRAPH_CONFIG.charge);
-  };
+  }, []);
 
-  const nudgeSimulation = (target = 0.25, settleDelay = 150) => {
-    const simulation = simRef.current;
-    if (!simulation) return;
+  const nudgeSimulation = useCallback(
+    (target = 0.25, settleDelay = 150) => {
+      const simulation = simRef.current;
+      if (!simulation) return;
 
-    updateSimulationForces();
-    simulation.alphaTarget(target).restart();
+      updateSimulationForces();
+      simulation.alphaTarget(target).restart();
 
-    if (settleTimeoutRef.current !== null) {
-      window.clearTimeout(settleTimeoutRef.current);
-    }
+      if (settleTimeoutRef.current !== null) {
+        window.clearTimeout(settleTimeoutRef.current);
+      }
 
-    settleTimeoutRef.current = window.setTimeout(() => {
-      settleTimeoutRef.current = null;
-      simRef.current?.alphaTarget(0);
-    }, settleDelay);
-  };
+      settleTimeoutRef.current = window.setTimeout(() => {
+        settleTimeoutRef.current = null;
+        simRef.current?.alphaTarget(0);
+      }, settleDelay);
+    },
+    [updateSimulationForces],
+  );
 
-  const syncPendingRequestWidth = (node: SimNode) => {
+  const syncPendingRequestWidth = useCallback((node: SimNode) => {
     const widths = pendingWidthsRef.current.get(node.id);
     node.requestedWidth =
       widths && widths.size ? Math.max(...widths) : undefined;
-  };
+  }, []);
 
-  const trackPendingWidth = (
-    node: SimNode,
-    width: number,
-    pending: boolean,
-  ) => {
-    const current = pendingWidthsRef.current.get(node.id) ?? new Set<number>();
+  const trackPendingWidth = useCallback(
+    (node: SimNode, width: number, pending: boolean) => {
+      const current =
+        pendingWidthsRef.current.get(node.id) ?? new Set<number>();
 
-    if (pending) {
-      current.add(width);
-      pendingWidthsRef.current.set(node.id, current);
-    } else {
-      current.delete(width);
-      if (!current.size) {
-        pendingWidthsRef.current.delete(node.id);
+      if (pending) {
+        current.add(width);
+        pendingWidthsRef.current.set(node.id, current);
+      } else {
+        current.delete(width);
+        if (!current.size) {
+          pendingWidthsRef.current.delete(node.id);
+        }
       }
-    }
 
-    syncPendingRequestWidth(node);
-  };
+      syncPendingRequestWidth(node);
+    },
+    [syncPendingRequestWidth],
+  );
 
-  const refreshNodeAfterImageLoad = () => {
+  const refreshNodeAfterImageLoad = useCallback(() => {
     const collideForce = simRef.current?.force("collide") as
       | d3.ForceCollide<SimNode>
       | undefined;
@@ -481,241 +498,259 @@ export default function PhotoGraphCanvas({
 
     nudgeSimulation(0.08, 220);
     requestRender();
-  };
+  }, [nudgeSimulation, requestRender]);
 
-  const applyOptimizedImage = (
-    node: SimNode,
-    image: HTMLImageElement,
-    loadedWidth: number,
-  ) => {
-    if (!shouldUpgradeWidth(node.loadedWidth, loadedWidth)) {
-      return;
-    }
+  const applyOptimizedImage = useCallback(
+    (node: SimNode, image: HTMLImageElement, loadedWidth: number) => {
+      if (!shouldUpgradeWidth(node.loadedWidth, loadedWidth)) {
+        return;
+      }
 
-    sizeNodeFromImage(node, image);
-    node.loadedWidth = loadedWidth;
-    imagesRef.current.set(node.id, image);
-    refreshNodeAfterImageLoad();
-  };
+      sizeNodeFromImage(node, image);
+      node.loadedWidth = loadedWidth;
+      imagesRef.current.set(node.id, image);
+      refreshNodeAfterImageLoad();
+    },
+    [refreshNodeAfterImageLoad],
+  );
 
-  const applyFallbackImage = (node: SimNode, image: HTMLImageElement) => {
-    if (imagesRef.current.has(node.id)) {
-      return;
-    }
+  const applyFallbackImage = useCallback(
+    (node: SimNode, image: HTMLImageElement) => {
+      if (imagesRef.current.has(node.id)) {
+        return;
+      }
 
-    sizeNodeFromImage(node, image);
-    node.loadedWidth = 0;
-    imagesRef.current.set(node.id, image);
-    refreshNodeAfterImageLoad();
-  };
+      sizeNodeFromImage(node, image);
+      node.loadedWidth = 0;
+      imagesRef.current.set(node.id, image);
+      refreshNodeAfterImageLoad();
+    },
+    [refreshNodeAfterImageLoad],
+  );
 
-  const logNodeImageError = (node: SimNode, error: unknown) => {
+  const logNodeImageError = useCallback((node: SimNode, error: unknown) => {
     const errorKey = node.id;
     if (errorLogRef.current.has(errorKey)) return;
 
     errorLogRef.current.add(errorKey);
     console.error(`Failed to load image for node ${node.id}`, error);
-  };
+  }, []);
 
-  const getNodeTargetWidth = (node: SimNode) =>
-    computeTargetImageWidth(node, transformRef.current.k, dprRef.current);
+  const getNodeTargetWidth = useCallback(
+    (node: SimNode) =>
+      computeTargetImageWidth(node, transformRef.current.k, dprRef.current),
+    [],
+  );
 
-  const loadNodeImage = async (
-    node: SimNode,
-    targetWidth: number,
-    signal: AbortSignal,
-  ) => {
-    if (signal.aborted) return;
-    if (!shouldUpgradeWidth(node.loadedWidth, targetWidth)) return;
-    if ((node.requestedWidth ?? 0) >= targetWidth) return;
+  const loadNodeImage = useCallback(
+    async (node: SimNode, targetWidth: number, signal: AbortSignal) => {
+      if (signal.aborted) return;
+      if (!shouldUpgradeWidth(node.loadedWidth, targetWidth)) return;
+      if ((node.requestedWidth ?? 0) >= targetWidth) return;
 
-    trackPendingWidth(node, targetWidth, true);
+      trackPendingWidth(node, targetWidth, true);
 
-    try {
       try {
-        const optimizedUrl = buildOptimizedImageUrl(
-          node.sourceUrl,
-          targetWidth,
-        );
-        const optimizedImage = await loadImage(optimizedUrl, signal);
-        if (signal.aborted) return;
-        applyOptimizedImage(node, optimizedImage, targetWidth);
-      } catch (error) {
-        if (isAbortError(error)) return;
-
         try {
-          const fallbackImage = await loadImage(node.sourceUrl, signal);
+          const optimizedUrl = buildOptimizedImageUrl(
+            node.sourceUrl,
+            targetWidth,
+          );
+          const optimizedImage = await loadImage(optimizedUrl, signal);
           if (signal.aborted) return;
-          applyFallbackImage(node, fallbackImage);
-        } catch (fallbackError) {
-          if (isAbortError(fallbackError)) return;
-          logNodeImageError(node, fallbackError);
-        }
-      }
-    } finally {
-      trackPendingWidth(node, targetWidth, false);
-    }
-  };
+          applyOptimizedImage(node, optimizedImage, targetWidth);
+        } catch (error) {
+          if (isAbortError(error)) return;
 
-  const runNodeQueue = async (
-    nodes: SimNode[],
-    signal: AbortSignal,
-    resolveWidth: (node: SimNode) => number,
-  ) => {
-    if (!nodes.length) return;
-
-    let index = 0;
-
-    const worker = async () => {
-      while (!signal.aborted) {
-        const node = nodes[index];
-        index += 1;
-        if (!node) return;
-
-        await loadNodeImage(node, resolveWidth(node), signal);
-      }
-    };
-
-    await Promise.all(
-      Array.from(
-        { length: Math.min(GRAPH_CONFIG.imageConcurrency, nodes.length) },
-        () => worker(),
-      ),
-    );
-  };
-
-  const preloadImages = async (signal: AbortSignal) => {
-    await runNodeQueue(nodesRef.current, signal, getNodeTargetWidth);
-  };
-
-  const upgradeVisibleImages = async (signal: AbortSignal) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const viewportWidth = canvas.clientWidth;
-    const viewportHeight = canvas.clientHeight;
-    if (!viewportWidth || !viewportHeight) return;
-
-    const transform = transformRef.current;
-    const visibleNodes = nodesRef.current.filter((node) =>
-      isNodeVisible(node, transform, viewportWidth, viewportHeight),
-    );
-
-    await runNodeQueue(visibleNodes, signal, getNodeTargetWidth);
-  };
-
-  const scheduleUpgradePass = (
-    signal: AbortSignal,
-    delay = GRAPH_CONFIG.upgradeDebounceMs,
-  ) => {
-    if (upgradeTimeoutRef.current !== null) {
-      window.clearTimeout(upgradeTimeoutRef.current);
-    }
-
-    upgradeTimeoutRef.current = window.setTimeout(() => {
-      upgradeTimeoutRef.current = null;
-      void upgradeVisibleImages(signal);
-    }, delay);
-  };
-
-  const bindInteractions = (
-    canvas: HTMLCanvasElement,
-    onZoomOrPan: () => void,
-  ) => {
-    const selection = d3.select(canvas);
-
-    const zoom = d3
-      .zoom<HTMLCanvasElement, unknown>()
-      .scaleExtent(GRAPH_CONFIG.zoomExtent)
-      .filter((event: CanvasInputEvent) => {
-        if (event.type === "wheel") return true;
-        if ("touches" in event && event.touches.length > 1) return true;
-        return !hitNode(event, canvas);
-      })
-      .on("zoom", (event: d3.D3ZoomEvent<HTMLCanvasElement, unknown>) => {
-        transformRef.current = event.transform;
-        requestRender();
-        onZoomOrPan();
-      });
-
-    zoomRef.current = zoom;
-    selection.call(zoom);
-
-    const drag = d3
-      .drag<HTMLCanvasElement, SimNode>()
-      .container(() => canvas)
-      .subject((event: CanvasInputEvent) => hitNode(event, canvas) ?? null)
-      .on(
-        "start",
-        (event: d3.D3DragEvent<HTMLCanvasElement, SimNode, SimNode>) => {
-          const simulation = simRef.current;
-          if (!simulation) return;
-
-          canvas.style.cursor = "grabbing";
-          if (!event.active) simulation.alphaTarget(0.35).restart();
-
-          const [mouseX, mouseY] = getWorldPoint(
-            event.sourceEvent as CanvasInputEvent,
-            canvas,
-          );
-          event.subject._grab = {
-            dx: (event.subject.x ?? 0) - mouseX,
-            dy: (event.subject.y ?? 0) - mouseY,
-          };
-          event.subject.fx = event.subject.x;
-          event.subject.fy = event.subject.y;
-        },
-      )
-      .on(
-        "drag",
-        (event: d3.D3DragEvent<HTMLCanvasElement, SimNode, SimNode>) => {
-          const [mouseX, mouseY] = getWorldPoint(
-            event.sourceEvent as CanvasInputEvent,
-            canvas,
-          );
-          const grab = event.subject._grab ?? { dx: 0, dy: 0 };
-
-          event.subject.fx = mouseX + grab.dx;
-          event.subject.fy = mouseY + grab.dy;
-          requestRender();
-        },
-      )
-      .on(
-        "end",
-        (event: d3.D3DragEvent<HTMLCanvasElement, SimNode, SimNode>) => {
-          canvas.style.cursor = "default";
-
-          if (!event.active) {
-            simRef.current?.alphaTarget(0);
+          try {
+            const fallbackImage = await loadImage(node.sourceUrl, signal);
+            if (signal.aborted) return;
+            applyFallbackImage(node, fallbackImage);
+          } catch (fallbackError) {
+            if (isAbortError(fallbackError)) return;
+            logNodeImageError(node, fallbackError);
           }
+        }
+      } finally {
+        trackPendingWidth(node, targetWidth, false);
+      }
+    },
+    [
+      applyFallbackImage,
+      applyOptimizedImage,
+      logNodeImageError,
+      trackPendingWidth,
+    ],
+  );
 
-          event.subject.fx = null;
-          event.subject.fy = null;
-          delete event.subject._grab;
-        },
+  const runNodeQueue = useCallback(
+    async (
+      nodes: SimNode[],
+      signal: AbortSignal,
+      resolveWidth: (node: SimNode) => number,
+    ) => {
+      if (!nodes.length) return;
+
+      let index = 0;
+
+      const worker = async () => {
+        while (!signal.aborted) {
+          const node = nodes[index];
+          index += 1;
+          if (!node) return;
+
+          await loadNodeImage(node, resolveWidth(node), signal);
+        }
+      };
+
+      await Promise.all(
+        Array.from(
+          { length: Math.min(GRAPH_CONFIG.imageConcurrency, nodes.length) },
+          () => worker(),
+        ),
+      );
+    },
+    [loadNodeImage],
+  );
+
+  const preloadImages = useCallback(
+    async (signal: AbortSignal) => {
+      await runNodeQueue(nodesRef.current, signal, getNodeTargetWidth);
+    },
+    [getNodeTargetWidth, runNodeQueue],
+  );
+
+  const upgradeVisibleImages = useCallback(
+    async (signal: AbortSignal) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const viewportWidth = canvas.clientWidth;
+      const viewportHeight = canvas.clientHeight;
+      if (!viewportWidth || !viewportHeight) return;
+
+      const transform = transformRef.current;
+      const visibleNodes = nodesRef.current.filter((node) =>
+        isNodeVisible(node, transform, viewportWidth, viewportHeight),
       );
 
-    selection.call(drag);
+      await runNodeQueue(visibleNodes, signal, getNodeTargetWidth);
+    },
+    [getNodeTargetWidth, runNodeQueue],
+  );
 
-    const handleClick = (event: MouseEvent) => {
-      const node = hitNode(event, canvas);
-      if (node) setInspectUrl(node.sourceUrl);
-    };
+  const scheduleUpgradePass = useCallback(
+    (signal: AbortSignal, delay = GRAPH_CONFIG.upgradeDebounceMs) => {
+      if (upgradeTimeoutRef.current !== null) {
+        window.clearTimeout(upgradeTimeoutRef.current);
+      }
 
-    const handleMouseMove = (event: MouseEvent) => {
-      canvas.style.cursor = hitNode(event, canvas) ? "pointer" : "default";
-    };
+      upgradeTimeoutRef.current = window.setTimeout(() => {
+        upgradeTimeoutRef.current = null;
+        void upgradeVisibleImages(signal);
+      }, delay);
+    },
+    [upgradeVisibleImages],
+  );
 
-    canvas.addEventListener("click", handleClick);
-    canvas.addEventListener("mousemove", handleMouseMove);
+  const bindInteractions = useCallback(
+    (canvas: HTMLCanvasElement, onZoomOrPan: () => void) => {
+      const selection = d3.select(canvas);
 
-    return () => {
-      canvas.removeEventListener("click", handleClick);
-      canvas.removeEventListener("mousemove", handleMouseMove);
-      selection.on(".zoom", null);
-      selection.on(".drag", null);
-    };
-  };
+      const zoom = d3
+        .zoom<HTMLCanvasElement, unknown>()
+        .scaleExtent(GRAPH_CONFIG.zoomExtent)
+        .filter((event: CanvasInputEvent) => {
+          if (event.type === "wheel") return true;
+          if ("touches" in event && event.touches.length > 1) return true;
+          return !hitNode(event, canvas);
+        })
+        .on("zoom", (event: d3.D3ZoomEvent<HTMLCanvasElement, unknown>) => {
+          transformRef.current = event.transform;
+          requestRender();
+          onZoomOrPan();
+        });
+
+      zoomRef.current = zoom;
+      selection.call(zoom);
+
+      const drag = d3
+        .drag<HTMLCanvasElement, SimNode>()
+        .container(() => canvas)
+        .subject((event: CanvasInputEvent) => hitNode(event, canvas) ?? null)
+        .on(
+          "start",
+          (event: d3.D3DragEvent<HTMLCanvasElement, SimNode, SimNode>) => {
+            const simulation = simRef.current;
+            if (!simulation) return;
+
+            canvas.style.cursor = "grabbing";
+            if (!event.active) simulation.alphaTarget(0.35).restart();
+
+            const [mouseX, mouseY] = getWorldPoint(
+              event.sourceEvent as CanvasInputEvent,
+              canvas,
+            );
+            event.subject._grab = {
+              dx: (event.subject.x ?? 0) - mouseX,
+              dy: (event.subject.y ?? 0) - mouseY,
+            };
+            event.subject.fx = event.subject.x;
+            event.subject.fy = event.subject.y;
+          },
+        )
+        .on(
+          "drag",
+          (event: d3.D3DragEvent<HTMLCanvasElement, SimNode, SimNode>) => {
+            const [mouseX, mouseY] = getWorldPoint(
+              event.sourceEvent as CanvasInputEvent,
+              canvas,
+            );
+            const grab = event.subject._grab ?? { dx: 0, dy: 0 };
+
+            event.subject.fx = mouseX + grab.dx;
+            event.subject.fy = mouseY + grab.dy;
+            requestRender();
+          },
+        )
+        .on(
+          "end",
+          (event: d3.D3DragEvent<HTMLCanvasElement, SimNode, SimNode>) => {
+            canvas.style.cursor = "default";
+
+            if (!event.active) {
+              simRef.current?.alphaTarget(0);
+            }
+
+            event.subject.fx = null;
+            event.subject.fy = null;
+            delete event.subject._grab;
+          },
+        );
+
+      selection.call(drag);
+
+      const handleClick = (event: MouseEvent) => {
+        const node = hitNode(event, canvas);
+        if (node) setInspectUrl(node.sourceUrl);
+      };
+
+      const handleMouseMove = (event: MouseEvent) => {
+        canvas.style.cursor = hitNode(event, canvas) ? "pointer" : "default";
+      };
+
+      canvas.addEventListener("click", handleClick);
+      canvas.addEventListener("mousemove", handleMouseMove);
+
+      return () => {
+        canvas.removeEventListener("click", handleClick);
+        canvas.removeEventListener("mousemove", handleMouseMove);
+        selection.on(".zoom", null);
+        selection.on(".drag", null);
+      };
+    },
+    [hitNode, requestRender, getWorldPoint],
+  );
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -736,7 +771,7 @@ export default function PhotoGraphCanvas({
   useEffect(() => {
     darkModeRef.current = darkMode;
     requestRender();
-  }, [darkMode]);
+  }, [darkMode, requestRender]);
 
   useEffect(() => {
     let disposed = false;
@@ -744,109 +779,116 @@ export default function PhotoGraphCanvas({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const scheduleCurrentUpgradePass = () =>
+    const scheduleCurrentUpgradePass = () => {
       scheduleUpgradePass(abortController.signal);
+    };
 
-    const resize = () => {
+    const resizeCanvas = () => {
       dprRef.current = window.devicePixelRatio || 1;
 
-      const width = window.innerWidth;
-      const height = window.innerHeight;
+      const rect = canvas.getBoundingClientRect();
+      const cssWidth = Math.max(1, Math.round(rect.width));
+      const cssHeight = Math.max(1, Math.round(rect.height));
 
-      canvas.width = Math.round(width * dprRef.current);
-      canvas.height = Math.round(height * dprRef.current);
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
+      const nextWidth = Math.round(cssWidth * dprRef.current);
+      const nextHeight = Math.round(cssHeight * dprRef.current);
 
-      requestRender();
-      scheduleCurrentUpgradePass();
+      if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
+        canvas.width = nextWidth;
+        canvas.height = nextHeight;
+        requestRender();
+        scheduleCurrentUpgradePass();
+      }
     };
 
     const cleanupInteractions = bindInteractions(
       canvas,
       scheduleCurrentUpgradePass,
     );
-    resize();
-    window.addEventListener("resize", resize);
 
-    const init = async () => {
-      try {
-        const response = await fetch(graphUrl, {
-          cache: "no-store",
-          signal: abortController.signal,
-        });
+    const resizeObserver = new ResizeObserver(resizeCanvas);
+    resizeObserver.observe(canvas);
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch graph data: ${graphUrl}`);
-        }
+    resizeCanvas();
 
-        const data = (await response.json()) as RawNode[];
-        if (disposed) return;
+    applyInitialZoom(canvas);
 
-        const { nodes, links } = await buildGraph(data, imageBasePath);
-        nodesRef.current = nodes;
-        linksRef.current = links;
-        imagesRef.current = new Map();
-        pendingWidthsRef.current = new Map();
-        errorLogRef.current = new Set();
-        const simulation = d3
-          .forceSimulation<SimNode>(nodes)
-          .force(
-            "link",
-            d3
-              .forceLink<SimNode, SimLink>(links)
-              .id((node) => node.id)
-              .distance((link) => {
-                const value = link._baseValue ?? link.value ?? 0;
-                return (
-                  GRAPH_CONFIG.distMin +
-                  (1 - value) * (GRAPH_CONFIG.distMax - GRAPH_CONFIG.distMin)
-                );
-              })
-              .strength(
-                (link) => 0.15 + 0.85 * (link._baseValue ?? link.value ?? 0),
-              ),
-          )
-          .force(
-            "charge",
-            d3.forceManyBody<SimNode>().strength(GRAPH_CONFIG.charge),
-          )
-          .force("x", d3.forceX<SimNode>().strength(0.03))
-          .force("y", d3.forceY<SimNode>().strength(0.09))
-          .force(
-            "collide",
-            d3
-              .forceCollide<SimNode>()
-              .radius(
-                (node) =>
-                  Math.max(node.w, node.h) / 2 + GRAPH_CONFIG.collidePad,
-              )
-              .iterations(3),
-          )
-          .on("tick", requestRender);
+    window.addEventListener("resize", resizeCanvas);
 
-        simRef.current = simulation;
-        applyConnectionVisibility(controlsRef.current.hideConnections);
-        updateSimulationForces();
-        simulation.alpha(1).restart();
-        requestRender();
-
-        await preloadImages(abortController.signal);
-        scheduleUpgradePass(abortController.signal, 0);
-      } catch (error) {
-        if (!isAbortError(error)) {
-          console.error(error);
-        }
-      }
+    const resetRuntimeCollections = () => {
+      imagesRef.current = new Map();
+      pendingWidthsRef.current = new Map();
+      errorLogRef.current = new Set();
     };
 
-    void init();
+    const createSimulation = (nodes: SimNode[], links: SimLink[]) =>
+      d3
+        .forceSimulation<SimNode>(nodes)
+        .force(
+          "link",
+          d3
+            .forceLink<SimNode, SimLink>(links)
+            .id((node) => node.id)
+            .distance((link) => {
+              const value = link._baseValue ?? link.value ?? 0;
+              return (
+                GRAPH_CONFIG.distMin +
+                (1 - value) * (GRAPH_CONFIG.distMax - GRAPH_CONFIG.distMin)
+              );
+            })
+            .strength(
+              (link) => 0.15 + 0.85 * (link._baseValue ?? link.value ?? 0),
+            ),
+        )
+        .force(
+          "charge",
+          d3.forceManyBody<SimNode>().strength(GRAPH_CONFIG.charge),
+        )
+        .force("x", d3.forceX<SimNode>().strength(0.03))
+        .force("y", d3.forceY<SimNode>().strength(0.09))
+        .force(
+          "collide",
+          d3
+            .forceCollide<SimNode>()
+            .radius(
+              (node) => Math.max(node.w, node.h) / 2 + GRAPH_CONFIG.collidePad,
+            )
+            .iterations(3),
+        )
+        .on("tick", requestRender);
 
-    return () => {
-      disposed = true;
-      abortController.abort();
+    const initializeGraph = async () => {
+      const response = await fetch(graphUrl, {
+        cache: "no-store",
+        signal: abortController.signal,
+      });
 
-      window.removeEventListener("resize", resize);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch graph data: ${graphUrl}`);
+      }
+
+      const data = (await response.json()) as RawNode[];
+      if (disposed) return;
+
+      const { nodes, links } = await buildGraph(data, imageBasePath);
+      nodesRef.current = nodes;
+      linksRef.current = links;
+      resetRuntimeCollections();
+
+      const simulation = createSimulation(nodes, links);
+      simRef.current = simulation;
+      applyConnectionVisibility(controlsRef.current.hideConnections);
+      updateSimulationForces();
+      simulation.alpha(1).restart();
+      requestRender();
+
+      await preloadImages(abortController.signal);
+      scheduleUpgradePass(abortController.signal, 0);
+    };
+
+    const cleanupRuntime = () => {
+      window.removeEventListener("resize", resizeCanvas);
+      resizeObserver.disconnect();
       cleanupInteractions();
 
       if (frameRef.current !== null) {
@@ -867,23 +909,47 @@ export default function PhotoGraphCanvas({
       simRef.current?.stop();
       simRef.current = null;
     };
-    // These helpers read mutable refs on purpose; reinitializing the graph on every render is unnecessary.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graphUrl, imageBasePath]);
+
+    const init = async () => {
+      try {
+        await initializeGraph();
+      } catch (error) {
+        if (!isAbortError(error)) {
+          console.error(error);
+        }
+      }
+    };
+
+    void init();
+
+    return () => {
+      disposed = true;
+      abortController.abort();
+      cleanupRuntime();
+    };
+  }, [
+    graphUrl,
+    imageBasePath,
+    applyConnectionVisibility,
+    applyInitialZoom,
+    bindInteractions,
+    preloadImages,
+    requestRender,
+    scheduleUpgradePass,
+    updateSimulationForces,
+  ]);
 
   useEffect(() => {
     controlsRef.current.hideConnections = hideConnections;
     applyConnectionVisibility(hideConnections);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hideConnections]);
+  }, [hideConnections, applyConnectionVisibility]);
 
   useEffect(() => {
     controlsRef.current.chargeMult = chargeMult;
     controlsRef.current.distMinMult = distMinMult;
     controlsRef.current.distMaxMult = distMaxMult;
     nudgeSimulation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chargeMult, distMinMult, distMaxMult]);
+  }, [chargeMult, distMinMult, distMaxMult, nudgeSimulation]);
 
   // TODO: make this fade between colours instead of hard switching.
   const alphaColorClass = alpha < 0.01 ? "text-green-600" : "text-red-600";
@@ -898,9 +964,12 @@ export default function PhotoGraphCanvas({
     ? "bg-black/75 text-neutral-100"
     : "bg-white/75 text-neutral-950";
 
+  const isFullPageRoute = usePathname() === "/components/projects/photo-graph";
   return (
-    <div className={`h-full w-full transition-colors ${canvasThemeClass}`}>
-      <nav className="absolute left-[1vmin] right-[1vmin] top-[1vmin] z-[5] flex h-8 items-center">
+    <div
+      className={`static h-full w-full transition-colors ${canvasThemeClass}`}
+    >
+      <nav className="absolute left-[1vmin] right-[1vmin] top-[1vmin] z-5 flex h-8 items-center">
         {!menuOpen && (
           <button
             onClick={() => setMenuOpen(true)}
@@ -923,23 +992,33 @@ export default function PhotoGraphCanvas({
             {darkMode ? "◐" : "◑"}
           </button>
 
-          <Link
-            href="/"
-            className={`flex h-8 w-8 items-center justify-center rounded-md ${overlayControlClass} ${overlayToneClass}`}
-            aria-label="Back to home"
-          >
-            <ArrowRightFromLine className="h-4 w-4" />
-          </Link>
+          {isFullPageRoute ? (
+            <Link
+              href="/"
+              className={`flex h-8 w-8 items-center justify-center rounded-md ${overlayControlClass} ${overlayToneClass}`}
+              aria-label="Back to home"
+            >
+              <ArrowRightFromLine className="h-4 w-4" />
+            </Link>
+          ) : (
+            <Link
+              href="/components/projects/photo-graph"
+              className={`flex h-8 w-8 items-center justify-center rounded-md ${overlayControlClass} ${overlayToneClass}`}
+              aria-label="Expand project to full page"
+            >
+              <Maximize className="h-4 w-4" />
+            </Link>
+          )}
         </div>
       </nav>
 
       {menuOpen && (
         <div
-          className={`rounded-md  select-none ${overlayPanelClass} ${overlayToneClass}`}
+          className={`rounded-md select-none ${overlayPanelClass} ${overlayToneClass}`}
         >
           <div className="w-full flex items-start">
             <div className="flex-1 text-center">
-              <p className={`mx-  2 ${overlayTextClass}`}>Simulation Alpha</p>
+              <p className={`mx-2 ${overlayTextClass}`}>Simulation Alpha</p>
               <p className={`${overlayTextClass} ${alphaColorClass}`}>
                 {alpha.toFixed(3)}
               </p>
@@ -1011,11 +1090,10 @@ export default function PhotoGraphCanvas({
         </div>
       )}
 
-
       {inspectUrl && (
         <div
           onClick={() => setInspectUrl(null)}
-          className={`absolute left-1/2 top-1/2 z-10 flex h-[70vh] w-[70vw] -translate-x-1/2 -translate-y-1/2 items-center justify-center ${inspectOverlayClass} backdrop-blur-sm`}
+          className={`absolute m-auto inset-0 z-10 flex max-w-9/12 max-h-8/12 items-center justify-center ${inspectOverlayClass} backdrop-blur-sm`}
           // TODO: add colour swatches to inspect view
           // TODO: add pinterest/save button to inspect view ???
           // TODO: add fadein/out animations and fade the other ui elements while doing so through the flex container holding all of them.
@@ -1034,7 +1112,7 @@ export default function PhotoGraphCanvas({
           <img
             src={inspectUrl}
             alt=""
-            className="max-h-[90%] max-w-[90%]"
+            className="static max-h-5/6 max-w-5/6"
             onClick={(event) => event.stopPropagation()}
           />
         </div>
@@ -1042,7 +1120,7 @@ export default function PhotoGraphCanvas({
 
       <canvas
         ref={canvasRef}
-        className="block h-full w-full m-0 [image-rendering:pixelated]"
+        className="block relative h-full w-full m-0 [image-rendering:pixelated]"
       />
     </div>
   );

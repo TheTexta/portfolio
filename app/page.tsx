@@ -1,11 +1,14 @@
-import aboutSection from "@/app/components/about/about";
-import Link from "next/link";
+import AboutSection from "@/app/components/about/about";
+import PhotoGraphCanvas from "@/app/components/projects/photo-graph/PhotoGraphCanvas";
+import ProjectsSection from "@/app/components/projects/projects-section";
 
 export default function Page() {
   return (
-    <>
-      {aboutSection()}
-      <Link href="components/projects/photo-graph">Photo Graph</Link>
-    </>
+    <div className="relative w-full h-dvh px-5">
+      <AboutSection />
+      <ProjectsSection>
+        <PhotoGraphCanvas />
+      </ProjectsSection>
+    </div>
   );
 }

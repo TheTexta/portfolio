@@ -76,6 +76,8 @@ declare module "d3" {
     k: number;
     x: number;
     y: number;
+    scale(k: number): ZoomTransform;
+    translate(x: number, y: number): ZoomTransform;
     invert(point: [number, number]): [number, number];
   }
 
@@ -102,6 +104,7 @@ declare module "d3" {
     scaleExtent(extent: [number, number]): this;
     filter(filterFn: (event: any) => boolean): this;
     on(type: string, listener: (event: D3ZoomEvent<GElement, Datum>) => void): this;
+    transform(selection: Selection<GElement>, transform: ZoomTransform): void;
     translateTo(selection: Selection<GElement>, x: number, y: number): void;
   }
 
