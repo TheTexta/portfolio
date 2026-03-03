@@ -16,6 +16,11 @@ const nextConfig: NextConfig = {
         hostname: "storage.googleapis.com",
         pathname: "/portfolio-site-firebase-41fab.firebasestorage.app/**",
       },
+      {
+        protocol: "https",
+        hostname: "i.scdn.co",
+        pathname: "/image/**",
+      },
     ],
     minimumCacheTTL: 60*60*24*14, // 14 days
   },
