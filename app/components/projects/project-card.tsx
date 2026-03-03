@@ -26,7 +26,7 @@ export default function ProjectCard({
           ))}
         </ul>
       </header>
-      <div className="relative overflow-hidden rounded-md mx-auto w-5/6 space-y-4 ">{children}</div>
+      <div className="relative overflow-hidden rounded-md mx-auto w-5/6 aspect-video">{children}</div>
     </article>
   );
 }

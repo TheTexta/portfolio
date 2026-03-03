@@ -1,6 +1,6 @@
 export default function About() {
   return (
-    <div className="mx-auto text-center mt-32">
+    <div className="mx-auto text-center pt-32">
       <h1 className="text-5xl sm:text-7xl font-bold">Dexter Young</h1>
       
 
