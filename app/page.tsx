@@ -8,7 +8,7 @@ export default function Page() {
     {
       title: "Photo Graph",
       description:
-        "Interactive force-directed image graph that lets visitors inspect and explore linked photos.",
+        "Interactive force-directed image graph where photographs dynamically cluster based on color similarity, creating an evolving canvas shaped by user interaction.",
       tags: ["Next.js", "D3", "Firebase"],
       preview: <PhotoGraphCanvas />,
     },
