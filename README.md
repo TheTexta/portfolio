@@ -87,3 +87,6 @@ Images are loaded from Firebase Storage at runtime. The graph starts by loading 
 - The portfolio is still in progress; the landing page is intentionally minimal right now.
 - Firebase web config is currently embedded in the client component because the app only uses public client-side Firebase services for image access.
 - There is no automated test suite in the repo yet; linting is the main built-in code quality check.
+
+## TODO
+- compressed loading of nepobabiesruntheunderground image previews.
