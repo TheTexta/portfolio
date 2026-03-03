@@ -1,13 +1,12 @@
 import Link from "next/link";
 
-import { ArrowRightFromLine, Maximize, Menu } from "lucide-react";
+import { ArrowRightFromLine, Maximize } from "lucide-react";
 
 type ProjectViewControlsProps = {
-  menuOpen: boolean;
-  onOpenMenu: () => void;
   isFullPage: boolean;
-  darkMode: boolean;
-  onToggleDarkMode: () => void;
+  darkMode?: boolean;
+  onToggleDarkMode?: () => void;
+  showDarkModeToggle?: boolean;
   toneClass: string;
   expandHref: string;
   exitHref: string;
@@ -16,29 +15,18 @@ type ProjectViewControlsProps = {
 const overlayControlClass = "cursor-pointer px-1.5 backdrop-blur-[2px]";
 
 export default function ProjectViewControls({
-  menuOpen,
-  onOpenMenu,
   isFullPage,
   darkMode,
   onToggleDarkMode,
+  showDarkModeToggle = isFullPage,
   toneClass,
   expandHref,
   exitHref,
 }: ProjectViewControlsProps) {
   return (
     <nav className="absolute left-[1vmin] right-[1vmin] top-[1vmin] z-5 flex h-8 items-center">
-      {!menuOpen && (
-        <button
-          onClick={onOpenMenu}
-          className={`flex h-8 w-8 items-center justify-center rounded-md ${overlayControlClass} ${toneClass}`}
-          aria-label="Open graph controls"
-        >
-          <Menu className="h-4 w-4" />
-        </button>
-      )}
-
       <div className="ml-auto flex h-full items-center gap-2">
-        {isFullPage && (
+        {showDarkModeToggle && darkMode !== undefined && onToggleDarkMode && (
           <button
             onClick={onToggleDarkMode}
             className={`flex h-8 w-8 items-center justify-center rounded-full ${overlayControlClass} ${toneClass}`}

@@ -1,0 +1,531 @@
+/* Reset + disable text-selection globally */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  image-rendering: pixelated;
+}
+::-webkit-scrollbar {
+  display: none;
+}
+/* Text selection styling */
+::selection {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+/* TV Static overlay with screen blend mode */
+.tv-static-canvas {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+
+/* Top layer TV static with different blend mode */
+.tv-static-top {
+  mix-blend-mode: screen;
+  opacity: 1;
+  z-index: 100001;
+  filter: brightness(0.5) contrast(2) brightness(2);
+}
+
+.tv-static-cursor-tracking-layer {
+  mix-blend-mode: multiply;
+  opacity: 1;
+  z-index: 4;
+  filter: brightness(0.5) contrast(4) brightness(4.5) invert(1);
+}
+
+/* 2) Base body */
+body {
+  background-color: #fff;
+  font-family: "Didot", serif;
+  font-style: italic;
+}
+
+/* 3) Parallax layer */
+.parallax {
+  position: fixed;
+  width: 100%;
+  height: 100vh;
+}
+
+/* Parallax sections can grow with their content */
+.parallax-section {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* Child layer that receives parallax transform */
+.parallax-layer {
+  position: absolute;
+  width: 100%;
+  will-change: transform;
+  height: 200%;
+  object-fit: cover;
+}
+
+/* Parallax background child */
+#parallax-bg {
+  background-image: url("../images/background.jpg");
+  background-repeat: repeat-y;
+  background-size: 100% auto;
+  background-position: center top;
+  z-index: -2;
+  will-change: transform;
+}
+
+/* Parallax foreground child with blend mode */
+#parallax-fg {
+  background-image: url("../images/layer-5.jpg");
+  background-repeat: repeat-y;
+  background-size: 100% auto;
+  background-position: center top;
+  z-index: -1;
+  will-change: transform;
+  mix-blend-mode: multiply;
+  filter: brightness(2) contrast(0.5);
+}
+
+.inverted-wrapper {
+  filter: invert(1);
+}
+
+/* 5) Overlay layer: overlay.jpg */
+.pillsieat-overlay {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background-image: url("../images/overlay.jpg");
+  background-repeat: repeat;
+  background-position: center center;
+  background-size: 720px auto;
+
+  mix-blend-mode: color-dodge;
+  filter: grayscale(1);
+  pointer-events: none;
+  z-index: 500;
+}
+
+/* wrappers */
+.difference-wrapper {
+  mix-blend-mode: difference;
+}
+
+.logo-layer {
+  position: fixed;
+  z-index: 10000;
+}
+
+/*logo text */
+.logo-text {
+  position: fixed;
+  top: 0.7vh;
+  left: 15vw;
+  transform-origin: center;
+  transform: scaleX(0.73);
+
+  width: 60vw; /* Adjust this value as needed for alignment */
+  height: auto;
+  z-index: 10000;
+  font-size: 6vw;
+  text-align: center;
+  color: rgb(255, 255, 255);
+}
+.logo-text-small {
+  transform: scaleX(0.73) scaleY(0.3) translateY(+20%);
+  color: black;
+  position: fixed;
+}
+
+/* BASSVICTIM */
+
+/* Base image styles */
+.background_bassvictim,
+.overlay_bassvictim {
+  width: 25vw;
+  right: 10%;
+  position: absolute;
+  padding: 0;
+  margin: 0;
+}
+
+.background_bassvictim {
+  mix-blend-mode: normal;
+  filter: grayscale(1) brightness(0.76) contrast(15);
+}
+.background_bassvictim:hover {
+  filter: grayscale(1) brightness(0.5) contrast(15);
+}
+
+.overlay_bassvictim {
+  z-index: 10;
+  mix-blend-mode: hard-light;
+  filter: grayscale(0) contrast(2) brightness(1.5);
+}
+.overlay_bassvictim:hover {
+  filter: grayscale(1) contrast(1);
+}
+
+/* Centered text overlay */
+.bassvictim_text {
+  width: 25vw;
+  right: 10%;
+  transform: translateY(12.3%);
+  position: absolute;
+  text-align: center;
+  font-size: 4vw;
+  font-style: normal;
+  color: black;
+  pointer-events: none;
+  line-height: 0.5;
+  z-index: 11;
+}
+
+.bassvictim_text p {
+  opacity: 0;
+  visibility: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+.bassvictim_text p.reveal {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Drank */
+.drankdrankdrank {
+  width: 15vw;
+  height: auto;
+  transform: translateX(-50%);
+  mix-blend-mode: hard-light;
+  z-index: 9001;
+  filter: brightness(1.5);
+}
+.drankdrankdrank:hover {
+  filter: brightness(1) contrast(0.5);
+  mix-blend-mode: hard-light;
+}
+.drankhue {
+  mix-blend-mode: hue;
+  z-index: 9003;
+  opacity: 1;
+}
+.drankhue:hover {
+  opacity: 0;
+}
+.drankgif {
+  mix-blend-mode: normal;
+}
+.drankgif:hover {
+  mix-blend-mode: normal;
+}
+
+/* Dickpilled */
+.dickpilled {
+  width: 20vw; /* Adjust this value as needed for alignment */
+  height: auto;
+  z-index: 9000;
+}
+.dickpilled_foreground {
+  mix-blend-mode: hard-light;
+  filter: contrast(3.5) brightness(1) grayscale(1);
+}
+.dickpilled_background {
+  mix-blend-mode: normal;
+  filter: brightness(1.4) contrast(2) grayscale(1);
+}
+.dickpilled:hover {
+  filter: brightness(0.9) contrast(4) grayscale(0.8);
+  /*filter: invert(0.9) grayscale(1) brightness(1.1) contrast(3);*/
+}
+
+/* Me */
+.me {
+  grid-area: me;
+  top: 10%;
+  left: 10%;
+  width: 25vw; /* Adjust this value as needed for alignment */
+  z-index: 9000;
+}
+
+.me_background {
+  mix-blend-mode: hard-light;
+  filter: grayscale(1);
+}
+.me_foreground {
+  mix-blend-mode: color-burn;
+  filter: grayscale(1);
+}
+.me_ultraforeground {
+  mix-blend-mode: color;
+}
+.me_hover {
+  mix-blend-mode: hard-light;
+  opacity: 0;
+  filter: grayscale(1);
+}
+.me_hover:hover {
+  opacity: 1;
+}
+
+.pilleater-image {
+  transform: translateX(-50%);
+  position: absolute;
+  width: 22.9vw;
+  height: auto;
+  align-self: center;
+  z-index: 9000;
+  mix-blend-mode: color-dodge;
+}
+.pilleater-image-foreground {
+  mix-blend-mode: hard-light;
+}
+
+.pilleater-image:hover {
+  filter: invert(1);
+  mix-blend-mode: hard-light;
+}
+
+main {
+  position: absolute;
+  top: 20vh;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 800px;
+  z-index: 10;
+  user-select: text;
+  overflow: hidden;
+}
+
+/* Blog page specific styling */
+main.blog {
+  top: 5vh;
+}
+
+/* 8) Footer */
+footer {
+  padding: 2rem;
+  text-align: center;
+  font-size: 0.9rem;
+  position: relative;
+  z-index: 0;
+}
+
+#content {
+  position: relative;
+  background-color: rgb(255, 255, 255);
+  mix-blend-mode: difference;
+  color: white;
+  font-size: clamp(1rem, 2vw, 2rem);
+  text-align: center;
+  flex-direction: column;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0.2em 1em;
+  margin: 0 auto;
+  margin-bottom: 15vh;
+  user-select: text;
+  align-items: center;
+}
+#content p {
+  z-index: 10;
+  color: white;
+  mix-blend-mode: difference;
+  filter: none;
+}
+
+#contentbackgroundimg {
+  position: absolute;
+  background-repeat: repeat-y;
+  background-position: center;
+  background-image: url("../images/background.jpg");
+  background-size: 100vw;
+  width: 100%;
+  height: 100%;
+  right: 0%;
+  bottom: 0%;
+  mix-blend-mode: difference;
+  filter: grayscale(1);
+  overflow: hidden;
+  pointer-events: none;
+}
+#contentbackgroundimgoverlay {
+  position: absolute;
+  transform: translateX(-50%);
+  height: 600%;
+  mix-blend-mode: color-dodge;
+  filter: invert(1);
+  z-index: -1;
+}
+
+.strobing-text {
+  color: white;
+  animation: strobing 0.02s infinite;
+}
+
+/* LINKS */
+@keyframes strobing {
+  0% {
+    color: white;
+  }
+  100% {
+    color: rgb(119, 119, 119);
+  }
+}
+
+/* blog shit */
+/* ENTRY STYLING */
+.post {
+  background: rgba(0, 0, 0, 0.096);
+  backdrop-filter: blur(3px) brightness(1.2);
+  -webkit-backdrop-filter: blur(3px) brightness(1.2);
+  border: 1px solid rgb(0, 0, 0);
+  padding: 1.5rem;
+  margin-bottom: 2.5rem;
+  font-style: normal;
+  font-family: serif;
+  color: black;
+  line-height: 1.7;
+  text-align: justify;
+  z-index: 1;
+}
+
+.post h2 {
+  text-align: left;
+  letter-spacing: 0.05em;
+}
+
+.post-body img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1.5rem auto;
+  mix-blend-mode: lighten;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+.meta {
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.qotd {
+  font-style: normal;
+  font-size: 1.2rem;
+  font-family: "Didot", serif;
+  color: #2f2f2f;
+  padding: 0.5rem 1rem;
+  margin: 1rem 0;
+  text-align: left;
+}
+
+pre {
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 1.1rem;
+  background: none;
+  color: inherit;
+  padding: 0;
+  margin: 0;
+  line-height: 1.7;
+}
+
+/* Container that the layers will position against */
+.button-stack {
+  position: static;
+  width: 50vw;
+  height: 5vh;
+  margin: 1rem;
+  display: flex;
+}
+
+/* Your existing button styles remain, but remove the global absolute positioning */
+.button-12 {
+  font-size: 1rem;
+  padding: 0.375rem 0.14rem;
+  border: none;
+  position: absolute;
+  text-decoration: none;
+  background: #03030300;
+  box-shadow: min(1px, 0.07rem) 0px rgba(255, 255, 255, 0.366),
+    inset 0px min(1px, 0.07rem) rgba(255, 255, 255, 0.5),
+    0px 0px 0px min(1px, 0.07rem) rgba(0, 0, 0, 0.12);
+  color: #000000;
+  z-index: 10;
+  place-items: center;
+  width: inherit;
+  height: inherit;
+  text-align: center;
+  display: inline-flex;
+  justify-content: center;
+}
+.button-12:hover {
+  background: #0f0f0f;
+  mix-blend-mode: hard-light;
+  box-shadow: 1px 0px rgba(0, 0, 0, 0.922), inset 2px -2px rgba(0, 0, 0, 0.703),
+    inset -3px 3px rgba(0, 0, 0, 0.9);
+  color: white;
+}
+
+/* Only the visual layers are absolutely positioned to stack */
+.button-stack .layer {
+  pointer-events: none;
+}
+
+#mobile-menu {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+  align-content: center;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(40vh, 1fr));
+  gap: 2rem;
+  width: 100%;
+  height: 100vh;
+  padding: 2rem;
+  align-items: center;
+  justify-items: center;
+  position: static;
+  z-index: 1;
+  grid-template-areas:
+    "me nettspend"
+    "pilleater bassvictim";
+}
+
+#me-section {
+  grid-area: me;
+}
+#nettspend-parallax {
+  grid-area: nettspend;
+}
+#pilleater-section {
+  grid-area: pilleater;
+}
+#bassvictim-section {
+  grid-area: bassvictim;
+}
+
+/* neutralize your old viewport-anchored offsets when inside the grid */
+.grid-container .me {
+  position: absolute;
+  transform: none;
+  max-width: min(90%, 480px);
+  height: auto;
+}
+.grid-container .drankdrankdrank {
+  position: absolute;
+  top: auto;
+  left: auto;
+  transform: none;
+  max-width: min(90%, 480px);
+  height: auto;
+}

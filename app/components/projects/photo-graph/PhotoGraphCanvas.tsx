@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
-import { X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 import {
   buildOptimizedImageUrl,
@@ -966,9 +966,17 @@ export default function PhotoGraphCanvas({
     <div
       className={`static h-full w-full transition-colors ${canvasThemeClass}`}
     >
+      {!menuOpen && (
+        <button
+          onClick={() => setMenuOpen(true)}
+          className={`absolute left-[1vmin] top-[1vmin] z-[6] flex h-8 w-8 items-center justify-center rounded-md ${overlayControlClass} ${overlayToneClass}`}
+          aria-label="Open graph controls"
+        >
+          <Menu className="h-4 w-4" />
+        </button>
+      )}
+
       <ProjectViewControls
-        menuOpen={menuOpen}
-        onOpenMenu={() => setMenuOpen(true)}
         isFullPage={isFullPageRoute}
         darkMode={darkMode}
         onToggleDarkMode={() => setDarkMode((current) => !current)}
