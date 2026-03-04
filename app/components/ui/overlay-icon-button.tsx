@@ -3,7 +3,7 @@ import { type ButtonHTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 const baseClassName =
-  "flex h-8 w-8 items-center justify-center border backdrop-blur-[2px] transition-colors";
+  "flex h-8 w-8 items-center justify-center border p-0 leading-none backdrop-blur-[2px] transition-colors [&_svg]:block [&_svg]:shrink-0";
 
 type OverlayIconButtonProps = {
   toneClass: string;
@@ -20,7 +20,6 @@ type OverlayIconLinkProps = {
   children: ReactNode;
   "aria-label": string;
 };
-
 export function OverlayIconButton({
   toneClass,
   shape = "square",

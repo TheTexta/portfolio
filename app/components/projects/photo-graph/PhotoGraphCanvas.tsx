@@ -5,12 +5,10 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
-import { Menu, X } from "lucide-react";
+import { Download, Menu, X } from "lucide-react";
 
 import { useTheme } from "@/app/components/theme/theme-provider";
-import {
-  getProjectChrome,
-} from "@/app/components/projects/project-chrome";
+import { getProjectChrome } from "@/app/components/projects/project-chrome";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import {
   buildOptimizedImageUrl,
@@ -21,7 +19,6 @@ import { OverlayIconButton } from "@/app/components/ui/overlay-icon-button";
 import OverlayNavBar from "@/app/components/ui/overlay-nav-bar";
 import { storage } from "@/app/components/projects/photo-graph/firebaseClient";
 import { getDownloadURL, ref } from "firebase/storage";
-// TODO: add metadata to inspection view
 
 // TODO: find a way to generate json edge data when new images added.
 
@@ -60,6 +57,25 @@ type PhotoGraphCanvasProps = {
   graphUrl?: string;
   imageBasePath?: string;
   forcedDarkMode?: boolean;
+};
+
+type GraphControls = {
+  hideConnections: boolean;
+  chargeMult: number;
+  distMinMult: number;
+  distMaxMult: number;
+};
+
+type InspectTarget = {
+  id: string;
+  url: string;
+};
+
+type InspectMetadata = {
+  resolution: { width: number; height: number } | null;
+  sizeMb: number | null;
+  downloadUrl: string | null;
+  filename: string;
 };
 
 const DEFAULT_IMAGE_BASE_PATH = "photography-images";
@@ -240,6 +256,29 @@ function getNodeTopLeft(node: SimNode) {
   };
 }
 
+function buildInspectFilename(
+  id: string,
+  sourceUrl: string,
+  mimeType?: string,
+) {
+  const typeExtension = mimeType?.split("/")[1]?.split("+")[0];
+  if (typeExtension) return `${id}.${typeExtension}`;
+
+  try {
+    const { pathname } = new URL(sourceUrl);
+    const extension = pathname.split(".").pop();
+    if (extension && extension !== pathname) return `${id}.${extension}`;
+  } catch {
+    // Ignore URL parsing failures and fall back to png.
+  }
+
+  return `${id}.png`;
+}
+
+function formatSizeInMb(sizeInBytes: number) {
+  return (sizeInBytes / (1024 * 1024)).toFixed(2);
+}
+
 export default function PhotoGraphCanvas({
   graphUrl = "/portfolioTable.json",
   imageBasePath = DEFAULT_IMAGE_BASE_PATH,
@@ -263,7 +302,7 @@ export default function PhotoGraphCanvas({
   const upgradeTimeoutRef = useRef<number | null>(null);
   const alphaRef = useRef({ value: 1, updatedAt: 0 });
   const darkModeRef = useRef(false);
-  const controlsRef = useRef({
+  const controlsRef = useRef<GraphControls>({
     hideConnections: false,
     chargeMult: 1,
     distMinMult: 1,
@@ -271,13 +310,18 @@ export default function PhotoGraphCanvas({
   });
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [hideConnections, setHideConnections] = useState(false);
-  const [chargeMult, setChargeMult] = useState(1);
-  const [distMinMult, setDistMinMult] = useState(1);
-  const [distMaxMult, setDistMaxMult] = useState(1);
+  const [controls, setControls] = useState<GraphControls>({
+    hideConnections: false,
+    chargeMult: 1,
+    distMinMult: 1,
+    distMaxMult: 1,
+  });
   const [alpha, setAlpha] = useState(1);
-  const [inspectUrl, setInspectUrl] = useState<string | null>(null);
-  const [darkMode, setDarkMode] = useState(siteDarkMode);
+  const [inspectTarget, setInspectTarget] = useState<InspectTarget | null>(
+    null,
+  );
+  const [inspectMetadata, setInspectMetadata] =
+    useState<InspectMetadata | null>(null);
 
   const syncAlpha = useCallback(() => {
     const simAlpha = simRef.current?.alpha() ?? 0;
@@ -737,7 +781,9 @@ export default function PhotoGraphCanvas({
 
       const handleClick = (event: MouseEvent) => {
         const node = hitNode(event, canvas);
-        if (node) setInspectUrl(node.sourceUrl);
+        if (node) {
+          setInspectTarget({ id: node.id, url: node.sourceUrl });
+        }
       };
 
       const handleMouseMove = (event: MouseEvent) => {
@@ -757,14 +803,12 @@ export default function PhotoGraphCanvas({
     [hitNode, requestRender, getWorldPoint],
   );
 
-  useEffect(() => {
-    setDarkMode(siteDarkMode);
-  }, [siteDarkMode]);
+  const activeDarkMode = forcedDarkMode ?? siteDarkMode;
 
   useEffect(() => {
-    darkModeRef.current = forcedDarkMode ?? darkMode;
+    darkModeRef.current = activeDarkMode;
     requestRender();
-  }, [darkMode, forcedDarkMode, requestRender]);
+  }, [activeDarkMode, requestRender]);
 
   useEffect(() => {
     let disposed = false;
@@ -933,26 +977,91 @@ export default function PhotoGraphCanvas({
   ]);
 
   useEffect(() => {
-    controlsRef.current.hideConnections = hideConnections;
-    applyConnectionVisibility(hideConnections);
-  }, [hideConnections, applyConnectionVisibility]);
+    controlsRef.current = controls;
+  }, [controls]);
 
   useEffect(() => {
-    controlsRef.current.chargeMult = chargeMult;
-    controlsRef.current.distMinMult = distMinMult;
-    controlsRef.current.distMaxMult = distMaxMult;
+    applyConnectionVisibility(controls.hideConnections);
+  }, [controls.hideConnections, applyConnectionVisibility]);
+
+  useEffect(() => {
     nudgeSimulation();
-  }, [chargeMult, distMinMult, distMaxMult, nudgeSimulation]);
+  }, [
+    controls.chargeMult,
+    controls.distMinMult,
+    controls.distMaxMult,
+    nudgeSimulation,
+  ]);
+
+  useEffect(() => {
+    if (!inspectTarget) {
+      setInspectMetadata(null);
+      return;
+    }
+
+    const abortController = new AbortController();
+    let objectUrl: string | null = null;
+
+    setInspectMetadata({
+      resolution: null,
+      sizeMb: null,
+      downloadUrl: null,
+      filename: buildInspectFilename(inspectTarget.id, inspectTarget.url),
+    });
+
+    const loadInspectMetadata = async () => {
+      try {
+        const response = await fetch(inspectTarget.url, {
+          signal: abortController.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch original image: ${response.status} ${response.statusText}`,
+          );
+        }
+
+        const blob = await response.blob();
+        if (abortController.signal.aborted) return;
+
+        objectUrl = URL.createObjectURL(blob);
+        setInspectMetadata((current) =>
+          current
+            ? {
+                ...current,
+                sizeMb: Number(formatSizeInMb(blob.size)),
+                downloadUrl: objectUrl,
+                filename: buildInspectFilename(
+                  inspectTarget.id,
+                  inspectTarget.url,
+                  blob.type,
+                ),
+              }
+            : current,
+        );
+      } catch (error) {
+        if (!isAbortError(error)) {
+          console.error(error);
+        }
+      }
+    };
+
+    void loadInspectMetadata();
+
+    return () => {
+      abortController.abort();
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [inspectTarget]);
 
   // TODO: make this fade between colours instead of hard switching.
   const alphaColorClass = alpha < 0.01 ? "text-green-600" : "text-red-600";
-  const activeDarkMode = forcedDarkMode ?? darkMode;
   const chrome = getProjectChrome("photo-graph", activeDarkMode);
   const isFullPageRoute = usePathname() === PROJECT_ROUTES.photoGraph;
   return (
-    <div
-      className={`static h-full w-full transition-colors ${chrome.shell}`}
-    >
+    <div className={`static h-full w-full transition-colors ${chrome.shell}`}>
       {!menuOpen && (
         <OverlayIconButton
           onClick={() => setMenuOpen(true)}
@@ -967,7 +1076,9 @@ export default function PhotoGraphCanvas({
       <OverlayNavBar
         darkMode={isFullPageRoute ? activeDarkMode : undefined}
         onToggleDarkMode={
-          isFullPageRoute && forcedDarkMode === undefined ? toggleTheme : undefined
+          isFullPageRoute && forcedDarkMode === undefined
+            ? toggleTheme
+            : undefined
         }
         expandHref={isFullPageRoute ? undefined : PROJECT_ROUTES.photoGraph}
         exitHref={isFullPageRoute ? PROJECT_ROUTES.home : undefined}
@@ -1003,8 +1114,13 @@ export default function PhotoGraphCanvas({
             Hide Connections{" "}
             <input
               type="checkbox"
-              checked={hideConnections}
-              onChange={(event) => setHideConnections(event.target.checked)}
+              checked={controls.hideConnections}
+              onChange={(event) =>
+                setControls((current) => ({
+                  ...current,
+                  hideConnections: event.target.checked,
+                }))
+              }
               className="m-0 h-2.5"
             />
           </label>
@@ -1014,12 +1130,17 @@ export default function PhotoGraphCanvas({
             min={0}
             max={5}
             step="any"
-            value={chargeMult}
-            onChange={(event) => setChargeMult(Number(event.target.value))}
+            value={controls.chargeMult}
+            onChange={(event) =>
+              setControls((current) => ({
+                ...current,
+                chargeMult: Number(event.target.value),
+              }))
+            }
             className={sliderClass}
           />
           <p className={overlayTextClass}>
-            Charge Mult: {chargeMult.toFixed(2)}
+            Charge Mult: {controls.chargeMult.toFixed(2)}
           </p>
 
           <input
@@ -1027,14 +1148,17 @@ export default function PhotoGraphCanvas({
             min={0}
             max={500}
             step="any"
-            value={distMinMult / 0.1}
+            value={controls.distMinMult / 0.1}
             onChange={(event) =>
-              setDistMinMult(Number(event.target.value) * 0.1)
+              setControls((current) => ({
+                ...current,
+                distMinMult: Number(event.target.value) * 0.1,
+              }))
             }
             className={sliderClass}
           />
           <p className={overlayTextClass}>
-            Dist Min Mult: {distMinMult.toFixed(2)}
+            Dist Min Mult: {controls.distMinMult.toFixed(2)}
           </p>
 
           <input
@@ -1042,44 +1166,92 @@ export default function PhotoGraphCanvas({
             min={0}
             max={50}
             step="any"
-            value={distMaxMult / 0.1}
+            value={controls.distMaxMult / 0.1}
             onChange={(event) =>
-              setDistMaxMult(Number(event.target.value) * 0.1)
+              setControls((current) => ({
+                ...current,
+                distMaxMult: Number(event.target.value) * 0.1,
+              }))
             }
             className={sliderClass}
           />
           <p className={overlayTextClass}>
-            Dist Max Mult: {distMaxMult.toFixed(2)}
+            Dist Max Mult: {controls.distMaxMult.toFixed(2)}
           </p>
         </div>
       )}
 
-      {inspectUrl && (
+      {inspectTarget && (
         <div
-          onClick={() => setInspectUrl(null)}
-          className={`absolute inset-0 z-10 m-auto flex max-h-8/12 max-w-9/12 items-center justify-center ${chrome.modal} backdrop-blur-sm`}
+          onClick={() => setInspectTarget(null)}
+          className={`absolute inset-0 z-10 m-auto flex max-h-9/12 max-w-9/12 items-center justify-center ${chrome.modal} backdrop-blur-sm`}
           // TODO: add colour swatches to inspect view
-          // TODO: add pinterest/save button to inspect view ???
           // TODO: add fadein/out animations and fade the other ui elements while doing so through the flex container holding all of them.
         >
-          <OverlayIconButton
-            onClick={(event) => {
-              event.stopPropagation();
-              setInspectUrl(null);
-            }}
-            toneClass={chrome.overlay}
-            className="absolute right-0 top-0 mx-2 my-2"
-            aria-label="Close image inspection"
-          >
-            <X className="h-4 w-4" />
-          </OverlayIconButton>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={inspectUrl}
-            alt=""
-            className="static max-h-5/6 max-w-5/6"
+          <div
+            className="relative flex h-full  w-full flex-col items-center justify-center"
             onClick={(event) => event.stopPropagation()}
-          />
+          >
+            <OverlayIconButton
+              onClick={() => setInspectTarget(null)}
+              toneClass={chrome.overlay}
+              className="absolute right-0 top-0 mx-2 my-2"
+              aria-label="Close image inspection"
+            >
+              <X className="h-4 w-4" />
+            </OverlayIconButton>
+
+            <img
+              src={inspectTarget.url}
+              alt=""
+              className="max-h-9/12 max-w-5/6 justify-self-center self-center align-middle my-auto"
+              onLoad={(event) => {
+                const { naturalWidth, naturalHeight } = event.currentTarget;
+                setInspectMetadata((current) =>
+                  current
+                    ? {
+                        ...current,
+                        resolution: {
+                          width: naturalWidth,
+                          height: naturalHeight,
+                        },
+                      }
+                    : current,
+                );
+              }}
+            />
+
+            <div className="absolute flex h-1/8 w-full items-center justify-between gap-4 px-4 bottom-0 sm:text-xs text-[9px] {overlayTextClass}">
+              <div className="flex items-center gap-4">
+                <p>
+                  <span className="hidden sm:inline">Resolution: </span>
+                  {inspectMetadata?.resolution
+                    ? `${inspectMetadata.resolution.width} x ${inspectMetadata.resolution.height}`
+                    : "Loading..."}
+                </p>
+                <p>
+                  <span className="hidden sm:inline">Original Size: </span>
+                  {inspectMetadata?.sizeMb != null
+                    ? `${inspectMetadata.sizeMb.toFixed(2)} MB`
+                    : "Loading..."}
+                </p>
+              </div>
+
+              <a
+                href={inspectMetadata?.downloadUrl ?? undefined}
+                download={inspectMetadata?.filename}
+                className={`inline-flex items-center gap-1 ${
+                  inspectMetadata?.downloadUrl
+                    ? ""
+                    : "pointer-events-none opacity-50"
+                }`}
+                aria-disabled={!inspectMetadata?.downloadUrl}
+              >
+                Download Original
+                <Download className="sm:h-3.5 sm:w-3.5 h-1.75 w-1.75" />
+              </a>
+            </div>
+          </div>
         </div>
       )}
 

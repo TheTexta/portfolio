@@ -6,6 +6,7 @@
 - users can compare node graphs to compare time listened in various genres
 - colourful node colouring
 - ninajirachi techsiglism based ui
+- ecco2k ui
 - focused on screenshotability / story postability
 
 - future idea: customisable ui based on user preferences so that wide aesthetic variety of receipts can be generated
