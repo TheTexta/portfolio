@@ -1,6 +1,6 @@
 "use client";
 
-import { type UserProfile } from "@spotify/web-api-ts-sdk";
+import { type Track, type UserProfile } from "@spotify/web-api-ts-sdk";
 import { useEffect, useState } from "react";
 import { getSpotifySDK } from "@/lib/GetSpotifySDK";
 
@@ -10,6 +10,7 @@ export type SpotifySessionState = {
   status: SessionStatus;
   notice: string | null;
   profile: UserProfile | null;
+  topTracks: Track[];
 };
 
 export function useSpotifySession() {
@@ -17,6 +18,7 @@ export function useSpotifySession() {
     status: "checking",
     notice: null,
     profile: null,
+    topTracks: [],
   });
 
   useEffect(() => {
@@ -39,11 +41,19 @@ export function useSpotifySession() {
             status: "disconnected",
             notice: savedNotice,
             profile: null,
+            topTracks: [],
           });
           return;
         }
 
-        const profile = await sdk.currentUser.profile();
+        const [profileResult, topTracksResult] = await Promise.allSettled([
+          sdk.currentUser.profile(),
+          sdk.currentUser.topItems("tracks", "short_term", 10),
+        ]);
+
+        if (profileResult.status !== "fulfilled") {
+          throw profileResult.reason;
+        }
 
         if (!isMounted) {
           return;
@@ -51,8 +61,18 @@ export function useSpotifySession() {
 
         setSession({
           status: "connected",
-          notice: savedNotice,
-          profile,
+          notice:
+            topTracksResult.status === "fulfilled"
+              ? savedNotice
+              : mergeNotices(
+                  savedNotice,
+                  "Reconnect Spotify to load your top tracks from the past month.",
+                ),
+          profile: profileResult.value,
+          topTracks:
+            topTracksResult.status === "fulfilled"
+              ? topTracksResult.value.items
+              : [],
         });
       } catch {
         sdk.logOut();
@@ -65,6 +85,7 @@ export function useSpotifySession() {
           status: "disconnected",
           notice: "Spotify connected, but profile fetch failed.",
           profile: null,
+          topTracks: [],
         });
       }
     }
@@ -89,6 +110,7 @@ export function useSpotifySession() {
       status: "disconnected",
       notice: "Spotify connection cleared.",
       profile: null,
+      topTracks: [],
     });
   }
 
@@ -117,4 +139,8 @@ function consumeSpotifyAuthNotice() {
   }
 
   return savedNotice;
+}
+
+function mergeNotices(primary: string | null, secondary: string) {
+  return primary ? `${primary} ${secondary}` : secondary;
 }

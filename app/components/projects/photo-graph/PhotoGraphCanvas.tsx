@@ -7,12 +7,18 @@ import * as d3 from "d3";
 
 import { Menu, X } from "lucide-react";
 
+import { useTheme } from "@/app/components/theme/theme-provider";
+import {
+  getProjectChrome,
+} from "@/app/components/projects/project-chrome";
+import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import {
   buildOptimizedImageUrl,
   computeTargetImageWidth,
   shouldUpgradeWidth,
 } from "@/app/components/projects/photo-graph/imageOptimizer";
-import ProjectViewControls from "@/app/components/projects/project-view-controls";
+import { OverlayIconButton } from "@/app/components/ui/overlay-icon-button";
+import OverlayNavBar from "@/app/components/ui/overlay-nav-bar";
 import { storage } from "@/app/components/projects/photo-graph/firebaseClient";
 import { getDownloadURL, ref } from "firebase/storage";
 // TODO: add metadata to inspection view
@@ -53,6 +59,7 @@ type CanvasInputEvent = MouseEvent | TouchEvent | PointerEvent | WheelEvent;
 type PhotoGraphCanvasProps = {
   graphUrl?: string;
   imageBasePath?: string;
+  forcedDarkMode?: boolean;
 };
 
 const DEFAULT_IMAGE_BASE_PATH = "photography-images";
@@ -72,7 +79,6 @@ const GRAPH_CONFIG = {
   viewportBufferRatio: 0.15,
 };
 
-const overlayControlClass = "cursor-pointer px-1.5 backdrop-blur-[2px]";
 const overlayPanelClass =
   "absolute left-[1vmin] top-[1vmin] z-[5] space-y-2 p-1.5 text-center backdrop-blur-[2px]";
 const overlayTextClass = "m-0 p-0 text-xs";
@@ -237,7 +243,9 @@ function getNodeTopLeft(node: SimNode) {
 export default function PhotoGraphCanvas({
   graphUrl = "/portfolioTable.json",
   imageBasePath = DEFAULT_IMAGE_BASE_PATH,
+  forcedDarkMode,
 }: PhotoGraphCanvasProps) {
+  const { darkMode: siteDarkMode, toggleTheme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const nodesRef = useRef<SimNode[]>([]);
   const linksRef = useRef<SimLink[]>([]);
@@ -269,7 +277,7 @@ export default function PhotoGraphCanvas({
   const [distMaxMult, setDistMaxMult] = useState(1);
   const [alpha, setAlpha] = useState(1);
   const [inspectUrl, setInspectUrl] = useState<string | null>(null);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(siteDarkMode);
 
   const syncAlpha = useCallback(() => {
     const simAlpha = simRef.current?.alpha() ?? 0;
@@ -750,25 +758,13 @@ export default function PhotoGraphCanvas({
   );
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const updateTheme = (isDark: boolean) => {
-      darkModeRef.current = isDark;
-      setDarkMode(isDark);
-    };
-
-    updateTheme(mediaQuery.matches);
-
-    const handleChange = (event: MediaQueryListEvent) =>
-      updateTheme(event.matches);
-    mediaQuery.addEventListener("change", handleChange);
-
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, []);
+    setDarkMode(siteDarkMode);
+  }, [siteDarkMode]);
 
   useEffect(() => {
-    darkModeRef.current = darkMode;
+    darkModeRef.current = forcedDarkMode ?? darkMode;
     requestRender();
-  }, [darkMode, requestRender]);
+  }, [darkMode, forcedDarkMode, requestRender]);
 
   useEffect(() => {
     let disposed = false;
@@ -950,44 +946,38 @@ export default function PhotoGraphCanvas({
 
   // TODO: make this fade between colours instead of hard switching.
   const alphaColorClass = alpha < 0.01 ? "text-green-600" : "text-red-600";
-
-  const canvasThemeClass = darkMode
-    ? "bg-neutral-950 text-neutral-100"
-    : "bg-stone-100 text-neutral-950";
-  const overlayToneClass = darkMode
-    ? "border border-white/10 bg-black/35 text-neutral-100"
-    : "border border-black/10 bg-white/35 text-neutral-950";
-  const inspectOverlayClass = darkMode
-    ? "bg-black/75 text-neutral-100"
-    : "bg-white/75 text-neutral-950";
-
-  const isFullPageRoute = usePathname() === "/components/projects/photo-graph";
+  const activeDarkMode = forcedDarkMode ?? darkMode;
+  const chrome = getProjectChrome("photo-graph", activeDarkMode);
+  const isFullPageRoute = usePathname() === PROJECT_ROUTES.photoGraph;
   return (
     <div
-      className={`static h-full w-full transition-colors ${canvasThemeClass}`}
+      className={`static h-full w-full transition-colors ${chrome.shell}`}
     >
       {!menuOpen && (
-        <button
+        <OverlayIconButton
           onClick={() => setMenuOpen(true)}
-          className={`absolute left-[1vmin] top-[1vmin] z-[6] flex h-8 w-8 items-center justify-center rounded-md ${overlayControlClass} ${overlayToneClass}`}
+          toneClass={chrome.overlay}
+          className="absolute left-[1vmin] top-[1vmin] z-[6]"
           aria-label="Open graph controls"
         >
           <Menu className="h-4 w-4" />
-        </button>
+        </OverlayIconButton>
       )}
 
-      <ProjectViewControls
-        isFullPage={isFullPageRoute}
-        darkMode={darkMode}
-        onToggleDarkMode={() => setDarkMode((current) => !current)}
-        toneClass={overlayToneClass}
-        expandHref="/components/projects/photo-graph"
-        exitHref="/"
+      <OverlayNavBar
+        darkMode={isFullPageRoute ? activeDarkMode : undefined}
+        onToggleDarkMode={
+          isFullPageRoute && forcedDarkMode === undefined ? toggleTheme : undefined
+        }
+        expandHref={isFullPageRoute ? undefined : PROJECT_ROUTES.photoGraph}
+        exitHref={isFullPageRoute ? PROJECT_ROUTES.home : undefined}
+        toneClass={chrome.overlay}
+        ariaLabel="Photo graph controls"
       />
 
       {menuOpen && (
         <div
-          className={`rounded-md select-none ${overlayPanelClass} ${overlayToneClass}`}
+          className={`rounded-md select-none ${overlayPanelClass} border ${chrome.overlay}`}
         >
           <div className="w-full flex items-start">
             <div className="flex-1 text-center">
@@ -997,13 +987,14 @@ export default function PhotoGraphCanvas({
               </p>
             </div>
 
-            <button
+            <OverlayIconButton
               onClick={() => setMenuOpen(false)}
-              className={`ml-auto m-0 flex rounded-md h-7 w-7 items-center justify-center ${overlayControlClass}`}
+              toneClass={chrome.overlay}
+              className="ml-auto h-7 w-7"
               aria-label="Close graph controls"
             >
               <X className="h-5 w-5" />
-            </button>
+            </OverlayIconButton>
           </div>
 
           <label
@@ -1066,21 +1057,22 @@ export default function PhotoGraphCanvas({
       {inspectUrl && (
         <div
           onClick={() => setInspectUrl(null)}
-          className={`absolute m-auto inset-0 z-10 flex max-w-9/12 max-h-8/12 items-center justify-center ${inspectOverlayClass} backdrop-blur-sm`}
+          className={`absolute inset-0 z-10 m-auto flex max-h-8/12 max-w-9/12 items-center justify-center ${chrome.modal} backdrop-blur-sm`}
           // TODO: add colour swatches to inspect view
           // TODO: add pinterest/save button to inspect view ???
           // TODO: add fadein/out animations and fade the other ui elements while doing so through the flex container holding all of them.
         >
-          <button
+          <OverlayIconButton
             onClick={(event) => {
               event.stopPropagation();
               setInspectUrl(null);
             }}
-            className={`absolute mx-2 my-2 right-0 top-0 flex h-8 w-8 items-center justify-center cursor-pointer`}
+            toneClass={chrome.overlay}
+            className="absolute right-0 top-0 mx-2 my-2"
             aria-label="Close image inspection"
           >
             <X className="h-4 w-4" />
-          </button>
+          </OverlayIconButton>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={inspectUrl}
@@ -1093,7 +1085,7 @@ export default function PhotoGraphCanvas({
 
       <canvas
         ref={canvasRef}
-        className="block relative h-full w-full m-0 [image-rendering:pixelated]"
+        className="relative m-0 block h-full w-full [image-rendering:pixelated]"
       />
     </div>
   );

@@ -1,4 +1,4 @@
-export const SPOTIFY_SCOPES = ["user-read-private"];
+export const SPOTIFY_SCOPES = ["user-read-private", "user-top-read"];
 
 export function getSpotifyRedirectUri() {
   if (process.env.NEXT_PUBLIC_SPOTIFY_REDIRECT_URI) {

@@ -6,6 +6,13 @@
   --color-accent: #2563eb;
 }
 
+@layer base {
+  a:hover,
+  button:not(:disabled):hover {
+    @apply cursor-pointer;
+  }
+}
+
 body {
   @apply bg-gray-100 text-gray-800 dark:bg-black dark:text-gray-100;
 }

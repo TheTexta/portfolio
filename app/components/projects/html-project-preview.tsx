@@ -1,4 +1,6 @@
-import ProjectViewControls from "@/app/components/projects/project-view-controls";
+import { getProjectChrome } from "@/app/components/projects/project-chrome";
+import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
+import OverlayNavBar from "@/app/components/ui/overlay-nav-bar";
 
 type HtmlProjectPreviewProps = {
   title: string;
@@ -12,11 +14,15 @@ export default function HtmlProjectPreview({
   title,
   previewSrc,
   projectHref,
-  exitHref = "/",
+  exitHref = PROJECT_ROUTES.home,
   isFullPage = false,
 }: HtmlProjectPreviewProps) {
+  const chrome = getProjectChrome("html-preview", true);
+
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-[inherit] bg-neutral-950 text-white">
+    <div
+      className={`relative h-full w-full overflow-hidden rounded-[inherit] ${chrome.shell}`}
+    >
       <iframe
         title={`${title} preview`}
         src={previewSrc}
@@ -24,12 +30,11 @@ export default function HtmlProjectPreview({
         className="absolute inset-0 h-full w-full border-0 bg-white"
       />
 
-      <ProjectViewControls
-        isFullPage={isFullPage}
-        showDarkModeToggle={false}
-        toneClass="border border-white/10 bg-black/35 text-neutral-100"
-        expandHref={projectHref}
-        exitHref={exitHref}
+      <OverlayNavBar
+        toneClass={chrome.overlay}
+        expandHref={isFullPage ? undefined : projectHref}
+        exitHref={isFullPage ? exitHref : undefined}
+        ariaLabel={`${title} controls`}
       />
     </div>
   );

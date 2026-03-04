@@ -1,5 +1,10 @@
+import ProjectPageShell from "@/app/components/projects/project-page-shell";
 import SpotifyNodify from "./spotify-nodify";
 
 export default function Page() {
-  return <div className="block w-full h-dvh"><SpotifyNodify /></div>;
+  return (
+    <ProjectPageShell>
+      <SpotifyNodify />
+    </ProjectPageShell>
+  );
 }

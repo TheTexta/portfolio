@@ -1,17 +1,16 @@
 import HtmlProjectPreview from "@/app/components/projects/html-project-preview";
-
-const projectHref = "/components/projects/nepobabiesruntheunderground";
-const previewSrc = "/components/projects/nepobabiesruntheunderground/preview";
+import ProjectPageShell from "@/app/components/projects/project-page-shell";
+import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 
 export default function Page() {
   return (
-    <div className="h-dvh w-full">
+    <ProjectPageShell>
       <HtmlProjectPreview
         title="nepobabiesruntheunderground"
-        previewSrc={previewSrc}
-        projectHref={projectHref}
+        previewSrc={PROJECT_ROUTES.nepobabiesPreview}
+        projectHref={PROJECT_ROUTES.nepobabies}
         isFullPage
       />
-    </div>
+    </ProjectPageShell>
   );
 }
