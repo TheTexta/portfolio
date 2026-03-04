@@ -7,6 +7,7 @@ type ProjectCardProps = {
   children: ReactNode;
 };
 
+// TODO: Better scaling for mobile UI.
 export default function ProjectCard({
   title,
   description,
@@ -14,9 +15,9 @@ export default function ProjectCard({
   children,
 }: ProjectCardProps) {
   return (
-    <article className="rounded-xl w-5/6 max-w-3xl  justify-self-center">
+    <article className="rounded-xl w-full md:w-5/6 max-w-3xl  justify-self-center">
       <header className="mb-4">
-        <h3 className="text-2xl font-semibold">{title}</h3>
+        <h3 className="text-xl sm:text-2xl font-semibold">{title}</h3>
         <p className="mt-2 text-sm">{description}</p>
         <ul className="mt-3 flex flex-wrap gap-2">
           {tags.map((tag) => (
@@ -26,7 +27,7 @@ export default function ProjectCard({
           ))}
         </ul>
       </header>
-      <div className="relative overflow-hidden rounded-md mx-auto w-5/6 aspect-video">{children}</div>
+      <div className="relative overflow-hidden rounded-md mx-auto aspect-video">{children}</div>
     </article>
   );
 }
