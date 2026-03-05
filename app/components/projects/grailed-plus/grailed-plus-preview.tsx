@@ -48,6 +48,7 @@ const COMPARE_PAGES: ComparePage[] = [
 ];
 
 const IMAGE_SIZES = "(min-width: 1024px) 960px, (min-width: 768px) 80vw, 100vw";
+const GRAILED_PREVIEW_IMAGE_QUALITY = 75;
 
 function clampSplit(value: number) {
   return Math.min(100, Math.max(0, Math.round(value)));
@@ -182,6 +183,7 @@ export default function GrailedPlusPreview({
             alt={activePage.afterAlt}
             className="pointer-events-none block h-auto w-full select-none"
             sizes={IMAGE_SIZES}
+            quality={GRAILED_PREVIEW_IMAGE_QUALITY}
             priority
           />
           <div
@@ -195,6 +197,7 @@ export default function GrailedPlusPreview({
                   alt={activePage.beforeAlt}
                   className="block h-auto w-full select-none"
                   sizes={IMAGE_SIZES}
+                  quality={GRAILED_PREVIEW_IMAGE_QUALITY}
                   priority
                 />
               </div>
