@@ -3,7 +3,6 @@
 ## Source Context
 
 - Project: **Grailed Plus (V2)**
-- Credit lineage: forked from [RVRX/grailed-plus](https://github.com/RVRX/grailed-plus)
 - Core goal: restore pricing context on modern `grailed.com` listings
 
 ### Current shipped capabilities to highlight

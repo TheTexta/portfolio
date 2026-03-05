@@ -228,7 +228,6 @@
         { once: true }
       );
     }
-
     // LOGO HOVER EFFECT
     window.addEventListener("DOMContentLoaded", () => {
       const logoForeground = document.getElementById("logo-foreground");
@@ -268,7 +267,6 @@
           lines.forEach((p) => p.classList.remove("reveal"));
         });
       }
-
       // TODO move all this to css. it can be done with css animations and keyframes very easily
       const pilleaterForeground = document.getElementById(
         "pilleater-foreground"
@@ -311,13 +309,6 @@
         cursorCanvas.style.opacity = 1;
       }
     });
-
-    // SERVICE WORKER REGISTRATION
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("sw.js");
-      });
-    }
   </script>
 </body>
 
