@@ -27,6 +27,7 @@ type RawNode = {
   scale?: number;
   colour?: string;
   correlations?: Record<string, number>;
+  storagePath?: string;
   url?: string;
 };
 
@@ -119,8 +120,10 @@ async function resolveNodeSourceUrl(
   imageBasePath: string,
 ) {
   if (node.url) return node.url;
+  const storagePath =
+    node.storagePath ?? `${imageBasePath.replace(/\/$/, "")}/${id}.png`;
   return getDownloadURL(
-    ref(storage, `${imageBasePath.replace(/\/$/, "")}/${id}.png`),
+    ref(storage, storagePath),
   );
 }
 
@@ -280,7 +283,7 @@ function formatSizeInMb(sizeInBytes: number) {
 }
 
 export default function PhotoGraphCanvas({
-  graphUrl = "/portfolioTable.json",
+  graphUrl = "/api/photo-graph/graph",
   imageBasePath = DEFAULT_IMAGE_BASE_PATH,
   forcedDarkMode,
 }: PhotoGraphCanvasProps) {

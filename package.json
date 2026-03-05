@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "photo-graph:migrate": "tsx scripts/photo-graph/migrate-static-to-runtime.ts"
   },
   "dependencies": {
     "@spotify/web-api-ts-sdk": "^1.2.0",
@@ -31,6 +32,7 @@
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^4.2.1",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
