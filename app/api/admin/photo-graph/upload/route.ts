@@ -16,7 +16,6 @@ import {
   featureFromRgb,
   rgbToHex,
 } from "@/lib/photo-graph/feature-extraction";
-import { createPhotoGraphJob } from "@/lib/photo-graph/job-runner";
 import { getFirebaseAdminBucket } from "@/lib/server/firebase-admin";
 import {
   ADMIN_SESSION_COOKIE_NAME,
@@ -260,11 +259,9 @@ export async function POST(request: NextRequest) {
   }
 
   await writeRuntimeGraph(nodes);
-  const jobId = await createPhotoGraphJob(createdIds, nodes.length);
 
   return NextResponse.json({
     ok: true,
-    jobId,
     createdIds,
     source: loaded.source,
     nodeCount: nodes.length,
