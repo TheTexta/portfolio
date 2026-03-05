@@ -125,3 +125,4 @@ Images are loaded from Firebase Storage at runtime. The graph starts by loading 
 - Fix project description for nepobabiesruntheunderground and grailed-plus
 - superwide images need to be larger for photograph
 - less default zoom for nodegraphphoto
+- possibly do subtle (low saturation) gradient (masked) versions of all my favourite images that scroll in random paralaxes in the background

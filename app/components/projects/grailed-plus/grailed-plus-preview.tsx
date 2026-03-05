@@ -31,7 +31,7 @@ type ComparePage = {
 const COMPARE_PAGES: ComparePage[] = [
   {
     id: "dm",
-    label: "DM Listing",
+    label: "DARK MODE",
     before: beforeDm,
     after: afterDm,
     beforeAlt: "Grailed listing page before Grailed Plus dark mode and enhancements",
