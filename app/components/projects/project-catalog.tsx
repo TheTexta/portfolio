@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import HtmlProjectPreview from "@/app/components/projects/html-project-preview";
 import PhotoGraphCanvas from "@/app/components/projects/photo-graph/PhotoGraphCanvas";
-import SpotifyNodify from "@/app/components/projects/spotify-nodify/spotify-nodify";
 import { PROJECT_ROUTES } from "./project-routes";
 
 export type ProjectDefinition = {
@@ -34,13 +33,5 @@ export const projectCatalog: ProjectDefinition[] = [
         projectHref={PROJECT_ROUTES.nepobabies}
       />
     ),
-  },
-  {
-    id: "spotify-nodify",
-    title: "spotify-nodify",
-    description:
-      "Spotify authorization demo that turns your account into a live project preview, with profile data, top tracks, and an expandable dark-mode UI.",
-    tags: ["Next.js", "Spotify API", "OAuth"],
-    renderPreview: (darkMode) => <SpotifyNodify forcedDarkMode={darkMode} />,
   },
 ];

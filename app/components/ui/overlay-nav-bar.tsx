@@ -11,6 +11,7 @@ type OverlayNavBarProps = {
   className?: string;
   iconClassName?: string;
   ariaLabel?: string;
+  containerMode?: "absolute" | "sticky";
 };
 
 export default function OverlayNavBar({
@@ -22,12 +23,19 @@ export default function OverlayNavBar({
   className,
   iconClassName = "h-4 w-4",
   ariaLabel = "Page controls",
+  containerMode = "absolute",
 }: OverlayNavBarProps) {
+  const positionClass =
+    containerMode === "sticky"
+      ? "sticky top-[1vmin] ml-auto w-fit"
+      : "absolute right-[1vmin] top-[1vmin]";
+
   return (
     <nav
       aria-label={ariaLabel}
       className={cn(
-        "absolute right-[1vmin] top-[1vmin] z-[8] flex items-center gap-2",
+        "z-[8] flex items-center gap-2",
+        positionClass,
         className,
       )}
     >

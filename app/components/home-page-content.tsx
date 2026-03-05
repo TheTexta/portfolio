@@ -18,7 +18,8 @@ export default function HomePageContent() {
         darkMode={darkMode}
         onToggleDarkMode={toggleTheme}
         toneClass={homeOverlayClass}
-        className="right-5 top-5 z-20"
+        containerMode="sticky"
+        className="top-5 z-20"
         ariaLabel="Site controls"
       />
       <AboutSection />

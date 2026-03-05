@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 
-const THEME_STORAGE_KEY = "portfolio-theme";
+const LEGACY_THEME_STORAGE_KEY = "portfolio-theme";
 
 type ThemeContextValue = {
   darkMode: boolean;
@@ -27,17 +27,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
 
     const syncTheme = (isDark: boolean) => {
       applyDocumentTheme(isDark);
       setDarkMode(isDark);
     };
 
-    if (storedTheme === "dark" || storedTheme === "light") {
-      syncTheme(storedTheme === "dark");
-      return;
-    }
+    // Clear legacy persisted preference; theme no longer uses localStorage.
+    window.localStorage.removeItem(LEGACY_THEME_STORAGE_KEY);
 
     syncTheme(mediaQuery.matches);
 
@@ -56,10 +53,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       toggleTheme: () => {
         const nextDarkMode = !darkMode;
         applyDocumentTheme(nextDarkMode);
-        window.localStorage.setItem(
-          THEME_STORAGE_KEY,
-          nextDarkMode ? "dark" : "light",
-        );
         setDarkMode(nextDarkMode);
       },
     }),
