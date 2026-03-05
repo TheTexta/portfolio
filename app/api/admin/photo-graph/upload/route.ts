@@ -16,7 +16,11 @@ import {
   ADMIN_SESSION_COOKIE_NAME,
   isValidAdminSessionToken,
 } from "@/lib/server/admin-session";
-import type { GraphFeature, GraphNode } from "@/lib/photo-graph/types";
+import type {
+  GraphFeature,
+  GraphImageDimensions,
+  GraphNode,
+} from "@/lib/photo-graph/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,6 +28,7 @@ export const dynamic = "force-dynamic";
 type UploadRegistration = {
   storagePath?: string;
   feature?: GraphFeature;
+  dimensions?: GraphImageDimensions;
   colour?: string;
 };
 
@@ -34,6 +39,7 @@ type UploadRegistrationPayload = {
 type ParsedUploadRegistration = {
   storagePath: string;
   feature: GraphFeature;
+  dimensions: GraphImageDimensions;
   colour: string;
 };
 
@@ -87,6 +93,38 @@ function parseFeaturePayload(value: unknown): ParsedUploadRegistration["feature"
   return featureFromRgb(rgbTuple, Math.max(1, Math.round(longSide)));
 }
 
+function parseDimensionsPayload(value: unknown): ParsedUploadRegistration["dimensions"] | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const raw = value as Record<string, unknown>;
+  const width = parseNumber(raw.width);
+  const height = parseNumber(raw.height);
+
+  if (!Number.isFinite(width) || !Number.isFinite(height)) {
+    return null;
+  }
+
+  if (width <= 0 || height <= 0) {
+    return null;
+  }
+
+  const normalizedWidth = Math.max(1, Math.round(width));
+  const normalizedHeight = Math.max(1, Math.round(height));
+  const aspectRatio = normalizedWidth / normalizedHeight;
+
+  if (!Number.isFinite(aspectRatio) || aspectRatio <= 0) {
+    return null;
+  }
+
+  return {
+    width: normalizedWidth,
+    height: normalizedHeight,
+    aspectRatio,
+  };
+}
+
 function normalizeUploads(value: unknown) {
   if (!Array.isArray(value) || value.length === 0) {
     return null;
@@ -111,9 +149,15 @@ function normalizeUploads(value: unknown) {
       return null;
     }
 
+    const dimensions = parseDimensionsPayload(record.dimensions);
+    if (!dimensions) {
+      return null;
+    }
+
     uploads.push({
       storagePath,
       feature,
+      dimensions,
       colour: rgbToHex(feature.rgb),
     });
   }
@@ -188,6 +232,7 @@ export async function POST(request: NextRequest) {
       correlations: {},
       storagePath: upload.storagePath,
       feature: upload.feature,
+      dimensions: upload.dimensions,
     });
   }
 

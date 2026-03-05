@@ -8,6 +8,7 @@ import {
 } from "@/lib/photo-graph/feature-extraction";
 import { getFirebaseAdminBucket } from "@/lib/server/firebase-admin";
 import type {
+  GraphImageDimensions,
   GraphLoadSource,
   GraphNode,
   PublicGraphNode,
@@ -107,6 +108,33 @@ function normalizeFeature(value: unknown) {
   };
 }
 
+function normalizeDimensions(value: unknown) {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const width = parseNumber(value.width, Number.NaN);
+  const height = parseNumber(value.height, Number.NaN);
+
+  if (!Number.isFinite(width) || !Number.isFinite(height)) {
+    return undefined;
+  }
+
+  if (width <= 0 || height <= 0) {
+    return undefined;
+  }
+
+  const normalizedWidth = Math.max(1, Math.round(width));
+  const normalizedHeight = Math.max(1, Math.round(height));
+  const normalizedAspectRatio = normalizedWidth / normalizedHeight;
+
+  return {
+    width: normalizedWidth,
+    height: normalizedHeight,
+    aspectRatio: normalizedAspectRatio,
+  } as GraphImageDimensions;
+}
+
 function normalizeNode(
   rawNode: unknown,
   index: number,
@@ -134,6 +162,7 @@ function normalizeNode(
 
   const correlations = normalizeCorrelations(rawNode.correlations);
   const feature = normalizeFeature(rawNode.feature);
+  const dimensions = normalizeDimensions(rawNode.dimensions);
 
   const storagePath =
     typeof rawNode.storagePath === "string" && rawNode.storagePath
@@ -148,6 +177,7 @@ function normalizeNode(
     colour: parsedColour,
     correlations,
     feature,
+    dimensions,
     storagePath,
     url,
   };
@@ -254,6 +284,10 @@ export function cloneGraphNodes(nodes: GraphNode[]): GraphNode[] {
       };
     }
 
+    if (node.dimensions) {
+      cloned.dimensions = { ...node.dimensions };
+    }
+
     return cloned;
   });
 }
@@ -295,6 +329,7 @@ export function toPublicGraphNodes(nodes: GraphNode[]): PublicGraphNode[] {
     colour: node.colour,
     correlations: node.correlations,
     storagePath: node.storagePath,
+    dimensions: node.dimensions ? { ...node.dimensions } : undefined,
     url: node.url,
   }));
 }

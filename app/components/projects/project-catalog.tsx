@@ -25,7 +25,7 @@ export const projectCatalog: ProjectDefinition[] = [
     id: "grailed-plus",
     title: "Grailed Plus (V2)",
     description:
-      "Browser extension that restores Grailed listing intelligence with price history, drop metrics, seller metadata, currency conversion, and site-wide dark mode controls.",
+      "Browser extension that introduces price history, drop metrics, seller metadata, custom currency conversion, and site-wide dark mode controls.",
     tags: ["Browser Extension", "Chrome MV3", "Firefox MV3", "JavaScript"],
     renderPreview: (darkMode) => (
       <GrailedPlusPreview forcedDarkMode={darkMode} />
@@ -35,7 +35,7 @@ export const projectCatalog: ProjectDefinition[] = [
     id: "nepobabiesruntheunderground",
     title: "nepobabiesruntheunderground",
     description:
-      "Legacy multimedia web piece embedded as a live HTML preview, with its original CSS, JavaScript, shaders, and image assets preserved.",
+      "Creative visual UI project blending custom typography, layered motion, collage imagery, and WebGL textures into an experimental digital world.",
     tags: ["HTML", "CSS", "JavaScript", "WebGL"],
     renderPreview: () => (
       <HtmlProjectPreview

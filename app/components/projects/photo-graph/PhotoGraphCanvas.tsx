@@ -18,6 +18,7 @@ import {
 import { OverlayIconButton } from "@/app/components/ui/overlay-icon-button";
 import OverlayNavBar from "@/app/components/ui/overlay-nav-bar";
 import { storage } from "@/lib/firebase/client";
+import type { GraphImageDimensions } from "@/lib/photo-graph/types";
 import { getDownloadURL, ref } from "firebase/storage";
 
 // TODO: find a way to generate json edge data when new images added.
@@ -29,12 +30,15 @@ type RawNode = {
   correlations?: Record<string, number>;
   storagePath?: string;
   url?: string;
+  dimensions?: GraphImageDimensions;
 };
 
 type SimNode = d3.SimulationNodeDatum & {
   id: string;
   colour?: string;
   sourceUrl: string;
+  baseSize: number;
+  aspectRatio: number;
   w: number;
   h: number;
   loadedWidth?: number;
@@ -85,12 +89,16 @@ const GRAPH_CONFIG = {
   baseBox: 220,
   minBox: 64,
   maxBox: 300,
+  balanceStartDeviationLog2: 0.3,
+  balanceMaxDeviationLog2: 1.5,
+  maxAreaBoost: 1.55,
+  maxLongSideMultiplier: 2,
   collidePad: 0,
   distMin: 10,
   distMax: 1600,
   charge: -420,
   zoomExtent: [0.25, 4] as [number, number],
-  initialZoom: 0.8, // <-- add this
+  initialZoom: 0.8,
   imageConcurrency: 5,
   upgradeDebounceMs: 120,
   viewportBufferRatio: 0.15,
@@ -114,6 +122,55 @@ function resolveNodeId(node: RawNode, index: number) {
   return String(node.id ?? index + 1);
 }
 
+function normalizeAspectRatio(aspectRatio: number | undefined) {
+  if (!Number.isFinite(aspectRatio) || !aspectRatio || aspectRatio <= 0) {
+    return 1;
+  }
+
+  return aspectRatio;
+}
+
+function resolveRawAspectRatio(dimensions: GraphImageDimensions | undefined) {
+  if (!dimensions) {
+    return 1;
+  }
+
+  const derivedAspect = dimensions.width / dimensions.height;
+  return normalizeAspectRatio(
+    Number.isFinite(dimensions.aspectRatio) && dimensions.aspectRatio > 0
+      ? dimensions.aspectRatio
+      : derivedAspect,
+  );
+}
+
+function sizeNodeFromAspectRatio(node: SimNode) {
+  const aspectRatio = normalizeAspectRatio(node.aspectRatio);
+  const baseSize = Math.max(1, node.baseSize);
+  const deviation = Math.abs(Math.log2(aspectRatio));
+  const progress = clamp(
+    (deviation - GRAPH_CONFIG.balanceStartDeviationLog2) /
+      (GRAPH_CONFIG.balanceMaxDeviationLog2 - GRAPH_CONFIG.balanceStartDeviationLog2),
+    0,
+    1,
+  );
+  const areaBoost = 1 + progress * (GRAPH_CONFIG.maxAreaBoost - 1);
+  const targetArea = baseSize * baseSize * areaBoost;
+
+  let width = Math.sqrt(targetArea * aspectRatio);
+  let height = Math.sqrt(targetArea / aspectRatio);
+
+  const longSideLimit = baseSize * GRAPH_CONFIG.maxLongSideMultiplier;
+  const longSide = Math.max(width, height);
+  if (longSide > longSideLimit) {
+    const shrink = longSideLimit / longSide;
+    width *= shrink;
+    height *= shrink;
+  }
+
+  node.w = width;
+  node.h = height;
+}
+
 async function resolveNodeSourceUrl(
   node: RawNode,
   id: string,
@@ -133,15 +190,8 @@ function sizeNodeFromImage(node: SimNode, image: HTMLImageElement) {
 
   if (!width || !height) return;
 
-  const aspect = width / height;
-  if (aspect >= 1) {
-    node.w = GRAPH_CONFIG.baseBox;
-    node.h = GRAPH_CONFIG.baseBox / aspect;
-    return;
-  }
-
-  node.h = GRAPH_CONFIG.baseBox;
-  node.w = GRAPH_CONFIG.baseBox * aspect;
+  node.aspectRatio = normalizeAspectRatio(width / height);
+  sizeNodeFromAspectRatio(node);
 }
 
 async function buildGraph(data: RawNode[], imageBasePath: string) {
@@ -153,16 +203,22 @@ async function buildGraph(data: RawNode[], imageBasePath: string) {
         GRAPH_CONFIG.minBox,
         GRAPH_CONFIG.maxBox,
       );
-
-      return {
+      const aspectRatio = resolveRawAspectRatio(entry.dimensions);
+      const node: SimNode = {
         id,
         colour: entry.colour,
         sourceUrl: await resolveNodeSourceUrl(entry, id, imageBasePath),
+        baseSize: box,
+        aspectRatio,
         w: box,
         h: box,
         x: (Math.random() - 0.5) * 50,
         y: (Math.random() - 0.5) * 50,
       };
+
+      sizeNodeFromAspectRatio(node);
+
+      return node;
     }),
   );
 

@@ -5,6 +5,12 @@ export type GraphFeature = {
   longSide: number;
 };
 
+export type GraphImageDimensions = {
+  width: number;
+  height: number;
+  aspectRatio: number;
+};
+
 export type GraphNode = {
   id: string;
   scale: number;
@@ -12,6 +18,7 @@ export type GraphNode = {
   correlations: Record<string, number>;
   storagePath?: string;
   feature?: GraphFeature;
+  dimensions?: GraphImageDimensions;
   url?: string;
 };
 

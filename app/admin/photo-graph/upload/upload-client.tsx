@@ -17,7 +17,10 @@ import {
   computeCorrelation,
 } from "@/lib/photo-graph/correlation";
 import { featureFromRgb, rgbToHex } from "@/lib/photo-graph/feature-extraction";
-import type { GraphFeature } from "@/lib/photo-graph/types";
+import type {
+  GraphFeature,
+  GraphImageDimensions,
+} from "@/lib/photo-graph/types";
 
 type UploadApiResponse = {
   ok: boolean;
@@ -44,6 +47,7 @@ type AdminGraphNode = {
   previewUrl?: string;
   correlations: Record<string, number>;
   feature?: GraphFeature;
+  dimensions?: GraphImageDimensions;
 };
 
 type AdminGraphResponse = {
@@ -77,12 +81,14 @@ type ComputedFeaturePayload = {
   lab: [number, number, number];
   hue: number;
   longSide: number;
+  dimensions: GraphImageDimensions;
   colour: string;
 };
 
 type UploadRegistration = {
   storagePath: string;
-  feature: Omit<ComputedFeaturePayload, "colour">;
+  feature: Omit<ComputedFeaturePayload, "colour" | "dimensions">;
+  dimensions: GraphImageDimensions;
 };
 
 type VerboseLogLevel = "info" | "success" | "warn" | "error";
@@ -159,6 +165,12 @@ async function computeFeaturePayload(file: File): Promise<ComputedFeaturePayload
   const image = await loadImage(file);
   const width = image.naturalWidth || image.width;
   const height = image.naturalHeight || image.height;
+  if (!width || !height) {
+    throw new Error(`Image has invalid dimensions: ${file.name}`);
+  }
+
+  const normalizedWidth = Math.max(1, Math.round(width));
+  const normalizedHeight = Math.max(1, Math.round(height));
   const longSide = Math.max(1, Math.max(width, height));
 
   const ratio = longSide > 1024 ? 1024 / longSide : 1;
@@ -210,6 +222,11 @@ async function computeFeaturePayload(file: File): Promise<ComputedFeaturePayload
     lab: feature.lab,
     hue: feature.hue,
     longSide: feature.longSide,
+    dimensions: {
+      width: normalizedWidth,
+      height: normalizedHeight,
+      aspectRatio: normalizedWidth / normalizedHeight,
+    },
     colour: rgbToHex(feature.rgb),
   };
 }
@@ -564,6 +581,7 @@ export default function PhotoGraphUploadClient() {
             hue: featurePayload.hue,
             longSide: featurePayload.longSide,
           },
+          dimensions: featurePayload.dimensions,
         });
 
         appendVerboseLog(

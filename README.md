@@ -121,8 +121,11 @@ Images are loaded from Firebase Storage at runtime. The graph starts by loading 
 - There is no automated test suite in the repo yet; linting is the main built-in code quality check.
 
 ## TODO
-- Custom font for main page
-- Fix project description for nepobabiesruntheunderground and grailed-plus
 - superwide images need to be larger for photograph
 - less default zoom for nodegraphphoto
 - possibly do subtle (low saturation) gradient (masked) versions of all my favourite images that scroll in random paralaxes in the background
+- fix icon centering on safari
+- implment before/after text with inversion mono filter stuff like the top right text
+- adding to the above I want to make a full design philosophy for myself.
+- custom square node implemenation for d3
+- use the light 300 version of font
