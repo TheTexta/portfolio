@@ -17,7 +17,7 @@ import {
 } from "@/app/components/projects/photo-graph/imageOptimizer";
 import { OverlayIconButton } from "@/app/components/ui/overlay-icon-button";
 import OverlayNavBar from "@/app/components/ui/overlay-nav-bar";
-import { storage } from "@/app/components/projects/photo-graph/firebaseClient";
+import { storage } from "@/lib/firebase/client";
 import { getDownloadURL, ref } from "firebase/storage";
 
 // TODO: find a way to generate json edge data when new images added.

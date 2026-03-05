@@ -3,6 +3,7 @@ import "./globals.css";
 
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { FirebaseAnalytics } from "@/app/components/firebase/firebase-analytics";
 import { ThemeProvider } from "@/app/components/theme/theme-provider";
 
 
@@ -21,6 +22,7 @@ export default function RootLayout({
       
       <body>
         <ThemeProvider>
+          <FirebaseAnalytics />
           {children}
           <Analytics />
           <SpeedInsights />

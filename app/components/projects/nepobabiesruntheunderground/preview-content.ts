@@ -9,7 +9,7 @@ const PREVIEW_BASE_PATH =
   "/components/projects/nepobabiesruntheunderground/preview/";
 const NO_STORE_CACHE_CONTROL = "no-store";
 const STATIC_CACHE_CONTROL =
-  "public, max-age=86400, stale-while-revalidate=604800";
+  "public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=604800";
 const DEFAULT_IMAGE_QUALITY = 72;
 const DEFAULT_IMAGE_WIDTH = 1080;
 

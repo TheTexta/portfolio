@@ -28,7 +28,7 @@ const nextConfig: NextConfig = {
         pathname: "/image/**",
       },
     ],
-    minimumCacheTTL: 60*60*24*14, // 14 days
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 1 month (30 days)
   },
 };
 
