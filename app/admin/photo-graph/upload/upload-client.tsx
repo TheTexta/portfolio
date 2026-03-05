@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import NextImage from "next/image";
 import { useRouter } from "next/navigation";
 
 import {
@@ -40,6 +41,7 @@ type AdminGraphNode = {
   colour?: string;
   storagePath?: string;
   url?: string;
+  previewUrl?: string;
   correlations: Record<string, number>;
   feature?: GraphFeature;
 };
@@ -797,12 +799,34 @@ export default function PhotoGraphUploadClient() {
                     key={node.id}
                     className="flex flex-col gap-2 rounded-md border border-black/10 p-2 dark:border-white/10"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="font-mono text-[11px]">
-                        <span className="font-semibold">ID {node.id}</span>{" "}
-                        <span className="opacity-70">
-                          ({Object.keys(node.correlations ?? {}).length} edges)
-                        </span>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-start gap-2">
+                        {node.previewUrl ? (
+                          <NextImage
+                            src={node.previewUrl}
+                            alt={`Node ${node.id}`}
+                            width={44}
+                            height={44}
+                            sizes="44px"
+                            className="h-11 w-11 rounded object-cover"
+                          />
+                        ) : (
+                          <div className="h-11 w-11 rounded border border-black/20 dark:border-white/20" />
+                        )}
+
+                        <div className="min-w-0 font-mono text-[11px]">
+                          <div>
+                            <span className="font-semibold">ID {node.id}</span>{" "}
+                            <span className="opacity-70">
+                              ({Object.keys(node.correlations ?? {}).length} edges)
+                            </span>
+                          </div>
+                          {node.storagePath && (
+                            <p className="mt-1 break-all font-mono text-[10px] opacity-70">
+                              {node.storagePath}
+                            </p>
+                          )}
+                        </div>
                       </div>
                       <button
                         onClick={() => void handleDeleteNode(node)}
@@ -816,11 +840,6 @@ export default function PhotoGraphUploadClient() {
                         {isDeleting ? "Deleting..." : "Delete"}
                       </button>
                     </div>
-                    {node.storagePath && (
-                      <p className="break-all font-mono text-[10px] opacity-70">
-                        {node.storagePath}
-                      </p>
-                    )}
                   </li>
                 );
               })}
