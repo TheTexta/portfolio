@@ -151,15 +151,44 @@
     var cursorCanvas = document.getElementById(
       "tv-static-tracking-cursor-pos"
     );
+    var isMobileDevice = function () {
+      if (typeof window.mobileCheck === "function") {
+        return window.mobileCheck();
+      }
 
-    if (window.mobileCheck()) {
+      var ua = navigator.userAgent || "";
+      var uaMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
+      var coarsePointer =
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(pointer: coarse)").matches;
+      var narrowViewport =
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(max-width: 900px)").matches;
+
+      return uaMobile || (coarsePointer && narrowViewport);
+    };
+    var hideById = function (id) {
+      var element = document.getElementById(id);
+      if (element) {
+        element.style.display = "none";
+      }
+    };
+
+    if (isMobileDevice()) {
       console.log("Mobile device detected: TV static effects disabled");
-      topCanvas.style.display = "none";
-      cursorCanvas.style.display = "none";
-      document.getElementById("mobile-menu").style.display = "grid";
-      document.getElementById("content").style.display = "none";
-      document.getElementById("grid-container").style.display = "none";
-      document.getElementById("desktop-photo-button").style.display = "none";
+      if (topCanvas) {
+        topCanvas.style.display = "none";
+      }
+      if (cursorCanvas) {
+        cursorCanvas.style.display = "none";
+      }
+      hideById("content");
+      hideById("grid-container");
+      hideById("desktop-photo-button");
+      var mobileMenu = document.getElementById("mobile-menu");
+      if (mobileMenu) {
+        mobileMenu.style.display = "grid";
+      }
     } else {
       // Use window load to ensure deferred scripts are executed and shaders are fetchable
       window.addEventListener(
@@ -261,18 +290,26 @@
     // PARALLAX SCROLLING EFFECTS
     window.addEventListener("scroll", () => {
       const y = window.scrollY;
-      document.getElementById("parallax-bg").style.backgroundPositionY = `${y * -0.1
-        }px`;
-      document.getElementById("parallax-fg").style.backgroundPositionY = `${y * -0.3
-        }px`;
+      const parallaxBg = document.getElementById("parallax-bg");
+      const parallaxFg = document.getElementById("parallax-fg");
+      if (parallaxBg) {
+        parallaxBg.style.backgroundPositionY = `${y * -0.1}px`;
+      }
+      if (parallaxFg) {
+        parallaxFg.style.backgroundPositionY = `${y * -0.3}px`;
+      }
     });
 
     // cursor fade on mouse leaving window effect
     window.addEventListener("mouseout", () => {
-      cursorCanvas.style.opacity = 0;
+      if (cursorCanvas) {
+        cursorCanvas.style.opacity = 0;
+      }
     });
     window.addEventListener("mouseover", () => {
-      cursorCanvas.style.opacity = 1;
+      if (cursorCanvas) {
+        cursorCanvas.style.opacity = 1;
+      }
     });
 
     // SERVICE WORKER REGISTRATION

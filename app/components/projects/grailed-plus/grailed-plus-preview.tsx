@@ -45,38 +45,34 @@ export default function GrailedPlusPreview({
   };
 
   return (
-    <section
-      className={`flex h-full w-full items-center justify-center p-4 transition-colors md:p-6 ${chrome.shell}`}
+    <div
+      className={`relative w-full h-full overflow-hidden  ${chrome.surface ?? (darkMode ? " bg-black/30" : " bg-white/85")}`}
     >
-      <div
-        className={`relative aspect-[16/10] w-full max-w-5xl overflow-hidden rounded-2xl border ${chrome.surface ?? (darkMode ? "border-white/10 bg-black/30" : "border-black/10 bg-white/85")}`}
-      >
-        <Image
-          src={activeScreenshot.src}
-          alt={activeScreenshot.alt}
-          fill
-          className="object-cover"
-          sizes="(min-width: 1024px) 960px, (min-width: 768px) 80vw, 100vw"
-          priority
-        />
+      <Image
+        src={activeScreenshot.src}
+        alt={activeScreenshot.alt}
+        fill
+        className="object-cover"
+        sizes="(min-width: 1024px) 960px, (min-width: 768px) 80vw, 100vw"
+        priority
+      />
 
-        <button
-          type="button"
-          onClick={handlePrevious}
-          aria-label="Previous screenshot"
-          className={`absolute left-3 top-1/2 -translate-y-1/2 rounded-full border px-3 py-2 text-base font-semibold transition-colors md:left-4 ${chrome.button ?? (darkMode ? "border-white/15 bg-black/55 text-white hover:bg-black/70" : "border-black/10 bg-white/85 text-neutral-950 hover:bg-white")}`}
-        >
-          ←
-        </button>
-        <button
-          type="button"
-          onClick={handleNext}
-          aria-label="Next screenshot"
-          className={`absolute right-3 top-1/2 -translate-y-1/2 rounded-full border px-3 py-2 text-base font-semibold transition-colors md:right-4 ${chrome.button ?? (darkMode ? "border-white/15 bg-black/55 text-white hover:bg-black/70" : "border-black/10 bg-white/85 text-neutral-950 hover:bg-white")}`}
-        >
-          →
-        </button>
-      </div>
-    </section>
+      <button
+        type="button"
+        onClick={handlePrevious}
+        aria-label="Previous screenshot"
+        className={`absolute left-3 top-1/2 -translate-y-1/2 rounded-full border px-3 py-2 text-base font-semibold transition-colors md:left-4 ${chrome.button ?? (darkMode ? "border-white/15 bg-black/55 text-white hover:bg-black/70" : "border-black/10 bg-white/85 text-neutral-950 hover:bg-white")}`}
+      >
+        ←
+      </button>
+      <button
+        type="button"
+        onClick={handleNext}
+        aria-label="Next screenshot"
+        className={`absolute right-3 top-1/2 -translate-y-1/2 rounded-full border px-3 py-2 text-base font-semibold transition-colors md:right-4 ${chrome.button ?? (darkMode ? "border-white/15 bg-black/55 text-white hover:bg-black/70" : "border-black/10 bg-white/85 text-neutral-950 hover:bg-white")}`}
+      >
+        →
+      </button>
+    </div>
   );
 }
