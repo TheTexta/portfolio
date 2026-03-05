@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { loadGraphWithFallback } from "@/lib/photo-graph/graph-store";
+import { getFirebaseAdminBucket } from "@/lib/server/firebase-admin";
 import {
   ADMIN_SESSION_COOKIE_NAME,
   isValidAdminSessionToken,
@@ -8,29 +9,7 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function bucketNameForPublicUrls() {
-  const explicitBucket = process.env.FIREBASE_STORAGE_BUCKET;
-  if (explicitBucket) {
-    return explicitBucket;
-  }
-
-  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
-  if (!projectId) {
-    return null;
-  }
-
-  return `${projectId}.firebasestorage.app`;
-}
-
-function toPublicStorageUrl(storagePath: string, bucketName: string) {
-  const encodedPath = storagePath
-    .split("/")
-    .map((segment) => encodeURIComponent(segment))
-    .join("/");
-
-  return `https://storage.googleapis.com/${bucketName}/${encodedPath}`;
-}
+const PREVIEW_URL_TTL_MS = 60 * 60 * 1000;
 
 function isAuthorized(request: NextRequest) {
   const token = request.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
@@ -43,15 +22,36 @@ export async function GET(request: NextRequest) {
   }
 
   const { nodes, source } = await loadGraphWithFallback();
-  const bucketName = bucketNameForPublicUrls();
-  const nodesWithPreview = nodes.map((node) => ({
-    ...node,
-    previewUrl:
-      node.url ??
-      (bucketName && node.storagePath
-        ? toPublicStorageUrl(node.storagePath, bucketName)
-        : undefined),
-  }));
+  const bucket = getFirebaseAdminBucket();
+
+  const nodesWithPreview = await Promise.all(
+    nodes.map(async (node) => {
+      if (!node.storagePath) {
+        return {
+          ...node,
+          previewUrl: node.url,
+        };
+      }
+
+      try {
+        const [previewUrl] = await bucket.file(node.storagePath).getSignedUrl({
+          version: "v4",
+          action: "read",
+          expires: Date.now() + PREVIEW_URL_TTL_MS,
+        });
+
+        return {
+          ...node,
+          previewUrl,
+        };
+      } catch {
+        return {
+          ...node,
+          previewUrl: node.url,
+        };
+      }
+    }),
+  );
 
   return NextResponse.json(
     {

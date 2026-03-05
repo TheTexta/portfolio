@@ -56,6 +56,7 @@ npm run lint
 - each edge is a correlation score between two photos
 - stronger correlations keep images closer together
 - users can zoom, pan, drag nodes, hide connections, and inspect images in a modal
+- admin page for image uploads at [text](https://dextery.dev/admin/photo-graph/login)
 
 Images are loaded from Firebase Storage at runtime. The graph starts by loading usable image sizes quickly, then requests larger versions for visible nodes as the user zooms in.
 

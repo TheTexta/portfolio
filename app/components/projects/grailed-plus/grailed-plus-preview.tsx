@@ -1,5 +1,6 @@
 "use client";
-import Link from "next/link";
+import Image from "next/image";
+import { useState } from "react";
 import { getProjectChrome } from "@/app/components/projects/project-chrome";
 import { useTheme } from "@/app/components/theme/theme-provider";
 
@@ -7,9 +8,20 @@ type GrailedPlusPreviewProps = {
   forcedDarkMode?: boolean;
 };
 
-const CHROME_WEB_STORE_URL =
-  "https://chromewebstore.google.com/detail/grailed-plus/ipecfmmbppgpommpibaandmonmhohfnd";
-const GITHUB_REPO_URL = "https://github.com/TheTexta/grailed-plus";
+const SCREENSHOTS = [
+  {
+    src: "/projects/grailed-plus/screenshots/pricing.webp",
+    alt: "Grailed Plus pricing insights panel on a listing",
+  },
+  {
+    src: "/projects/grailed-plus/screenshots/currency.webp",
+    alt: "Grailed Plus currency conversion details on a listing",
+  },
+  {
+    src: "/projects/grailed-plus/screenshots/theme.webp",
+    alt: "Grailed Plus dark mode theme controls",
+  },
+];
 
 export default function GrailedPlusPreview({
   forcedDarkMode,
@@ -17,49 +29,53 @@ export default function GrailedPlusPreview({
   const { darkMode: siteDarkMode } = useTheme();
   const darkMode = forcedDarkMode ?? siteDarkMode;
   const chrome = getProjectChrome("grailed-plus", darkMode);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeScreenshot = SCREENSHOTS[activeIndex];
+
+  const handlePrevious = () => {
+    setActiveIndex((current) =>
+      current === 0 ? SCREENSHOTS.length - 1 : current - 1,
+    );
+  };
+
+  const handleNext = () => {
+    setActiveIndex((current) =>
+      current === SCREENSHOTS.length - 1 ? 0 : current + 1,
+    );
+  };
 
   return (
     <section
-      className={`h-full w-full overflow-y-auto p-4 transition-colors md:p-6 ${chrome.shell}`}
+      className={`flex h-full w-full items-center justify-center p-4 transition-colors md:p-6 ${chrome.shell}`}
     >
-      <p className="text-[11px] uppercase tracking-[0.35em] opacity-60">
-        Browser extension
-      </p>
-      <h3 className="mt-2 text-2xl font-semibold md:text-3xl">Grailed Plus</h3>
-      <p className="mt-3 max-w-2xl text-sm opacity-80 md:text-base">
-        Quick preview of Grailed Plus in action.
-      </p>
-
-      <video
-        className={`mt-4 aspect-video w-full rounded-2xl border bg-black object-cover ${darkMode ? "border-white/10" : "border-black/10"}`}
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="metadata"
-        poster="/projects/grailed-plus/poster.webp"
+      <div
+        className={`relative aspect-[16/10] w-full max-w-5xl overflow-hidden rounded-2xl border ${chrome.surface ?? (darkMode ? "border-white/10 bg-black/30" : "border-black/10 bg-white/85")}`}
       >
-        <source src="/projects/grailed-plus/preview.webm" type="video/webm" />
-        <source src="/projects/grailed-plus/preview.mp4" type="video/mp4" />
-      </video>
+        <Image
+          src={activeScreenshot.src}
+          alt={activeScreenshot.alt}
+          fill
+          className="object-cover"
+          sizes="(min-width: 1024px) 960px, (min-width: 768px) 80vw, 100vw"
+          priority
+        />
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Link
-          href={CHROME_WEB_STORE_URL}
-          target="_blank"
-          rel="noreferrer"
-          className={`rounded-full border px-3 py-2 text-xs uppercase tracking-[0.2em] transition-colors ${chrome.button}`}
+        <button
+          type="button"
+          onClick={handlePrevious}
+          aria-label="Previous screenshot"
+          className={`absolute left-3 top-1/2 -translate-y-1/2 rounded-full border px-3 py-2 text-base font-semibold transition-colors md:left-4 ${chrome.button ?? (darkMode ? "border-white/15 bg-black/55 text-white hover:bg-black/70" : "border-black/10 bg-white/85 text-neutral-950 hover:bg-white")}`}
         >
-          Chrome Store
-        </Link>
-        <Link
-          href={GITHUB_REPO_URL}
-          target="_blank"
-          rel="noreferrer"
-          className={`rounded-full border px-3 py-2 text-xs uppercase tracking-[0.2em] transition-colors ${chrome.button}`}
+          ←
+        </button>
+        <button
+          type="button"
+          onClick={handleNext}
+          aria-label="Next screenshot"
+          className={`absolute right-3 top-1/2 -translate-y-1/2 rounded-full border px-3 py-2 text-base font-semibold transition-colors md:right-4 ${chrome.button ?? (darkMode ? "border-white/15 bg-black/55 text-white hover:bg-black/70" : "border-black/10 bg-white/85 text-neutral-950 hover:bg-white")}`}
         >
-          GitHub
-        </Link>
+          →
+        </button>
       </div>
     </section>
   );
