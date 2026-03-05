@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "photo-graph:migrate": "tsx scripts/photo-graph/migrate-static-to-runtime.ts"
+    "photo-graph:migrate": "tsx scripts/photo-graph/migrate-static-to-runtime.ts",
+    "nepobabies:assets:dry-run": "tsx scripts/nepobabies/migrate-assets-to-firebase.ts --mode=dry-run --version=${NEPOBABIES_ASSET_VERSION:-v20260305-1}",
+    "nepobabies:assets:upload": "tsx scripts/nepobabies/migrate-assets-to-firebase.ts --mode=upload --version=${NEPOBABIES_ASSET_VERSION:-v20260305-1}",
+    "nepobabies:assets:verify": "tsx scripts/nepobabies/migrate-assets-to-firebase.ts --mode=verify --version=${NEPOBABIES_ASSET_VERSION:-v20260305-1}",
+    "nepobabies:assets:rewrite": "tsx scripts/nepobabies/migrate-assets-to-firebase.ts --mode=rewrite --version=${NEPOBABIES_ASSET_VERSION:-v20260305-1}"
   },
   "dependencies": {
     "@spotify/web-api-ts-sdk": "^1.2.0",

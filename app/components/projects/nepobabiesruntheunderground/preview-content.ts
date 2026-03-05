@@ -1,12 +1,19 @@
 import path from "node:path";
 import { readFile } from "node:fs/promises";
 
+import {
+  NEPOBABIES_PREVIEW_BASE_PATH,
+  nepobabiesAssetUrl,
+  normalizeNepobabiesAssetPath,
+  resolveNepobabiesAssetPathFromUrl,
+  resolveRelativeNepobabiesAssetPath,
+} from "@/lib/nepobabies/assets";
+
 const PROJECT_ROOT = path.join(
   process.cwd(),
   "app/components/projects/nepobabiesruntheunderground",
 );
-const PREVIEW_BASE_PATH =
-  "/components/projects/nepobabiesruntheunderground/preview/";
+const PREVIEW_BASE_PATH = NEPOBABIES_PREVIEW_BASE_PATH;
 const NO_STORE_CACHE_CONTROL = "no-store";
 const STATIC_CACHE_CONTROL =
   "public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=604800";
@@ -87,76 +94,49 @@ function resolveProjectFile(segments: string[]) {
   return filePath;
 }
 
-function stripQueryAndHash(rawUrl: string) {
-  const match = rawUrl.match(/^([^?#]*)([?#].*)?$/);
-
-  return {
-    pathname: match?.[1] ?? rawUrl,
-    suffix: match?.[2] ?? "",
-  };
-}
-
-function isExternalUrl(rawUrl: string) {
-  return (
-    /^(?:[a-z][a-z0-9+.-]*:)?\/\//i.test(rawUrl) ||
-    /^(data|blob|mailto|tel):/i.test(rawUrl)
-  );
-}
-
-function normalizeAssetPath(rawAssetPath: string) {
-  const withoutLeadingSlash = rawAssetPath.replace(/^\/+/, "");
-  const normalized = path.posix.normalize(withoutLeadingSlash);
+function resolveLegacyAssetRedirect(segments: string[]) {
+  if (segments.length === 0 || segments[0] !== "assets") {
+    return null;
+  }
 
   if (
-    normalized.startsWith("../") ||
-    normalized === ".." ||
-    path.posix.isAbsolute(normalized)
+    segments.some(
+      (segment) =>
+        segment.length === 0 || segment === "." || segment === "..",
+    )
   ) {
     return null;
   }
 
-  if (!normalized.startsWith("assets/")) {
+  const normalizedAssetPath = normalizeNepobabiesAssetPath(segments.join("/"));
+  if (!normalizedAssetPath) {
     return null;
   }
 
-  return normalized;
+  return nepobabiesAssetUrl(normalizedAssetPath);
 }
 
-function resolvePreviewAssetPath(rawUrl: string) {
-  if (isExternalUrl(rawUrl)) {
-    return null;
+function resolvePreviewAssetPath(rawUrl: string, baseAssetPath?: string) {
+  const directAssetPath = resolveNepobabiesAssetPathFromUrl(rawUrl);
+  if (directAssetPath) {
+    return directAssetPath;
   }
 
-  const { pathname } = stripQueryAndHash(rawUrl);
-  if (!pathname) {
-    return null;
-  }
-
-  if (pathname.startsWith(PREVIEW_BASE_PATH)) {
-    return normalizeAssetPath(pathname.slice(PREVIEW_BASE_PATH.length));
-  }
-
-  if (pathname.startsWith("/assets/")) {
-    return normalizeAssetPath(pathname.slice(1));
-  }
-
-  if (pathname.startsWith("./assets/")) {
-    return normalizeAssetPath(pathname.slice(2));
-  }
-
-  if (pathname.startsWith("assets/")) {
-    return normalizeAssetPath(pathname);
-  }
-
-  if (pathname.startsWith("../images/")) {
-    return normalizeAssetPath(`assets/images/${pathname.slice("../images/".length)}`);
+  if (baseAssetPath) {
+    const relativeAssetPath = resolveRelativeNepobabiesAssetPath(
+      baseAssetPath,
+      rawUrl,
+    );
+    if (relativeAssetPath) {
+      return relativeAssetPath;
+    }
   }
 
   return null;
 }
 
 function buildPreviewAssetUrl(assetPath: string) {
-  return `${PREVIEW_BASE_PATH}${assetPath}`;
+  return nepobabiesAssetUrl(assetPath);
 }
 
 function getImageOptimizationOptions(assetPath: string) {
@@ -212,11 +192,12 @@ function rewriteImageTag(imgTag: string) {
       ? ` ${attributesWithoutSrc}`
       : "";
 
-    const mediaBaseUrl = buildPreviewAssetUrl(
-      `assets/media/optimized/${videoStem}`,
-    );
+    const mediaRoot = `assets/media/optimized/${videoStem}`;
+    const posterUrl = buildPreviewAssetUrl(`${mediaRoot}-poster.jpg`);
+    const webmUrl = buildPreviewAssetUrl(`${mediaRoot}.webm`);
+    const mp4Url = buildPreviewAssetUrl(`${mediaRoot}.mp4`);
 
-    return `<video autoplay loop muted playsinline preload="metadata" poster="${mediaBaseUrl}-poster.jpg"${videoAttributes}><source src="${mediaBaseUrl}.webm" type="video/webm" /><source src="${mediaBaseUrl}.mp4" type="video/mp4" /></video>`;
+    return `<video autoplay loop muted playsinline preload="metadata" poster="${posterUrl}"${videoAttributes}><source src="${webmUrl}" type="video/webm" /><source src="${mp4Url}" type="video/mp4" /></video>`;
   }
 
   if (!isOptimizableImageExtension(extension)) {
@@ -255,7 +236,7 @@ function rewriteCssDocument(source: string) {
   return source.replace(
     /url\(\s*(["']?)([^"')]+)\1\s*\)/gi,
     (match, _quote: string, rawUrl: string) => {
-      const assetPath = resolvePreviewAssetPath(rawUrl);
+      const assetPath = resolvePreviewAssetPath(rawUrl, "assets/css/styles.css");
       if (!assetPath) {
         return match;
       }
@@ -321,6 +302,11 @@ function responseHeadersForExtension(extension: string) {
 }
 
 export async function servePreviewFile(segments: string[]) {
+  const legacyAssetRedirect = resolveLegacyAssetRedirect(segments);
+  if (legacyAssetRedirect) {
+    return Response.redirect(legacyAssetRedirect, 308);
+  }
+
   const filePath = resolveProjectFile(segments);
 
   if (!filePath) {

@@ -1,0 +1,267 @@
+{
+  "version": "v20260305-1",
+  "bucket": "portfolio-site-firebase-41fab.firebasestorage.app",
+  "baseObjectPrefix": "nepobabies/assets/v20260305-1",
+  "generatedAt": "2026-03-05T18:45:34.111Z",
+  "byPath": {
+    "assets/css/styles.css": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/css/styles.css",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fcss%2Fstyles.css?alt=media",
+      "bytes": 10588,
+      "sha256": "5b9cde233a4c7c30254b21750f17f2fe7b2fc10aef876affc6fb64bbb57fd520",
+      "contentType": "text/css; charset=utf-8"
+    },
+    "assets/images/background.jpg": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/background.jpg",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Fbackground.jpg?alt=media",
+      "bytes": 4393301,
+      "sha256": "bcabf3f5430918ed85333d5a2f548f24509f4a1234f12bd58fe7c203fb678e14",
+      "contentType": "image/jpeg"
+    },
+    "assets/images/bassvictim.png": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/bassvictim.png",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Fbassvictim.png?alt=media",
+      "bytes": 492002,
+      "sha256": "c37095c719f72cba05ab32ac4d0e536a8902e0924d1f85c6db6fbc54c2cc13b6",
+      "contentType": "image/png"
+    },
+    "assets/images/bassvictim_overlay.png": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/bassvictim_overlay.png",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Fbassvictim_overlay.png?alt=media",
+      "bytes": 334514,
+      "sha256": "8d0d7604433ea8d78d95531f12e537ce2b76f51232d989892ebccfb055a45f71",
+      "contentType": "image/png"
+    },
+    "assets/images/blog/entree-one-photo-one.png": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/blog/entree-one-photo-one.png",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Fblog%2Fentree-one-photo-one.png?alt=media",
+      "bytes": 5784671,
+      "sha256": "97fbeb943dea34e247e5a277b0e79fa1d460c8c9f4b6fac3b6d707bb45dd20e0",
+      "contentType": "image/png"
+    },
+    "assets/images/blog/stalking myself photo.jpeg": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/blog/stalking myself photo.jpeg",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Fblog%2Fstalking%20myself%20photo.jpeg?alt=media",
+      "bytes": 170895,
+      "sha256": "37f403571e1db0e607affbab3cd64340cb071693f18151e275c031f54633be6e",
+      "contentType": "image/jpeg"
+    },
+    "assets/images/favicons/apple-touch-icon.png": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/favicons/apple-touch-icon.png",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Ffavicons%2Fapple-touch-icon.png?alt=media",
+      "bytes": 85742,
+      "sha256": "551970f2ebe7b89f2a744f7e224b50db9bff7b2757844eeb3c152c8fbb7c8de2",
+      "contentType": "image/png"
+    },
+    "assets/images/favicons/favicon-96x96.png": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/favicons/favicon-96x96.png",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Ffavicons%2Ffavicon-96x96.png?alt=media",
+      "bytes": 26259,
+      "sha256": "868965901d4b4e05d1dd72cee25213c035076c81c790fac7524377e2077e7b1c",
+      "contentType": "image/png"
+    },
+    "assets/images/favicons/favicon.ico": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/favicons/favicon.ico",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Ffavicons%2Ffavicon.ico?alt=media",
+      "bytes": 15086,
+      "sha256": "9333fcc003f3f65dda543b3e2567cd2627861d8e22807a0a7202c7be5c8f2956",
+      "contentType": "image/x-icon"
+    },
+    "assets/images/favicons/favicon.svg": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/favicons/favicon.svg",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Ffavicons%2Ffavicon.svg?alt=media",
+      "bytes": 15378336,
+      "sha256": "3dbc4d4f3ae2f85ae732d5b7394a3920374e6e13e7b307c2edb2dfcd463f547b",
+      "contentType": "image/svg+xml"
+    },
+    "assets/images/favicons/site.webmanifest": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/favicons/site.webmanifest",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Ffavicons%2Fsite.webmanifest?alt=media",
+      "bytes": 776,
+      "sha256": "35a31a19f4d5654110d829c31253f4035ca12f6c60fde59dc233e412712edba7",
+      "contentType": "application/manifest+json; charset=utf-8"
+    },
+    "assets/images/favicons/web-app-manifest-192x192.png": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/favicons/web-app-manifest-192x192.png",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Ffavicons%2Fweb-app-manifest-192x192.png?alt=media",
+      "bytes": 96334,
+      "sha256": "b298f9e3ec4b01a4d75bba92ca53272ce204cecae9c3c2461306a60cd76e34db",
+      "contentType": "image/png"
+    },
+    "assets/images/favicons/web-app-manifest-512x512.png": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/favicons/web-app-manifest-512x512.png",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Ffavicons%2Fweb-app-manifest-512x512.png?alt=media",
+      "bytes": 566789,
+      "sha256": "6f284831a8b02a58feeeebf66f58cfbf18cfee19753b55ea4820b916061b1266",
+      "contentType": "image/png"
+    },
+    "assets/images/layer-5.jpg": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/layer-5.jpg",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Flayer-5.jpg?alt=media",
+      "bytes": 1516113,
+      "sha256": "8ef634166bc64df5827582d5041b9a8919e1c8d7efe37f5ac6c8c8915649bd2b",
+      "contentType": "image/jpeg"
+    },
+    "assets/images/me_background.gif": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/me_background.gif",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Fme_background.gif?alt=media",
+      "bytes": 33219538,
+      "sha256": "2692759216cb95356e08a58b7962707f2444b6c6684b8ac9fd2447192042adf9",
+      "contentType": "image/gif"
+    },
+    "assets/images/me_foreground.gif": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/me_foreground.gif",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Fme_foreground.gif?alt=media",
+      "bytes": 28541216,
+      "sha256": "9143f826751eae5c157789a91059e8e7bdb582da4b46fdcb4412d7cbd3458ddb",
+      "contentType": "image/gif"
+    },
+    "assets/images/me_hover.gif": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/me_hover.gif",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Fme_hover.gif?alt=media",
+      "bytes": 1874424,
+      "sha256": "c9d0e12b6d894d6f106e0bdbe2bbd09096ca49ac509f952b544b82b99c74ffb5",
+      "contentType": "image/gif"
+    },
+    "assets/images/nettspend.gif": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/nettspend.gif",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Fnettspend.gif?alt=media",
+      "bytes": 1457274,
+      "sha256": "af3701438316fbdfa99ce53ea744f51ae2fcd45bc9b8465a96fcd14b469ee903",
+      "contentType": "image/gif"
+    },
+    "assets/images/nettspend_overlay.png": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/nettspend_overlay.png",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Fnettspend_overlay.png?alt=media",
+      "bytes": 377728,
+      "sha256": "93263d8d6d56a547d32f53ebf19e572c5bb468ae757ac8dd408cf763fee6f3d9",
+      "contentType": "image/png"
+    },
+    "assets/images/overlay.jpg": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/overlay.jpg",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Foverlay.jpg?alt=media",
+      "bytes": 556443,
+      "sha256": "21ba3f13eb2d404d7b34cf5cfcf5f8cb44697792b7e2c88d71bd512b5b416670",
+      "contentType": "image/jpeg"
+    },
+    "assets/images/pilleater.png": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/images/pilleater.png",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fimages%2Fpilleater.png?alt=media",
+      "bytes": 168871,
+      "sha256": "5bf199d4382a94a20107c19410e610f147d7e57aa92b3aadc87edfc05193e40f",
+      "contentType": "image/png"
+    },
+    "assets/js/blog.js": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/js/blog.js",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fjs%2Fblog.js?alt=media",
+      "bytes": 3267,
+      "sha256": "f2d2e46ebfcb89a319c28d842e558d778ef88c826cd2b6bcf5509eb64dc26cad",
+      "contentType": "text/javascript; charset=utf-8"
+    },
+    "assets/js/tvstatic.js": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/js/tvstatic.js",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fjs%2Ftvstatic.js?alt=media",
+      "bytes": 28259,
+      "sha256": "901178152c2dc1e94620d15454ab4952713d60999ef0ae7fde1a1962fdc12728",
+      "contentType": "text/javascript; charset=utf-8"
+    },
+    "assets/media/optimized/me-background-poster.jpg": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/media/optimized/me-background-poster.jpg",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fmedia%2Foptimized%2Fme-background-poster.jpg?alt=media",
+      "bytes": 222720,
+      "sha256": "58c7eaac9151cfbcbcc82b71e66911ec920e5e91b045fc5f6cb658a67cac7c8c",
+      "contentType": "image/jpeg"
+    },
+    "assets/media/optimized/me-background.mp4": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/media/optimized/me-background.mp4",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fmedia%2Foptimized%2Fme-background.mp4?alt=media",
+      "bytes": 6776239,
+      "sha256": "58b3e44d1fd2df670c485d18e7980020679db2a3fa00a588ebed8c7405c683f8",
+      "contentType": "video/mp4"
+    },
+    "assets/media/optimized/me-background.webm": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/media/optimized/me-background.webm",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fmedia%2Foptimized%2Fme-background.webm?alt=media",
+      "bytes": 11945551,
+      "sha256": "42e68dfc538bdd3c2f3fb59a678edaf2630d3762b0aa563dc22bd92541bad890",
+      "contentType": "video/webm"
+    },
+    "assets/media/optimized/me-foreground-poster.jpg": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/media/optimized/me-foreground-poster.jpg",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fmedia%2Foptimized%2Fme-foreground-poster.jpg?alt=media",
+      "bytes": 260613,
+      "sha256": "068e89c0f0bf8ceff32aca8a60b60923859572b267ab127f33c4eba48c7b7bd6",
+      "contentType": "image/jpeg"
+    },
+    "assets/media/optimized/me-foreground.mp4": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/media/optimized/me-foreground.mp4",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fmedia%2Foptimized%2Fme-foreground.mp4?alt=media",
+      "bytes": 10445769,
+      "sha256": "23db7b9152128f959308c6d63168fac4456a3025a6b12ba7e640a48b52df763d",
+      "contentType": "video/mp4"
+    },
+    "assets/media/optimized/me-foreground.webm": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/media/optimized/me-foreground.webm",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fmedia%2Foptimized%2Fme-foreground.webm?alt=media",
+      "bytes": 15603029,
+      "sha256": "40c7db0201681aa96d6fd8511d4fbbb0212e9f0229bb13eb4bd73cdead243abf",
+      "contentType": "video/webm"
+    },
+    "assets/media/optimized/me-hover-poster.jpg": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/media/optimized/me-hover-poster.jpg",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fmedia%2Foptimized%2Fme-hover-poster.jpg?alt=media",
+      "bytes": 227489,
+      "sha256": "3cc74cc480229a945b9ce22dc4c39621ced95b4b5339025ef727ac7808c182aa",
+      "contentType": "image/jpeg"
+    },
+    "assets/media/optimized/me-hover.mp4": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/media/optimized/me-hover.mp4",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fmedia%2Foptimized%2Fme-hover.mp4?alt=media",
+      "bytes": 485692,
+      "sha256": "207f823348d1ed74257a186bb710576be03449ead4ecb72c4c0040e3eb93886b",
+      "contentType": "video/mp4"
+    },
+    "assets/media/optimized/me-hover.webm": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/media/optimized/me-hover.webm",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fmedia%2Foptimized%2Fme-hover.webm?alt=media",
+      "bytes": 652109,
+      "sha256": "33ff41175974b906e15acc50e0ce8ab3435c29afd47d45f0510bd8ecfcac8264",
+      "contentType": "video/webm"
+    },
+    "assets/media/optimized/nettspend-poster.jpg": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/media/optimized/nettspend-poster.jpg",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fmedia%2Foptimized%2Fnettspend-poster.jpg?alt=media",
+      "bytes": 201311,
+      "sha256": "efad5f74d784a64c66fcfd6f9057d2e0a5fd0a07fd0c417d5087b06152c2b90f",
+      "contentType": "image/jpeg"
+    },
+    "assets/media/optimized/nettspend.mp4": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/media/optimized/nettspend.mp4",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fmedia%2Foptimized%2Fnettspend.mp4?alt=media",
+      "bytes": 272974,
+      "sha256": "7497fa381b6421b0639ebef59057e55468c6afe3c2be577e7080446ef1257735",
+      "contentType": "video/mp4"
+    },
+    "assets/media/optimized/nettspend.webm": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/media/optimized/nettspend.webm",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fmedia%2Foptimized%2Fnettspend.webm?alt=media",
+      "bytes": 387252,
+      "sha256": "b02adafb65f9ff94df89d42983b3f96a80aa82ef3286a23dc81f132d15b7f378",
+      "contentType": "video/webm"
+    },
+    "assets/shaders/tvstatic.frag": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/shaders/tvstatic.frag",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fshaders%2Ftvstatic.frag?alt=media",
+      "bytes": 2585,
+      "sha256": "f761ca397f85965d3485367c1556a66d7bfc74f959491090c2a7aab1fefeb6da",
+      "contentType": "text/plain; charset=utf-8"
+    },
+    "assets/shaders/tvstatic.vert": {
+      "objectPath": "nepobabies/assets/v20260305-1/assets/shaders/tvstatic.vert",
+      "publicUrl": "https://firebasestorage.googleapis.com/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/nepobabies%2Fassets%2Fv20260305-1%2Fassets%2Fshaders%2Ftvstatic.vert?alt=media",
+      "bytes": 1517,
+      "sha256": "98ec787028080be4c4ca89820eeb13ad173bb8e6a8f27c257c83cb2c426357ba",
+      "contentType": "text/plain; charset=utf-8"
+    }
+  }
+}

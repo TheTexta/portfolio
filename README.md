@@ -46,7 +46,38 @@ npm run dev
 npm run build
 npm run start
 npm run lint
+npm run photo-graph:migrate
+npm run nepobabies:assets:dry-run
+npm run nepobabies:assets:upload
+npm run nepobabies:assets:verify
+npm run nepobabies:assets:rewrite
 ```
+
+## Nepobabies assets (Firebase Storage)
+
+`nepobabiesruntheunderground` static assets are versioned in Firebase Storage under:
+
+- `nepobabies/assets/<NEPOBABIES_ASSET_VERSION>/assets/**`
+
+Set:
+
+```bash
+NEPOBABIES_ASSET_VERSION=v20260305-1
+```
+
+Migration sequence:
+
+```bash
+npm run nepobabies:assets:dry-run
+npm run nepobabies:assets:upload
+npm run nepobabies:assets:verify
+npm run nepobabies:assets:rewrite
+```
+
+Notes:
+
+- `dry-run` and `upload` require a local `app/components/projects/nepobabiesruntheunderground/assets` source tree.
+- `verify` and `rewrite` run from `assets-manifest.json`, so they continue to work after local asset cleanup.
 
 ## How the photo graph works
 
@@ -90,4 +121,4 @@ Images are loaded from Firebase Storage at runtime. The graph starts by loading 
 - There is no automated test suite in the repo yet; linting is the main built-in code quality check.
 
 ## TODO
-- compressed loading of nepobabiesruntheunderground image previews.
+- Continue improving media compression and delivery quality for project previews.

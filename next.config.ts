@@ -6,11 +6,6 @@ const nextConfig: NextConfig = {
     deviceSizes: CANVAS_IMAGE_DEVICE_SIZES,
     imageSizes: CANVAS_IMAGE_SIZES,
     qualities: [72, 75],
-    localPatterns: [
-      {
-        pathname: "/components/projects/nepobabiesruntheunderground/preview/assets/images/**",
-      },
-    ],
     remotePatterns: [
       {
         protocol: "https",
