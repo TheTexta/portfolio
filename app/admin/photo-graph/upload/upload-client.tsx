@@ -4,7 +4,9 @@ import {
   ChangeEvent,
   DragEvent,
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -23,8 +25,21 @@ type UploadApiResponse = {
   error?: string;
 };
 
+type UploadUrlResponse = {
+  ok: boolean;
+  objectPath: string;
+  uploadUrl: string;
+  requiredHeaders?: Record<string, string>;
+  expiresInSeconds: number;
+  error?: string;
+};
+
 type AdminGraphNode = {
   id: string;
+  scale?: number;
+  colour?: string;
+  storagePath?: string;
+  url?: string;
   correlations: Record<string, number>;
   feature?: GraphFeature;
 };
@@ -42,6 +57,13 @@ type ApplyCorrelationsResponse = {
   error?: string;
 };
 
+type DeletePhotoResponse = {
+  ok: boolean;
+  deletedId: string;
+  nodeCount: number;
+  error?: string;
+};
+
 type CorrelationUpdate = {
   leftId: string;
   rightId: string;
@@ -56,11 +78,42 @@ type ComputedFeaturePayload = {
   colour: string;
 };
 
+type UploadRegistration = {
+  storagePath: string;
+  feature: Omit<ComputedFeaturePayload, "colour">;
+};
+
+type VerboseLogLevel = "info" | "success" | "warn" | "error";
+
+type VerboseLogEntry = {
+  id: number;
+  createdAt: number;
+  level: VerboseLogLevel;
+  message: string;
+};
+
 const EDGE_UPDATE_BATCH_SIZE = 2000;
 const COMPUTE_YIELD_INTERVAL = 750;
 
 function bytesToMb(size: number) {
   return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function formatLogTimestamp(timestamp: number) {
+  return new Date(timestamp).toLocaleTimeString(undefined, {
+    hour12: false,
+  });
+}
+
+async function parseJsonOrThrow<T>(response: Response): Promise<T> {
+  const text = await response.text();
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    const fallback = text.trim() || `Request failed with status ${response.status}.`;
+    throw new Error(fallback);
+  }
 }
 
 function sortNodesById(nodes: AdminGraphNode[]) {
@@ -220,17 +273,106 @@ async function buildCorrelationUpdates(
 
 export default function PhotoGraphUploadClient() {
   const router = useRouter();
+  const correlationProgressRef = useRef(-1);
 
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [createdIds, setCreatedIds] = useState<string[]>([]);
+  const [graphNodes, setGraphNodes] = useState<AdminGraphNode[]>([]);
+  const [loadingGraphNodes, setLoadingGraphNodes] = useState(false);
+  const [deletingNodeId, setDeletingNodeId] = useState<string | null>(null);
+  const [manageQuery, setManageQuery] = useState("");
+  const [verbosePanelOpen, setVerbosePanelOpen] = useState(true);
+  const [verboseLogs, setVerboseLogs] = useState<VerboseLogEntry[]>([]);
 
   const totalBytes = useMemo(
     () => files.reduce((sum, file) => sum + file.size, 0),
     [files],
   );
+
+  const filteredGraphNodes = useMemo(() => {
+    const query = manageQuery.trim().toLowerCase();
+    const sortedNodes = sortNodesById(graphNodes);
+
+    if (!query) {
+      return sortedNodes;
+    }
+
+    return sortedNodes.filter((node) => {
+      return (
+        node.id.toLowerCase().includes(query) ||
+        (node.storagePath ?? "").toLowerCase().includes(query)
+      );
+    });
+  }, [graphNodes, manageQuery]);
+
+  const appendVerboseLog = useCallback((message: string, level: VerboseLogLevel = "info") => {
+    setVerboseLogs((current) => {
+      const nextEntry: VerboseLogEntry = {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        createdAt: Date.now(),
+        level,
+        message,
+      };
+
+      const next = [...current, nextEntry];
+      return next.length > 500 ? next.slice(next.length - 500) : next;
+    });
+  }, []);
+
+  const setStatusWithLog = useCallback(
+    (message: string, level: VerboseLogLevel = "info") => {
+      setStatusMessage(message);
+      appendVerboseLog(message, level);
+    },
+    [appendVerboseLog],
+  );
+
+  const clearVerboseLogs = useCallback(() => {
+    setVerboseLogs([]);
+  }, []);
+
+  const fetchGraphNodes = useCallback(
+    async (silent = false) => {
+      if (!silent) {
+        setStatusWithLog("Loading graph nodes for admin panel...");
+      }
+
+      setLoadingGraphNodes(true);
+
+      try {
+        const response = await fetch("/api/admin/photo-graph/graph", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        const body = await parseJsonOrThrow<AdminGraphResponse>(response);
+
+        if (!response.ok || !Array.isArray(body.nodes)) {
+          throw new Error(body.error ?? "Failed to load graph metadata.");
+        }
+
+        setGraphNodes(body.nodes);
+        appendVerboseLog(
+          `Admin panel refreshed (${body.nodes.length} node(s), source: ${body.source}).`,
+          "success",
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to load graph nodes.";
+        appendVerboseLog(`Admin panel refresh failed: ${message}`, "error");
+      } finally {
+        setLoadingGraphNodes(false);
+      }
+    },
+    [appendVerboseLog, setStatusWithLog],
+  );
+
+  useEffect(() => {
+    void fetchGraphNodes(true);
+  }, [fetchGraphNodes]);
 
   const addFiles = useCallback((incomingFiles: FileList | File[]) => {
     const list = Array.from(incomingFiles);
@@ -269,19 +411,22 @@ export default function PhotoGraphUploadClient() {
 
   const applyCorrelationBatches = async (updates: CorrelationUpdate[]) => {
     if (!updates.length) {
+      appendVerboseLog("No correlation updates to apply.", "warn");
       return;
     }
 
     const totalBatches = Math.ceil(updates.length / EDGE_UPDATE_BATCH_SIZE);
+    appendVerboseLog(
+      `Applying ${updates.length} edge updates in ${totalBatches} batch(es).`,
+      "info",
+    );
 
     for (let batchIndex = 0; batchIndex < totalBatches; batchIndex += 1) {
       const start = batchIndex * EDGE_UPDATE_BATCH_SIZE;
       const end = start + EDGE_UPDATE_BATCH_SIZE;
       const batch = updates.slice(start, end);
 
-      setStatusMessage(
-        `Applying edge updates (${batchIndex + 1}/${totalBatches})...`,
-      );
+      setStatusWithLog(`Applying edge updates (${batchIndex + 1}/${totalBatches})...`);
 
       const response = await fetch("/api/admin/photo-graph/apply-correlations", {
         method: "POST",
@@ -291,89 +436,219 @@ export default function PhotoGraphUploadClient() {
         body: JSON.stringify({ updates: batch }),
       });
 
-      const body = (await response.json()) as ApplyCorrelationsResponse;
+      const body = await parseJsonOrThrow<ApplyCorrelationsResponse>(response);
 
       if (!response.ok || !body.ok) {
         throw new Error(body.error ?? "Failed to apply correlation updates.");
       }
+
+      appendVerboseLog(
+        `Applied batch ${batchIndex + 1}/${totalBatches} (${batch.length} updates).`,
+        "success",
+      );
     }
   };
+
+  const handleDeleteNode = useCallback(
+    async (node: AdminGraphNode) => {
+      const confirmed = window.confirm(
+        `Delete node ${node.id}? This removes the photo and its graph edges.`,
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      setDeletingNodeId(node.id);
+      setErrorMessage(null);
+      setStatusWithLog(`Deleting node ${node.id}...`, "warn");
+
+      try {
+        const response = await fetch("/api/admin/photo-graph/delete", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ nodeId: node.id }),
+        });
+
+        const body = await parseJsonOrThrow<DeletePhotoResponse>(response);
+
+        if (!response.ok || !body.ok) {
+          throw new Error(body.error ?? "Failed to delete node.");
+        }
+
+        appendVerboseLog(
+          `Deleted node ${body.deletedId}. Remaining nodes: ${body.nodeCount}.`,
+          "success",
+        );
+
+        setCreatedIds((current) => current.filter((id) => id !== node.id));
+        await fetchGraphNodes(true);
+        setStatusWithLog(`Node ${body.deletedId} deleted.`, "success");
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Delete failed unexpectedly.";
+        setErrorMessage(message);
+        appendVerboseLog(`Delete failed for node ${node.id}: ${message}`, "error");
+      } finally {
+        setDeletingNodeId(null);
+      }
+    },
+    [appendVerboseLog, fetchGraphNodes, setStatusWithLog],
+  );
 
   const handleUpload = async () => {
     if (!files.length || isProcessing) {
       return;
     }
 
+    correlationProgressRef.current = -1;
     setIsProcessing(true);
     setErrorMessage(null);
-    setStatusMessage("Extracting image features...");
+    setStatusWithLog("Starting upload pipeline...", "info");
 
     try {
-      const featurePayloads: ComputedFeaturePayload[] = [];
+      appendVerboseLog(`Validated ${files.length} file(s) for upload.`, "success");
+
+      const registrations: UploadRegistration[] = [];
 
       for (let index = 0; index < files.length; index += 1) {
         const file = files[index];
-        setStatusMessage(
-          `Extracting image features (${index + 1}/${files.length}): ${file.name}`,
+
+        setStatusWithLog(`Extracting image features (${index + 1}/${files.length}): ${file.name}`);
+        const featurePayload = await computeFeaturePayload(file);
+        appendVerboseLog(`Feature extraction complete: ${file.name}.`, "success");
+
+        setStatusWithLog(`Requesting upload URL (${index + 1}/${files.length}): ${file.name}`);
+        const uploadUrlResponse = await fetch("/api/admin/photo-graph/upload-url", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            filename: file.name,
+            contentType: file.type,
+          }),
+        });
+
+        const uploadUrlBody = await parseJsonOrThrow<UploadUrlResponse>(uploadUrlResponse);
+
+        if (!uploadUrlResponse.ok || !uploadUrlBody.ok) {
+          throw new Error(uploadUrlBody.error ?? "Failed to get upload URL.");
+        }
+
+        setStatusWithLog(`Uploading directly to Firebase (${index + 1}/${files.length}): ${file.name}`);
+
+        const directUploadResponse = await fetch(uploadUrlBody.uploadUrl, {
+          method: "PUT",
+          headers: uploadUrlBody.requiredHeaders ?? { "content-type": file.type },
+          body: file,
+        });
+
+        if (!directUploadResponse.ok) {
+          const failureText = await directUploadResponse.text();
+          throw new Error(
+            failureText.trim() ||
+              `Direct upload failed for ${file.name} (status ${directUploadResponse.status}).`,
+          );
+        }
+
+        registrations.push({
+          storagePath: uploadUrlBody.objectPath,
+          feature: {
+            rgb: featurePayload.rgb,
+            lab: featurePayload.lab,
+            hue: featurePayload.hue,
+            longSide: featurePayload.longSide,
+          },
+        });
+
+        appendVerboseLog(
+          `Direct upload complete: ${file.name} -> ${uploadUrlBody.objectPath}.`,
+          "success",
         );
-
-        featurePayloads.push(await computeFeaturePayload(file));
       }
 
-      const formData = new FormData();
-      for (const file of files) {
-        formData.append("files", file);
-      }
-      formData.append("features", JSON.stringify(featurePayloads));
+      setStatusWithLog("Registering uploaded files as graph nodes...");
 
-      setStatusMessage("Uploading files and creating nodes...");
-
-      const uploadResponse = await fetch("/api/admin/photo-graph/upload", {
+      const registerResponse = await fetch("/api/admin/photo-graph/upload", {
         method: "POST",
-        body: formData,
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          uploads: registrations,
+        }),
       });
 
-      const uploadBody = (await uploadResponse.json()) as UploadApiResponse;
+      const registerBody = await parseJsonOrThrow<UploadApiResponse>(registerResponse);
 
-      if (!uploadResponse.ok || !uploadBody.ok) {
-        throw new Error(uploadBody.error ?? "Upload request failed.");
+      if (!registerResponse.ok || !registerBody.ok) {
+        throw new Error(registerBody.error ?? "Upload registration failed.");
       }
 
-      setCreatedIds(uploadBody.createdIds);
+      setCreatedIds(registerBody.createdIds);
       setFiles([]);
 
-      setStatusMessage("Fetching graph snapshot for local edge generation...");
+      appendVerboseLog(
+        `Registered ${registerBody.createdIds.length} new node(s): ${registerBody.createdIds.join(", ")}.`,
+        "success",
+      );
+
+      setStatusWithLog("Fetching graph snapshot for local edge generation...");
 
       const graphResponse = await fetch("/api/admin/photo-graph/graph", {
         method: "GET",
         cache: "no-store",
       });
 
-      const graphBody = (await graphResponse.json()) as AdminGraphResponse;
+      const graphBody = await parseJsonOrThrow<AdminGraphResponse>(graphResponse);
 
       if (!graphResponse.ok || !Array.isArray(graphBody.nodes)) {
         throw new Error(graphBody.error ?? "Failed to load graph metadata.");
       }
 
+      appendVerboseLog(
+        `Loaded graph snapshot (${graphBody.nodes.length} node(s), source: ${graphBody.source}).`,
+        "success",
+      );
+
       const correlationBuild = await buildCorrelationUpdates(
         graphBody.nodes,
-        uploadBody.createdIds,
+        registerBody.createdIds,
         (processed, total) => {
           const ratio = total > 0 ? Math.round((processed / total) * 100) : 100;
-          setStatusMessage(`Generating edges in browser (${ratio}%)...`);
+          setStatusWithLog(`Generating edges in browser (${ratio}%)...`);
+
+          if (ratio >= correlationProgressRef.current + 10 || ratio === 100) {
+            correlationProgressRef.current = ratio;
+            appendVerboseLog(
+              `Edge generation progress: ${processed}/${total} (${ratio}%).`,
+              "info",
+            );
+          }
         },
       );
 
-      await applyCorrelationBatches(correlationBuild.updates);
+      appendVerboseLog(
+        `Edge generation complete (${correlationBuild.totalPairs} comparisons, ${correlationBuild.updates.length} updates).`,
+        "success",
+      );
 
-      setStatusMessage(
-        `Done. Added ${uploadBody.createdIds.length} image(s) and generated ${correlationBuild.updates.length} edge updates.`,
+      await applyCorrelationBatches(correlationBuild.updates);
+      await fetchGraphNodes(true);
+
+      setStatusWithLog(
+        `Done. Added ${registerBody.createdIds.length} image(s) and generated ${correlationBuild.updates.length} edge updates.`,
+        "success",
       );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Upload failed unexpectedly.";
       setErrorMessage(message);
       setStatusMessage(null);
+      appendVerboseLog(`Pipeline failed: ${message}`, "error");
     } finally {
       setIsProcessing(false);
     }
@@ -396,7 +671,7 @@ export default function PhotoGraphUploadClient() {
         <div>
           <h1 className="text-2xl font-semibold">Photo Graph Upload Admin</h1>
           <p className="mt-1 text-sm opacity-70">
-            Batch upload images, then your browser generates node correlations and syncs updates.
+            Batch upload images directly to Firebase, then your browser generates node correlations and syncs updates.
           </p>
         </div>
 
@@ -460,6 +735,20 @@ export default function PhotoGraphUploadClient() {
             Clear
           </button>
         )}
+
+        <button
+          onClick={() => setVerbosePanelOpen((current) => !current)}
+          className="rounded-md border border-black/50 px-4 py-2 text-sm dark:border-white/50"
+        >
+          {verbosePanelOpen ? "Hide Verbose Panel" : "Show Verbose Panel"}
+        </button>
+
+        <button
+          onClick={clearVerboseLogs}
+          className="rounded-md border border-black/50 px-4 py-2 text-sm dark:border-white/50"
+        >
+          Clear Logs
+        </button>
       </div>
 
       {statusMessage && <p className="mt-4 text-sm text-blue-700">{statusMessage}</p>}
@@ -470,6 +759,114 @@ export default function PhotoGraphUploadClient() {
           Created node IDs: {createdIds.join(", ")}
         </p>
       )}
+
+      <section className="mt-6 rounded-md border border-black/20 p-4 dark:border-white/20">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold">Manage Photos</h2>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="opacity-70">{graphNodes.length} total node(s)</span>
+            <button
+              onClick={() => void fetchGraphNodes()}
+              disabled={loadingGraphNodes || isProcessing || deletingNodeId !== null}
+              className="rounded-md border border-black/50 px-2 py-1 disabled:opacity-50 dark:border-white/50"
+            >
+              {loadingGraphNodes ? "Refreshing..." : "Refresh"}
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-3">
+          <input
+            type="text"
+            value={manageQuery}
+            onChange={(event) => setManageQuery(event.target.value)}
+            placeholder="Filter by node ID or storage path..."
+            className="w-full rounded-md border border-black/20 bg-transparent px-3 py-2 text-sm outline-none focus:border-black/50 dark:border-white/20 dark:focus:border-white/50"
+          />
+        </div>
+
+        <div className="mt-3 max-h-64 overflow-y-auto rounded-md border border-black/10 p-2 text-xs dark:border-white/10">
+          {filteredGraphNodes.length === 0 ? (
+            <p className="px-2 py-2 opacity-70">No nodes match your filter.</p>
+          ) : (
+            <ul className="space-y-1">
+              {filteredGraphNodes.map((node) => {
+                const isDeleting = deletingNodeId === node.id;
+                return (
+                  <li
+                    key={node.id}
+                    className="flex flex-col gap-2 rounded-md border border-black/10 p-2 dark:border-white/10"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="font-mono text-[11px]">
+                        <span className="font-semibold">ID {node.id}</span>{" "}
+                        <span className="opacity-70">
+                          ({Object.keys(node.correlations ?? {}).length} edges)
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => void handleDeleteNode(node)}
+                        disabled={
+                          isProcessing ||
+                          loadingGraphNodes ||
+                          (deletingNodeId !== null && !isDeleting)
+                        }
+                        className="rounded-md border border-red-500/70 px-2 py-1 text-red-600 disabled:opacity-50"
+                      >
+                        {isDeleting ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
+                    {node.storagePath && (
+                      <p className="break-all font-mono text-[10px] opacity-70">
+                        {node.storagePath}
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      <section className="mt-6 rounded-md border border-black/20 p-4 dark:border-white/20">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold">Verbose Activity</h2>
+          <p className="text-xs opacity-70">{verboseLogs.length} log entries</p>
+        </div>
+
+        {verbosePanelOpen ? (
+          <div className="mt-3 max-h-64 overflow-y-auto rounded-md border border-black/10 bg-black/5 p-3 text-xs dark:border-white/10 dark:bg-white/5">
+            {verboseLogs.length === 0 ? (
+              <p className="opacity-70">No activity yet.</p>
+            ) : (
+              <ul className="space-y-1">
+                {verboseLogs.map((entry) => (
+                  <li key={entry.id} className="font-mono leading-relaxed">
+                    <span className="opacity-70">[{formatLogTimestamp(entry.createdAt)}]</span>{" "}
+                    <span
+                      className={
+                        entry.level === "error"
+                          ? "text-red-600"
+                          : entry.level === "warn"
+                            ? "text-amber-600"
+                            : entry.level === "success"
+                              ? "text-green-600"
+                              : "text-blue-600"
+                      }
+                    >
+                      {entry.level.toUpperCase()}
+                    </span>{" "}
+                    {entry.message}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
+          <p className="mt-2 text-xs opacity-70">Panel hidden.</p>
+        )}
+      </section>
     </main>
   );
 }
