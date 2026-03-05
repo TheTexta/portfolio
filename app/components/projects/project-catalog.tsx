@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import HtmlProjectPreview from "@/app/components/projects/html-project-preview";
+import GrailedPlusPreview from "@/app/components/projects/grailed-plus/grailed-plus-preview";
 import PhotoGraphCanvas from "@/app/components/projects/photo-graph/PhotoGraphCanvas";
 import { PROJECT_ROUTES } from "./project-routes";
 
@@ -19,6 +20,16 @@ export const projectCatalog: ProjectDefinition[] = [
       "Interactive force-directed image graph where photographs dynamically cluster based on color similarity; an evolving canvas shaped by user interaction.",
     tags: ["Next.js", "D3", "Firebase"],
     renderPreview: (darkMode) => <PhotoGraphCanvas forcedDarkMode={darkMode} />,
+  },
+  {
+    id: "grailed-plus",
+    title: "Grailed Plus (V2)",
+    description:
+      "Browser extension that restores Grailed listing intelligence with price history, drop metrics, seller metadata, currency conversion, and site-wide dark mode controls.",
+    tags: ["Browser Extension", "Chrome MV3", "Firefox MV3", "JavaScript"],
+    renderPreview: (darkMode) => (
+      <GrailedPlusPreview forcedDarkMode={darkMode} />
+    ),
   },
   {
     id: "nepobabiesruntheunderground",
