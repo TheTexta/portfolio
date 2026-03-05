@@ -121,4 +121,7 @@ Images are loaded from Firebase Storage at runtime. The graph starts by loading 
 - There is no automated test suite in the repo yet; linting is the main built-in code quality check.
 
 ## TODO
-- Continue improving media compression and delivery quality for project previews.
+- Custom font for main page
+- Fix project description for nepobabiesruntheunderground and grailed-plus
+- superwide images need to be larger for photograph
+- less default zoom for nodegraphphoto
