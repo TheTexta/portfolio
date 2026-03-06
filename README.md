@@ -121,7 +121,6 @@ Images are loaded from Firebase Storage at runtime. The graph starts by loading 
 - There is no automated test suite in the repo yet; linting is the main built-in code quality check.
 
 ## TODO
-- superwide images need to be larger for photograph
 - less default zoom for nodegraphphoto
 - possibly do subtle (low saturation) gradient (masked) versions of all my favourite images that scroll in random paralaxes in the background
 - fix icon centering on safari

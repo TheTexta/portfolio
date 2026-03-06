@@ -39,8 +39,10 @@ type SimNode = d3.SimulationNodeDatum & {
   sourceUrl: string;
   baseSize: number;
   aspectRatio: number;
+  layerNoise: number;
   w: number;
   h: number;
+  renderArea: number;
   loadedWidth?: number;
   requestedWidth?: number;
   hasInitialImage?: boolean;
@@ -54,6 +56,11 @@ type SimLink = d3.SimulationLinkDatum<SimNode> & {
   target: string | SimNode;
   value: number;
   _baseValue?: number;
+};
+
+type RectangleCollisionForce = {
+  (alpha: number): void;
+  initialize: (nodes: SimNode[] | ArrayLike<SimNode>) => void;
 };
 
 type CanvasInputEvent = MouseEvent | TouchEvent | PointerEvent | WheelEvent;
@@ -94,6 +101,13 @@ const GRAPH_CONFIG = {
   maxAreaBoost: 1.55,
   maxLongSideMultiplier: 2,
   collidePad: 0,
+  collideBoxScale: 1.3,
+  collideStrength: 0.55,
+  collideIterations: 1,
+  linkStrengthMin: 0.0001,
+  linkStrengthMax: 0.04,
+  linkNodeSizeDistanceFactor: 0.72,
+  layerAreaBlurStrength: 0.14,
   distMin: 10,
   distMax: 1600,
   charge: -420,
@@ -109,6 +123,8 @@ const overlayPanelClass =
 const overlayTextClass = "m-0 p-0 text-xs";
 const sliderClass =
   "accent-grey-800 range-sm h-1 rounded-full bg-white/50 border-none";
+const INITIAL_CHARGE_MULT = 5;
+const DEFAULT_CHARGE_MULT = 1;
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
@@ -120,6 +136,20 @@ function isAbortError(error: unknown) {
 
 function resolveNodeId(node: RawNode, index: number) {
   return String(node.id ?? index + 1);
+}
+
+function computeNodeLayerNoise(id: string) {
+  // Deterministic per-node noise in [-1, 1] to softly blur strict layering.
+  let hash = 0;
+  for (let index = 0; index < id.length; index += 1) {
+    hash = (hash * 31 + id.charCodeAt(index)) >>> 0;
+  }
+
+  if (hash === 0) {
+    return 0;
+  }
+
+  return (hash / 0xffffffff) * 2 - 1;
 }
 
 function normalizeAspectRatio(aspectRatio: number | undefined) {
@@ -169,6 +199,7 @@ function sizeNodeFromAspectRatio(node: SimNode) {
 
   node.w = width;
   node.h = height;
+  node.renderArea = Math.max(1, width * height);
 }
 
 async function resolveNodeSourceUrl(
@@ -210,8 +241,10 @@ async function buildGraph(data: RawNode[], imageBasePath: string) {
         sourceUrl: await resolveNodeSourceUrl(entry, id, imageBasePath),
         baseSize: box,
         aspectRatio,
+        layerNoise: computeNodeLayerNoise(id),
         w: box,
         h: box,
+        renderArea: box * box,
         x: (Math.random() - 0.5) * 50,
         y: (Math.random() - 0.5) * 50,
       };
@@ -247,6 +280,112 @@ async function buildGraph(data: RawNode[], imageBasePath: string) {
   }
 
   return { nodes, links };
+}
+
+function createRectangleCollideForce(
+  padding = 0,
+  boxScale = GRAPH_CONFIG.collideBoxScale,
+  strength = GRAPH_CONFIG.collideStrength,
+  iterations = GRAPH_CONFIG.collideIterations,
+): RectangleCollisionForce {
+  let nodes: SimNode[] = [];
+
+  const force: RectangleCollisionForce = (alpha) => {
+    if (!nodes.length) return;
+
+    for (let iteration = 0; iteration < iterations; iteration += 1) {
+      for (let leftIndex = 0; leftIndex < nodes.length; leftIndex += 1) {
+        const left = nodes[leftIndex];
+        const leftX = left.x ?? 0;
+        const leftY = left.y ?? 0;
+        const leftHalfWidth = (left.w * boxScale) / 2 + padding;
+        const leftHalfHeight = (left.h * boxScale) / 2 + padding;
+
+        for (let rightIndex = leftIndex + 1; rightIndex < nodes.length; rightIndex += 1) {
+          const right = nodes[rightIndex];
+          const rightX = right.x ?? 0;
+          const rightY = right.y ?? 0;
+          const rightHalfWidth = (right.w * boxScale) / 2 + padding;
+          const rightHalfHeight = (right.h * boxScale) / 2 + padding;
+
+          const deltaX = rightX - leftX;
+          const deltaY = rightY - leftY;
+          const overlapX = leftHalfWidth + rightHalfWidth - Math.abs(deltaX);
+          if (overlapX <= 0) continue;
+
+          const overlapY = leftHalfHeight + rightHalfHeight - Math.abs(deltaY);
+          if (overlapY <= 0) continue;
+
+          const pushFactor = strength * alpha;
+          if (overlapX < overlapY) {
+            const directionX = deltaX === 0 ? 1 : Math.sign(deltaX);
+            const pushX = overlapX * pushFactor * directionX;
+
+            if (left.fx == null && right.fx == null) {
+              left.vx = (left.vx ?? 0) - pushX * 0.5;
+              right.vx = (right.vx ?? 0) + pushX * 0.5;
+            } else if (left.fx == null) {
+              left.vx = (left.vx ?? 0) - pushX;
+            } else if (right.fx == null) {
+              right.vx = (right.vx ?? 0) + pushX;
+            }
+            continue;
+          }
+
+          const directionY = deltaY === 0 ? 1 : Math.sign(deltaY);
+          const pushY = overlapY * pushFactor * directionY;
+          if (left.fy == null && right.fy == null) {
+            left.vy = (left.vy ?? 0) - pushY * 0.5;
+            right.vy = (right.vy ?? 0) + pushY * 0.5;
+          } else if (left.fy == null) {
+            left.vy = (left.vy ?? 0) - pushY;
+          } else if (right.fy == null) {
+            right.vy = (right.vy ?? 0) + pushY;
+          }
+        }
+      }
+    }
+  };
+
+  force.initialize = (nextNodes) => {
+    nodes = Array.from(nextNodes);
+  };
+
+  return force;
+}
+
+function getLinkValue(link: SimLink) {
+  return clamp(link._baseValue ?? link.value ?? 0, 0, 1);
+}
+
+function resolveLinkNodes(link: SimLink) {
+  const source = typeof link.source === "object" ? link.source : null;
+  const target = typeof link.target === "object" ? link.target : null;
+  return { source, target };
+}
+
+function computeLinkDistance(link: SimLink, minDistance: number, maxDistance: number) {
+  const value = getLinkValue(link);
+  const desiredDistance = minDistance + (1 - value) * (maxDistance - minDistance);
+  const { source, target } = resolveLinkNodes(link);
+  if (!source || !target) {
+    return desiredDistance;
+  }
+
+  const minAxisDistance = Math.max(
+    ((source.w + target.w) / 2) * GRAPH_CONFIG.linkNodeSizeDistanceFactor,
+    ((source.h + target.h) / 2) * GRAPH_CONFIG.linkNodeSizeDistanceFactor,
+  );
+
+  return Math.max(desiredDistance, minAxisDistance);
+}
+
+function computeLinkStrength(link: SimLink) {
+  const value = getLinkValue(link);
+  return (
+    GRAPH_CONFIG.linkStrengthMin +
+    value * (GRAPH_CONFIG.linkStrengthMax - GRAPH_CONFIG.linkStrengthMin)
+  );
 }
 
 function loadImage(url: string, signal: AbortSignal) {
@@ -315,6 +454,32 @@ function getNodeTopLeft(node: SimNode) {
   };
 }
 
+function getNodeRenderArea(node: SimNode) {
+  if (Number.isFinite(node.renderArea) && node.renderArea > 0) {
+    return node.renderArea;
+  }
+
+  return Math.max(1, node.w * node.h);
+}
+
+function getNodeLayerArea(node: SimNode) {
+  const baseArea = getNodeRenderArea(node);
+  const blurScale =
+    1 + clamp(node.layerNoise, -1, 1) * GRAPH_CONFIG.layerAreaBlurStrength;
+  return Math.max(1, baseArea * blurScale);
+}
+
+function getRenderOrderedNodes(nodes: SimNode[]) {
+  return [...nodes].sort((left, right) => {
+    const areaDelta = getNodeLayerArea(right) - getNodeLayerArea(left);
+    if (Math.abs(areaDelta) > 1e-6) {
+      return areaDelta;
+    }
+
+    return left.id.localeCompare(right.id);
+  });
+}
+
 function buildInspectFilename(
   id: string,
   sourceUrl: string,
@@ -359,11 +524,12 @@ export default function PhotoGraphCanvas({
   const frameRef = useRef<number | null>(null);
   const settleTimeoutRef = useRef<number | null>(null);
   const upgradeTimeoutRef = useRef<number | null>(null);
+  const initialChargeResetTimeoutRef = useRef<number | null>(null);
   const alphaRef = useRef({ value: 1, updatedAt: 0 });
   const darkModeRef = useRef(false);
   const controlsRef = useRef<GraphControls>({
     hideConnections: false,
-    chargeMult: 1,
+    chargeMult: INITIAL_CHARGE_MULT,
     distMinMult: 1,
     distMaxMult: 1,
   });
@@ -371,7 +537,7 @@ export default function PhotoGraphCanvas({
   const [menuOpen, setMenuOpen] = useState(false);
   const [controls, setControls] = useState<GraphControls>({
     hideConnections: false,
-    chargeMult: 1,
+    chargeMult: INITIAL_CHARGE_MULT,
     distMinMult: 1,
     distMaxMult: 1,
   });
@@ -424,7 +590,7 @@ export default function PhotoGraphCanvas({
     );
 
     context.strokeStyle = isDarkMode ? "rgba(255, 255, 255, 0.72)" : "#000";
-    context.lineWidth = 3;
+    context.lineWidth = 1;
 
     for (const link of linksRef.current) {
       const opacity = link.value ?? 0;
@@ -443,7 +609,8 @@ export default function PhotoGraphCanvas({
 
     context.globalAlpha = 1;
 
-    for (const node of nodesRef.current) {
+    const renderNodes = getRenderOrderedNodes(nodesRef.current);
+    for (const node of renderNodes) {
       const { x, y } = getNodeTopLeft(node);
       const image = imagesRef.current.get(node.id);
 
@@ -482,9 +649,10 @@ export default function PhotoGraphCanvas({
   const hitNode = useCallback(
     (event: CanvasInputEvent, canvas: HTMLCanvasElement) => {
       const [mouseX, mouseY] = getWorldPoint(event, canvas);
+      const renderNodes = getRenderOrderedNodes(nodesRef.current);
 
-      for (let index = nodesRef.current.length - 1; index >= 0; index -= 1) {
-        const node = nodesRef.current[index];
+      for (let index = renderNodes.length - 1; index >= 0; index -= 1) {
+        const node = renderNodes[index];
         const { x, y } = getNodeTopLeft(node);
 
         if (
@@ -541,9 +709,9 @@ export default function PhotoGraphCanvas({
       | undefined;
     if (linkForce) {
       linkForce.distance((link) => {
-        const value = link._baseValue ?? link.value ?? 0;
-        return minDistance + (1 - value) * (maxDistance - minDistance);
+        return computeLinkDistance(link, minDistance, maxDistance);
       });
+      linkForce.strength((link) => computeLinkStrength(link));
     }
 
     const chargeForce = simulation.force("charge") as
@@ -600,7 +768,7 @@ export default function PhotoGraphCanvas({
 
   const refreshNodeAfterImageLoad = useCallback(() => {
     const collideForce = simRef.current?.force("collide") as
-      | d3.ForceCollide<SimNode>
+      | RectangleCollisionForce
       | undefined;
     collideForce?.initialize?.(nodesRef.current);
 
@@ -925,16 +1093,10 @@ export default function PhotoGraphCanvas({
           d3
             .forceLink<SimNode, SimLink>(links)
             .id((node) => node.id)
-            .distance((link) => {
-              const value = link._baseValue ?? link.value ?? 0;
-              return (
-                GRAPH_CONFIG.distMin +
-                (1 - value) * (GRAPH_CONFIG.distMax - GRAPH_CONFIG.distMin)
-              );
-            })
-            .strength(
-              (link) => 0.15 + 0.85 * (link._baseValue ?? link.value ?? 0),
-            ),
+            .distance((link) =>
+              computeLinkDistance(link, GRAPH_CONFIG.distMin, GRAPH_CONFIG.distMax),
+            )
+            .strength((link) => computeLinkStrength(link)),
         )
         .force(
           "charge",
@@ -944,12 +1106,7 @@ export default function PhotoGraphCanvas({
         .force("y", d3.forceY<SimNode>().strength(0.09))
         .force(
           "collide",
-          d3
-            .forceCollide<SimNode>()
-            .radius(
-              (node) => Math.max(node.w, node.h) / 2 + GRAPH_CONFIG.collidePad,
-            )
-            .iterations(3),
+          createRectangleCollideForce(GRAPH_CONFIG.collidePad),
         )
         .on("tick", requestRender);
 
@@ -978,6 +1135,18 @@ export default function PhotoGraphCanvas({
       simulation.alpha(1).restart();
       requestRender();
 
+      if (initialChargeResetTimeoutRef.current !== null) {
+        window.clearTimeout(initialChargeResetTimeoutRef.current);
+      }
+      initialChargeResetTimeoutRef.current = window.setTimeout(() => {
+        initialChargeResetTimeoutRef.current = null;
+        setControls((current) =>
+          current.chargeMult === INITIAL_CHARGE_MULT
+            ? { ...current, chargeMult: DEFAULT_CHARGE_MULT }
+            : current,
+        );
+      }, 0);
+
       await preloadImages(abortController.signal);
       scheduleUpgradePass(abortController.signal, 0);
     };
@@ -1000,6 +1169,11 @@ export default function PhotoGraphCanvas({
       if (upgradeTimeoutRef.current !== null) {
         window.clearTimeout(upgradeTimeoutRef.current);
         upgradeTimeoutRef.current = null;
+      }
+
+      if (initialChargeResetTimeoutRef.current !== null) {
+        window.clearTimeout(initialChargeResetTimeoutRef.current);
+        initialChargeResetTimeoutRef.current = null;
       }
 
       simRef.current?.stop();
