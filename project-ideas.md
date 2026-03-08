@@ -13,10 +13,3 @@
 
 - future idea: customisable ui based on user preferences so that wide aesthetic variety of receipts can be generated
 - future idea: explore top genre nodes and how they connect to unexplored related genres to allow for user track discovery
-
-
-### Grailed plus
-
-- price history
-- dark mode
-- depop similar items comparison

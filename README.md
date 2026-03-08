@@ -41,7 +41,5 @@ Images are loaded from Firebase Storage at runtime. The graph starts by loading 
 - fix nepobabiesruntheunderground running weirdly on mobile
 - implment before/after text with inversion mono filter stuff like the top right text
 - adding to the above I want to make a full design philosophy for myself.
-- custom square node implemenation for d3
-- use the light 300 version of font
 - auto recentering on zoomout of graph-view-image
 - sitemaps?

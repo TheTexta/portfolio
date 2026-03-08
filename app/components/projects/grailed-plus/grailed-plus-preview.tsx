@@ -51,6 +51,7 @@ const IMAGE_SIZES = "(min-width: 1024px) 960px, (min-width: 768px) 80vw, 100vw";
 const GRAILED_PREVIEW_IMAGE_QUALITY = 75;
 const GRAILED_ICON_BUTTON_CLASS =
   "inline-flex h-10 w-10 appearance-none items-center justify-center rounded-full border p-0 [line-height:1]";
+const GRAILED_OVERLAY_MONO_FILTER = "grayscale(1) brightness(1.35)";
 
 function clampSplit(value: number) {
   return Math.min(100, Math.max(0, Math.round(value)));
@@ -238,20 +239,20 @@ export default function GrailedPlusPreview({
 
       <div
         className="pointer-events-none absolute right-3 top-3 z-10 px-1 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-white mix-blend-difference"
-        style={{ filter: "grayscale(1) brightness(1.35)" }}
+        style={{ filter: GRAILED_OVERLAY_MONO_FILTER }}
       >
         {activePage.label}
       </div>
 
       <div
         className="pointer-events-none absolute bottom-3 left-3 z-10 text-[10px] font-semibold uppercase tracking-[0.22em] text-white mix-blend-difference"
-        style={{ filter: "grayscale(1) brightness(1.15)", opacity: 0.42 }}
+        style={{ filter: GRAILED_OVERLAY_MONO_FILTER, opacity: 0.42 }}
       >
         Before
       </div>
       <div
         className="pointer-events-none absolute bottom-3 right-3 z-10 text-[10px] font-semibold uppercase tracking-[0.22em] text-white mix-blend-difference"
-        style={{ filter: "grayscale(1) brightness(1.15)", opacity: 0.42 }}
+        style={{ filter: GRAILED_OVERLAY_MONO_FILTER, opacity: 0.42 }}
       >
         After
       </div>
