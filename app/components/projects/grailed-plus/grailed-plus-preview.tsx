@@ -49,6 +49,8 @@ const COMPARE_PAGES: ComparePage[] = [
 
 const IMAGE_SIZES = "(min-width: 1024px) 960px, (min-width: 768px) 80vw, 100vw";
 const GRAILED_PREVIEW_IMAGE_QUALITY = 75;
+const GRAILED_ICON_BUTTON_CLASS =
+  "inline-flex h-10 w-10 appearance-none items-center justify-center rounded-full border p-0 [line-height:1]";
 
 function clampSplit(value: number) {
   return Math.min(100, Math.max(0, Math.round(value)));
@@ -225,10 +227,12 @@ export default function GrailedPlusPreview({
           onPointerCancel={handleSliderPointerUp}
           onLostPointerCapture={() => setDraggingPointerId(null)}
           onKeyDown={handleSliderKeyDown}
-          className={`pointer-events-auto absolute top-1/2 -translate-y-1/2 touch-none rounded-full border px-3 py-2 text-sm font-semibold shadow-sm transition-colors ${chrome.button ?? (darkMode ? "border-white/15 bg-black/55 text-white hover:bg-black/70" : "border-black/10 bg-white/85 text-neutral-950 hover:bg-white")}`}
+          className={`pointer-events-auto absolute top-1/2 touch-none ${GRAILED_ICON_BUTTON_CLASS} text-sm font-semibold shadow-sm transition-colors ${chrome.button ?? (darkMode ? "border-white/15 bg-black/55 text-white hover:bg-black/70" : "border-black/10 bg-white/85 text-neutral-950 hover:bg-white")}`}
           style={{ left: `${splitPercent}%`, transform: "translate(-50%, -50%)" }}
         >
-          ↔
+          <span aria-hidden className="block leading-none">
+            ↔
+          </span>
         </button>
       </div>
 
@@ -256,17 +260,21 @@ export default function GrailedPlusPreview({
         type="button"
         onClick={handlePrevious}
         aria-label="Previous before and after page"
-        className={`absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full border px-3 py-2 text-base font-semibold transition-colors md:left-4 ${chrome.button ?? (darkMode ? "border-white/15 bg-black/55 text-white hover:bg-black/70" : "border-black/10 bg-white/85 text-neutral-950 hover:bg-white")}`}
+        className={`absolute left-3 top-1/2 z-10 -translate-y-1/2 md:left-4 ${GRAILED_ICON_BUTTON_CLASS} text-base font-semibold transition-colors ${chrome.button ?? (darkMode ? "border-white/15 bg-black/55 text-white hover:bg-black/70" : "border-black/10 bg-white/85 text-neutral-950 hover:bg-white")}`}
       >
-        ←
+        <span aria-hidden className="block leading-none">
+          ←
+        </span>
       </button>
       <button
         type="button"
         onClick={handleNext}
         aria-label="Next before and after page"
-        className={`absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full border px-3 py-2 text-base font-semibold transition-colors md:right-4 ${chrome.button ?? (darkMode ? "border-white/15 bg-black/55 text-white hover:bg-black/70" : "border-black/10 bg-white/85 text-neutral-950 hover:bg-white")}`}
+        className={`absolute right-3 top-1/2 z-10 -translate-y-1/2 md:right-4 ${GRAILED_ICON_BUTTON_CLASS} text-base font-semibold transition-colors ${chrome.button ?? (darkMode ? "border-white/15 bg-black/55 text-white hover:bg-black/70" : "border-black/10 bg-white/85 text-neutral-950 hover:bg-white")}`}
       >
-        →
+        <span aria-hidden className="block leading-none">
+          →
+        </span>
       </button>
     </div>
   );

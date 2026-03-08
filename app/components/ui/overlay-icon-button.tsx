@@ -3,7 +3,7 @@ import { type ButtonHTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 const baseClassName =
-  "flex h-8 w-8 items-center justify-center border p-0 leading-none backdrop-blur-[2px] transition-colors [&_svg]:block [&_svg]:shrink-0";
+  "inline-flex h-8 w-8 appearance-none items-center justify-center border p-0 [line-height:1] backdrop-blur-[2px] transition-colors [&_svg]:m-auto [&_svg]:block [&_svg]:pointer-events-none [&_svg]:shrink-0";
 
 type OverlayIconButtonProps = {
   toneClass: string;

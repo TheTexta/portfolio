@@ -151,22 +151,7 @@
     var cursorCanvas = document.getElementById(
       "tv-static-tracking-cursor-pos"
     );
-    var isMobileDevice = function () {
-      if (typeof window.mobileCheck === "function") {
-        return window.mobileCheck();
-      }
-
-      var ua = navigator.userAgent || "";
-      var uaMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
-      var coarsePointer =
-        typeof window.matchMedia === "function" &&
-        window.matchMedia("(pointer: coarse)").matches;
-      var narrowViewport =
-        typeof window.matchMedia === "function" &&
-        window.matchMedia("(max-width: 900px)").matches;
-
-      return uaMobile || (coarsePointer && narrowViewport);
-    };
+    
     var hideById = function (id) {
       var element = document.getElementById(id);
       if (element) {
@@ -174,22 +159,7 @@
       }
     };
 
-    if (isMobileDevice()) {
-      console.log("Mobile device detected: TV static effects disabled");
-      if (topCanvas) {
-        topCanvas.style.display = "none";
-      }
-      if (cursorCanvas) {
-        cursorCanvas.style.display = "none";
-      }
-      hideById("content");
-      hideById("grid-container");
-      hideById("desktop-photo-button");
-      var mobileMenu = document.getElementById("mobile-menu");
-      if (mobileMenu) {
-        mobileMenu.style.display = "grid";
-      }
-    } else {
+
       // Use window load to ensure deferred scripts are executed and shaders are fetchable
       window.addEventListener(
         "load",
@@ -227,7 +197,7 @@
         },
         { once: true }
       );
-    }
+    
     // LOGO HOVER EFFECT
     window.addEventListener("DOMContentLoaded", () => {
       const logoForeground = document.getElementById("logo-foreground");
