@@ -17,9 +17,9 @@ export type ProjectDefinition = {
 export const projectCatalog: ProjectDefinition[] = [
   {
     id: "photo-graph",
-    title: "Node based Photo Gallery",
+    title: "Photo Node-Gallery",
     description:
-      "Interactive force-directed image graph where photographs dynamically cluster based on color similarity; an evolving canvas shaped by user interaction.",
+      "Interactive force-directed image graph where photographs dynamically cluster based on color similarity; an evolving interactive gallery experience.",
     tags: ["Next.js", "D3", "Firebase"],
     renderPreview: (darkMode) => <PhotoGraphCanvas forcedDarkMode={darkMode} />,
   },

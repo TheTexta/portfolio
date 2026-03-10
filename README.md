@@ -43,3 +43,4 @@ Images are loaded from Firebase Storage at runtime. The graph starts by loading 
 - implment before/after text with inversion mono filter stuff like the top right text
 - adding to the above I want to make a full design philosophy for myself.
 - auto recentering on zoomout of graph-view-image
+- explode effect on zooming in/out of photographview
