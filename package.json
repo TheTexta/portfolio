@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
     "photo-graph:migrate": "tsx scripts/photo-graph/migrate-static-to-runtime.ts",
     "photo-graph:backfill-dimensions": "tsx scripts/photo-graph/backfill-runtime-dimensions.ts",
     "nepobabies:assets:dry-run": "tsx scripts/nepobabies/migrate-assets-to-firebase.ts --mode=dry-run --version=${NEPOBABIES_ASSET_VERSION:-v20260305-1}",
@@ -18,6 +20,8 @@
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "@vercel/analytics": "^1.6.1",
     "@vercel/speed-insights": "^1.3.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "d3": "^7.9.0",
     "firebase": "^12.10.0",
     "firebase-admin": "^13.7.0",
@@ -25,7 +29,8 @@
     "next": "16.1.6",
     "postcss": "^8.5.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.1",
@@ -34,6 +39,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "eslint-plugin-tailwindcss": "^4.0.0-beta.0",
     "image-size": "^2.0.2",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",

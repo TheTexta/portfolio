@@ -13,7 +13,7 @@ export default function HomePageContent() {
   const { overlay: homeOverlayClass } = getProjectChrome("home", darkMode);
 
   return (
-    <div className="relative w-full min-h-dvh pb-16 font-light text-black dark:text-gray-100">
+    <div className="relative min-h-dvh w-full pb-16 font-light text-black dark:text-gray-100">
       <OverlayNavBar
         darkMode={darkMode}
         onToggleDarkMode={toggleTheme}

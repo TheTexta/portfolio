@@ -205,7 +205,11 @@ export function photoGraphImageBasePath() {
 }
 
 export async function readStaticGraph() {
-  const staticGraphPath = path.join(process.cwd(), "public", "portfolioTable.json");
+  const staticGraphPath = path.join(
+    process.cwd(),
+    "public",
+    "portfolioTable.json",
+  );
   const buffer = await readFile(staticGraphPath);
   const raw = JSON.parse(buffer.toString("utf-8"));
 

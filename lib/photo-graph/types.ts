@@ -24,11 +24,7 @@ export type GraphNode = {
 
 export type GraphLoadSource = "runtime" | "static";
 
-export type PhotoGraphJobStatus =
-  | "queued"
-  | "running"
-  | "completed"
-  | "failed";
+export type PhotoGraphJobStatus = "queued" | "running" | "completed" | "failed";
 
 export type PhotoGraphJobDocument = {
   status: PhotoGraphJobStatus;

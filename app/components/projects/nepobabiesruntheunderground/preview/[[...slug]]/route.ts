@@ -6,10 +6,7 @@ type PreviewRouteContext = {
   }>;
 };
 
-export async function GET(
-  _request: Request,
-  { params }: PreviewRouteContext,
-) {
+export async function GET(_request: Request, { params }: PreviewRouteContext) {
   const { slug = [] } = await params;
 
   return servePreviewFile(slug);

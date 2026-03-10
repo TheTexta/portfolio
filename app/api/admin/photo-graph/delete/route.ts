@@ -35,7 +35,10 @@ export async function POST(request: NextRequest) {
   try {
     payload = (await request.json()) as DeletePhotoPayload;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid JSON payload." },
+      { status: 400 },
+    );
   }
 
   const nodeId = String(payload.nodeId ?? "").trim();

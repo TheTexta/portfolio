@@ -119,7 +119,8 @@ async function parseJsonOrThrow<T>(response: Response): Promise<T> {
   try {
     return JSON.parse(text) as T;
   } catch {
-    const fallback = text.trim() || `Request failed with status ${response.status}.`;
+    const fallback =
+      text.trim() || `Request failed with status ${response.status}.`;
     throw new Error(fallback);
   }
 }
@@ -151,7 +152,8 @@ async function loadImage(file: File) {
       const element = new Image();
 
       element.onload = () => resolve(element);
-      element.onerror = () => reject(new Error(`Failed to load image: ${file.name}`));
+      element.onerror = () =>
+        reject(new Error(`Failed to load image: ${file.name}`));
       element.src = objectUrl;
     });
 
@@ -161,7 +163,9 @@ async function loadImage(file: File) {
   }
 }
 
-async function computeFeaturePayload(file: File): Promise<ComputedFeaturePayload> {
+async function computeFeaturePayload(
+  file: File,
+): Promise<ComputedFeaturePayload> {
   const image = await loadImage(file);
   const width = image.naturalWidth || image.width;
   const height = image.naturalHeight || image.height;
@@ -327,19 +331,22 @@ export default function PhotoGraphUploadClient() {
     });
   }, [graphNodes, manageQuery]);
 
-  const appendVerboseLog = useCallback((message: string, level: VerboseLogLevel = "info") => {
-    setVerboseLogs((current) => {
-      const nextEntry: VerboseLogEntry = {
-        id: Date.now() + Math.floor(Math.random() * 1000),
-        createdAt: Date.now(),
-        level,
-        message,
-      };
+  const appendVerboseLog = useCallback(
+    (message: string, level: VerboseLogLevel = "info") => {
+      setVerboseLogs((current) => {
+        const nextEntry: VerboseLogEntry = {
+          id: Date.now() + Math.floor(Math.random() * 1000),
+          createdAt: Date.now(),
+          level,
+          message,
+        };
 
-      const next = [...current, nextEntry];
-      return next.length > 500 ? next.slice(next.length - 500) : next;
-    });
-  }, []);
+        const next = [...current, nextEntry];
+        return next.length > 500 ? next.slice(next.length - 500) : next;
+      });
+    },
+    [],
+  );
 
   const setStatusWithLog = useCallback(
     (message: string, level: VerboseLogLevel = "info") => {
@@ -380,7 +387,9 @@ export default function PhotoGraphUploadClient() {
         );
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Failed to load graph nodes.";
+          error instanceof Error
+            ? error.message
+            : "Failed to load graph nodes.";
         appendVerboseLog(`Admin panel refresh failed: ${message}`, "error");
       } finally {
         setLoadingGraphNodes(false);
@@ -398,7 +407,10 @@ export default function PhotoGraphUploadClient() {
 
     setFiles((current) => {
       const map = new Map(
-        current.map((file) => [`${file.name}:${file.size}:${file.lastModified}`, file]),
+        current.map((file) => [
+          `${file.name}:${file.size}:${file.lastModified}`,
+          file,
+        ]),
       );
 
       for (const file of list) {
@@ -445,15 +457,20 @@ export default function PhotoGraphUploadClient() {
       const end = start + EDGE_UPDATE_BATCH_SIZE;
       const batch = updates.slice(start, end);
 
-      setStatusWithLog(`Applying edge updates (${batchIndex + 1}/${totalBatches})...`);
+      setStatusWithLog(
+        `Applying edge updates (${batchIndex + 1}/${totalBatches})...`,
+      );
 
-      const response = await fetch("/api/admin/photo-graph/apply-correlations", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
+      const response = await fetch(
+        "/api/admin/photo-graph/apply-correlations",
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ updates: batch }),
         },
-        body: JSON.stringify({ updates: batch }),
-      });
+      );
 
       const body = await parseJsonOrThrow<ApplyCorrelationsResponse>(response);
 
@@ -507,9 +524,14 @@ export default function PhotoGraphUploadClient() {
         setStatusWithLog(`Node ${body.deletedId} deleted.`, "success");
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Delete failed unexpectedly.";
+          error instanceof Error
+            ? error.message
+            : "Delete failed unexpectedly.";
         setErrorMessage(message);
-        appendVerboseLog(`Delete failed for node ${node.id}: ${message}`, "error");
+        appendVerboseLog(
+          `Delete failed for node ${node.id}: ${message}`,
+          "error",
+        );
       } finally {
         setDeletingNodeId(null);
       }
@@ -528,40 +550,58 @@ export default function PhotoGraphUploadClient() {
     setStatusWithLog("Starting upload pipeline...", "info");
 
     try {
-      appendVerboseLog(`Validated ${files.length} file(s) for upload.`, "success");
+      appendVerboseLog(
+        `Validated ${files.length} file(s) for upload.`,
+        "success",
+      );
 
       const registrations: UploadRegistration[] = [];
 
       for (let index = 0; index < files.length; index += 1) {
         const file = files[index];
 
-        setStatusWithLog(`Extracting image features (${index + 1}/${files.length}): ${file.name}`);
+        setStatusWithLog(
+          `Extracting image features (${index + 1}/${files.length}): ${file.name}`,
+        );
         const featurePayload = await computeFeaturePayload(file);
-        appendVerboseLog(`Feature extraction complete: ${file.name}.`, "success");
+        appendVerboseLog(
+          `Feature extraction complete: ${file.name}.`,
+          "success",
+        );
 
-        setStatusWithLog(`Requesting upload URL (${index + 1}/${files.length}): ${file.name}`);
-        const uploadUrlResponse = await fetch("/api/admin/photo-graph/upload-url", {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
+        setStatusWithLog(
+          `Requesting upload URL (${index + 1}/${files.length}): ${file.name}`,
+        );
+        const uploadUrlResponse = await fetch(
+          "/api/admin/photo-graph/upload-url",
+          {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              filename: file.name,
+              contentType: file.type,
+            }),
           },
-          body: JSON.stringify({
-            filename: file.name,
-            contentType: file.type,
-          }),
-        });
+        );
 
-        const uploadUrlBody = await parseJsonOrThrow<UploadUrlResponse>(uploadUrlResponse);
+        const uploadUrlBody =
+          await parseJsonOrThrow<UploadUrlResponse>(uploadUrlResponse);
 
         if (!uploadUrlResponse.ok || !uploadUrlBody.ok) {
           throw new Error(uploadUrlBody.error ?? "Failed to get upload URL.");
         }
 
-        setStatusWithLog(`Uploading directly to Firebase (${index + 1}/${files.length}): ${file.name}`);
+        setStatusWithLog(
+          `Uploading directly to Firebase (${index + 1}/${files.length}): ${file.name}`,
+        );
 
         const directUploadResponse = await fetch(uploadUrlBody.uploadUrl, {
           method: "PUT",
-          headers: uploadUrlBody.requiredHeaders ?? { "content-type": file.type },
+          headers: uploadUrlBody.requiredHeaders ?? {
+            "content-type": file.type,
+          },
           body: file,
         });
 
@@ -602,7 +642,8 @@ export default function PhotoGraphUploadClient() {
         }),
       });
 
-      const registerBody = await parseJsonOrThrow<UploadApiResponse>(registerResponse);
+      const registerBody =
+        await parseJsonOrThrow<UploadApiResponse>(registerResponse);
 
       if (!registerResponse.ok || !registerBody.ok) {
         throw new Error(registerBody.error ?? "Upload registration failed.");
@@ -623,7 +664,8 @@ export default function PhotoGraphUploadClient() {
         cache: "no-store",
       });
 
-      const graphBody = await parseJsonOrThrow<AdminGraphResponse>(graphResponse);
+      const graphBody =
+        await parseJsonOrThrow<AdminGraphResponse>(graphResponse);
 
       if (!graphResponse.ok || !Array.isArray(graphBody.nodes)) {
         throw new Error(graphBody.error ?? "Failed to load graph metadata.");
@@ -691,7 +733,8 @@ export default function PhotoGraphUploadClient() {
         <div>
           <h1 className="text-2xl font-semibold">Photo Graph Upload Admin</h1>
           <p className="mt-1 text-sm opacity-70">
-            Batch upload images directly to Firebase, then your browser generates node correlations and syncs updates.
+            Batch upload images directly to Firebase, then your browser
+            generates node correlations and syncs updates.
           </p>
         </div>
 
@@ -730,7 +773,10 @@ export default function PhotoGraphUploadClient() {
       {files.length > 0 && (
         <ul className="mt-3 max-h-56 overflow-y-auto rounded-md border border-black/20 p-3 text-sm dark:border-white/20">
           {files.map((file) => (
-            <li key={`${file.name}-${file.size}-${file.lastModified}`} className="py-1">
+            <li
+              key={`${file.name}-${file.size}-${file.lastModified}`}
+              className="py-1"
+            >
               {file.name} ({bytesToMb(file.size)})
             </li>
           ))}
@@ -771,8 +817,12 @@ export default function PhotoGraphUploadClient() {
         </button>
       </div>
 
-      {statusMessage && <p className="mt-4 text-sm text-blue-700">{statusMessage}</p>}
-      {errorMessage && <p className="mt-2 text-sm text-red-600">{errorMessage}</p>}
+      {statusMessage && (
+        <p className="mt-4 text-sm text-blue-700">{statusMessage}</p>
+      )}
+      {errorMessage && (
+        <p className="mt-2 text-sm text-red-600">{errorMessage}</p>
+      )}
 
       {createdIds.length > 0 && (
         <p className="mt-2 text-xs opacity-70">
@@ -784,10 +834,14 @@ export default function PhotoGraphUploadClient() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold">Manage Photos</h2>
           <div className="flex items-center gap-2 text-xs">
-            <span className="opacity-70">{graphNodes.length} total node(s)</span>
+            <span className="opacity-70">
+              {graphNodes.length} total node(s)
+            </span>
             <button
               onClick={() => void fetchGraphNodes()}
-              disabled={loadingGraphNodes || isProcessing || deletingNodeId !== null}
+              disabled={
+                loadingGraphNodes || isProcessing || deletingNodeId !== null
+              }
               className="rounded-md border border-black/50 px-2 py-1 disabled:opacity-50 dark:border-white/50"
             >
               {loadingGraphNodes ? "Refreshing..." : "Refresh"}
@@ -836,11 +890,12 @@ export default function PhotoGraphUploadClient() {
                           <div>
                             <span className="font-semibold">ID {node.id}</span>{" "}
                             <span className="opacity-70">
-                              ({Object.keys(node.correlations ?? {}).length} edges)
+                              ({Object.keys(node.correlations ?? {}).length}{" "}
+                              edges)
                             </span>
                           </div>
                           {node.storagePath && (
-                            <p className="mt-1 break-all font-mono text-[10px] opacity-70">
+                            <p className="mt-1 font-mono text-[10px] break-all opacity-70">
                               {node.storagePath}
                             </p>
                           )}
@@ -880,7 +935,9 @@ export default function PhotoGraphUploadClient() {
               <ul className="space-y-1">
                 {verboseLogs.map((entry) => (
                   <li key={entry.id} className="font-mono leading-relaxed">
-                    <span className="opacity-70">[{formatLogTimestamp(entry.createdAt)}]</span>{" "}
+                    <span className="opacity-70">
+                      [{formatLogTimestamp(entry.createdAt)}]
+                    </span>{" "}
                     <span
                       className={
                         entry.level === "error"

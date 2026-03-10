@@ -67,4 +67,3 @@ Place these files in `public/projects/grailed-plus/`:
 2. Capture a 8-15s listing-page demo showing pricing panel + currency + dark mode.
 3. Add one concrete outcome metric if available (time saved, decision speed, conversion usage, etc.).
 4. Add eventual screenshot updates once logo refresh is complete.
-

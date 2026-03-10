@@ -1,4 +1,5 @@
 "use client";
+import { cva } from "class-variance-authority";
 import Image from "next/image";
 import type { StaticImageData } from "next/image";
 import {
@@ -10,6 +11,7 @@ import {
 } from "react";
 import { getProjectChrome } from "@/app/components/projects/project-chrome";
 import { useTheme } from "@/app/components/theme/theme-provider";
+import { cn } from "@/lib/cn";
 import afterCustomCurrency from "./after-custom-currency.png";
 import afterDm from "./after-dm.png";
 import beforeCustomCurrency from "./before-custom-currency.png";
@@ -34,24 +36,42 @@ const COMPARE_PAGES: ComparePage[] = [
     label: "DARK MODE",
     before: beforeDm,
     after: afterDm,
-    beforeAlt: "Grailed listing page before Grailed Plus dark mode and enhancements",
-    afterAlt: "Grailed listing page after Grailed Plus dark mode and enhancements",
+    beforeAlt:
+      "Grailed listing page before Grailed Plus dark mode and enhancements",
+    afterAlt:
+      "Grailed listing page after Grailed Plus dark mode and enhancements",
   },
   {
     id: "custom-currency",
     label: "Custom Currency",
     before: beforeCustomCurrency,
     after: afterCustomCurrency,
-    beforeAlt: "Grailed browse page before Grailed Plus custom currency enhancements",
-    afterAlt: "Grailed browse page after Grailed Plus custom currency enhancements",
+    beforeAlt:
+      "Grailed browse page before Grailed Plus custom currency enhancements",
+    afterAlt:
+      "Grailed browse page after Grailed Plus custom currency enhancements",
   },
 ];
 
 const IMAGE_SIZES = "(min-width: 1024px) 960px, (min-width: 768px) 80vw, 100vw";
 const GRAILED_PREVIEW_IMAGE_QUALITY = 75;
-const GRAILED_ICON_BUTTON_CLASS =
-  "inline-flex h-10 w-10 appearance-none items-center justify-center rounded-full border p-0 [line-height:1]";
 const GRAILED_OVERLAY_MONO_FILTER = "grayscale(1) brightness(1.35)";
+
+const grailedPreviewShell = cva("relative h-full w-full overflow-hidden");
+const grailedControlButton = cva(
+  "inline-flex h-10 w-10 appearance-none items-center justify-center rounded-full border p-0 [line-height:1] font-semibold transition-colors",
+  {
+    variants: {
+      size: {
+        compact: "text-sm shadow-sm",
+        default: "text-base",
+      },
+    },
+    defaultVariants: {
+      size: "default",
+    },
+  },
+);
 
 function clampSplit(value: number) {
   return Math.min(100, Math.max(0, Math.round(value)));
@@ -71,6 +91,9 @@ export default function GrailedPlusPreview({
   const rootRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const activePage = COMPARE_PAGES[activeIndex];
+  const controlToneClass =
+    chrome.button ??
+    (darkMode ? "overlay-button-dark-solid" : "overlay-button-light");
 
   const updateSplitFromClientX = (clientX: number) => {
     const bounds = rootRef.current?.getBoundingClientRect();
@@ -154,7 +177,8 @@ export default function GrailedPlusPreview({
     }
   };
 
-  const beforeScaleWidth = splitPercent === 0 ? "100%" : `${10000 / splitPercent}%`;
+  const beforeScaleWidth =
+    splitPercent === 0 ? "100%" : `${10000 / splitPercent}%`;
 
   useEffect(() => {
     const scrollElement = scrollRef.current;
@@ -174,11 +198,17 @@ export default function GrailedPlusPreview({
   return (
     <div
       ref={rootRef}
-      className={`relative h-full w-full overflow-hidden ${chrome.surface ?? (darkMode ? " bg-black/30" : " bg-white/85")}`}
+      className={cn(
+        grailedPreviewShell(),
+        chrome.surface ??
+          (darkMode
+            ? "bg-surface-overlay-dark-panel"
+            : "bg-surface-overlay-light-button"),
+      )}
     >
       <div
         ref={scrollRef}
-        className="relative h-full overflow-y-auto overflow-x-hidden"
+        className="relative h-full overflow-x-hidden overflow-y-auto"
       >
         <div className="relative w-full">
           <Image
@@ -211,7 +241,10 @@ export default function GrailedPlusPreview({
 
       <div className="pointer-events-none absolute inset-0">
         <div
-          className={`absolute inset-y-0 w-px ${darkMode ? "bg-white/70" : "bg-black/35"}`}
+          className={cn(
+            "absolute inset-y-0 w-px",
+            darkMode ? "bg-divider-overlay-dark" : "bg-divider-overlay-light",
+          )}
           style={{ left: `${splitPercent}%`, transform: "translateX(-0.5px)" }}
         />
         <button
@@ -228,8 +261,15 @@ export default function GrailedPlusPreview({
           onPointerCancel={handleSliderPointerUp}
           onLostPointerCapture={() => setDraggingPointerId(null)}
           onKeyDown={handleSliderKeyDown}
-          className={`pointer-events-auto absolute top-1/2 touch-none ${GRAILED_ICON_BUTTON_CLASS} text-sm font-semibold shadow-sm transition-colors ${chrome.button ?? (darkMode ? "border-white/15 bg-black/55 text-white hover:bg-black/70" : "border-black/10 bg-white/85 text-neutral-950 hover:bg-white")}`}
-          style={{ left: `${splitPercent}%`, transform: "translate(-50%, -50%)" }}
+          className={cn(
+            "pointer-events-auto absolute top-1/2 touch-none",
+            grailedControlButton({ size: "compact" }),
+            controlToneClass,
+          )}
+          style={{
+            left: `${splitPercent}%`,
+            transform: "translate(-50%, -50%)",
+          }}
         >
           <span aria-hidden className="block leading-none">
             ↔
@@ -238,20 +278,20 @@ export default function GrailedPlusPreview({
       </div>
 
       <div
-        className="pointer-events-none absolute right-3 top-3 z-10 px-1 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-white mix-blend-difference"
+        className="pointer-events-none absolute top-3 right-3 z-10 px-1 py-1 text-xs font-semibold tracking-[0.14em] text-white uppercase mix-blend-difference"
         style={{ filter: GRAILED_OVERLAY_MONO_FILTER }}
       >
         {activePage.label}
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-3 left-3 z-10 text-[10px] font-semibold uppercase tracking-[0.22em] text-white mix-blend-difference"
+        className="pointer-events-none absolute bottom-3 left-3 z-10 text-[10px] font-semibold tracking-[0.22em] text-white uppercase mix-blend-difference"
         style={{ filter: GRAILED_OVERLAY_MONO_FILTER, opacity: 0.42 }}
       >
         Before
       </div>
       <div
-        className="pointer-events-none absolute bottom-3 right-3 z-10 text-[10px] font-semibold uppercase tracking-[0.22em] text-white mix-blend-difference"
+        className="pointer-events-none absolute right-3 bottom-3 z-10 text-[10px] font-semibold tracking-[0.22em] text-white uppercase mix-blend-difference"
         style={{ filter: GRAILED_OVERLAY_MONO_FILTER, opacity: 0.42 }}
       >
         After
@@ -261,7 +301,11 @@ export default function GrailedPlusPreview({
         type="button"
         onClick={handlePrevious}
         aria-label="Previous before and after page"
-        className={`absolute left-3 top-1/2 z-10 -translate-y-1/2 md:left-4 ${GRAILED_ICON_BUTTON_CLASS} text-base font-semibold transition-colors ${chrome.button ?? (darkMode ? "border-white/15 bg-black/55 text-white hover:bg-black/70" : "border-black/10 bg-white/85 text-neutral-950 hover:bg-white")}`}
+        className={cn(
+          "absolute top-1/2 left-3 z-10 -translate-y-1/2 md:left-4",
+          grailedControlButton(),
+          controlToneClass,
+        )}
       >
         <span aria-hidden className="block leading-none">
           ←
@@ -271,7 +315,11 @@ export default function GrailedPlusPreview({
         type="button"
         onClick={handleNext}
         aria-label="Next before and after page"
-        className={`absolute right-3 top-1/2 z-10 -translate-y-1/2 md:right-4 ${GRAILED_ICON_BUTTON_CLASS} text-base font-semibold transition-colors ${chrome.button ?? (darkMode ? "border-white/15 bg-black/55 text-white hover:bg-black/70" : "border-black/10 bg-white/85 text-neutral-950 hover:bg-white")}`}
+        className={cn(
+          "absolute top-1/2 right-3 z-10 -translate-y-1/2 md:right-4",
+          grailedControlButton(),
+          controlToneClass,
+        )}
       >
         <span aria-hidden className="block leading-none">
           →

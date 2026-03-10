@@ -8,10 +8,7 @@ import {
   loadGraphWithFallback,
   writeRuntimeGraph,
 } from "@/lib/photo-graph/graph-store";
-import {
-  featureFromRgb,
-  rgbToHex,
-} from "@/lib/photo-graph/feature-extraction";
+import { featureFromRgb, rgbToHex } from "@/lib/photo-graph/feature-extraction";
 import {
   ADMIN_SESSION_COOKIE_NAME,
   isValidAdminSessionToken,
@@ -62,7 +59,9 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-function parseFeaturePayload(value: unknown): ParsedUploadRegistration["feature"] | null {
+function parseFeaturePayload(
+  value: unknown,
+): ParsedUploadRegistration["feature"] | null {
   if (!value || typeof value !== "object") {
     return null;
   }
@@ -93,7 +92,9 @@ function parseFeaturePayload(value: unknown): ParsedUploadRegistration["feature"
   return featureFromRgb(rgbTuple, Math.max(1, Math.round(longSide)));
 }
 
-function parseDimensionsPayload(value: unknown): ParsedUploadRegistration["dimensions"] | null {
+function parseDimensionsPayload(
+  value: unknown,
+): ParsedUploadRegistration["dimensions"] | null {
   if (!value || typeof value !== "object") {
     return null;
   }
@@ -193,7 +194,10 @@ export async function POST(request: NextRequest) {
   try {
     payload = (await request.json()) as UploadRegistrationPayload;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid JSON payload." },
+      { status: 400 },
+    );
   }
 
   const uploads = normalizeUploads(payload.uploads);
@@ -251,7 +255,10 @@ export async function POST(request: NextRequest) {
   } else {
     for (const node of createdNodes) {
       if (!node.feature) continue;
-      node.scale = scaleFromLongSide(node.feature.longSide, existingMaxLongSide);
+      node.scale = scaleFromLongSide(
+        node.feature.longSide,
+        existingMaxLongSide,
+      );
     }
   }
 

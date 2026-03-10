@@ -1,5 +1,8 @@
 import type { NextConfig } from "next";
-import { CANVAS_IMAGE_DEVICE_SIZES, CANVAS_IMAGE_SIZES } from "./lib/image-optimization";
+import {
+  CANVAS_IMAGE_DEVICE_SIZES,
+  CANVAS_IMAGE_SIZES,
+} from "./lib/image-optimization";
 
 const nextConfig: NextConfig = {
   images: {
@@ -10,7 +13,8 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "firebasestorage.googleapis.com",
-        pathname: "/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/**",
+        pathname:
+          "/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/**",
       },
       {
         protocol: "https",

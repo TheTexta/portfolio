@@ -1,21 +1,50 @@
 "use client";
 
 import { type Track, type UserProfile } from "@spotify/web-api-ts-sdk";
+import { cva } from "class-variance-authority";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/app/components/theme/theme-provider";
 import { getProjectChrome } from "@/app/components/projects/project-chrome";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import OverlayNavBar from "@/app/components/ui/overlay-nav-bar";
+import { cn } from "@/lib/cn";
 import { useSpotifySession } from "./useSpotifySession";
 
 type SpotifyNodifyProps = {
   forcedDarkMode?: boolean;
 };
 
-export default function SpotifyNodify({
-  forcedDarkMode,
-}: SpotifyNodifyProps) {
+const spotifyShell = cva(
+  "relative h-full w-full overflow-hidden rounded-[inherit] transition-colors",
+);
+const spotifySurface = cva("rounded-3xl border", {
+  variants: {
+    spacing: {
+      base: "p-5 md:p-6",
+      roomy: "p-6 md:p-7",
+    },
+    alignment: {
+      left: "text-left",
+      profile: "text-center lg:text-left",
+    },
+  },
+  defaultVariants: {
+    spacing: "base",
+    alignment: "left",
+  },
+});
+const spotifyActionButton = cva(
+  "rounded-full border px-4 py-2 text-sm transition-colors",
+);
+const spotifyTrackItem = cva(
+  "grid grid-cols-[auto,1fr] items-start gap-3 rounded-2xl border px-3 py-3 md:px-4",
+);
+const spotifyEmptyState = cva(
+  "mt-4 rounded-2xl border border-dashed px-4 py-6 text-sm opacity-75",
+);
+
+export default function SpotifyNodify({ forcedDarkMode }: SpotifyNodifyProps) {
   const { session, connect, disconnect } = useSpotifySession();
   const { darkMode: siteDarkMode, toggleTheme } = useTheme();
   const pathname = usePathname();
@@ -27,13 +56,13 @@ export default function SpotifyNodify({
   const projectPath = PROJECT_ROUTES.spotifyNodify;
 
   return (
-    <div
-      className={`relative h-full w-full overflow-hidden rounded-[inherit] transition-colors ${chrome.shell}`}
-    >
+    <div className={cn(spotifyShell(), chrome.shell)}>
       <OverlayNavBar
         darkMode={isFullPageRoute ? darkMode : undefined}
         onToggleDarkMode={
-          isFullPageRoute && forcedDarkMode === undefined ? toggleTheme : undefined
+          isFullPageRoute && forcedDarkMode === undefined
+            ? toggleTheme
+            : undefined
         }
         expandHref={isFullPageRoute ? undefined : projectPath}
         exitHref={isFullPageRoute ? PROJECT_ROUTES.home : undefined}
@@ -44,7 +73,7 @@ export default function SpotifyNodify({
       <div className="h-full overflow-y-auto p-4 pt-12 md:p-6 md:pt-14">
         <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col justify-center gap-5">
           <div className="text-left">
-            <p className="text-[11px] uppercase tracking-[0.35em] opacity-60">
+            <p className="text-[11px] tracking-[0.35em] uppercase opacity-60">
               Spotify API experiment
             </p>
             <h3 className="mt-2 text-2xl font-semibold md:text-3xl">
@@ -62,9 +91,7 @@ export default function SpotifyNodify({
           ) : null}
 
           {session.status === "checking" ? (
-            <div
-              className={`rounded-3xl border p-5 text-sm md:p-6 ${chrome.surface}`}
-            >
+            <div className={cn(spotifySurface(), "text-sm", chrome.surface)}>
               Checking Spotify session...
             </div>
           ) : null}
@@ -72,7 +99,10 @@ export default function SpotifyNodify({
           {session.status === "connected" && session.profile ? (
             <div className="grid gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
               <section
-                className={`rounded-3xl border p-5 text-center md:p-6 lg:text-left ${chrome.surface}`}
+                className={cn(
+                  spotifySurface({ alignment: "profile" }),
+                  chrome.surface,
+                )}
               >
                 <div className="flex flex-col items-center gap-4 lg:items-start">
                   {session.profile.images[0]?.url ? (
@@ -97,21 +127,21 @@ export default function SpotifyNodify({
                       Plan: {session.profile.product ?? "unknown"}
                     </p>
                     <p className="text-sm opacity-75">
-                      Showing {visibleTracks.length} of {session.topTracks.length || 10} top
-                      tracks
+                      Showing {visibleTracks.length} of{" "}
+                      {session.topTracks.length || 10} top tracks
                     </p>
                   </div>
 
                   <div className="flex flex-wrap justify-center gap-3 lg:justify-start">
                     <button
                       onClick={connect}
-                      className={`rounded-full border px-4 py-2 text-sm transition-colors ${chrome.button}`}
+                      className={cn(spotifyActionButton(), chrome.button)}
                     >
                       Reconnect Spotify
                     </button>
                     <button
                       onClick={disconnect}
-                      className={`rounded-full border px-4 py-2 text-sm transition-colors ${chrome.button}`}
+                      className={cn(spotifyActionButton(), chrome.button)}
                     >
                       Clear Connection
                     </button>
@@ -119,15 +149,13 @@ export default function SpotifyNodify({
                 </div>
               </section>
 
-              <section className={`rounded-3xl border p-5 md:p-6 ${chrome.surface}`}>
+              <section className={cn(spotifySurface(), chrome.surface)}>
                 <div className="flex items-end justify-between gap-3">
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.3em] opacity-60">
+                    <p className="text-[11px] tracking-[0.3em] uppercase opacity-60">
                       Past month
                     </p>
-                    <h4 className="mt-2 text-xl font-semibold">
-                      Top tracks
-                    </h4>
+                    <h4 className="mt-2 text-xl font-semibold">Top tracks</h4>
                   </div>
                   {!isFullPageRoute ? (
                     <p className="text-xs opacity-60">Expand for full list</p>
@@ -139,9 +167,9 @@ export default function SpotifyNodify({
                     {visibleTracks.map((track, index) => (
                       <li
                         key={track.id}
-                        className={`grid grid-cols-[auto,1fr] items-start gap-3 rounded-2xl border px-3 py-3 md:px-4 ${chrome.item}`}
+                        className={cn(spotifyTrackItem(), chrome.item)}
                       >
-                        <span className="pt-0.5 text-xs font-semibold uppercase tracking-[0.2em] opacity-50">
+                        <span className="pt-0.5 text-xs font-semibold tracking-[0.2em] uppercase opacity-50">
                           {(index + 1).toString().padStart(2, "0")}
                         </span>
                         <div className="min-w-0">
@@ -157,9 +185,7 @@ export default function SpotifyNodify({
                     ))}
                   </ol>
                 ) : (
-                  <div
-                    className={`mt-4 rounded-2xl border border-dashed px-4 py-6 text-sm opacity-75 ${chrome.emptyState}`}
-                  >
+                  <div className={cn(spotifyEmptyState(), chrome.emptyState)}>
                     No past-month top tracks available yet.
                   </div>
                 )}
@@ -169,9 +195,12 @@ export default function SpotifyNodify({
 
           {session.status === "disconnected" ? (
             <section
-              className={`rounded-3xl border p-6 text-left md:p-7 ${chrome.surface}`}
+              className={cn(
+                spotifySurface({ spacing: "roomy" }),
+                chrome.surface,
+              )}
             >
-              <p className="text-sm uppercase tracking-[0.25em] opacity-60">
+              <p className="text-sm tracking-[0.25em] uppercase opacity-60">
                 Connection required
               </p>
               <p className="mt-3 max-w-2xl text-sm opacity-80 md:text-base">
@@ -181,7 +210,7 @@ export default function SpotifyNodify({
               <div className="mt-5 flex flex-wrap gap-3">
                 <button
                   onClick={connect}
-                  className={`rounded-full border px-4 py-2 text-sm transition-colors ${chrome.button}`}
+                  className={cn(spotifyActionButton(), chrome.button)}
                 >
                   Connect Spotify
                 </button>

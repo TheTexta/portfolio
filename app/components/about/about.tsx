@@ -1,12 +1,11 @@
-
 export default function About() {
   return (
-    <div className="mx-auto text-center pt-32">
-      <h1 className="text-5xl sm:text-7xl font-bold">Dexter Young</h1>
+    <div className="mx-auto pt-32 text-center">
+      <h1 className="text-5xl font-bold sm:text-7xl">Dexter Young</h1>
 
       {/* <p>CS Student at McGill</p>
       <h2 className="text-4xl">Contact me:</h2> */}
-      <div className="justify-center gap-5 mt-5 text-lg hidden sm:flex">
+      <div className="mt-5 hidden justify-center gap-5 text-lg sm:flex">
         <a href="https://github.com/TheTexta" className="hover:underline">
           GitHub: @TheTexta
         </a>
@@ -20,7 +19,7 @@ export default function About() {
           Email: dextery777@gmail.com
         </a>
       </div>
-      <div className="sm:hidden flex gap-5 mt-5 flex-col-3 justify-center">
+      <div className="flex-col-3 mt-5 flex justify-center gap-5 sm:hidden">
         <a href="https://github.com/TheTexta" className="block hover:underline">
           GitHub
         </a>

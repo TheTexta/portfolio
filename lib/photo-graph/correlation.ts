@@ -16,7 +16,10 @@ function hueDistance(leftHue: number, rightHue: number) {
   return delta > 180 ? 360 - delta : delta;
 }
 
-function deltaE76(leftLab: [number, number, number], rightLab: [number, number, number]) {
+function deltaE76(
+  leftLab: [number, number, number],
+  rightLab: [number, number, number],
+) {
   const dl = leftLab[0] - rightLab[0];
   const da = leftLab[1] - rightLab[1];
   const db = leftLab[2] - rightLab[2];
@@ -24,10 +27,7 @@ function deltaE76(leftLab: [number, number, number], rightLab: [number, number, 
   return Math.sqrt(dl * dl + da * da + db * db);
 }
 
-export function computeCorrelation(
-  left: GraphFeature,
-  right: GraphFeature,
-) {
+export function computeCorrelation(left: GraphFeature, right: GraphFeature) {
   const distanceE = deltaE76(left.lab, right.lab);
   const similarity = gauss(distanceE, SIGMA_E);
 

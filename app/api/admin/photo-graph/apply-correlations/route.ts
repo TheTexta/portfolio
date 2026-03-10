@@ -81,13 +81,19 @@ export async function POST(request: NextRequest) {
   try {
     payload = (await request.json()) as ApplyCorrelationsPayload;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid JSON payload." },
+      { status: 400 },
+    );
   }
 
   const updates = normalizeUpdates(payload.updates);
 
   if (!updates || updates.length === 0) {
-    return NextResponse.json({ error: "No correlation updates provided." }, { status: 400 });
+    return NextResponse.json(
+      { error: "No correlation updates provided." },
+      { status: 400 },
+    );
   }
 
   if (updates.length > 5000) {
@@ -111,7 +117,10 @@ export async function POST(request: NextRequest) {
       continue;
     }
 
-    if (typeof update.correlation === "number" && update.correlation >= MIN_CORRELATION) {
+    if (
+      typeof update.correlation === "number" &&
+      update.correlation >= MIN_CORRELATION
+    ) {
       left.correlations[right.id] = update.correlation;
       right.correlations[left.id] = update.correlation;
     } else {

@@ -55,7 +55,10 @@ function isValidDimensions(
   );
 }
 
-function normalizeDimensions(width: number, height: number): GraphImageDimensions {
+function normalizeDimensions(
+  width: number,
+  height: number,
+): GraphImageDimensions {
   const normalizedWidth = Math.max(1, Math.round(width));
   const normalizedHeight = Math.max(1, Math.round(height));
 

@@ -1,6 +1,8 @@
+import { cva } from "class-variance-authority";
 import { getProjectChrome } from "@/app/components/projects/project-chrome";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import OverlayNavBar from "@/app/components/ui/overlay-nav-bar";
+import { cn } from "@/lib/cn";
 
 type HtmlProjectPreviewProps = {
   title: string;
@@ -9,6 +11,13 @@ type HtmlProjectPreviewProps = {
   exitHref?: string;
   isFullPage?: boolean;
 };
+
+const htmlPreviewShell = cva(
+  "relative h-full w-full overflow-hidden rounded-[inherit]",
+);
+const htmlPreviewFrame = cva(
+  "absolute inset-0 h-full w-full border-0 bg-white",
+);
 
 export default function HtmlProjectPreview({
   title,
@@ -20,14 +29,12 @@ export default function HtmlProjectPreview({
   const chrome = getProjectChrome("html-preview", true);
 
   return (
-    <div
-      className={`relative h-full w-full overflow-hidden rounded-[inherit] ${chrome.shell}`}
-    >
+    <div className={cn(htmlPreviewShell(), chrome.shell)}>
       <iframe
         title={`${title} preview`}
         src={previewSrc}
         loading={isFullPage ? "eager" : "lazy"}
-        className="absolute inset-0 h-full w-full border-0 bg-white"
+        className={htmlPreviewFrame()}
       />
 
       <OverlayNavBar

@@ -1,9 +1,22 @@
+import { cva } from "class-variance-authority";
 import Link from "next/link";
 import { type ButtonHTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-const baseClassName =
-  "inline-flex h-8 w-8 appearance-none items-center justify-center border p-0 [line-height:1] backdrop-blur-[2px] transition-colors [&_svg]:m-auto [&_svg]:block [&_svg]:pointer-events-none [&_svg]:shrink-0";
+const overlayIconControl = cva(
+  "inline-flex h-8 w-8 appearance-none items-center justify-center border p-0 [line-height:1] backdrop-blur-[2px] transition-colors [&_svg]:pointer-events-none [&_svg]:m-auto [&_svg]:block [&_svg]:shrink-0",
+  {
+    variants: {
+      shape: {
+        square: "rounded-md",
+        round: "rounded-full",
+      },
+    },
+    defaultVariants: {
+      shape: "square",
+    },
+  },
+);
 
 type OverlayIconButtonProps = {
   toneClass: string;
@@ -31,12 +44,7 @@ export function OverlayIconButton({
   return (
     <button
       type={type}
-      className={cn(
-        baseClassName,
-        shape === "round" ? "rounded-full" : "rounded-md",
-        toneClass,
-        className,
-      )}
+      className={cn(overlayIconControl({ shape }), toneClass, className)}
       {...props}
     >
       {children}
@@ -55,12 +63,7 @@ export function OverlayIconLink({
   return (
     <Link
       href={href}
-      className={cn(
-        baseClassName,
-        shape === "round" ? "rounded-full" : "rounded-md",
-        toneClass,
-        className,
-      )}
+      className={cn(overlayIconControl({ shape }), toneClass, className)}
       {...props}
     >
       {children}

@@ -103,7 +103,11 @@ function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function replaceAllLiteral(source: string, target: string, replacement: string) {
+function replaceAllLiteral(
+  source: string,
+  target: string,
+  replacement: string,
+) {
   if (!target || source.includes(target) === false) {
     return source;
   }
@@ -112,7 +116,12 @@ function replaceAllLiteral(source: string, target: string, replacement: string) 
 }
 
 function parseMode(value: string): Mode {
-  if (value === "dry-run" || value === "upload" || value === "verify" || value === "rewrite") {
+  if (
+    value === "dry-run" ||
+    value === "upload" ||
+    value === "verify" ||
+    value === "rewrite"
+  ) {
     return value;
   }
 
@@ -136,7 +145,9 @@ function parseArgs(argv: string[]): CliOptions {
   }
 
   if (!mode) {
-    throw new Error("Missing required argument: --mode=dry-run|upload|verify|rewrite");
+    throw new Error(
+      "Missing required argument: --mode=dry-run|upload|verify|rewrite",
+    );
   }
 
   if (!version) {
@@ -180,7 +191,10 @@ async function listFilesRecursively(dirPath: string): Promise<string[]> {
   return nested.flat();
 }
 
-function replaceFirebaseUrls(source: string, urlByAssetPath: Record<string, string>) {
+function replaceFirebaseUrls(
+  source: string,
+  urlByAssetPath: Record<string, string>,
+) {
   let output = source;
 
   const firebasePattern =
@@ -198,10 +212,15 @@ function replaceFirebaseUrls(source: string, urlByAssetPath: Record<string, stri
   return output;
 }
 
-function replaceDirectAssetPaths(source: string, urlByAssetPath: Record<string, string>) {
+function replaceDirectAssetPaths(
+  source: string,
+  urlByAssetPath: Record<string, string>,
+) {
   let output = source;
 
-  const assetPaths = Object.keys(urlByAssetPath).sort((a, b) => b.length - a.length);
+  const assetPaths = Object.keys(urlByAssetPath).sort(
+    (a, b) => b.length - a.length,
+  );
 
   for (const assetPath of assetPaths) {
     const replacement = urlByAssetPath[assetPath];
@@ -215,7 +234,10 @@ function replaceDirectAssetPaths(source: string, urlByAssetPath: Record<string, 
     output = replaceAllLiteral(output, `./${assetPath}`, replacement);
     output = replaceAllLiteral(output, `/${assetPath}`, replacement);
 
-    const boundaryPattern = new RegExp(`(?<![A-Za-z0-9_%])${escapeRegex(assetPath)}(?=[?#"'\\s<>)]|$)`, "g");
+    const boundaryPattern = new RegExp(
+      `(?<![A-Za-z0-9_%])${escapeRegex(assetPath)}(?=[?#"'\\s<>)]|$)`,
+      "g",
+    );
     output = output.replace(boundaryPattern, replacement);
   }
 
@@ -230,7 +252,10 @@ function replaceRelativeCssUrls(
   return source.replace(
     /url\(\s*(["']?)([^"')]+)\1\s*\)/gi,
     (match, _quote: string, rawUrl: string) => {
-      const assetPath = resolveRelativeNepobabiesAssetPath(cssAssetPath, rawUrl);
+      const assetPath = resolveRelativeNepobabiesAssetPath(
+        cssAssetPath,
+        rawUrl,
+      );
       if (!assetPath) {
         return match;
       }
@@ -269,10 +294,7 @@ function rewriteTextDocument(
   return output;
 }
 
-async function buildAssetRecords(options: {
-  version: string;
-  bucket: string;
-}) {
+async function buildAssetRecords(options: { version: string; bucket: string }) {
   const assetDirExists = await pathExists(SOURCE_ASSET_DIR);
 
   if (!assetDirExists) {
@@ -284,7 +306,9 @@ async function buildAssetRecords(options: {
   const absoluteFiles = (await listFilesRecursively(SOURCE_ASSET_DIR)).sort();
 
   const assetPaths = absoluteFiles.map((absolutePath) => {
-    const relativePath = path.relative(SOURCE_ASSET_DIR, absolutePath).replace(/\\/g, "/");
+    const relativePath = path
+      .relative(SOURCE_ASSET_DIR, absolutePath)
+      .replace(/\\/g, "/");
 
     return `assets/${relativePath}`;
   });
@@ -310,7 +334,11 @@ async function buildAssetRecords(options: {
     let body = rawBuffer;
 
     if (TEXT_EXTENSIONS.has(extension)) {
-      const transformedText = rewriteTextDocument(rawBuffer.toString("utf-8"), assetPath, urlByAssetPath);
+      const transformedText = rewriteTextDocument(
+        rawBuffer.toString("utf-8"),
+        assetPath,
+        urlByAssetPath,
+      );
       body = Buffer.from(transformedText, "utf-8");
     }
 
@@ -382,7 +410,9 @@ function summarize(records: AssetRecord[]) {
   const mb = (totalBytes / (1024 * 1024)).toFixed(2);
 
   console.log(`Assets discovered: ${records.length}`);
-  console.log(`Transformed upload payload size: ${mb} MB (${totalBytes} bytes)`);
+  console.log(
+    `Transformed upload payload size: ${mb} MB (${totalBytes} bytes)`,
+  );
 
   const topFive = [...records].sort((a, b) => b.bytes - a.bytes).slice(0, 5);
 
@@ -393,7 +423,8 @@ function summarize(records: AssetRecord[]) {
 }
 
 async function uploadAssets(records: AssetRecord[]) {
-  const { getFirebaseAdminBucket } = await import("../../lib/server/firebase-admin");
+  const { getFirebaseAdminBucket } =
+    await import("../../lib/server/firebase-admin");
   const bucket = getFirebaseAdminBucket();
 
   for (const [index, record] of records.entries()) {
@@ -407,12 +438,15 @@ async function uploadAssets(records: AssetRecord[]) {
       },
     });
 
-    console.log(`[${index + 1}/${records.length}] Uploaded ${record.assetPath}`);
+    console.log(
+      `[${index + 1}/${records.length}] Uploaded ${record.assetPath}`,
+    );
   }
 }
 
 async function verifyManifest(manifest: NepobabiesAssetManifest) {
-  const { getFirebaseAdminBucket } = await import("../../lib/server/firebase-admin");
+  const { getFirebaseAdminBucket } =
+    await import("../../lib/server/firebase-admin");
   const bucket = getFirebaseAdminBucket();
 
   let hashMismatches = 0;
@@ -428,7 +462,9 @@ async function verifyManifest(manifest: NepobabiesAssetManifest) {
 
     if (!exists) {
       missingObjects += 1;
-      console.log(`[${index + 1}/${entries.length}] Missing object: ${expected.objectPath}`);
+      console.log(
+        `[${index + 1}/${entries.length}] Missing object: ${expected.objectPath}`,
+      );
       continue;
     }
 
@@ -495,12 +531,18 @@ async function rewriteShellFiles(manifest: NepobabiesAssetManifest) {
 
   for (const filePath of [INDEX_HTML_PATH, ME_HTML_PATH]) {
     const source = await fs.readFile(filePath, "utf-8");
-    const rewritten = rewriteTextDocument(source, "assets/dummy.html", urlByAssetPath);
+    const rewritten = rewriteTextDocument(
+      source,
+      "assets/dummy.html",
+      urlByAssetPath,
+    );
 
     if (rewritten !== source) {
       await fs.writeFile(filePath, rewritten, "utf-8");
       updatedFiles += 1;
-      console.log(`Rewrote asset references in ${path.relative(PROJECT_ROOT, filePath)}`);
+      console.log(
+        `Rewrote asset references in ${path.relative(PROJECT_ROOT, filePath)}`,
+      );
     }
   }
 
@@ -521,7 +563,11 @@ async function rewriteShellFiles(manifest: NepobabiesAssetManifest) {
 
       return {
         ...record,
-        content: rewriteTextDocument(record.content, "assets/dummy.html", urlByAssetPath),
+        content: rewriteTextDocument(
+          record.content,
+          "assets/dummy.html",
+          urlByAssetPath,
+        ),
       };
     });
 
@@ -530,7 +576,9 @@ async function rewriteShellFiles(manifest: NepobabiesAssetManifest) {
     if (serialized !== journalSource) {
       await fs.writeFile(JOURNAL_PATH, serialized, "utf-8");
       updatedFiles += 1;
-      console.log(`Rewrote asset references in ${path.relative(PROJECT_ROOT, JOURNAL_PATH)}`);
+      console.log(
+        `Rewrote asset references in ${path.relative(PROJECT_ROOT, JOURNAL_PATH)}`,
+      );
     }
   }
 
@@ -543,7 +591,10 @@ async function run() {
   const cli = parseArgs(process.argv.slice(2));
   const configuredVersion = getNepobabiesAssetVersion();
 
-  if (process.env.NEPOBABIES_ASSET_VERSION && configuredVersion !== cli.version) {
+  if (
+    process.env.NEPOBABIES_ASSET_VERSION &&
+    configuredVersion !== cli.version
+  ) {
     throw new Error(
       `--version (${cli.version}) must match NEPOBABIES_ASSET_VERSION (${configuredVersion}).`,
     );

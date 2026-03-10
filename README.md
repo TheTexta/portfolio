@@ -18,6 +18,8 @@ Personal portfolio built with Next.js, React, TypeScript, Tailwind, D3, and Fire
 - Firebase Storage
 - Lucide
 
+Tailwind conventions and styling rules live in [`docs/tailwind-conventions.md`](./docs/tailwind-conventions.md).
+
 ## How the photo graph works
 
 `Photo Graph` reads relationship data from [`public/portfolioTable.json`](./public/portfolioTable.json) and builds a force simulation where:
@@ -29,7 +31,6 @@ Personal portfolio built with Next.js, React, TypeScript, Tailwind, D3, and Fire
 - admin page for image uploads at [text](https://dextery.dev/admin/photo-graph/login)
 
 Images are loaded from Firebase Storage at runtime. The graph starts by loading usable image sizes quickly, then requests larger versions for visible nodes as the user zooms in.
-
 
 ## Notes
 

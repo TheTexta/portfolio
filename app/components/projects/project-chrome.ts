@@ -16,6 +16,19 @@ type ProjectChrome = {
   avatar?: string;
 };
 
+const OVERLAY_DARK = "overlay-tone-dark";
+const OVERLAY_LIGHT_BASE = "overlay-tone-light-base";
+const PANEL_DARK = "overlay-panel-dark";
+const PANEL_LIGHT = "overlay-panel-light";
+const BUTTON_DARK = "overlay-button-dark";
+const BUTTON_LIGHT = "overlay-button-light";
+const ITEM_DARK = "overlay-item-dark";
+const ITEM_LIGHT = "overlay-item-light";
+const BORDER_DARK = "overlay-border-dark";
+const BORDER_LIGHT = "overlay-border-light";
+const BORDER_DARK_STRONG = "overlay-border-dark-strong";
+const BORDER_LIGHT_STRONG = "overlay-border-light-strong";
+
 export function getProjectChrome(
   variant: ProjectChromeVariant,
   darkMode: boolean,
@@ -24,63 +37,57 @@ export function getProjectChrome(
     case "home":
       return {
         overlay: darkMode
-          ? "border-white/10 bg-black/35 text-neutral-100"
-          : "border-black/10 bg-white/70 text-neutral-950",
+          ? OVERLAY_DARK
+          : `${OVERLAY_LIGHT_BASE} bg-surface-overlay-light-panel`,
       };
     case "html-preview":
       return {
-        overlay: "border-white/10 bg-black/35 text-neutral-100",
+        overlay: OVERLAY_DARK,
         shell: "bg-neutral-950 text-white",
       };
     case "photo-graph":
       return {
         overlay: darkMode
-          ? "border-white/10 bg-black/35 text-neutral-100"
-          : "border-black/10 bg-white/35 text-neutral-950",
+          ? OVERLAY_DARK
+          : `${OVERLAY_LIGHT_BASE} bg-surface-overlay-light-soft`,
         shell: darkMode
           ? "bg-neutral-950 text-neutral-100"
           : "bg-stone-100 text-neutral-950",
         modal: darkMode
-          ? "bg-black/75 text-neutral-100"
-          : "bg-white/75 text-neutral-950",
+          ? "bg-surface-overlay-dark-modal text-text-overlay-dark"
+          : "bg-surface-overlay-light-modal text-text-overlay-light",
       };
     case "spotify":
       return {
         overlay: darkMode
-          ? "border-white/10 bg-black/35 text-neutral-100"
-          : "border-black/10 bg-white/50 text-neutral-950",
+          ? OVERLAY_DARK
+          : `${OVERLAY_LIGHT_BASE} bg-surface-overlay-light`,
         shell: darkMode
           ? "bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.22),_transparent_40%),linear-gradient(160deg,#04120b_0%,#071a12_45%,#020617_100%)] text-neutral-100"
           : "bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.16),_transparent_45%),linear-gradient(160deg,#f6fff9_0%,#e7f8ef_48%,#f8fafc_100%)] text-neutral-950",
-        surface: darkMode
-          ? "border-white/10 bg-black/30"
-          : "border-black/10 bg-white/70",
-        button: darkMode
-          ? "border-white/15 bg-white/8 text-neutral-100 hover:bg-white/12"
-          : "border-black/10 bg-white/85 text-neutral-950 hover:bg-white",
-        item: darkMode
-          ? "border-white/10 bg-white/5"
-          : "border-black/10 bg-black/[0.03]",
-        emptyState: darkMode ? "border-white/15" : "border-black/15",
-        avatar: darkMode ? "border-white/10" : "border-black/10",
+        surface: darkMode ? PANEL_DARK : PANEL_LIGHT,
+        button: darkMode ? BUTTON_DARK : BUTTON_LIGHT,
+        item: darkMode ? ITEM_DARK : ITEM_LIGHT,
+        emptyState: darkMode ? BORDER_DARK_STRONG : BORDER_LIGHT_STRONG,
+        avatar: darkMode ? BORDER_DARK : BORDER_LIGHT,
       };
     case "grailed-plus":
       return {
         overlay: darkMode
-          ? "border-white/15 bg-black/40 text-neutral-100"
-          : "border-black/10 bg-white/60 text-neutral-950",
+          ? `${BORDER_DARK_STRONG} bg-surface-overlay-dark-strong text-text-overlay-dark`
+          : `${OVERLAY_LIGHT_BASE} bg-surface-overlay-light-strong`,
         shell: darkMode
           ? "bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.18),_transparent_45%),linear-gradient(168deg,#23160b_0%,#17130f_55%,#090909_100%)] text-neutral-100"
           : "bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.2),_transparent_45%),linear-gradient(168deg,#fff8f2_0%,#f8f2ee_55%,#f6f5f4_100%)] text-neutral-950",
         surface: darkMode
-          ? "border-white/10 bg-black/30"
-          : "border-black/10 bg-white/78",
+          ? PANEL_DARK
+          : `${BORDER_LIGHT} bg-surface-overlay-light-panel-strong`,
         button: darkMode
-          ? "border-white/15 bg-white/8 text-neutral-100 hover:bg-white/12"
-          : "border-black/10 bg-white/90 text-neutral-950 hover:bg-white",
+          ? BUTTON_DARK
+          : `${BORDER_LIGHT} bg-surface-overlay-light-button-strong text-text-overlay-light hover:bg-white`,
         item: darkMode
-          ? "border-white/10 bg-white/7"
-          : "border-black/10 bg-black/[0.03]",
+          ? `${BORDER_DARK} bg-surface-overlay-dark-item-strong`
+          : ITEM_LIGHT,
       };
   }
 }

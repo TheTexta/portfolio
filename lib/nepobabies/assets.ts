@@ -55,13 +55,17 @@ function decodeSafely(value: string) {
 }
 
 function extractAssetPathFromObjectPath(objectPath: string) {
-  const normalizedObjectPath = path.posix.normalize(objectPath).replace(/^\/+/, "");
+  const normalizedObjectPath = path.posix
+    .normalize(objectPath)
+    .replace(/^\/+/, "");
 
   if (!normalizedObjectPath.startsWith(`${NEPOBABIES_STORAGE_PREFIX}/`)) {
     return null;
   }
 
-  const withoutPrefix = normalizedObjectPath.slice(NEPOBABIES_STORAGE_PREFIX.length + 1);
+  const withoutPrefix = normalizedObjectPath.slice(
+    NEPOBABIES_STORAGE_PREFIX.length + 1,
+  );
   const firstSlash = withoutPrefix.indexOf("/");
 
   if (firstSlash < 0) {
@@ -144,7 +148,9 @@ export function getNepobabiesStorageBucket() {
 }
 
 export function getNepobabiesAssetVersion() {
-  return process.env.NEPOBABIES_ASSET_VERSION ?? DEFAULT_NEPOBABIES_ASSET_VERSION;
+  return (
+    process.env.NEPOBABIES_ASSET_VERSION ?? DEFAULT_NEPOBABIES_ASSET_VERSION
+  );
 }
 
 export function nepobabiesObjectPrefix(version = getNepobabiesAssetVersion()) {
@@ -171,7 +177,10 @@ export function nepobabiesPublicUrlForObjectPath(
   return `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}/o/${encodeURIComponent(objectPath)}?alt=media`;
 }
 
-export function nepobabiesAssetUrl(rawAssetPath: string, options: AssetUrlOptions = {}) {
+export function nepobabiesAssetUrl(
+  rawAssetPath: string,
+  options: AssetUrlOptions = {},
+) {
   const objectPath = nepobabiesObjectPathForAsset(
     rawAssetPath,
     options.version ?? getNepobabiesAssetVersion(),
@@ -216,7 +225,9 @@ export function resolveNepobabiesAssetPathFromUrl(rawUrl: string) {
   }
 
   if (pathname.startsWith(NEPOBABIES_PREVIEW_BASE_PATH)) {
-    return normalizeNepobabiesAssetPath(pathname.slice(NEPOBABIES_PREVIEW_BASE_PATH.length));
+    return normalizeNepobabiesAssetPath(
+      pathname.slice(NEPOBABIES_PREVIEW_BASE_PATH.length),
+    );
   }
 
   if (pathname.startsWith("/assets/")) {

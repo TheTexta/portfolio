@@ -179,7 +179,8 @@ function sizeNodeFromAspectRatio(node: SimNode) {
   const deviation = Math.abs(Math.log2(aspectRatio));
   const progress = clamp(
     (deviation - GRAPH_CONFIG.balanceStartDeviationLog2) /
-      (GRAPH_CONFIG.balanceMaxDeviationLog2 - GRAPH_CONFIG.balanceStartDeviationLog2),
+      (GRAPH_CONFIG.balanceMaxDeviationLog2 -
+        GRAPH_CONFIG.balanceStartDeviationLog2),
     0,
     1,
   );
@@ -210,9 +211,7 @@ async function resolveNodeSourceUrl(
   if (node.url) return node.url;
   const storagePath =
     node.storagePath ?? `${imageBasePath.replace(/\/$/, "")}/${id}.png`;
-  return getDownloadURL(
-    ref(storage, storagePath),
-  );
+  return getDownloadURL(ref(storage, storagePath));
 }
 
 function sizeNodeFromImage(node: SimNode, image: HTMLImageElement) {
@@ -301,7 +300,11 @@ function createRectangleCollideForce(
         const leftHalfWidth = (left.w * boxScale) / 2 + padding;
         const leftHalfHeight = (left.h * boxScale) / 2 + padding;
 
-        for (let rightIndex = leftIndex + 1; rightIndex < nodes.length; rightIndex += 1) {
+        for (
+          let rightIndex = leftIndex + 1;
+          rightIndex < nodes.length;
+          rightIndex += 1
+        ) {
           const right = nodes[rightIndex];
           const rightX = right.x ?? 0;
           const rightY = right.y ?? 0;
@@ -364,9 +367,14 @@ function resolveLinkNodes(link: SimLink) {
   return { source, target };
 }
 
-function computeLinkDistance(link: SimLink, minDistance: number, maxDistance: number) {
+function computeLinkDistance(
+  link: SimLink,
+  minDistance: number,
+  maxDistance: number,
+) {
   const value = getLinkValue(link);
-  const desiredDistance = minDistance + (1 - value) * (maxDistance - minDistance);
+  const desiredDistance =
+    minDistance + (1 - value) * (maxDistance - minDistance);
   const { source, target } = resolveLinkNodes(link);
   if (!source || !target) {
     return desiredDistance;
@@ -1094,7 +1102,11 @@ export default function PhotoGraphCanvas({
             .forceLink<SimNode, SimLink>(links)
             .id((node) => node.id)
             .distance((link) =>
-              computeLinkDistance(link, GRAPH_CONFIG.distMin, GRAPH_CONFIG.distMax),
+              computeLinkDistance(
+                link,
+                GRAPH_CONFIG.distMin,
+                GRAPH_CONFIG.distMax,
+              ),
             )
             .strength((link) => computeLinkStrength(link)),
         )
@@ -1104,10 +1116,7 @@ export default function PhotoGraphCanvas({
         )
         .force("x", d3.forceX<SimNode>().strength(0.03))
         .force("y", d3.forceY<SimNode>().strength(0.09))
-        .force(
-          "collide",
-          createRectangleCollideForce(GRAPH_CONFIG.collidePad),
-        )
+        .force("collide", createRectangleCollideForce(GRAPH_CONFIG.collidePad))
         .on("tick", requestRender);
 
     const initializeGraph = async () => {
@@ -1299,7 +1308,7 @@ export default function PhotoGraphCanvas({
         <OverlayIconButton
           onClick={() => setMenuOpen(true)}
           toneClass={chrome.overlay}
-          className="absolute left-[1vmin] top-[1vmin] z-[6]"
+          className="absolute top-[1vmin] left-[1vmin] z-[6]"
           aria-label="Open graph controls"
         >
           <Menu className="h-4 w-4" />
@@ -1323,7 +1332,7 @@ export default function PhotoGraphCanvas({
         <div
           className={`rounded-md select-none ${overlayPanelClass} border ${chrome.overlay}`}
         >
-          <div className="w-full flex items-start">
+          <div className="flex w-full items-start">
             <div className="flex-1 text-center">
               <p className={`mx-2 ${overlayTextClass}`}>Simulation Alpha</p>
               <p className={`${overlayTextClass} ${alphaColorClass}`}>
@@ -1422,13 +1431,13 @@ export default function PhotoGraphCanvas({
           // TODO: add fadein/out animations and fade the other ui elements while doing so through the flex container holding all of them.
         >
           <div
-            className="relative flex h-full  w-full flex-col items-center justify-center"
+            className="relative flex h-full w-full flex-col items-center justify-center"
             onClick={(event) => event.stopPropagation()}
           >
             <OverlayIconButton
               onClick={() => setInspectTarget(null)}
               toneClass={chrome.overlay}
-              className="absolute right-0 top-0 mx-2 my-2"
+              className="absolute top-0 right-0 mx-2 my-2"
               aria-label="Close image inspection"
             >
               <X className="h-4 w-4" />
@@ -1437,7 +1446,7 @@ export default function PhotoGraphCanvas({
             <img
               src={inspectTarget.url}
               alt=""
-              className="max-h-9/12 max-w-5/6 justify-self-center self-center align-middle my-auto"
+              className="my-auto max-h-9/12 max-w-5/6 place-self-center align-middle"
               onLoad={(event) => {
                 const { naturalWidth, naturalHeight } = event.currentTarget;
                 setInspectMetadata((current) =>
@@ -1454,7 +1463,9 @@ export default function PhotoGraphCanvas({
               }}
             />
 
-            <div className="absolute flex h-1/8 w-full items-center justify-between gap-4 px-4 bottom-0 sm:text-xs text-[9px] {overlayTextClass}">
+            <div
+              className={`absolute bottom-0 flex h-1/8 w-full items-center justify-between gap-4 px-4 text-[9px] sm:text-xs ${overlayTextClass}`}
+            >
               <div className="flex items-center gap-4">
                 <p>
                   <span className="hidden sm:inline">Resolution: </span>
@@ -1481,7 +1492,7 @@ export default function PhotoGraphCanvas({
                 aria-disabled={!inspectMetadata?.downloadUrl}
               >
                 Download Original
-                <Download className="sm:h-3.5 sm:w-3.5 h-1.75 w-1.75" />
+                <Download className="h-1.75 w-1.75 sm:h-3.5 sm:w-3.5" />
               </a>
             </div>
           </div>

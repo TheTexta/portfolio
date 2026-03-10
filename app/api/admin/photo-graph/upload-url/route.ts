@@ -14,11 +14,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SIGNED_URL_TTL_MS = 15 * 60 * 1000;
-const ALLOWED_MIME_TYPES = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-]);
+const ALLOWED_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 
 type UploadUrlRequest = {
   filename?: string;
@@ -54,7 +50,10 @@ export async function POST(request: NextRequest) {
   try {
     body = (await request.json()) as UploadUrlRequest;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid JSON payload." },
+      { status: 400 },
+    );
   }
 
   const contentType = String(body.contentType ?? "").toLowerCase();

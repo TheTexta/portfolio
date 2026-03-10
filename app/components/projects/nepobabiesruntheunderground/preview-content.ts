@@ -77,8 +77,7 @@ function resolveProjectFile(segments: string[]) {
 
   if (
     normalizedSegments.some(
-      (segment) =>
-        segment.length === 0 || segment === "." || segment === "..",
+      (segment) => segment.length === 0 || segment === "." || segment === "..",
     )
   ) {
     return null;
@@ -101,8 +100,7 @@ function resolveLegacyAssetRedirect(segments: string[]) {
 
   if (
     segments.some(
-      (segment) =>
-        segment.length === 0 || segment === "." || segment === "..",
+      (segment) => segment.length === 0 || segment === "." || segment === "..",
     )
   ) {
     return null;
@@ -236,7 +234,10 @@ function rewriteCssDocument(source: string) {
   return source.replace(
     /url\(\s*(["']?)([^"')]+)\1\s*\)/gi,
     (match, _quote: string, rawUrl: string) => {
-      const assetPath = resolvePreviewAssetPath(rawUrl, "assets/css/styles.css");
+      const assetPath = resolvePreviewAssetPath(
+        rawUrl,
+        "assets/css/styles.css",
+      );
       if (!assetPath) {
         return match;
       }

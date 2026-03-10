@@ -52,15 +52,18 @@ function parseJobData(raw: unknown): PhotoGraphJobDocument | null {
         ? Math.max(0, Math.round(record.doneComparisons))
         : 0,
     pairCursor:
-      typeof record.pairCursor === "number" && Number.isFinite(record.pairCursor)
+      typeof record.pairCursor === "number" &&
+      Number.isFinite(record.pairCursor)
         ? Math.max(0, Math.round(record.pairCursor))
         : 0,
     createdAtMs:
-      typeof record.createdAtMs === "number" && Number.isFinite(record.createdAtMs)
+      typeof record.createdAtMs === "number" &&
+      Number.isFinite(record.createdAtMs)
         ? record.createdAtMs
         : Date.now(),
     updatedAtMs:
-      typeof record.updatedAtMs === "number" && Number.isFinite(record.updatedAtMs)
+      typeof record.updatedAtMs === "number" &&
+      Number.isFinite(record.updatedAtMs)
         ? record.updatedAtMs
         : Date.now(),
     errorMessage:
@@ -121,10 +124,16 @@ function comparisonCount(nodeCount: number, newNodeCount: number) {
     return 0;
   }
 
-  return newNodeCount * (nodeCount - newNodeCount) + (newNodeCount * (newNodeCount - 1)) / 2;
+  return (
+    newNodeCount * (nodeCount - newNodeCount) +
+    (newNodeCount * (newNodeCount - 1)) / 2
+  );
 }
 
-export async function createPhotoGraphJob(newNodeIds: string[], nodeCount: number) {
+export async function createPhotoGraphJob(
+  newNodeIds: string[],
+  nodeCount: number,
+) {
   const db = getFirebaseAdminDb();
   const jobRef = db.collection(JOB_COLLECTION).doc();
   const now = Date.now();
@@ -242,8 +251,13 @@ async function claimJob(candidateId: string) {
   });
 }
 
-export async function runNextPhotoGraphJob(options?: { maxComparisons?: number }) {
-  const maxComparisons = Math.max(1, Math.round(options?.maxComparisons ?? 300));
+export async function runNextPhotoGraphJob(options?: {
+  maxComparisons?: number;
+}) {
+  const maxComparisons = Math.max(
+    1,
+    Math.round(options?.maxComparisons ?? 300),
+  );
   const candidate = await findNextCandidateJob();
 
   if (!candidate) {
@@ -318,7 +332,8 @@ export async function runNextPhotoGraphJob(options?: { maxComparisons?: number }
       progress,
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown job error";
+    const message =
+      error instanceof Error ? error.message : "Unknown job error";
 
     await jobRef.update({
       status: "failed",

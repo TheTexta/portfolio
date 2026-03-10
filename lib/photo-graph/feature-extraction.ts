@@ -32,9 +32,11 @@ export function clamp01(value: number) {
 }
 
 export function rgbToHex(rgb: [number, number, number]) {
-  const [r, g, b] = rgb.map((value) =>
-    Math.round(clamp(value, 0, 255)),
-  ) as [number, number, number];
+  const [r, g, b] = rgb.map((value) => Math.round(clamp(value, 0, 255))) as [
+    number,
+    number,
+    number,
+  ];
 
   return `#${r.toString(16).padStart(2, "0")}${g
     .toString(16)
@@ -95,7 +97,9 @@ export function hueDegFromRgb(rgb: [number, number, number]) {
   return (60 * ((r - g) / delta) + 240) % 360;
 }
 
-export function rgbToLab(rgb: [number, number, number]): [number, number, number] {
+export function rgbToLab(
+  rgb: [number, number, number],
+): [number, number, number] {
   const [sr, sg, sb] = rgb.map((value) =>
     toLinearSrgb(clamp(value / 255, 0, 1)),
   ) as [number, number, number];

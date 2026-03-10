@@ -33,11 +33,7 @@ export default function OverlayNavBar({
   return (
     <nav
       aria-label={ariaLabel}
-      className={cn(
-        "z-[8] flex items-center gap-2",
-        positionClass,
-        className,
-      )}
+      className={cn("z-[8] flex items-center gap-2", positionClass, className)}
     >
       {darkMode !== undefined && onToggleDarkMode && (
         <OverlayIconButton

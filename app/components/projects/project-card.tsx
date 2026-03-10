@@ -1,6 +1,8 @@
-import { ReactNode } from "react";
+import { cva } from "class-variance-authority";
+import { ArrowUpRight } from "lucide-react";
+import { type ReactNode } from "react";
+import { cn } from "@/lib/cn";
 import type { PreviewLink } from "./project-preview-link";
-import { ArrowUpRight } from 'lucide-react';
 
 type ProjectCardProps = {
   title: string;
@@ -9,6 +11,23 @@ type ProjectCardProps = {
   previewLinks?: PreviewLink[];
   children: ReactNode;
 };
+
+const projectCard = cva("w-full max-w-3xl justify-self-center rounded-xl", {
+  variants: {
+    width: {
+      fluid: "md:w-5/6",
+    },
+  },
+  defaultVariants: {
+    width: "fluid",
+  },
+});
+
+const projectChip = cva("bg-surface-chip rounded-md px-2 py-1 text-xs");
+
+const projectPreviewFrame = cva(
+  "relative mx-auto aspect-video overflow-hidden rounded-md",
+);
 
 // TODO: Better scaling for mobile UI.
 export default function ProjectCard({
@@ -19,38 +38,40 @@ export default function ProjectCard({
   children,
 }: ProjectCardProps) {
   return (
-    <article className="rounded-xl w-full md:w-5/6 max-w-3xl  justify-self-center">
+    <article className={projectCard()}>
       <header className="mb-4">
-        <h3 className="text-xl sm:text-2xl font-semibold">{title}</h3>
+        <h3 className="text-xl font-semibold sm:text-2xl">{title}</h3>
         <p className="mt-2 text-sm">{description}</p>
         <div className="mt-3 flex flex-wrap items-start gap-2">
           <ul className="flex flex-wrap gap-2">
             {tags.map((tag) => (
-              <li key={tag} className="rounded-md bg-white/10 px-2 py-1 text-xs">
+              <li key={tag} className={projectChip()}>
                 {tag}
               </li>
             ))}
           </ul>
           {previewLinks?.length ? (
-            <ul className="ml-auto justify-end flex flex-wrap gap-2">
+            <ul className="ml-auto flex flex-wrap justify-end gap-2">
               {previewLinks.map((link) => (
-                <li key={`${link.href}:${link.label}`} className="rounded-md bg-white/10 px-2 py-1 text-xs">
+                <li
+                  key={`${link.href}:${link.label}`}
+                  className={projectChip()}
+                >
                   <a
                     href={link.href}
                     aria-label={link.ariaLabel ?? link.label}
-                    className="underline-offset-2 hover:underline"
+                    className={cn("hover:underline")}
                   >
                     {link.label}
                   </a>
-                   <ArrowUpRight className="inline-block ml-1 h-3.5 w-3.5" />
-
+                  <ArrowUpRight className="ml-1 inline-block h-3.5 w-3.5" />
                 </li>
               ))}
             </ul>
           ) : null}
         </div>
       </header>
-      <div className="relative overflow-hidden rounded-md mx-auto aspect-video">{children}</div>
+      <div className={projectPreviewFrame()}>{children}</div>
     </article>
   );
 }

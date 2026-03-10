@@ -1,11 +1,48 @@
-@import url("https://fonts.googleapis.com/css2?family=Vend+Sans:ital,wght@0,300..700;1,300..700&display=swap");
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --color-accent: #2563eb;
-  --font-sans: "Vend Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-red-hat-text), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-red-hat-display), ui-serif, Georgia, serif;
+
+  --color-page-bg: #f3f4f6;
+  --color-page-fg: #1f2937;
+  --color-page-bg-dark: #000000;
+  --color-page-fg-dark: var(--color-text-overlay-dark);
+
+  --color-text-overlay-light: #0a0a0a;
+  --color-text-overlay-dark: #f5f5f5;
+
+  --color-border-overlay-light: rgb(0 0 0 / 0.1);
+  --color-border-overlay-light-strong: rgb(0 0 0 / 0.15);
+  --color-border-overlay-dark: rgb(255 255 255 / 0.1);
+  --color-border-overlay-dark-strong: rgb(255 255 255 / 0.15);
+
+  --color-surface-chip: rgb(255 255 255 / 0.1);
+  --color-surface-overlay-light-soft: rgb(255 255 255 / 0.35);
+  --color-surface-overlay-light: rgb(255 255 255 / 0.5);
+  --color-surface-overlay-light-strong: rgb(255 255 255 / 0.6);
+  --color-surface-overlay-light-panel: rgb(255 255 255 / 0.7);
+  --color-surface-overlay-light-panel-strong: rgb(255 255 255 / 0.78);
+  --color-surface-overlay-light-button: rgb(255 255 255 / 0.85);
+  --color-surface-overlay-light-button-strong: rgb(255 255 255 / 0.9);
+  --color-surface-overlay-dark: rgb(0 0 0 / 0.35);
+  --color-surface-overlay-dark-strong: rgb(0 0 0 / 0.4);
+  --color-surface-overlay-dark-panel: rgb(0 0 0 / 0.3);
+  --color-surface-overlay-dark-modal: rgb(0 0 0 / 0.75);
+  --color-surface-overlay-dark-button: rgb(0 0 0 / 0.55);
+  --color-surface-overlay-dark-button-hover: rgb(0 0 0 / 0.7);
+  --color-surface-overlay-dark-ghost: rgb(255 255 255 / 0.08);
+  --color-surface-overlay-dark-ghost-hover: rgb(255 255 255 / 0.12);
+  --color-surface-overlay-dark-item: rgb(255 255 255 / 0.05);
+  --color-surface-overlay-dark-item-strong: rgb(255 255 255 / 0.07);
+  --color-surface-overlay-light-item: rgb(0 0 0 / 0.03);
+  --color-surface-overlay-light-modal: rgb(255 255 255 / 0.75);
+
+  --color-divider-overlay-light: rgb(0 0 0 / 0.35);
+  --color-divider-overlay-dark: rgb(255 255 255 / 0.7);
 }
 
 @layer base {
@@ -13,8 +50,71 @@
   button:not(:disabled):hover {
     @apply cursor-pointer;
   }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .overlay-tone-dark {
+    @apply border-border-overlay-dark bg-surface-overlay-dark text-text-overlay-dark;
+  }
+
+  .overlay-tone-light-base {
+    @apply border-border-overlay-light text-text-overlay-light;
+  }
+
+  .overlay-panel-dark {
+    @apply border-border-overlay-dark bg-surface-overlay-dark-panel;
+  }
+
+  .overlay-panel-light {
+    @apply border-border-overlay-light bg-surface-overlay-light-panel;
+  }
+
+  .overlay-button-dark {
+    @apply border-border-overlay-dark-strong bg-surface-overlay-dark-ghost text-text-overlay-dark hover:bg-surface-overlay-dark-ghost-hover;
+  }
+
+  .overlay-button-light {
+    @apply border-border-overlay-light bg-surface-overlay-light-button text-text-overlay-light hover:bg-white;
+  }
+
+  .overlay-button-dark-solid {
+    @apply border-border-overlay-dark-strong bg-surface-overlay-dark-button text-text-overlay-dark hover:bg-surface-overlay-dark-button-hover;
+  }
+
+  .overlay-item-dark {
+    @apply border-border-overlay-dark bg-surface-overlay-dark-item;
+  }
+
+  .overlay-item-light {
+    @apply border-border-overlay-light bg-surface-overlay-light-item;
+  }
+
+  .overlay-border-dark {
+    @apply border-border-overlay-dark;
+  }
+
+  .overlay-border-light {
+    @apply border-border-overlay-light;
+  }
+
+  .overlay-border-dark-strong {
+    @apply border-border-overlay-dark-strong;
+  }
+
+  .overlay-border-light-strong {
+    @apply border-border-overlay-light-strong;
+  }
 }
 
 body {
-  @apply bg-gray-100 font-sans text-gray-800 dark:bg-black dark:text-gray-100;
+  @apply bg-page-bg text-page-fg dark:bg-page-bg-dark dark:text-page-fg-dark font-sans;
 }

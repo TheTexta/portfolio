@@ -1,12 +1,14 @@
-import { ReactNode } from "react";
+import { cva } from "class-variance-authority";
+import { type ReactNode } from "react";
+
+const sectionHeading = cva("mt-20 mb-5 text-center text-4xl");
+const sectionList = cva("space-y-9");
 
 export default function ProjectsSection({ children }: { children: ReactNode }) {
   return (
     <>
-      <h2 className="text-4xl text-center mt-20 mb-5">Projects</h2>
-      <div className="space-y-9">
-        {children}
-      </div>
+      <h2 className={sectionHeading()}>Projects</h2>
+      <div className={sectionList()}>{children}</div>
     </>
   );
 }
