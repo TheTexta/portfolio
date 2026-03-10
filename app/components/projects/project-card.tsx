@@ -12,7 +12,7 @@ type ProjectCardProps = {
   children: ReactNode;
 };
 
-const projectCard = cva("w-full max-w-3xl justify-self-center rounded-xl", {
+const projectCard = cva("w-full max-w-3xl justify-self-center mx-auto rounded-xl", {
   variants: {
     width: {
       fluid: "md:w-5/6",

@@ -6,7 +6,7 @@ export const NEPOBABIES_ASSET_ROOT = "assets";
 export const NEPOBABIES_STORAGE_PREFIX = "nepobabies/assets";
 export const DEFAULT_NEPOBABIES_STORAGE_BUCKET =
   "portfolio-site-firebase-41fab.firebasestorage.app";
-export const DEFAULT_NEPOBABIES_ASSET_VERSION = "v20260305-1";
+export const DEFAULT_NEPOBABIES_ASSET_VERSION = "v20260310-2";
 
 export type NepobabiesAssetManifest = {
   version: string;

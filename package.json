@@ -11,10 +11,10 @@
     "format:check": "prettier . --check",
     "photo-graph:migrate": "tsx scripts/photo-graph/migrate-static-to-runtime.ts",
     "photo-graph:backfill-dimensions": "tsx scripts/photo-graph/backfill-runtime-dimensions.ts",
-    "nepobabies:assets:dry-run": "tsx scripts/nepobabies/migrate-assets-to-firebase.ts --mode=dry-run --version=${NEPOBABIES_ASSET_VERSION:-v20260305-1}",
-    "nepobabies:assets:upload": "tsx scripts/nepobabies/migrate-assets-to-firebase.ts --mode=upload --version=${NEPOBABIES_ASSET_VERSION:-v20260305-1}",
-    "nepobabies:assets:verify": "tsx scripts/nepobabies/migrate-assets-to-firebase.ts --mode=verify --version=${NEPOBABIES_ASSET_VERSION:-v20260305-1}",
-    "nepobabies:assets:rewrite": "tsx scripts/nepobabies/migrate-assets-to-firebase.ts --mode=rewrite --version=${NEPOBABIES_ASSET_VERSION:-v20260305-1}"
+    "nepobabies:assets:dry-run": "tsx scripts/nepobabies/migrate-assets-to-firebase.ts --mode=dry-run --version=${NEPOBABIES_ASSET_VERSION:-v20260310-2}",
+    "nepobabies:assets:upload": "tsx scripts/nepobabies/migrate-assets-to-firebase.ts --mode=upload --version=${NEPOBABIES_ASSET_VERSION:-v20260310-2}",
+    "nepobabies:assets:verify": "tsx scripts/nepobabies/migrate-assets-to-firebase.ts --mode=verify --version=${NEPOBABIES_ASSET_VERSION:-v20260310-2}",
+    "nepobabies:assets:rewrite": "tsx scripts/nepobabies/migrate-assets-to-firebase.ts --mode=rewrite --version=${NEPOBABIES_ASSET_VERSION:-v20260310-2}"
   },
   "dependencies": {
     "@spotify/web-api-ts-sdk": "^1.2.0",

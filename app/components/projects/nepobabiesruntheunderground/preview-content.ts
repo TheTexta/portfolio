@@ -134,7 +134,7 @@ function resolvePreviewAssetPath(rawUrl: string, baseAssetPath?: string) {
 }
 
 function buildPreviewAssetUrl(assetPath: string) {
-  return nepobabiesAssetUrl(assetPath);
+  return `${PREVIEW_BASE_PATH}${assetPath}`;
 }
 
 function getImageOptimizationOptions(assetPath: string) {
@@ -304,13 +304,13 @@ function responseHeadersForExtension(extension: string) {
 
 export async function servePreviewFile(segments: string[]) {
   const legacyAssetRedirect = resolveLegacyAssetRedirect(segments);
-  if (legacyAssetRedirect) {
-    return Response.redirect(legacyAssetRedirect, 308);
-  }
-
   const filePath = resolveProjectFile(segments);
 
   if (!filePath) {
+    if (legacyAssetRedirect) {
+      return Response.redirect(legacyAssetRedirect, 308);
+    }
+
     return new Response("Not found", { status: 404 });
   }
 
@@ -352,6 +352,10 @@ export async function servePreviewFile(segments: string[]) {
     const errorWithCode = error as NodeJS.ErrnoException;
 
     if (errorWithCode.code === "ENOENT") {
+      if (legacyAssetRedirect) {
+        return Response.redirect(legacyAssetRedirect, 308);
+      }
+
       return new Response("Not found", { status: 404 });
     }
 
