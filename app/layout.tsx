@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import Script from "next/script";
 import "./globals.css";
 
 import { Analytics } from "@vercel/analytics/next";
@@ -61,6 +62,9 @@ export default function RootLayout({
       className={`${redHatText.variable} ${redHatDisplay.variable}`}
     >
       <body>
+        <Script id="windows-scrollbar-preference" strategy="beforeInteractive">
+          {`document.documentElement.classList.toggle("windows", navigator.platform.startsWith("Win") || navigator.userAgent.includes("Windows"));`}
+        </Script>
         <ThemeProvider>
           <FirebaseAnalytics />
           {children}

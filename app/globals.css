@@ -118,3 +118,14 @@
 body {
   @apply bg-page-bg text-page-fg dark:bg-page-bg-dark dark:text-page-fg-dark font-sans;
 }
+
+html.windows,
+html.windows * {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html.windows ::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}

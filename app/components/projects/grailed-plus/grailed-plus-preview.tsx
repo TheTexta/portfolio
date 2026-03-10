@@ -1,5 +1,7 @@
 "use client";
+
 import { cva } from "class-variance-authority";
+import { ArrowLeft, ArrowLeftRight, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import type { StaticImageData } from "next/image";
 import {
@@ -59,12 +61,12 @@ const GRAILED_OVERLAY_MONO_FILTER = "grayscale(1) brightness(1.35)";
 
 const grailedPreviewShell = cva("relative h-full w-full overflow-hidden");
 const grailedControlButton = cva(
-  "inline-flex h-10 w-10 appearance-none items-center justify-center rounded-full border p-0 [line-height:1] font-semibold transition-colors",
+  "inline-flex h-10 w-10 appearance-none items-center justify-center rounded-full border p-0 [line-height:1] font-semibold transition-colors [&_svg]:pointer-events-none [&_svg]:m-auto [&_svg]:block [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0",
   {
     variants: {
       size: {
-        compact: "text-sm shadow-sm",
-        default: "text-base",
+        compact: "shadow-sm",
+        default: "",
       },
     },
     defaultVariants: {
@@ -271,9 +273,7 @@ export default function GrailedPlusPreview({
             transform: "translate(-50%, -50%)",
           }}
         >
-          <span aria-hidden className="block leading-none">
-            ↔
-          </span>
+          <ArrowLeftRight aria-hidden />
         </button>
       </div>
 
@@ -307,9 +307,7 @@ export default function GrailedPlusPreview({
           controlToneClass,
         )}
       >
-        <span aria-hidden className="block leading-none">
-          ←
-        </span>
+        <ArrowLeft aria-hidden />
       </button>
       <button
         type="button"
@@ -321,9 +319,7 @@ export default function GrailedPlusPreview({
           controlToneClass,
         )}
       >
-        <span aria-hidden className="block leading-none">
-          →
-        </span>
+        <ArrowRight aria-hidden />
       </button>
     </div>
   );
