@@ -17,15 +17,17 @@ import { OverlayControlButton } from "@/app/components/ui/overlay-control-button
 import { cn } from "@/lib/cn";
 import afterCustomCurrency from "./after-custom-currency.png";
 import afterDm from "./after-dm.png";
+import afterPriceTrend from "./after-price-trend.png";
 import beforeCustomCurrency from "./before-custom-currency.png";
 import beforeDm from "./before-dm.png";
+import beforePriceTrend from "./before-price-trend.png";
 
 type GrailedPlusPreviewProps = {
   forcedDarkMode?: boolean;
 };
 
 type ComparePage = {
-  id: "dm" | "custom-currency";
+  id: "dm" | "custom-currency" | "price-trend";
   label: string;
   before: StaticImageData;
   after: StaticImageData;
@@ -53,6 +55,16 @@ const COMPARE_PAGES: ComparePage[] = [
       "Grailed browse page before Grailed Plus custom currency enhancements",
     afterAlt:
       "Grailed browse page after Grailed Plus custom currency enhancements",
+  },
+  {
+    id: "price-trend",
+    label: "Price Trend",
+    before: beforePriceTrend,
+    after: afterPriceTrend,
+    beforeAlt:
+      "Grailed listing page before Grailed Plus price trend and seller metadata enhancements",
+    afterAlt:
+      "Grailed listing page after Grailed Plus price trend and seller metadata enhancements",
   },
 ];
 
