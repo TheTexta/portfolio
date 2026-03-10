@@ -12,6 +12,11 @@ import {
 import NextImage from "next/image";
 import { useRouter } from "next/navigation";
 
+import { ADMIN_CONTROL_CHROME } from "@/app/components/projects/project-chrome";
+import {
+  OverlayControlButton,
+  OverlayControlLabel,
+} from "@/app/components/ui/overlay-control-button";
 import {
   MIN_CORRELATION,
   computeCorrelation,
@@ -738,12 +743,13 @@ export default function PhotoGraphUploadClient() {
           </p>
         </div>
 
-        <button
+        <OverlayControlButton
           onClick={handleLogout}
-          className="rounded-md border border-black px-3 py-2 text-sm dark:border-white"
+          layout="action"
+          toneClass={ADMIN_CONTROL_CHROME.action}
         >
           Log Out
-        </button>
+        </OverlayControlButton>
       </div>
 
       <div
@@ -753,7 +759,10 @@ export default function PhotoGraphUploadClient() {
       >
         <p className="text-sm">Drag and drop images here</p>
         <p className="my-2 text-xs opacity-70">or</p>
-        <label className="inline-flex cursor-pointer items-center rounded-md border border-black px-3 py-2 text-sm dark:border-white">
+        <OverlayControlLabel
+          layout="action"
+          toneClass={ADMIN_CONTROL_CHROME.action}
+        >
           Select Files
           <input
             type="file"
@@ -762,7 +771,7 @@ export default function PhotoGraphUploadClient() {
             onChange={handleInputChange}
             className="hidden"
           />
-        </label>
+        </OverlayControlLabel>
       </div>
 
       <div className="mt-4 flex items-center justify-between text-sm">
@@ -784,37 +793,43 @@ export default function PhotoGraphUploadClient() {
       )}
 
       <div className="mt-5 flex items-center gap-3">
-        <button
+        <OverlayControlButton
           onClick={handleUpload}
           disabled={uploadDisabled}
-          className="rounded-md border border-black px-4 py-2 text-sm font-medium disabled:opacity-50 dark:border-white"
+          layout="action"
+          size="lg"
+          toneClass={ADMIN_CONTROL_CHROME.action}
+          className="font-medium"
         >
           {isProcessing ? "Processing..." : "Upload + Generate Edges"}
-        </button>
+        </OverlayControlButton>
 
         {files.length > 0 && (
-          <button
+          <OverlayControlButton
             onClick={() => setFiles([])}
             disabled={isProcessing}
-            className="rounded-md border border-black/50 px-4 py-2 text-sm disabled:opacity-50 dark:border-white/50"
+            layout="action"
+            toneClass={ADMIN_CONTROL_CHROME.action}
           >
             Clear
-          </button>
+          </OverlayControlButton>
         )}
 
-        <button
+        <OverlayControlButton
           onClick={() => setVerbosePanelOpen((current) => !current)}
-          className="rounded-md border border-black/50 px-4 py-2 text-sm dark:border-white/50"
+          layout="action"
+          toneClass={ADMIN_CONTROL_CHROME.action}
         >
           {verbosePanelOpen ? "Hide Verbose Panel" : "Show Verbose Panel"}
-        </button>
+        </OverlayControlButton>
 
-        <button
+        <OverlayControlButton
           onClick={clearVerboseLogs}
-          className="rounded-md border border-black/50 px-4 py-2 text-sm dark:border-white/50"
+          layout="action"
+          toneClass={ADMIN_CONTROL_CHROME.action}
         >
           Clear Logs
-        </button>
+        </OverlayControlButton>
       </div>
 
       {statusMessage && (
@@ -837,15 +852,17 @@ export default function PhotoGraphUploadClient() {
             <span className="opacity-70">
               {graphNodes.length} total node(s)
             </span>
-            <button
+            <OverlayControlButton
               onClick={() => void fetchGraphNodes()}
               disabled={
                 loadingGraphNodes || isProcessing || deletingNodeId !== null
               }
-              className="rounded-md border border-black/50 px-2 py-1 disabled:opacity-50 dark:border-white/50"
+              layout="action"
+              size="sm"
+              toneClass={ADMIN_CONTROL_CHROME.action}
             >
               {loadingGraphNodes ? "Refreshing..." : "Refresh"}
-            </button>
+            </OverlayControlButton>
           </div>
         </div>
 
@@ -901,17 +918,19 @@ export default function PhotoGraphUploadClient() {
                           )}
                         </div>
                       </div>
-                      <button
+                      <OverlayControlButton
                         onClick={() => void handleDeleteNode(node)}
                         disabled={
                           isProcessing ||
                           loadingGraphNodes ||
                           (deletingNodeId !== null && !isDeleting)
                         }
-                        className="rounded-md border border-red-500/70 px-2 py-1 text-red-600 disabled:opacity-50"
+                        layout="action"
+                        size="sm"
+                        toneClass={ADMIN_CONTROL_CHROME.danger}
                       >
                         {isDeleting ? "Deleting..." : "Delete"}
-                      </button>
+                      </OverlayControlButton>
                     </div>
                   </li>
                 );

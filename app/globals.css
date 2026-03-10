@@ -90,6 +90,18 @@
     @apply border-border-overlay-dark-strong bg-surface-overlay-dark-button text-text-overlay-dark hover:bg-surface-overlay-dark-button-hover;
   }
 
+  .overlay-control-icon-dark {
+    @apply border-border-overlay-dark bg-surface-overlay-dark text-text-overlay-dark hover:bg-surface-overlay-dark-strong active:bg-surface-overlay-dark-button;
+  }
+
+  .overlay-control-icon-light {
+    @apply border-border-overlay-light bg-surface-overlay-light-soft text-text-overlay-light hover:bg-surface-overlay-light-strong active:bg-surface-overlay-light-button;
+  }
+
+  .overlay-button-danger {
+    @apply border-red-500/70 bg-red-500/12 text-red-700 hover:bg-red-500/20 dark:border-red-400/70 dark:bg-red-500/20 dark:text-red-200 dark:hover:bg-red-500/30;
+  }
+
   .overlay-item-dark {
     @apply border-border-overlay-dark bg-surface-overlay-dark-item;
   }

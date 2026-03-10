@@ -15,7 +15,10 @@ import {
   computeTargetImageWidth,
   shouldUpgradeWidth,
 } from "@/app/components/projects/photo-graph/imageOptimizer";
-import { OverlayIconButton } from "@/app/components/ui/overlay-icon-button";
+import {
+  OverlayControlAnchor,
+  OverlayControlButton,
+} from "@/app/components/ui/overlay-control-button";
 import OverlayNavBar from "@/app/components/ui/overlay-nav-bar";
 import { storage } from "@/lib/firebase/client";
 import type { GraphImageDimensions } from "@/lib/photo-graph/types";
@@ -1305,14 +1308,14 @@ export default function PhotoGraphCanvas({
   return (
     <div className={`static h-full w-full transition-colors ${chrome.shell}`}>
       {!menuOpen && (
-        <OverlayIconButton
+        <OverlayControlButton
           onClick={() => setMenuOpen(true)}
-          toneClass={chrome.overlay}
+          toneClass={chrome.controls.icon}
           className="absolute top-[1vmin] left-[1vmin] z-[6]"
           aria-label="Open graph controls"
         >
           <Menu className="h-4 w-4" />
-        </OverlayIconButton>
+        </OverlayControlButton>
       )}
 
       <OverlayNavBar
@@ -1324,7 +1327,7 @@ export default function PhotoGraphCanvas({
         }
         expandHref={isFullPageRoute ? undefined : PROJECT_ROUTES.photoGraph}
         exitHref={isFullPageRoute ? PROJECT_ROUTES.home : undefined}
-        toneClass={chrome.overlay}
+        toneClass={chrome.controls.icon}
         ariaLabel="Photo graph controls"
       />
 
@@ -1340,14 +1343,15 @@ export default function PhotoGraphCanvas({
               </p>
             </div>
 
-            <OverlayIconButton
+            <OverlayControlButton
               onClick={() => setMenuOpen(false)}
-              toneClass={chrome.overlay}
-              className="ml-auto h-7 w-7"
+              toneClass={chrome.controls.icon}
+              size="sm"
+              className="ml-auto"
               aria-label="Close graph controls"
             >
-              <X className="h-5 w-5" />
-            </OverlayIconButton>
+              <X className="h-4 w-4" />
+            </OverlayControlButton>
           </div>
 
           <label
@@ -1434,14 +1438,14 @@ export default function PhotoGraphCanvas({
             className="relative flex h-full w-full flex-col items-center justify-center"
             onClick={(event) => event.stopPropagation()}
           >
-            <OverlayIconButton
+            <OverlayControlButton
               onClick={() => setInspectTarget(null)}
-              toneClass={chrome.overlay}
+              toneClass={chrome.controls.icon}
               className="absolute top-0 right-0 mx-2 my-2"
               aria-label="Close image inspection"
             >
               <X className="h-4 w-4" />
-            </OverlayIconButton>
+            </OverlayControlButton>
 
             <img
               src={inspectTarget.url}
@@ -1481,10 +1485,13 @@ export default function PhotoGraphCanvas({
                 </p>
               </div>
 
-              <a
+              <OverlayControlAnchor
                 href={inspectMetadata?.downloadUrl ?? undefined}
                 download={inspectMetadata?.filename}
-                className={`inline-flex items-center gap-1 ${
+                toneClass={chrome.controls.action}
+                layout="action"
+                size="sm"
+                className={`gap-1 ${
                   inspectMetadata?.downloadUrl
                     ? ""
                     : "pointer-events-none opacity-50"
@@ -1493,7 +1500,7 @@ export default function PhotoGraphCanvas({
               >
                 Download Original
                 <Download className="h-1.75 w-1.75 sm:h-3.5 sm:w-3.5" />
-              </a>
+              </OverlayControlAnchor>
             </div>
           </div>
         </div>

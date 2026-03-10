@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useTheme } from "@/app/components/theme/theme-provider";
 import { getProjectChrome } from "@/app/components/projects/project-chrome";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
+import { OverlayControlButton } from "@/app/components/ui/overlay-control-button";
 import OverlayNavBar from "@/app/components/ui/overlay-nav-bar";
 import { cn } from "@/lib/cn";
 import { useSpotifySession } from "./useSpotifySession";
@@ -34,9 +35,6 @@ const spotifySurface = cva("rounded-3xl border", {
     alignment: "left",
   },
 });
-const spotifyActionButton = cva(
-  "rounded-full border px-4 py-2 text-sm transition-colors",
-);
 const spotifyTrackItem = cva(
   "grid grid-cols-[auto,1fr] items-start gap-3 rounded-2xl border px-3 py-3 md:px-4",
 );
@@ -66,7 +64,7 @@ export default function SpotifyNodify({ forcedDarkMode }: SpotifyNodifyProps) {
         }
         expandHref={isFullPageRoute ? undefined : projectPath}
         exitHref={isFullPageRoute ? PROJECT_ROUTES.home : undefined}
-        toneClass={chrome.overlay}
+        toneClass={chrome.controls.icon}
         ariaLabel="spotify-nodify controls"
       />
 
@@ -133,18 +131,20 @@ export default function SpotifyNodify({ forcedDarkMode }: SpotifyNodifyProps) {
                   </div>
 
                   <div className="flex flex-wrap justify-center gap-3 lg:justify-start">
-                    <button
+                    <OverlayControlButton
                       onClick={connect}
-                      className={cn(spotifyActionButton(), chrome.button)}
+                      layout="action"
+                      toneClass={chrome.controls.action}
                     >
                       Reconnect Spotify
-                    </button>
-                    <button
+                    </OverlayControlButton>
+                    <OverlayControlButton
                       onClick={disconnect}
-                      className={cn(spotifyActionButton(), chrome.button)}
+                      layout="action"
+                      toneClass={chrome.controls.action}
                     >
                       Clear Connection
-                    </button>
+                    </OverlayControlButton>
                   </div>
                 </div>
               </section>
@@ -208,12 +208,13 @@ export default function SpotifyNodify({ forcedDarkMode }: SpotifyNodifyProps) {
                 tracks from the last month directly inside the project preview.
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
-                <button
+                <OverlayControlButton
                   onClick={connect}
-                  className={cn(spotifyActionButton(), chrome.button)}
+                  layout="action"
+                  toneClass={chrome.controls.action}
                 >
                   Connect Spotify
-                </button>
+                </OverlayControlButton>
               </div>
             </section>
           ) : null}

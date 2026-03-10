@@ -1,5 +1,8 @@
 import { ArrowRightFromLine, Maximize, Moon, SunMedium } from "lucide-react";
-import { OverlayIconButton, OverlayIconLink } from "./overlay-icon-button";
+import {
+  OverlayControlButton,
+  OverlayControlLink,
+} from "./overlay-control-button";
 import { cn } from "@/lib/cn";
 
 type OverlayNavBarProps = {
@@ -27,7 +30,7 @@ export default function OverlayNavBar({
 }: OverlayNavBarProps) {
   const positionClass =
     containerMode === "sticky"
-      ? "sticky ml-auto w-fit"
+      ? "sticky w-fit"
       : "absolute right-[1vmin] top-[1vmin]";
 
   return (
@@ -36,7 +39,7 @@ export default function OverlayNavBar({
       className={cn("z-[8] flex items-center gap-2", positionClass, className)}
     >
       {darkMode !== undefined && onToggleDarkMode && (
-        <OverlayIconButton
+        <OverlayControlButton
           toneClass={toneClass}
           shape="round"
           onClick={onToggleDarkMode}
@@ -48,27 +51,27 @@ export default function OverlayNavBar({
           ) : (
             <Moon className={iconClassName} />
           )}
-        </OverlayIconButton>
+        </OverlayControlButton>
       )}
 
       {expandHref && (
-        <OverlayIconLink
+        <OverlayControlLink
           href={expandHref}
           toneClass={toneClass}
           aria-label="Expand project to full page"
         >
           <Maximize className={iconClassName} />
-        </OverlayIconLink>
+        </OverlayControlLink>
       )}
 
       {exitHref && (
-        <OverlayIconLink
+        <OverlayControlLink
           href={exitHref}
           toneClass={toneClass}
           aria-label="Exit full project view"
         >
           <ArrowRightFromLine className={iconClassName} />
-        </OverlayIconLink>
+        </OverlayControlLink>
       )}
     </nav>
   );

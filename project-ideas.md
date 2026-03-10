@@ -18,3 +18,6 @@ _NOT POSSIBLE UNTIL API UPDATES - CURRENTLY IMPOSSIBLE TO RETRIEVE GENRE DATA TH
 #####
 
 An idea for an app that connects rate your music scores with a FM kind of experience to recommend songs for you to listen to based of songs in your history are using the radio music AVI stats fm with rym for recomendations
+
+### McGill course MCP server
+Super efficient studying through studocu style integration

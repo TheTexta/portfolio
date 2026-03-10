@@ -38,7 +38,7 @@ export default function HtmlProjectPreview({
       />
 
       <OverlayNavBar
-        toneClass={chrome.overlay}
+        toneClass={chrome.controls.icon}
         expandHref={isFullPage ? undefined : projectHref}
         exitHref={isFullPage ? exitHref : undefined}
         ariaLabel={`${title} controls`}

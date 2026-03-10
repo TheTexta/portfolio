@@ -2,6 +2,8 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ADMIN_CONTROL_CHROME } from "@/app/components/projects/project-chrome";
+import { OverlayControlButton } from "@/app/components/ui/overlay-control-button";
 
 export default function PhotoGraphAdminLoginPage() {
   const router = useRouter();
@@ -70,13 +72,15 @@ export default function PhotoGraphAdminLoginPage() {
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 
-          <button
+          <OverlayControlButton
             type="submit"
             disabled={submitting}
-            className="inline-flex items-center rounded-md border border-black px-4 py-2 text-sm font-medium disabled:opacity-50 dark:border-white"
+            layout="action"
+            toneClass={ADMIN_CONTROL_CHROME.action}
+            className="font-medium"
           >
             {submitting ? "Signing in..." : "Sign In"}
-          </button>
+          </OverlayControlButton>
         </form>
       </div>
     </main>

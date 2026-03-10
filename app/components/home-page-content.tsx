@@ -10,16 +10,16 @@ import OverlayNavBar from "@/app/components/ui/overlay-nav-bar";
 
 export default function HomePageContent() {
   const { darkMode, toggleTheme } = useTheme();
-  const { overlay: homeOverlayClass } = getProjectChrome("home", darkMode);
+  const chrome = getProjectChrome("home", darkMode);
 
   return (
     <div className="relative min-h-dvh w-full pb-16 font-light text-black dark:text-gray-100">
       <OverlayNavBar
         darkMode={darkMode}
         onToggleDarkMode={toggleTheme}
-        toneClass={homeOverlayClass}
+        toneClass={chrome.controls.icon}
         containerMode="sticky"
-        className="top-5 z-20 mx-4"
+        className="top-5 ml-auto mr-5 z-20"
         ariaLabel="Site controls"
       />
       <AboutSection />

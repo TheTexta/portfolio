@@ -13,6 +13,7 @@ import {
 } from "react";
 import { getProjectChrome } from "@/app/components/projects/project-chrome";
 import { useTheme } from "@/app/components/theme/theme-provider";
+import { OverlayControlButton } from "@/app/components/ui/overlay-control-button";
 import { cn } from "@/lib/cn";
 import afterCustomCurrency from "./after-custom-currency.png";
 import afterDm from "./after-dm.png";
@@ -60,20 +61,6 @@ const GRAILED_PREVIEW_IMAGE_QUALITY = 75;
 const GRAILED_OVERLAY_MONO_FILTER = "grayscale(1) brightness(1.35)";
 
 const grailedPreviewShell = cva("relative h-full w-full overflow-hidden");
-const grailedControlButton = cva(
-  "inline-flex h-10 w-10 appearance-none items-center justify-center rounded-full border p-0 [line-height:1] font-semibold transition-colors [&_svg]:pointer-events-none [&_svg]:m-auto [&_svg]:block [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0",
-  {
-    variants: {
-      size: {
-        compact: "shadow-sm",
-        default: "",
-      },
-    },
-    defaultVariants: {
-      size: "default",
-    },
-  },
-);
 
 function clampSplit(value: number) {
   return Math.min(100, Math.max(0, Math.round(value)));
@@ -93,9 +80,7 @@ export default function GrailedPlusPreview({
   const rootRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const activePage = COMPARE_PAGES[activeIndex];
-  const controlToneClass =
-    chrome.button ??
-    (darkMode ? "overlay-button-dark-solid" : "overlay-button-light");
+  const controlToneClass = chrome.controls.icon;
 
   const updateSplitFromClientX = (clientX: number) => {
     const bounds = rootRef.current?.getBoundingClientRect();
@@ -249,8 +234,10 @@ export default function GrailedPlusPreview({
           )}
           style={{ left: `${splitPercent}%`, transform: "translateX(-0.5px)" }}
         />
-        <button
-          type="button"
+        <OverlayControlButton
+          layout="icon"
+          shape="round"
+          toneClass={controlToneClass}
           role="slider"
           aria-label="Before and after comparison slider"
           aria-valuemin={0}
@@ -263,18 +250,14 @@ export default function GrailedPlusPreview({
           onPointerCancel={handleSliderPointerUp}
           onLostPointerCapture={() => setDraggingPointerId(null)}
           onKeyDown={handleSliderKeyDown}
-          className={cn(
-            "pointer-events-auto absolute top-1/2 touch-none",
-            grailedControlButton({ size: "compact" }),
-            controlToneClass,
-          )}
+          className="pointer-events-auto absolute top-1/2 touch-none"
           style={{
             left: `${splitPercent}%`,
             transform: "translate(-50%, -50%)",
           }}
         >
           <ArrowLeftRight aria-hidden />
-        </button>
+        </OverlayControlButton>
       </div>
 
       <div
@@ -297,30 +280,26 @@ export default function GrailedPlusPreview({
         After
       </div>
 
-      <button
-        type="button"
+      <OverlayControlButton
+        layout="icon"
+        shape="round"
+        toneClass={controlToneClass}
         onClick={handlePrevious}
         aria-label="Previous before and after page"
-        className={cn(
-          "absolute top-1/2 left-3 z-10 -translate-y-1/2 md:left-4",
-          grailedControlButton(),
-          controlToneClass,
-        )}
+        className="absolute top-1/2 left-3 z-10 -translate-y-1/2 md:left-4"
       >
         <ArrowLeft aria-hidden />
-      </button>
-      <button
-        type="button"
+      </OverlayControlButton>
+      <OverlayControlButton
+        layout="icon"
+        shape="round"
+        toneClass={controlToneClass}
         onClick={handleNext}
         aria-label="Next before and after page"
-        className={cn(
-          "absolute top-1/2 right-3 z-10 -translate-y-1/2 md:right-4",
-          grailedControlButton(),
-          controlToneClass,
-        )}
+        className="absolute top-1/2 right-3 z-10 -translate-y-1/2 md:right-4"
       >
         <ArrowRight aria-hidden />
-      </button>
+      </OverlayControlButton>
     </div>
   );
 }
