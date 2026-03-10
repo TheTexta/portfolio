@@ -13,13 +13,13 @@ export default function HomePageContent() {
   const { overlay: homeOverlayClass } = getProjectChrome("home", darkMode);
 
   return (
-    <div className="relative w-full min-h-dvh px-5 pb-16 font-light text-black dark:text-gray-100">
+    <div className="relative w-full min-h-dvh pb-16 font-light text-black dark:text-gray-100">
       <OverlayNavBar
         darkMode={darkMode}
         onToggleDarkMode={toggleTheme}
         toneClass={homeOverlayClass}
         containerMode="sticky"
-        className="top-5 z-20"
+        className="top-5 z-20 mx-4"
         ariaLabel="Site controls"
       />
       <AboutSection />
@@ -30,6 +30,7 @@ export default function HomePageContent() {
             title={project.title}
             description={project.description}
             tags={project.tags}
+            previewLinks={project.previewLinks}
           >
             {project.renderPreview(darkMode)}
           </ProjectCard>

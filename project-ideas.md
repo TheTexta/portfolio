@@ -13,3 +13,6 @@
 
 - future idea: customisable ui based on user preferences so that wide aesthetic variety of receipts can be generated
 - future idea: explore top genre nodes and how they connect to unexplored related genres to allow for user track discovery
+
+#####
+An idea for an app that connects rate your music scores with a FM kind of experience to recommend songs for you to listen to based of songs in your history are using the radio music AVI stats fm with rym for recomendations

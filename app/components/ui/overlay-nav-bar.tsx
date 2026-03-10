@@ -27,7 +27,7 @@ export default function OverlayNavBar({
 }: OverlayNavBarProps) {
   const positionClass =
     containerMode === "sticky"
-      ? "sticky top-[1vmin] ml-auto w-fit"
+      ? "sticky ml-auto w-fit"
       : "absolute right-[1vmin] top-[1vmin]";
 
   return (
