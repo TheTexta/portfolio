@@ -21,3 +21,5 @@ An idea for an app that connects rate your music scores with a FM kind of experi
 
 ### McGill course MCP server
 Super efficient studying through studocu style integration
+
+### Wallpaper Engine frozen window shader

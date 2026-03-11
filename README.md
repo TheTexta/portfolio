@@ -39,8 +39,6 @@ Images are loaded from Firebase Storage at runtime. The graph starts by loading 
 ## TODO
 
 - possibly do subtle (low saturation) gradient (masked) versions of all my favourite images that scroll in random paralaxes in the background
-- fix nepobabiesruntheunderground running weirdly on mobile
-- implment before/after text with inversion mono filter stuff like the top right text
 - adding to the above I want to make a full design philosophy for myself.
 - auto recentering on zoomout of graph-view-image
 - explode effect on zooming in/out of photographview
