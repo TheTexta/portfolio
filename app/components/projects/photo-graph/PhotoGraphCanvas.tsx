@@ -1311,7 +1311,7 @@ export default function PhotoGraphCanvas({
         <OverlayControlButton
           onClick={() => setMenuOpen(true)}
           toneClass={chrome.controls.icon}
-          className="absolute top-[1vmin] left-[1vmin] z-[6]"
+          className="absolute top-[1vmin] left-[1vmin] z-6"
           aria-label="Open graph controls"
         >
           <Menu className="h-4 w-4" />

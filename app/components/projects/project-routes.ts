@@ -6,5 +6,6 @@ export const PROJECT_ROUTES = {
   spotifyNodify: "/components/projects/spotify-nodify",
   grailedPlus: "/components/projects/grailed-plus",
   nepobabies: "/components/projects/nepobabiesruntheunderground",
-  nepobabiesPreview: "/components/projects/nepobabiesruntheunderground/preview",
+  nepobabiesPreview:
+    "https://thetexta.github.io/nepobabiesruntheunderground/index.html",
 } as const;

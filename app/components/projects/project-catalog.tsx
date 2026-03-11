@@ -47,6 +47,13 @@ export const projectCatalog: ProjectDefinition[] = [
     description:
       "Creative visual UI project blending custom typography, layered motion, collage imagery, and WebGL textures into an experimental digital world.",
     tags: ["HTML", "CSS", "JavaScript", "WebGL"],
+    previewLinks: [
+      {
+        label: "GitHub",
+        href: "https://github.com/TheTexta/nepobabiesruntheunderground",
+        ariaLabel: "Open nepobabiesruntheunderground on GitHub",
+      },
+    ],
     renderPreview: () => (
       <HtmlProjectPreview
         title="nepobabiesruntheunderground"
