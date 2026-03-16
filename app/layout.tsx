@@ -8,6 +8,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { FirebaseAnalytics } from "@/app/components/firebase/firebase-analytics";
 import { ThemeProvider } from "@/app/components/theme/theme-provider";
 import { SITE_ORIGIN } from "@/lib/site-config";
+import { getThemeInitScript } from "@/lib/theme";
 
 const redHatText = localFont({
   src: [
@@ -62,6 +63,9 @@ export default function RootLayout({
       className={`${redHatText.variable} ${redHatDisplay.variable}`}
     >
       <body>
+        <Script id="theme-preference" strategy="beforeInteractive">
+          {getThemeInitScript()}
+        </Script>
         <Script id="windows-scrollbar-preference" strategy="beforeInteractive">
           {`document.documentElement.classList.toggle("windows", navigator.platform.startsWith("Win") || navigator.userAgent.includes("Windows"));`}
         </Script>

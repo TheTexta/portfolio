@@ -124,7 +124,7 @@ export default function GrailedPlusPreview({
     event.currentTarget.setPointerCapture(event.pointerId);
     updateSplitFromClientX(event.clientX);
   };
-
+// TODO handle pages of different heights better
   const handleSliderPointerMove = (
     event: ReactPointerEvent<HTMLButtonElement>,
   ) => {
@@ -273,20 +273,20 @@ export default function GrailedPlusPreview({
       </div>
 
       <div
-        className="pointer-events-none absolute top-3 right-3 z-10 px-1 py-1 text-xs font-semibold tracking-[0.14em] text-white uppercase mix-blend-difference"
+        className="absolute top-3 right-3 z-10 px-1 py-1 text-xs font-semibold tracking-[0.14em] text-white uppercase mix-blend-difference pointer-events-none"
         style={{ filter: GRAILED_OVERLAY_MONO_FILTER }}
       >
         {activePage.label}
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-3 left-3 z-10 text-[10px] font-semibold tracking-[0.22em] text-white uppercase mix-blend-difference"
+        className="absolute bottom-3 left-3 z-10 text-[10px] font-semibold tracking-[0.22em] text-white uppercase mix-blend-difference pointer-events-none"
         style={{ filter: GRAILED_OVERLAY_MONO_FILTER, opacity: 0.42 }}
       >
         Before
       </div>
       <div
-        className="pointer-events-none absolute right-3 bottom-3 z-10 text-[10px] font-semibold tracking-[0.22em] text-white uppercase mix-blend-difference"
+        className="absolute right-3 bottom-3 z-10 text-[10px] font-semibold tracking-[0.22em] text-white uppercase mix-blend-difference pointer-events-none"
         style={{ filter: GRAILED_OVERLAY_MONO_FILTER, opacity: 0.42 }}
       >
         After

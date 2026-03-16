@@ -10,9 +10,9 @@
   --font-sans: var(--font-red-hat-text), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-red-hat-display), ui-serif, Georgia, serif;
 
-  --color-page-bg: #f3f4f6;
+  --color-page-bg: #fff;
   --color-page-fg: #1f2937;
-  --color-page-bg-dark: #000000;
+  --color-page-bg-dark: #000;
   --color-page-fg-dark: var(--color-text-overlay-dark);
 
   --color-text-overlay-light: #0a0a0a;
@@ -49,11 +49,25 @@
 }
 
 @layer base {
-  a:hover,
-  button:not(:disabled):hover {
-    @apply cursor-pointer;
+  html {
+    color-scheme: light;
   }
-
+  html.dark {
+    color-scheme: dark;
+  }
+  a {
+    @apply text-page-fg underline-offset-2 transition-colors duration-150 outline-none dark:text-page-fg-dark;
+    text-decoration: none;
+  }
+  a:hover {
+    @apply underline;
+  }
+  a:focus-visible {
+    @apply ring-2 ring-accent/70 ring-offset-2;
+  }
+  a:active {
+    @apply opacity-80;
+  }
   h1,
   h2,
   h3,
@@ -61,6 +75,22 @@
   h5,
   h6 {
     @apply font-display;
+  }
+}
+
+@layer components {
+  .link-normalized {
+    @apply text-page-fg underline-offset-2 transition-colors duration-150 outline-none dark:text-page-fg-dark;
+    text-decoration: none;
+  }
+  .link-normalized:hover {
+    @apply underline;
+  }
+  .link-normalized:focus-visible {
+    @apply ring-2 ring-accent/70 ring-offset-2;
+  }
+  .link-normalized:active {
+    @apply opacity-80;
   }
 }
 
@@ -86,7 +116,7 @@
   }
 
   .overlay-button-light {
-    @apply border-border-overlay-light bg-surface-overlay-light-button text-text-overlay-light hover:bg-white;
+    @apply border-border-overlay-light bg-surface-overlay-light-button text-text-overlay-light hover:bg-surface-overlay-light-panel-strong;
   }
 
   .overlay-button-dark-solid {

@@ -60,11 +60,11 @@ export default function ProjectCard({
                   <a
                     href={link.href}
                     aria-label={link.ariaLabel ?? link.label}
-                    className={cn("hover:underline")}
+                    className={cn("link-normalized")}
                   >
                     {link.label}
                   </a>
-                  <ArrowUpRight className="ml-1 inline-block h-3.5 w-3.5" />
+                  <ArrowUpRight className="ml-1 inline-block h-4 w-4" strokeWidth={1} />
                 </li>
               ))}
             </ul>

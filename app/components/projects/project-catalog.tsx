@@ -18,8 +18,8 @@ export const projectCatalog: ProjectDefinition[] = [
   {
     id: "photo-graph",
     title: "Photo Node-Gallery",
-    description:
-      "Interactive force-directed image graph where photographs dynamically cluster based on color similarity; an evolving interactive gallery experience.",
+      description:
+        "A force-directed gallery where photographs cluster and interact based on color similarity.",
     tags: ["Next.js", "D3", "Firebase"],
     renderPreview: (darkMode) => <PhotoGraphCanvas forcedDarkMode={darkMode} />,
   },
@@ -44,8 +44,8 @@ export const projectCatalog: ProjectDefinition[] = [
   {
     id: "nepobabiesruntheunderground",
     title: "nepobabiesruntheunderground",
-    description:
-      "Creative visual UI project blending custom typography, layered motion, collage imagery, and WebGL textures into an experimental digital world.",
+      description:
+        "A visual UI project combining custom typography, motion, collage imagery, and WebGL textures in an experimental digital environment.",
     tags: ["HTML", "CSS", "JavaScript", "WebGL"],
     previewLinks: [
       {

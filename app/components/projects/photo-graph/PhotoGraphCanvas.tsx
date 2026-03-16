@@ -125,7 +125,7 @@ const overlayPanelClass =
   "absolute left-[1vmin] top-[1vmin] z-[5] space-y-2 p-1.5 text-center backdrop-blur-[2px]";
 const overlayTextClass = "m-0 p-0 text-xs";
 const sliderClass =
-  "accent-grey-800 range-sm h-1 rounded-full bg-white/50 border-none";
+  "range-sm h-1 rounded-full border-none bg-black/15 accent-page-fg dark:bg-white/35 dark:accent-page-fg-dark";
 const INITIAL_CHARGE_MULT = 5;
 const DEFAULT_CHARGE_MULT = 1;
 
@@ -1302,7 +1302,10 @@ export default function PhotoGraphCanvas({
   }, [inspectTarget]);
 
   // TODO: make this fade between colours instead of hard switching.
-  const alphaColorClass = alpha < 0.01 ? "text-green-600" : "text-red-600";
+  const alphaColorClass =
+    alpha < 0.01
+      ? "text-emerald-700 dark:text-emerald-300"
+      : "text-red-700 dark:text-red-300";
   const chrome = getProjectChrome("photo-graph", activeDarkMode);
   const isFullPageRoute = usePathname() === PROJECT_ROUTES.photoGraph;
   return (
@@ -1499,7 +1502,7 @@ export default function PhotoGraphCanvas({
                 aria-disabled={!inspectMetadata?.downloadUrl}
               >
                 Download Original
-                <Download className="h-1.75 w-1.75 sm:h-3.5 sm:w-3.5" />
+                <Download className="h-4 w-4" />
               </OverlayControlAnchor>
             </div>
           </div>

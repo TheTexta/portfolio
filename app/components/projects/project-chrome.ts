@@ -70,7 +70,7 @@ export function getProjectChrome(
       return {
         overlay: OVERLAY_DARK,
         controls,
-        shell: "bg-neutral-950 text-white",
+        shell: "bg-neutral-950 text-text-overlay-dark",
       };
     case "photo-graph":
       return {
@@ -114,7 +114,7 @@ export function getProjectChrome(
           : `${BORDER_LIGHT} bg-surface-overlay-light-panel-strong`,
         button: darkMode
           ? BUTTON_DARK
-          : `${BORDER_LIGHT} bg-surface-overlay-light-button-strong text-text-overlay-light hover:bg-white`,
+          : `${BORDER_LIGHT} bg-surface-overlay-light-button-strong text-text-overlay-light hover:bg-surface-overlay-light-panel-strong`,
         item: darkMode
           ? `${BORDER_DARK} bg-surface-overlay-dark-item-strong`
           : ITEM_LIGHT,

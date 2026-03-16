@@ -8,8 +8,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
-
-const LEGACY_THEME_STORAGE_KEY = "portfolio-theme";
+import {
+  THEME_MEDIA_QUERY,
+  THEME_STORAGE_KEY,
+  type ThemePreference,
+} from "@/lib/theme";
 
 type ThemeContextValue = {
   darkMode: boolean;
@@ -20,32 +23,99 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function applyDocumentTheme(isDark: boolean) {
   document.documentElement.classList.toggle("dark", isDark);
+  document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+}
+
+function readStoredThemePreference(): ThemePreference {
+  if (typeof window === "undefined") {
+    return "system";
+  }
+
+  try {
+    const storedPreference = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return storedPreference === "light" || storedPreference === "dark"
+      ? storedPreference
+      : "system";
+  } catch {
+    return "system";
+  }
+}
+
+function resolveDarkMode(preference: ThemePreference) {
+  if (preference === "system") {
+    return window.matchMedia(THEME_MEDIA_QUERY).matches;
+  }
+
+  return preference === "dark";
+}
+
+function getInitialThemeState() {
+  return {
+    // Keep the first client render aligned with the server render.
+    // The mounted effect reconciles to the persisted/system theme immediately
+    // after hydration, while the inline script already sets the document class.
+    darkMode: false,
+    preference:
+      typeof window === "undefined"
+        ? ("system" as ThemePreference)
+        : readStoredThemePreference(),
+  };
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [darkMode, setDarkMode] = useState(false);
+  const [{ darkMode, preference }, setThemeState] = useState(
+    getInitialThemeState,
+  );
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const mediaQuery = window.matchMedia(THEME_MEDIA_QUERY);
 
-    const syncTheme = (isDark: boolean) => {
-      applyDocumentTheme(isDark);
-      setDarkMode(isDark);
+    const syncTheme = (nextPreference: ThemePreference) => {
+      const nextDarkMode = resolveDarkMode(nextPreference);
+      applyDocumentTheme(nextDarkMode);
+      setThemeState((current) =>
+        current.darkMode === nextDarkMode &&
+        current.preference === nextPreference
+          ? current
+          : {
+              darkMode: nextDarkMode,
+              preference: nextPreference,
+            },
+      );
     };
 
-    // Clear legacy persisted preference; theme no longer uses localStorage.
-    window.localStorage.removeItem(LEGACY_THEME_STORAGE_KEY);
-
-    syncTheme(mediaQuery.matches);
+    syncTheme(preference);
 
     const handleChange = (event: MediaQueryListEvent) => {
-      syncTheme(event.matches);
+      if (preference !== "system") {
+        return;
+      }
+
+      applyDocumentTheme(event.matches);
+      setThemeState((current) =>
+        current.preference === "system"
+          ? { ...current, darkMode: event.matches }
+          : current,
+      );
     };
 
     mediaQuery.addEventListener("change", handleChange);
 
     return () => mediaQuery.removeEventListener("change", handleChange);
-  }, []);
+  }, [preference]);
+
+  useEffect(() => {
+    try {
+      if (preference === "system") {
+        window.localStorage.removeItem(THEME_STORAGE_KEY);
+        return;
+      }
+
+      window.localStorage.setItem(THEME_STORAGE_KEY, preference);
+    } catch {
+      return;
+    }
+  }, [preference]);
 
   const value = useMemo<ThemeContextValue>(
     () => ({
@@ -53,7 +123,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       toggleTheme: () => {
         const nextDarkMode = !darkMode;
         applyDocumentTheme(nextDarkMode);
-        setDarkMode(nextDarkMode);
+        setThemeState({
+          darkMode: nextDarkMode,
+          preference: nextDarkMode ? "dark" : "light",
+        });
       },
     }),
     [darkMode],

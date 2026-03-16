@@ -13,7 +13,10 @@ const overlayControlBase = cva(
   {
     variants: {
       layout: {
-        icon: "p-0 [line-height:1] [&_svg]:pointer-events-none [&_svg]:m-auto [&_svg]:block [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0",
+        icon: "cursor-pointer p-0 [line-height:1] focus-visible:ring-2 focus-visible:ring-accent/70 focus-visible:ring-offset-0 [&_svg]:pointer-events-none [&_svg]:m-auto [&_svg]:block [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0",
+        // Icon Sizing Standardization:
+        // All icons in OverlayControlButton/Link/Anchor should use h-4 w-4 (16px) for consistency.
+        // If a different size is required for visual balance, document the reason inline.
         action: "leading-none font-medium",
       },
       size: {

@@ -16,7 +16,7 @@ const htmlPreviewShell = cva(
   "relative h-full w-full overflow-hidden rounded-[inherit]",
 );
 const htmlPreviewFrame = cva(
-  "absolute inset-0 h-full w-full border-0 bg-white",
+  "absolute inset-0 h-full w-full border-0 bg-neutral-950",
 );
 
 export default function HtmlProjectPreview({
