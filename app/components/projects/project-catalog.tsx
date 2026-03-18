@@ -14,12 +14,18 @@ export type ProjectDefinition = {
   renderPreview: (darkMode: boolean) => ReactNode;
 };
 
+/*
+    Use a compressed, technical, feature-dense style. when writing descriptions for projects - 
+    a single-sentence product summary structured as: 
+    what it is → where it applies → core technical mechanism → feature list
+    */
+
 export const projectCatalog: ProjectDefinition[] = [
   {
     id: "photo-graph",
     title: "Photo Node-Gallery",
-      description:
-        "A force-directed gallery where photographs cluster and interact based on color similarity.",
+    description:
+      "Interactive force-directed gallery that uses color-similarity mapping to cluster and link photographs within a dynamic node graph.",
     tags: ["Next.js", "D3", "Firebase"],
     renderPreview: (darkMode) => <PhotoGraphCanvas forcedDarkMode={darkMode} />,
   },
@@ -27,7 +33,7 @@ export const projectCatalog: ProjectDefinition[] = [
     id: "grailed-plus",
     title: "Grailed Plus (V2)",
     description:
-      "Browser extension that introduces price history, drop metrics, seller metadata, custom currency conversion, and site-wide dark mode controls.",
+      "Browser extension for grailed.com, a second-hand clothing marketplace, that injects embedding-based matching to compare listings across secondary clothing platforms, while adding price history, drop metrics, seller metadata, currency conversion, and dark mode controls.",
     tags: ["Browser Extension", "Chrome MV3", "Firefox MV3", "JavaScript"],
     // TODO: Firefox Webstore
     previewLinks: [
@@ -44,8 +50,8 @@ export const projectCatalog: ProjectDefinition[] = [
   {
     id: "nepobabiesruntheunderground",
     title: "nepobabiesruntheunderground",
-      description:
-        "A visual UI project combining custom typography, motion, collage imagery, and WebGL textures in an experimental digital environment.",
+    description:
+      "Interactive UI project that layers custom typography, motion, collage imagery, and WebGL textures into a dense experimental digital environment.",
     tags: ["HTML", "CSS", "JavaScript", "WebGL"],
     previewLinks: [
       {
