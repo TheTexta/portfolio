@@ -47,16 +47,6 @@ const COMPARE_PAGES: ComparePage[] = [
       "Grailed listing page after Grailed Plus dark mode and enhancements",
   },
   {
-    id: "custom-currency",
-    label: "Custom Currency",
-    before: beforeCustomCurrency,
-    after: afterCustomCurrency,
-    beforeAlt:
-      "Grailed browse page before Grailed Plus custom currency enhancements",
-    afterAlt:
-      "Grailed browse page after Grailed Plus custom currency enhancements",
-  },
-  {
     id: "price-trend",
     label: "Price Insights",
     before: beforePriceTrend,
@@ -65,6 +55,16 @@ const COMPARE_PAGES: ComparePage[] = [
       "Grailed listing page before Grailed Plus price trend and seller metadata enhancements",
     afterAlt:
       "Grailed listing page after Grailed Plus price trend and seller metadata enhancements",
+  },
+  {
+    id: "custom-currency",
+    label: "Custom Currency",
+    before: beforeCustomCurrency,
+    after: afterCustomCurrency,
+    beforeAlt:
+      "Grailed browse page before Grailed Plus custom currency enhancements",
+    afterAlt:
+      "Grailed browse page after Grailed Plus custom currency enhancements",
   },
 ];
 
@@ -190,7 +190,8 @@ export default function GrailedPlusPreview({
       return;
     }
 
-    const targetRatio = activePage.id === "dm" ? 0.05 : 0;
+    // Remove tiny scroll for DM showcase
+    const targetRatio = 0;
     scrollElement.scrollTop = maxScroll * targetRatio;
   }, [activePage.id]);
 
