@@ -1113,8 +1113,8 @@ export default function PhotoGraphCanvas({
   );
 
   const preloadImages = useCallback(
-    (signal: AbortSignal) =>
-      runNodeQueue(nodesRef.current, signal, getNodeTargetWidth),
+    (nodes: SimNode[], signal: AbortSignal) =>
+      runNodeQueue(nodes, signal, getNodeTargetWidth),
     [getNodeTargetWidth, runNodeQueue],
   );
 
@@ -1318,9 +1318,14 @@ export default function PhotoGraphCanvas({
       if (disposed) return;
 
       const { nodes, links } = await buildGraph(data, imageBasePath);
+      resetRuntimeCollections();
+      await preloadImages(nodes, abortController.signal);
+      if (abortController.signal.aborted) {
+        return;
+      }
+
       nodesRef.current = nodes;
       linksRef.current = links;
-      resetRuntimeCollections();
 
       const simulation = createSimulation(
         nodes,
@@ -1357,7 +1362,6 @@ export default function PhotoGraphCanvas({
       simulation.alpha(GRAPH_CONFIG.initialRenderAlpha).restart();
       requestRender();
 
-      await preloadImages(abortController.signal);
       scheduleUpgradePass(abortController.signal, 0);
     };
 
