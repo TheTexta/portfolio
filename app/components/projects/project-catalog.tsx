@@ -21,17 +21,10 @@ export type ProjectDefinition = {
     */
 
 export const projectCatalog: ProjectDefinition[] = [
-  {
-    id: "photo-graph",
-    title: "Photo Node-Gallery",
-    description:
-      "Interactive force-directed gallery that uses color-similarity mapping to cluster and link photographs within a dynamic node graph.",
-    tags: ["Next.js", "D3", "Firebase"],
-    renderPreview: (darkMode) => <PhotoGraphCanvas forcedDarkMode={darkMode} />,
-  },
+  
   {
     id: "grailed-plus",
-    title: "Grailed Plus (V2)",
+    title: "Grailed Plus",
     description:
       "Browser extension for grailed.com, a second-hand clothing marketplace, that injects embedding-based matching to compare listings across secondary clothing platforms, while adding price history, drop metrics, seller metadata, currency conversion, and dark mode controls.",
     tags: ["Browser Extension", "Chrome MV3", "Firefox MV3", "JavaScript"],
@@ -46,6 +39,14 @@ export const projectCatalog: ProjectDefinition[] = [
     renderPreview: (darkMode) => (
       <GrailedPlusPreview forcedDarkMode={darkMode} />
     ),
+  },
+  {
+    id: "photo-graph",
+    title: "Photo Node-Gallery",
+    description:
+      "Interactive force-directed gallery that uses color-similarity mapping to cluster and link photographs within a dynamic node graph.",
+    tags: ["Next.js", "D3", "Firebase"],
+    renderPreview: (darkMode) => <PhotoGraphCanvas forcedDarkMode={darkMode} />,
   },
   {
     id: "nepobabiesruntheunderground",

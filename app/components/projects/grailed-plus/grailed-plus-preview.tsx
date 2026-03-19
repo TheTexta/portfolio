@@ -58,7 +58,7 @@ const COMPARE_PAGES: ComparePage[] = [
   },
   {
     id: "price-trend",
-    label: "Price Trend",
+    label: "Price Insights",
     before: beforePriceTrend,
     after: afterPriceTrend,
     beforeAlt:

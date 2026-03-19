@@ -2,7 +2,15 @@
 
 import { usePathname } from "next/navigation";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Fragment,
+  type Dispatch,
+  type SetStateAction,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import * as d3 from "d3";
 
 import { Download, Menu, X } from "lucide-react";
@@ -23,8 +31,6 @@ import OverlayNavBar from "@/app/components/ui/overlay-nav-bar";
 import { storage } from "@/lib/firebase/client";
 import type { GraphImageDimensions } from "@/lib/photo-graph/types";
 import { getDownloadURL, ref } from "firebase/storage";
-
-// TODO: find a way to generate json edge data when new images added.
 
 type RawNode = {
   id?: string | number;
@@ -66,6 +72,12 @@ type RectangleCollisionForce = {
   initialize: (nodes: SimNode[] | ArrayLike<SimNode>) => void;
 };
 
+type TickableSimulation = d3.Simulation<SimNode, SimLink> & {
+  tick: (iterations?: number) => TickableSimulation;
+};
+
+type NodePositionSnapshot = { x: number; y: number }[];
+
 type CanvasInputEvent = MouseEvent | TouchEvent | PointerEvent | WheelEvent;
 
 type PhotoGraphCanvasProps = {
@@ -79,6 +91,14 @@ type GraphControls = {
   chargeMult: number;
   distMinMult: number;
   distMaxMult: number;
+};
+
+type GraphSliderConfig = {
+  key: Exclude<keyof GraphControls, "hideConnections">;
+  label: string;
+  min: number;
+  max: number;
+  scale?: number;
 };
 
 type InspectTarget = {
@@ -116,6 +136,13 @@ const GRAPH_CONFIG = {
   charge: -420,
   zoomExtent: [0.25, 4] as [number, number],
   initialZoom: 0.8,
+  initialRenderAlpha: 0.12,
+  initialLayoutTicksMin: 90,
+  initialLayoutTicksMax: 220,
+  initialLayoutTicksPerSqrtNode: 18,
+  initialCompactionAlpha: 0.6,
+  initialCompactionTickFactor: 0.7,
+  initialCompactionDurationMs: 1500,
   imageConcurrency: 5,
   upgradeDebounceMs: 120,
   viewportBufferRatio: 0.15,
@@ -126,15 +153,60 @@ const overlayPanelClass =
 const overlayTextClass = "m-0 p-0 text-xs";
 const sliderClass =
   "range-sm h-1 rounded-full border-none bg-black/15 accent-page-fg dark:bg-white/35 dark:accent-page-fg-dark";
-const INITIAL_CHARGE_MULT = 5;
 const DEFAULT_CHARGE_MULT = 1;
+const INITIAL_DIST_MAX_MULT = 5;
+const DEFAULT_DIST_MAX_MULT = 1;
+const DEFAULT_GRAPH_CONTROLS: GraphControls = {
+  hideConnections: false,
+  chargeMult: DEFAULT_CHARGE_MULT,
+  distMinMult: 1,
+  distMaxMult: DEFAULT_DIST_MAX_MULT,
+};
+const INITIAL_LAYOUT_CONTROLS: GraphControls = {
+  ...DEFAULT_GRAPH_CONTROLS,
+  distMaxMult: INITIAL_DIST_MAX_MULT,
+};
+const GRAPH_CONTROL_SLIDERS: readonly GraphSliderConfig[] = [
+  { key: "chargeMult", label: "Charge Mult", min: 0, max: 5 },
+  { key: "distMinMult", label: "Dist Min Mult", min: 0, max: 500, scale: 0.1 },
+  { key: "distMaxMult", label: "Dist Max Mult", min: 0, max: 50, scale: 0.1 },
+];
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
+function easeOutExponential(progress: number, decay = 6) {
+  if (progress <= 0) return 0;
+  if (progress >= 1) return 1;
+
+  const normalizedDecay = 1 - Math.exp(-decay);
+  return (1 - Math.exp(-decay * progress)) / normalizedDecay;
+}
+
 function isAbortError(error: unknown) {
   return error instanceof DOMException && error.name === "AbortError";
+}
+
+function cancelAnimationFrameRef(frameRef: { current: number | null }) {
+  if (frameRef.current === null) return;
+
+  window.cancelAnimationFrame(frameRef.current);
+  frameRef.current = null;
+}
+
+function clearTimeoutRef(timeoutRef: { current: number | null }) {
+  if (timeoutRef.current === null) return;
+
+  window.clearTimeout(timeoutRef.current);
+  timeoutRef.current = null;
+}
+
+function patchNullableState<T extends object>(
+  setState: Dispatch<SetStateAction<T | null>>,
+  patch: Partial<T>,
+) {
+  setState((current) => (current ? { ...current, ...patch } : current));
 }
 
 function resolveNodeId(node: RawNode, index: number) {
@@ -247,8 +319,6 @@ async function buildGraph(data: RawNode[], imageBasePath: string) {
         w: box,
         h: box,
         renderArea: box * box,
-        x: (Math.random() - 0.5) * 50,
-        y: (Math.random() - 0.5) * 50,
       };
 
       sizeNodeFromAspectRatio(node);
@@ -399,6 +469,106 @@ function computeLinkStrength(link: SimLink) {
   );
 }
 
+function applySimulationForces(
+  simulation: d3.Simulation<SimNode, SimLink>,
+  controls: GraphControls,
+) {
+  const minDistance = GRAPH_CONFIG.distMin * controls.distMinMult;
+  const maxDistance = GRAPH_CONFIG.distMax * controls.distMaxMult;
+
+  const linkForce = simulation.force("link") as
+    | d3.ForceLink<SimNode, SimLink>
+    | undefined;
+  if (linkForce) {
+    linkForce.distance((link) =>
+      computeLinkDistance(link, minDistance, maxDistance),
+    );
+    linkForce.strength((link) => computeLinkStrength(link));
+  }
+
+  const chargeForce = simulation.force("charge") as
+    | d3.ForceManyBody<SimNode>
+    | undefined;
+  chargeForce?.strength(controls.chargeMult * GRAPH_CONFIG.charge);
+}
+
+function createSimulation(
+  nodes: SimNode[],
+  links: SimLink[],
+  onTick: () => void,
+  controls: GraphControls,
+) {
+  const simulation = d3
+    .forceSimulation<SimNode>(nodes)
+    .force(
+      "link",
+      d3.forceLink<SimNode, SimLink>(links).id((node) => node.id),
+    )
+    .force("charge", d3.forceManyBody<SimNode>())
+    .force("x", d3.forceX<SimNode>().strength(0.03))
+    .force("y", d3.forceY<SimNode>().strength(0.09))
+    .force("collide", createRectangleCollideForce(GRAPH_CONFIG.collidePad))
+    .on("tick", onTick);
+
+  applySimulationForces(simulation, controls);
+  return simulation;
+}
+
+function getInitialLayoutTickCount(nodeCount: number) {
+  return clamp(
+    Math.round(
+      Math.sqrt(Math.max(1, nodeCount)) *
+        GRAPH_CONFIG.initialLayoutTicksPerSqrtNode,
+    ),
+    GRAPH_CONFIG.initialLayoutTicksMin,
+    GRAPH_CONFIG.initialLayoutTicksMax,
+  );
+}
+
+function getInitialCompactionTickCount(nodeCount: number) {
+  return Math.max(
+    1,
+    Math.round(
+      getInitialLayoutTickCount(nodeCount) *
+        GRAPH_CONFIG.initialCompactionTickFactor,
+    ),
+  );
+}
+
+function warmupSimulationLayout(
+  simulation: d3.Simulation<SimNode, SimLink>,
+  tickCount: number,
+  alpha = 1,
+) {
+  const tickableSimulation = simulation as TickableSimulation;
+  tickableSimulation.stop();
+  tickableSimulation.alpha(alpha);
+  tickableSimulation.tick(tickCount);
+}
+
+function captureNodePositions(nodes: SimNode[]): NodePositionSnapshot {
+  return nodes.map((node) => ({
+    x: node.x ?? 0,
+    y: node.y ?? 0,
+  }));
+}
+
+function applyNodePositions(
+  nodes: SimNode[],
+  positions: NodePositionSnapshot,
+  progress = 1,
+) {
+  nodes.forEach((node, index) => {
+    const position = positions[index];
+    if (!position) return;
+
+    node.x = (node.x ?? 0) + (position.x - (node.x ?? 0)) * progress;
+    node.y = (node.y ?? 0) + (position.y - (node.y ?? 0)) * progress;
+    node.vx = 0;
+    node.vy = 0;
+  });
+}
+
 function loadImage(url: string, signal: AbortSignal) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     if (signal.aborted) {
@@ -510,8 +680,8 @@ function buildInspectFilename(
   return `${id}.png`;
 }
 
-function formatSizeInMb(sizeInBytes: number) {
-  return (sizeInBytes / (1024 * 1024)).toFixed(2);
+function convertSizeToMb(sizeInBytes: number) {
+  return sizeInBytes / (1024 * 1024);
 }
 
 export default function PhotoGraphCanvas({
@@ -533,31 +703,37 @@ export default function PhotoGraphCanvas({
   const transformRef = useRef(d3.zoomIdentity);
   const dprRef = useRef(1);
   const frameRef = useRef<number | null>(null);
+  const introCompactionFrameRef = useRef<number | null>(null);
   const settleTimeoutRef = useRef<number | null>(null);
   const upgradeTimeoutRef = useRef<number | null>(null);
-  const initialChargeResetTimeoutRef = useRef<number | null>(null);
   const alphaRef = useRef({ value: 1, updatedAt: 0 });
   const darkModeRef = useRef(false);
-  const controlsRef = useRef<GraphControls>({
-    hideConnections: false,
-    chargeMult: INITIAL_CHARGE_MULT,
-    distMinMult: 1,
-    distMaxMult: 1,
-  });
+  const controlsRef = useRef<GraphControls>({ ...DEFAULT_GRAPH_CONTROLS });
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [controls, setControls] = useState<GraphControls>({
-    hideConnections: false,
-    chargeMult: INITIAL_CHARGE_MULT,
-    distMinMult: 1,
-    distMaxMult: 1,
-  });
+  const [controls, setControls] = useState<GraphControls>(() => ({
+    ...DEFAULT_GRAPH_CONTROLS,
+  }));
   const [alpha, setAlpha] = useState(1);
   const [inspectTarget, setInspectTarget] = useState<InspectTarget | null>(
     null,
   );
   const [inspectMetadata, setInspectMetadata] =
     useState<InspectMetadata | null>(null);
+  const patchInspectMetadata = useCallback(
+    (patch: Partial<InspectMetadata>) => {
+      patchNullableState(setInspectMetadata, patch);
+    },
+    [],
+  );
+  const setControlValue = useCallback(
+    <K extends keyof GraphControls>(key: K, value: GraphControls[K]) => {
+      setControls((current) =>
+        current[key] === value ? current : { ...current, [key]: value },
+      );
+    },
+    [],
+  );
 
   const syncAlpha = useCallback(() => {
     const simAlpha = simRef.current?.alpha() ?? 0;
@@ -649,6 +825,74 @@ export default function PhotoGraphCanvas({
     });
   }, [paint]);
 
+  const animateInitialCompaction = useCallback(
+    (
+      nodes: SimNode[],
+      fromPositions: NodePositionSnapshot,
+      toPositions: NodePositionSnapshot,
+      signal: AbortSignal,
+    ) =>
+      new Promise<void>((resolve) => {
+        applyNodePositions(nodes, fromPositions);
+        requestRender();
+
+        const finish = () => {
+          cancelAnimationFrameRef(introCompactionFrameRef);
+          applyNodePositions(nodes, toPositions);
+          requestRender();
+          resolve();
+        };
+
+        if (signal.aborted) {
+          finish();
+          return;
+        }
+
+        const startedAt = performance.now();
+
+        const step = (now: number) => {
+          if (signal.aborted) {
+            finish();
+            return;
+          }
+
+          const progress = clamp(
+            (now - startedAt) / GRAPH_CONFIG.initialCompactionDurationMs,
+            0,
+            1,
+          );
+          const easedProgress = easeOutExponential(progress);
+
+          nodes.forEach((node, index) => {
+            const fromPosition = fromPositions[index];
+            const toPosition = toPositions[index];
+            if (!fromPosition || !toPosition) return;
+
+            node.x =
+              fromPosition.x + (toPosition.x - fromPosition.x) * easedProgress;
+            node.y =
+              fromPosition.y + (toPosition.y - fromPosition.y) * easedProgress;
+            node.vx = 0;
+            node.vy = 0;
+          });
+
+          requestRender();
+
+          if (progress < 1) {
+            introCompactionFrameRef.current =
+              window.requestAnimationFrame(step);
+            return;
+          }
+
+          introCompactionFrameRef.current = null;
+          resolve();
+        };
+
+        introCompactionFrameRef.current = window.requestAnimationFrame(step);
+      }),
+    [requestRender],
+  );
+
   const getWorldPoint = useCallback(
     (event: CanvasInputEvent, canvas: HTMLCanvasElement) => {
       const point = d3.pointer(event, canvas) as [number, number];
@@ -711,38 +955,18 @@ export default function PhotoGraphCanvas({
     const simulation = simRef.current;
     if (!simulation) return;
 
-    const currentControls = controlsRef.current;
-    const minDistance = GRAPH_CONFIG.distMin * currentControls.distMinMult;
-    const maxDistance = GRAPH_CONFIG.distMax * currentControls.distMaxMult;
-
-    const linkForce = simulation.force("link") as
-      | d3.ForceLink<SimNode, SimLink>
-      | undefined;
-    if (linkForce) {
-      linkForce.distance((link) => {
-        return computeLinkDistance(link, minDistance, maxDistance);
-      });
-      linkForce.strength((link) => computeLinkStrength(link));
-    }
-
-    const chargeForce = simulation.force("charge") as
-      | d3.ForceManyBody<SimNode>
-      | undefined;
-    chargeForce?.strength(currentControls.chargeMult * GRAPH_CONFIG.charge);
+    applySimulationForces(simulation, controlsRef.current);
   }, []);
 
   const nudgeSimulation = useCallback(
-    (target = 0.25, settleDelay = 150) => {
+    (target = 0.75, settleDelay = 150) => {
       const simulation = simRef.current;
       if (!simulation) return;
 
       updateSimulationForces();
       simulation.alphaTarget(target).restart();
 
-      if (settleTimeoutRef.current !== null) {
-        window.clearTimeout(settleTimeoutRef.current);
-      }
-
+      clearTimeoutRef(settleTimeoutRef);
       settleTimeoutRef.current = window.setTimeout(() => {
         settleTimeoutRef.current = null;
         simRef.current?.alphaTarget(0);
@@ -787,28 +1011,21 @@ export default function PhotoGraphCanvas({
     requestRender();
   }, [nudgeSimulation, requestRender]);
 
-  const applyOptimizedImage = useCallback(
-    (node: SimNode, image: HTMLImageElement, loadedWidth: number) => {
-      if (!shouldUpgradeWidth(node.loadedWidth, loadedWidth)) {
+  const applyLoadedImage = useCallback(
+    (
+      node: SimNode,
+      image: HTMLImageElement,
+      loadedWidth: number,
+      onlyIfMissing = false,
+    ) => {
+      if (onlyIfMissing) {
+        if (imagesRef.current.has(node.id)) return;
+      } else if (!shouldUpgradeWidth(node.loadedWidth, loadedWidth)) {
         return;
       }
 
       sizeNodeFromImage(node, image);
       node.loadedWidth = loadedWidth;
-      imagesRef.current.set(node.id, image);
-      refreshNodeAfterImageLoad();
-    },
-    [refreshNodeAfterImageLoad],
-  );
-
-  const applyFallbackImage = useCallback(
-    (node: SimNode, image: HTMLImageElement) => {
-      if (imagesRef.current.has(node.id)) {
-        return;
-      }
-
-      sizeNodeFromImage(node, image);
-      node.loadedWidth = 0;
       imagesRef.current.set(node.id, image);
       refreshNodeAfterImageLoad();
     },
@@ -845,14 +1062,14 @@ export default function PhotoGraphCanvas({
           );
           const optimizedImage = await loadImage(optimizedUrl, signal);
           if (signal.aborted) return;
-          applyOptimizedImage(node, optimizedImage, targetWidth);
+          applyLoadedImage(node, optimizedImage, targetWidth);
         } catch (error) {
           if (isAbortError(error)) return;
 
           try {
             const fallbackImage = await loadImage(node.sourceUrl, signal);
             if (signal.aborted) return;
-            applyFallbackImage(node, fallbackImage);
+            applyLoadedImage(node, fallbackImage, 0, true);
           } catch (fallbackError) {
             if (isAbortError(fallbackError)) return;
             logNodeImageError(node, fallbackError);
@@ -862,12 +1079,7 @@ export default function PhotoGraphCanvas({
         trackPendingWidth(node, targetWidth, false);
       }
     },
-    [
-      applyFallbackImage,
-      applyOptimizedImage,
-      logNodeImageError,
-      trackPendingWidth,
-    ],
+    [applyLoadedImage, logNodeImageError, trackPendingWidth],
   );
 
   const runNodeQueue = useCallback(
@@ -901,9 +1113,8 @@ export default function PhotoGraphCanvas({
   );
 
   const preloadImages = useCallback(
-    async (signal: AbortSignal) => {
-      await runNodeQueue(nodesRef.current, signal, getNodeTargetWidth);
-    },
+    (signal: AbortSignal) =>
+      runNodeQueue(nodesRef.current, signal, getNodeTargetWidth),
     [getNodeTargetWidth, runNodeQueue],
   );
 
@@ -928,10 +1139,7 @@ export default function PhotoGraphCanvas({
 
   const scheduleUpgradePass = useCallback(
     (signal: AbortSignal, delay = GRAPH_CONFIG.upgradeDebounceMs) => {
-      if (upgradeTimeoutRef.current !== null) {
-        window.clearTimeout(upgradeTimeoutRef.current);
-      }
-
+      clearTimeoutRef(upgradeTimeoutRef);
       upgradeTimeoutRef.current = window.setTimeout(() => {
         upgradeTimeoutRef.current = null;
         void upgradeVisibleImages(signal);
@@ -1096,32 +1304,6 @@ export default function PhotoGraphCanvas({
       errorLogRef.current = new Set();
     };
 
-    const createSimulation = (nodes: SimNode[], links: SimLink[]) =>
-      d3
-        .forceSimulation<SimNode>(nodes)
-        .force(
-          "link",
-          d3
-            .forceLink<SimNode, SimLink>(links)
-            .id((node) => node.id)
-            .distance((link) =>
-              computeLinkDistance(
-                link,
-                GRAPH_CONFIG.distMin,
-                GRAPH_CONFIG.distMax,
-              ),
-            )
-            .strength((link) => computeLinkStrength(link)),
-        )
-        .force(
-          "charge",
-          d3.forceManyBody<SimNode>().strength(GRAPH_CONFIG.charge),
-        )
-        .force("x", d3.forceX<SimNode>().strength(0.03))
-        .force("y", d3.forceY<SimNode>().strength(0.09))
-        .force("collide", createRectangleCollideForce(GRAPH_CONFIG.collidePad))
-        .on("tick", requestRender);
-
     const initializeGraph = async () => {
       const response = await fetch(graphUrl, {
         cache: "no-store",
@@ -1140,24 +1322,40 @@ export default function PhotoGraphCanvas({
       linksRef.current = links;
       resetRuntimeCollections();
 
-      const simulation = createSimulation(nodes, links);
-      simRef.current = simulation;
+      const simulation = createSimulation(
+        nodes,
+        links,
+        requestRender,
+        INITIAL_LAYOUT_CONTROLS,
+      );
+      warmupSimulationLayout(
+        simulation,
+        getInitialLayoutTickCount(nodes.length),
+      );
+      const expandedPositions = captureNodePositions(nodes);
+      applySimulationForces(simulation, controlsRef.current);
+      warmupSimulationLayout(
+        simulation,
+        getInitialCompactionTickCount(nodes.length),
+        GRAPH_CONFIG.initialCompactionAlpha,
+      );
+      const compactedPositions = captureNodePositions(nodes);
+      applyNodePositions(nodes, expandedPositions);
       applyConnectionVisibility(controlsRef.current.hideConnections);
-      updateSimulationForces();
-      simulation.alpha(1).restart();
       requestRender();
-
-      if (initialChargeResetTimeoutRef.current !== null) {
-        window.clearTimeout(initialChargeResetTimeoutRef.current);
+      await animateInitialCompaction(
+        nodes,
+        expandedPositions,
+        compactedPositions,
+        abortController.signal,
+      );
+      if (abortController.signal.aborted) {
+        return;
       }
-      initialChargeResetTimeoutRef.current = window.setTimeout(() => {
-        initialChargeResetTimeoutRef.current = null;
-        setControls((current) =>
-          current.chargeMult === INITIAL_CHARGE_MULT
-            ? { ...current, chargeMult: DEFAULT_CHARGE_MULT }
-            : current,
-        );
-      }, 0);
+
+      simRef.current = simulation;
+      simulation.alpha(GRAPH_CONFIG.initialRenderAlpha).restart();
+      requestRender();
 
       await preloadImages(abortController.signal);
       scheduleUpgradePass(abortController.signal, 0);
@@ -1168,25 +1366,10 @@ export default function PhotoGraphCanvas({
       resizeObserver.disconnect();
       cleanupInteractions();
 
-      if (frameRef.current !== null) {
-        window.cancelAnimationFrame(frameRef.current);
-        frameRef.current = null;
-      }
-
-      if (settleTimeoutRef.current !== null) {
-        window.clearTimeout(settleTimeoutRef.current);
-        settleTimeoutRef.current = null;
-      }
-
-      if (upgradeTimeoutRef.current !== null) {
-        window.clearTimeout(upgradeTimeoutRef.current);
-        upgradeTimeoutRef.current = null;
-      }
-
-      if (initialChargeResetTimeoutRef.current !== null) {
-        window.clearTimeout(initialChargeResetTimeoutRef.current);
-        initialChargeResetTimeoutRef.current = null;
-      }
+      cancelAnimationFrameRef(frameRef);
+      cancelAnimationFrameRef(introCompactionFrameRef);
+      clearTimeoutRef(settleTimeoutRef);
+      clearTimeoutRef(upgradeTimeoutRef);
 
       simRef.current?.stop();
       simRef.current = null;
@@ -1214,6 +1397,7 @@ export default function PhotoGraphCanvas({
     imageBasePath,
     applyConnectionVisibility,
     applyInitialZoom,
+    animateInitialCompaction,
     bindInteractions,
     preloadImages,
     requestRender,
@@ -1270,20 +1454,15 @@ export default function PhotoGraphCanvas({
         if (abortController.signal.aborted) return;
 
         objectUrl = URL.createObjectURL(blob);
-        setInspectMetadata((current) =>
-          current
-            ? {
-                ...current,
-                sizeMb: Number(formatSizeInMb(blob.size)),
-                downloadUrl: objectUrl,
-                filename: buildInspectFilename(
-                  inspectTarget.id,
-                  inspectTarget.url,
-                  blob.type,
-                ),
-              }
-            : current,
-        );
+        patchInspectMetadata({
+          sizeMb: convertSizeToMb(blob.size),
+          downloadUrl: objectUrl,
+          filename: buildInspectFilename(
+            inspectTarget.id,
+            inspectTarget.url,
+            blob.type,
+          ),
+        });
       } catch (error) {
         if (!isAbortError(error)) {
           console.error(error);
@@ -1299,7 +1478,7 @@ export default function PhotoGraphCanvas({
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [inspectTarget]);
+  }, [inspectTarget, patchInspectMetadata]);
 
   // TODO: make this fade between colours instead of hard switching.
   const alphaColorClass =
@@ -1365,68 +1544,30 @@ export default function PhotoGraphCanvas({
               type="checkbox"
               checked={controls.hideConnections}
               onChange={(event) =>
-                setControls((current) => ({
-                  ...current,
-                  hideConnections: event.target.checked,
-                }))
+                setControlValue("hideConnections", event.target.checked)
               }
               className="m-0 h-2.5"
             />
           </label>
 
-          <input
-            type="range"
-            min={0}
-            max={5}
-            step="any"
-            value={controls.chargeMult}
-            onChange={(event) =>
-              setControls((current) => ({
-                ...current,
-                chargeMult: Number(event.target.value),
-              }))
-            }
-            className={sliderClass}
-          />
-          <p className={overlayTextClass}>
-            Charge Mult: {controls.chargeMult.toFixed(2)}
-          </p>
-
-          <input
-            type="range"
-            min={0}
-            max={500}
-            step="any"
-            value={controls.distMinMult / 0.1}
-            onChange={(event) =>
-              setControls((current) => ({
-                ...current,
-                distMinMult: Number(event.target.value) * 0.1,
-              }))
-            }
-            className={sliderClass}
-          />
-          <p className={overlayTextClass}>
-            Dist Min Mult: {controls.distMinMult.toFixed(2)}
-          </p>
-
-          <input
-            type="range"
-            min={0}
-            max={50}
-            step="any"
-            value={controls.distMaxMult / 0.1}
-            onChange={(event) =>
-              setControls((current) => ({
-                ...current,
-                distMaxMult: Number(event.target.value) * 0.1,
-              }))
-            }
-            className={sliderClass}
-          />
-          <p className={overlayTextClass}>
-            Dist Max Mult: {controls.distMaxMult.toFixed(2)}
-          </p>
+          {GRAPH_CONTROL_SLIDERS.map(({ key, label, min, max, scale = 1 }) => (
+            <Fragment key={key}>
+              <input
+                type="range"
+                min={min}
+                max={max}
+                step="any"
+                value={controls[key] / scale}
+                onChange={(event) =>
+                  setControlValue(key, Number(event.target.value) * scale)
+                }
+                className={sliderClass}
+              />
+              <p className={overlayTextClass}>
+                {label}: {controls[key].toFixed(2)}
+              </p>
+            </Fragment>
+          ))}
         </div>
       )}
 
@@ -1456,17 +1597,12 @@ export default function PhotoGraphCanvas({
               className="my-auto max-h-9/12 max-w-5/6 place-self-center align-middle"
               onLoad={(event) => {
                 const { naturalWidth, naturalHeight } = event.currentTarget;
-                setInspectMetadata((current) =>
-                  current
-                    ? {
-                        ...current,
-                        resolution: {
-                          width: naturalWidth,
-                          height: naturalHeight,
-                        },
-                      }
-                    : current,
-                );
+                patchInspectMetadata({
+                  resolution: {
+                    width: naturalWidth,
+                    height: naturalHeight,
+                  },
+                });
               }}
             />
 
