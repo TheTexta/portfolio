@@ -1,13 +1,8 @@
 "use client";
 
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
-import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
-import { useTheme } from "@/app/components/theme/theme-provider";
-import OverlayNavBar from "@/app/components/ui/overlay-nav-bar";
-import { cn } from "@/lib/cn";
 
 type GrailedPlusInstallRedirectProps = {
   googleAdsSendTo?: string;
@@ -40,9 +35,11 @@ const AUTO_REDIRECT_DELAY_MS = 180;
 const GOOGLE_ADS_READY_WAIT_MS = 600;
 const GOOGLE_ADS_REDIRECT_FALLBACK_MS = 1200;
 const MANUAL_REDIRECT_VALUES = new Set(["1", "true", "manual"]);
-const INITIAL_STATUS_MESSAGE = "Preparing your Chrome Web Store redirect.";
-const MANUAL_STATUS_MESSAGE =
-  "Automatic redirect is paused. Continue to the Chrome Web Store when ready.";
+const INITIAL_STATUS_MESSAGE = "Redirecting to the Chrome Web Store.";
+const OPENING_STATUS_MESSAGE = "Opening the Chrome Web Store.";
+const MANUAL_STATUS_MESSAGE = "Automatic redirect is paused.";
+const INITIAL_SECONDARY_MESSAGE = "If nothing happens, use the link below.";
+const MANUAL_SECONDARY_MESSAGE = "Use the link below when you're ready.";
 const TRACKED_QUERY_KEYS = [
   "gclid",
   "gbraid",
@@ -129,22 +126,12 @@ function isManualRedirect(searchParams: URLSearchParams) {
 export default function GrailedPlusInstallRedirect({
   googleAdsSendTo,
 }: GrailedPlusInstallRedirectProps) {
-  const { darkMode, toggleTheme } = useTheme();
   const [{ autoRedirectEnabled, statusMessage }, setRedirectState] = useState({
     autoRedirectEnabled: true,
     statusMessage: INITIAL_STATUS_MESSAGE,
   });
   const redirectStartedRef = useRef(false);
   const redirectCompletedRef = useRef(false);
-
-  const buttonClass = cn(
-    "inline-flex items-center justify-center gap-2 rounded-full border px-5 py-3 text-sm font-medium transition-colors duration-150",
-    darkMode ? "overlay-button-dark-solid" : "overlay-button-light",
-  );
-  const secondaryLinkClass = cn(
-    "inline-flex items-center justify-center gap-2 rounded-full border px-5 py-3 text-sm transition-colors duration-150",
-    darkMode ? "overlay-item-dark" : "overlay-item-light",
-  );
 
   const redirectToStore = useCallback(() => {
     if (redirectCompletedRef.current) {
@@ -171,11 +158,11 @@ export default function GrailedPlusInstallRedirect({
       );
 
       setRedirectState((current) =>
-        current.statusMessage === "Opening the Chrome Web Store listing."
+        current.statusMessage === OPENING_STATUS_MESSAGE
           ? current
           : {
               ...current,
-              statusMessage: "Opening the Chrome Web Store listing.",
+              statusMessage: OPENING_STATUS_MESSAGE,
             },
       );
       queueTrackingRequest(trackingPayload);
@@ -247,97 +234,37 @@ export default function GrailedPlusInstallRedirect({
   }, [beginRedirect]);
 
   return (
-    <div className="relative min-h-dvh overflow-hidden px-5 py-5 sm:px-8">
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-0",
-          darkMode
-            ? "bg-[radial-gradient(circle_at_top,_rgb(255_255_255_/_0.1),_transparent_58%),linear-gradient(180deg,_rgb(255_255_255_/_0.02),_transparent_42%)]"
-            : "bg-[radial-gradient(circle_at_top,_rgb(0_0_0_/_0.08),_transparent_58%),linear-gradient(180deg,_rgb(0_0_0_/_0.03),_transparent_42%)]",
-        )}
-      />
+    <main className="flex min-h-dvh items-center justify-center px-6 text-center">
+      <div className="max-w-sm">
+        <p className="text-sm sm:text-base">{statusMessage}</p>
+        <p className="mt-2 text-sm text-black/55 dark:text-white/55">
+          {autoRedirectEnabled
+            ? INITIAL_SECONDARY_MESSAGE
+            : MANUAL_SECONDARY_MESSAGE}
+        </p>
+        <p className="mt-5 text-sm">
+          <a
+            href={PROJECT_ROUTES.grailedPlusChromeWebStore}
+            className="underline decoration-current underline-offset-4"
+            onClick={(event) => {
+              if (
+                event.button !== 0 ||
+                event.metaKey ||
+                event.altKey ||
+                event.ctrlKey ||
+                event.shiftKey
+              ) {
+                return;
+              }
 
-      <OverlayNavBar
-        darkMode={darkMode}
-        onToggleDarkMode={toggleTheme}
-        exitHref={PROJECT_ROUTES.grailedPlus}
-        toneClass={darkMode ? "overlay-control-icon-dark" : "overlay-control-icon-light"}
-        className="top-5 z-20 mr-0 ml-auto"
-        ariaLabel="Install page controls"
-        containerMode="sticky"
-      />
-
-      <main className="relative z-10 mx-auto flex min-h-[calc(100dvh-4.5rem)] max-w-4xl items-center py-10">
-        <section
-          className={cn(
-            "w-full rounded-[2rem] border px-6 py-8 backdrop-blur-xl sm:px-10 sm:py-12",
-            darkMode ? "overlay-panel-dark" : "overlay-panel-light",
-          )}
-        >
-          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl">
-              <p className="text-[0.72rem] font-medium tracking-[0.32em] text-black/55 uppercase dark:text-white/55">
-                Grailed Plus install
-              </p>
-              <h1 className="mt-4 text-4xl leading-[0.94] font-semibold sm:text-6xl">
-                Chrome Web Store redirect
-              </h1>
-              <p className="mt-4 max-w-xl text-sm leading-6 text-black/70 sm:text-base dark:text-white/70">
-                Redirecting to the official Chrome Web Store listing for
-                Grailed Plus. If your browser pauses or blocks the handoff, use
-                the direct link below.
-              </p>
-            </div>
-
-            <div
-              className={cn(
-                "w-full max-w-sm rounded-2xl border px-4 py-4 text-sm",
-                darkMode ? "overlay-item-dark" : "overlay-item-light",
-              )}
-            >
-              <p className="text-[0.7rem] tracking-[0.28em] text-black/50 uppercase dark:text-white/50">
-                Status
-              </p>
-              <p className="mt-3 leading-6">{statusMessage}</p>
-            </div>
-          </div>
-
-          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <a
-              href={PROJECT_ROUTES.grailedPlusChromeWebStore}
-              className={buttonClass}
-              onClick={(event) => {
-                if (
-                  event.button !== 0 ||
-                  event.metaKey ||
-                  event.altKey ||
-                  event.ctrlKey ||
-                  event.shiftKey
-                ) {
-                  return;
-                }
-
-                event.preventDefault();
-                beginRedirect("manual");
-              }}
-            >
-              Continue to Chrome Web Store
-              <ArrowUpRight className="h-4 w-4" strokeWidth={1.7} />
-            </a>
-
-            <Link href={PROJECT_ROUTES.grailedPlus} className={secondaryLinkClass}>
-              <ArrowLeft className="h-4 w-4" strokeWidth={1.7} />
-              View project page
-            </Link>
-          </div>
-
-          <p className="mt-4 text-xs leading-5 text-black/55 dark:text-white/55">
-            {autoRedirectEnabled
-              ? "The redirect runs automatically unless you open this route with `?manual=1`."
-              : "Automatic redirect is disabled because `manual=1` or `redirect=manual` is set in the URL."}
-          </p>
-        </section>
-      </main>
-    </div>
+              event.preventDefault();
+              beginRedirect("manual");
+            }}
+          >
+            Chrome Web Store
+          </a>
+        </p>
+      </div>
+    </main>
   );
 }
