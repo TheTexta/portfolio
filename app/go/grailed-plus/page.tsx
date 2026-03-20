@@ -5,6 +5,8 @@ import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import { SITE_ORIGIN } from "@/lib/site-config";
 import GrailedPlusInstallRedirect from "./grailed-plus-install-redirect";
 
+const DEFAULT_GOOGLE_ADS_ID = "AW-18008800880";
+
 function normalizeGoogleAdsId(value: string | undefined) {
   const normalized = value?.trim();
   if (!normalized) {
@@ -14,7 +16,9 @@ function normalizeGoogleAdsId(value: string | undefined) {
   return normalized.startsWith("AW-") ? normalized : `AW-${normalized}`;
 }
 
-const googleAdsId = normalizeGoogleAdsId(process.env.NEXT_PUBLIC_GOOGLE_ADS_ID);
+const googleAdsId =
+  normalizeGoogleAdsId(process.env.NEXT_PUBLIC_GOOGLE_ADS_ID) ??
+  DEFAULT_GOOGLE_ADS_ID;
 const googleAdsInstallLabel =
   process.env.NEXT_PUBLIC_GOOGLE_ADS_GRAILED_PLUS_INSTALL_LABEL?.trim() ||
   undefined;
