@@ -6,6 +6,8 @@ import { SITE_ORIGIN } from "@/lib/site-config";
 import GrailedPlusInstallRedirect from "./grailed-plus-install-redirect";
 
 const DEFAULT_GOOGLE_ADS_ID = "AW-18008800880";
+const DEFAULT_GOOGLE_ADS_GRAILED_PLUS_INSTALL_LABEL =
+  "96j6CPOdxIwcEPD8oYtD";
 
 function normalizeGoogleAdsId(value: string | undefined) {
   const normalized = value?.trim();
@@ -21,7 +23,7 @@ const googleAdsId =
   DEFAULT_GOOGLE_ADS_ID;
 const googleAdsInstallLabel =
   process.env.NEXT_PUBLIC_GOOGLE_ADS_GRAILED_PLUS_INSTALL_LABEL?.trim() ||
-  undefined;
+  DEFAULT_GOOGLE_ADS_GRAILED_PLUS_INSTALL_LABEL;
 const googleAdsSendTo =
   googleAdsId && googleAdsInstallLabel
     ? `${googleAdsId}/${googleAdsInstallLabel}`
