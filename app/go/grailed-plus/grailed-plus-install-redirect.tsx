@@ -1,18 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
+import GrailedPlusPreview from "@/app/components/projects/grailed-plus/grailed-plus-preview";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
+import { cn } from "@/lib/cn";
 
 type GrailedPlusInstallRedirectProps = {
   googleAdsSendTo?: string;
 };
 
-type RedirectMode = "auto" | "manual";
-
 type TrackingPayload = {
   autoRedirectEnabled: boolean;
-  redirectMode: RedirectMode;
+  redirectMode: "manual";
   referrer: string | null;
 } & Partial<
   Record<
@@ -31,15 +31,11 @@ type TrackingPayload = {
 >;
 
 const TRACKING_ENDPOINT = "/api/marketing/grailed-plus-redirect";
-const AUTO_REDIRECT_DELAY_MS = 180;
+const CLICK_REDIRECT_DELAY_MS = 180;
 const GOOGLE_ADS_READY_WAIT_MS = 600;
 const GOOGLE_ADS_REDIRECT_FALLBACK_MS = 1200;
-const MANUAL_REDIRECT_VALUES = new Set(["1", "true", "manual"]);
-const INITIAL_STATUS_MESSAGE = "Redirecting to the Chrome Web Store.";
-const OPENING_STATUS_MESSAGE = "Opening the Chrome Web Store.";
-const MANUAL_STATUS_MESSAGE = "Automatic redirect is paused.";
-const INITIAL_SECONDARY_MESSAGE = "If nothing happens, use the link below.";
-const MANUAL_SECONDARY_MESSAGE = "Use the link below when you're ready.";
+const CTA_LABEL = "Add to Chrome";
+const CTA_OPENING_LABEL = "Opening Chrome Web Store...";
 const TRACKED_QUERY_KEYS = [
   "gclid",
   "gbraid",
@@ -65,14 +61,10 @@ function readSearchValue(searchParams: URLSearchParams, key: string) {
   return value ? value.slice(0, 240) : null;
 }
 
-function buildTrackingPayload(
-  searchParams: URLSearchParams,
-  autoRedirectEnabled: boolean,
-  redirectMode: RedirectMode,
-): TrackingPayload {
+function buildTrackingPayload(searchParams: URLSearchParams): TrackingPayload {
   const payload: TrackingPayload = {
-    autoRedirectEnabled,
-    redirectMode,
+    autoRedirectEnabled: false,
+    redirectMode: "manual",
     referrer: document.referrer || null,
   };
 
@@ -98,7 +90,7 @@ function queueTrackingRequest(payload: TrackingPayload) {
       }
     }
   } catch {
-    // Ignore beacon errors and fall back to fetch keepalive below.
+    // Tracking is best-effort and should never block the outbound click.
   }
 
   void fetch(TRACKING_ENDPOINT, {
@@ -109,27 +101,14 @@ function queueTrackingRequest(payload: TrackingPayload) {
     body,
     keepalive: true,
   }).catch(() => {
-    // Tracking is best-effort and should not block the redirect.
+    // Ignore tracking failures and continue with the redirect.
   });
-}
-
-function isManualRedirect(searchParams: URLSearchParams) {
-  const manualValue = searchParams.get("manual")?.trim().toLowerCase();
-  const redirectValue = searchParams.get("redirect")?.trim().toLowerCase();
-
-  return (
-    (manualValue !== undefined && MANUAL_REDIRECT_VALUES.has(manualValue)) ||
-    redirectValue === "manual"
-  );
 }
 
 export default function GrailedPlusInstallRedirect({
   googleAdsSendTo,
 }: GrailedPlusInstallRedirectProps) {
-  const [{ autoRedirectEnabled, statusMessage }, setRedirectState] = useState({
-    autoRedirectEnabled: true,
-    statusMessage: INITIAL_STATUS_MESSAGE,
-  });
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const redirectStartedRef = useRef(false);
   const redirectCompletedRef = useRef(false);
 
@@ -142,129 +121,107 @@ export default function GrailedPlusInstallRedirect({
     window.location.replace(PROJECT_ROUTES.grailedPlusChromeWebStore);
   }, []);
 
-  const beginRedirect = useCallback(
-    (redirectMode: RedirectMode) => {
-      if (redirectStartedRef.current) {
-        return;
-      }
+  const beginRedirect = useCallback(() => {
+    if (redirectStartedRef.current) {
+      return;
+    }
 
-      redirectStartedRef.current = true;
+    redirectStartedRef.current = true;
+    setIsRedirecting(true);
 
-      const searchParams = new URLSearchParams(window.location.search);
-      const trackingPayload = buildTrackingPayload(
-        searchParams,
-        autoRedirectEnabled,
-        redirectMode,
-      );
-
-      setRedirectState((current) =>
-        current.statusMessage === OPENING_STATUS_MESSAGE
-          ? current
-          : {
-              ...current,
-              statusMessage: OPENING_STATUS_MESSAGE,
-            },
-      );
-      queueTrackingRequest(trackingPayload);
-
-      if (!googleAdsSendTo) {
-        window.setTimeout(redirectToStore, AUTO_REDIRECT_DELAY_MS);
-        return;
-      }
-
-      const deadline = Date.now() + GOOGLE_ADS_READY_WAIT_MS;
-      const dispatchGoogleAdsConversion = () => {
-        if (typeof window.gtag === "function") {
-          let settled = false;
-
-          const completeRedirect = () => {
-            if (settled) {
-              return;
-            }
-
-            settled = true;
-            redirectToStore();
-          };
-
-          window.gtag("event", "conversion", {
-            send_to: googleAdsSendTo,
-            event_callback: completeRedirect,
-          });
-          window.setTimeout(
-            completeRedirect,
-            GOOGLE_ADS_REDIRECT_FALLBACK_MS,
-          );
-          return;
-        }
-
-        if (Date.now() < deadline) {
-          window.setTimeout(dispatchGoogleAdsConversion, 50);
-          return;
-        }
-
-        window.setTimeout(redirectToStore, AUTO_REDIRECT_DELAY_MS);
-      };
-
-      dispatchGoogleAdsConversion();
-    },
-    [autoRedirectEnabled, googleAdsSendTo, redirectToStore],
-  );
-
-  useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
+    const trackingPayload = buildTrackingPayload(searchParams);
 
-    const timeoutId = window.setTimeout(() => {
-      if (isManualRedirect(searchParams)) {
-        setRedirectState((current) =>
-          current.autoRedirectEnabled ||
-          current.statusMessage !== MANUAL_STATUS_MESSAGE
-            ? {
-                autoRedirectEnabled: false,
-                statusMessage: MANUAL_STATUS_MESSAGE,
-              }
-            : current,
-        );
+    queueTrackingRequest(trackingPayload);
+
+    if (!googleAdsSendTo) {
+      window.setTimeout(redirectToStore, CLICK_REDIRECT_DELAY_MS);
+      return;
+    }
+
+    const deadline = Date.now() + GOOGLE_ADS_READY_WAIT_MS;
+    const dispatchGoogleAdsConversion = () => {
+      if (typeof window.gtag === "function") {
+        let settled = false;
+
+        const completeRedirect = () => {
+          if (settled) {
+            return;
+          }
+
+          settled = true;
+          redirectToStore();
+        };
+
+        window.gtag("event", "conversion", {
+          send_to: googleAdsSendTo,
+          event_callback: completeRedirect,
+        });
+        window.setTimeout(completeRedirect, GOOGLE_ADS_REDIRECT_FALLBACK_MS);
         return;
       }
 
-      beginRedirect("auto");
-    }, 0);
+      if (Date.now() < deadline) {
+        window.setTimeout(dispatchGoogleAdsConversion, 50);
+        return;
+      }
 
-    return () => window.clearTimeout(timeoutId);
-  }, [beginRedirect]);
+      window.setTimeout(redirectToStore, CLICK_REDIRECT_DELAY_MS);
+    };
+
+    dispatchGoogleAdsConversion();
+  }, [googleAdsSendTo, redirectToStore]);
 
   return (
-    <main className="flex min-h-dvh items-center justify-center px-6 text-center">
-      <div className="max-w-sm">
-        <p className="text-sm sm:text-base">{statusMessage}</p>
-        <p className="mt-2 text-sm text-black/55 dark:text-white/55">
-          {autoRedirectEnabled
-            ? INITIAL_SECONDARY_MESSAGE
-            : MANUAL_SECONDARY_MESSAGE}
+    <main className="min-h-dvh px-5 py-8 sm:px-8 sm:py-12 bg-page-bg text-page-fg dark:bg-page-bg-dark dark:text-page-fg-dark font-sans">
+      <section className="mx-auto flex flex-col items-center justify-center min-h-[calc(100dvh-4rem)] max-w-3xl">
+        <p className="text-[0.72rem] font-medium tracking-[0.3em] uppercase mb-2" style={{ color: 'var(--color-text-overlay-light)', opacity: 0.5 }}>
+          Chrome extension for Grailed
         </p>
-        <p className="mt-5 text-sm">
-          <a
-            href={PROJECT_ROUTES.grailedPlusChromeWebStore}
-            className="underline decoration-current underline-offset-4"
-            onClick={(event) => {
-              if (
-                event.button !== 0 ||
-                event.metaKey ||
-                event.altKey ||
-                event.ctrlKey ||
-                event.shiftKey
-              ) {
-                return;
-              }
-
-              event.preventDefault();
-              beginRedirect("manual");
-            }}
-          >
-            Chrome Web Store
-          </a>
+        <h1 className="text-5xl font-bold sm:text-7xl text-center mb-4" style={{ color: 'var(--color-page-fg)' }}>
+          Grailed +
+        </h1>
+        <div className="space-y-2 text-sm leading-6 sm:text-base text-center mb-6" style={{ color: 'var(--color-text-overlay-light)', opacity: 0.7 }}>
+          <p>
+            Dark mode, price insights, seller metadata, and custom currency in one lightweight extension for Grailed.
+          </p>
+          <p>
+            Preview the changes below, then install directly from the Chrome Web Store.
+          </p>
+        </div>
+        <a
+          href={PROJECT_ROUTES.grailedPlusChromeWebStore}
+          aria-busy={isRedirecting}
+          aria-disabled={isRedirecting}
+          className={cn(
+            "inline-flex items-center justify-center rounded-full px-8 text-center text-sm font-medium tracking-[0.16em] uppercase transition-colors duration-200",
+            "overlay-button-dark overlay-button-light bg-black text-white dark:bg-white dark:text-black",
+            "h-12 min-w-45 sm:min-w-55",
+            isRedirecting && "pointer-events-none opacity-70",
+          )}
+          onClick={(event) => {
+            if (
+              event.button !== 0 ||
+              event.metaKey ||
+              event.altKey ||
+              event.ctrlKey ||
+              event.shiftKey
+            ) {
+              return;
+            }
+            event.preventDefault();
+            beginRedirect();
+          }}
+        >
+          {isRedirecting ? CTA_OPENING_LABEL : CTA_LABEL}
+        </a>
+        <p className="mt-3 text-center text-xs" style={{ color: 'var(--color-text-overlay-light)', opacity: 0.45 }}>
+          Installs from the official Chrome Web Store listing.
         </p>
-      </div>
+        <div className="relative aspect-video w-full max-w-3xl overflow-hidden rounded-md mt-8">
+          <GrailedPlusPreview />
+        </div>
+      </section>
     </main>
   );
 }
