@@ -21,7 +21,6 @@ export type ProjectDefinition = {
     */
 
 export const projectCatalog: ProjectDefinition[] = [
-  
   {
     id: "grailed-plus",
     title: "Grailed Plus",
@@ -32,7 +31,7 @@ export const projectCatalog: ProjectDefinition[] = [
     previewLinks: [
       {
         label: "Chrome Web Store",
-        href: "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd?authuser=1&hl=en",
+        href: PROJECT_ROUTES.grailedPlusChromeWebStore,
         ariaLabel: "Open Grailed Plus on Chrome Web Store",
       },
     ],

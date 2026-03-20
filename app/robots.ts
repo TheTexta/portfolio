@@ -6,6 +6,7 @@ const DISALLOWED_PATHS = [
   "/api/",
   "/admin/",
   "/auth/spotify/callback",
+  "/go/",
   "/components/projects/nepobabiesruntheunderground/preview",
 ];
 

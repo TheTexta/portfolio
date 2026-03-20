@@ -5,6 +5,9 @@ export const PROJECT_ROUTES = {
   photoGraphAdminUpload: "/admin/photo-graph/upload",
   spotifyNodify: "/components/projects/spotify-nodify",
   grailedPlus: "/components/projects/grailed-plus",
+  grailedPlusInstall: "/go/grailed-plus",
+  grailedPlusChromeWebStore:
+    "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd?authuser=1&hl=en",
   nepobabies: "/components/projects/nepobabiesruntheunderground",
   nepobabiesPreview:
     "https://thetexta.github.io/nepobabiesruntheunderground/index.html",
