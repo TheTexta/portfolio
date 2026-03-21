@@ -23,33 +23,29 @@ type ProjectChrome = {
   avatar?: string;
 };
 
-const OVERLAY_DARK = "overlay-tone-dark";
-const OVERLAY_LIGHT_BASE = "overlay-tone-light-base";
-const PANEL_DARK = "overlay-panel-dark";
-const PANEL_LIGHT = "overlay-panel-light";
-const BUTTON_DARK = "overlay-button-dark";
-const BUTTON_LIGHT = "overlay-button-light";
-const ITEM_DARK = "overlay-item-dark";
-const ITEM_LIGHT = "overlay-item-light";
-const BORDER_DARK = "overlay-border-dark";
-const BORDER_LIGHT = "overlay-border-light";
-const BORDER_DARK_STRONG = "overlay-border-dark-strong";
-const BORDER_LIGHT_STRONG = "overlay-border-light-strong";
-const CONTROL_ICON_DARK = "overlay-control-icon-dark";
-const CONTROL_ICON_LIGHT = "overlay-control-icon-light";
+const OVERLAY_TONE = "overlay-tone";
+const OVERLAY_TONE_BASE = "overlay-tone-base";
+const PANEL = "overlay-panel";
+const BUTTON = "overlay-button";
+const BUTTON_STRONG = "overlay-button-strong";
+const ITEM = "overlay-item";
+const ITEM_STRONG = "overlay-item-strong";
+const BORDER = "overlay-border";
+const BORDER_STRONG = "overlay-border-strong";
+const CONTROL_ICON = "overlay-control-icon";
 const CONTROL_DANGER = "overlay-button-danger";
 
-function resolveControlChrome(darkMode: boolean): ControlChrome {
+function resolveControlChrome(): ControlChrome {
   return {
-    icon: darkMode ? CONTROL_ICON_DARK : CONTROL_ICON_LIGHT,
-    action: darkMode ? BUTTON_DARK : BUTTON_LIGHT,
+    icon: CONTROL_ICON,
+    action: BUTTON,
     danger: CONTROL_DANGER,
   };
 }
 
 export const ADMIN_CONTROL_CHROME: ControlChrome = {
-  icon: "overlay-control-icon-light dark:overlay-control-icon-dark",
-  action: "overlay-button-light dark:overlay-button-dark",
+  icon: CONTROL_ICON,
+  action: BUTTON,
   danger: CONTROL_DANGER,
 };
 
@@ -57,67 +53,51 @@ export function getProjectChrome(
   variant: ProjectChromeVariant,
   darkMode: boolean,
 ): ProjectChrome {
-  const controls = resolveControlChrome(darkMode);
+  const controls = resolveControlChrome();
   switch (variant) {
     case "home":
       return {
-        overlay: darkMode
-          ? OVERLAY_DARK
-          : `${OVERLAY_LIGHT_BASE} bg-surface-overlay-light-panel`,
+        overlay: `${OVERLAY_TONE_BASE} bg-overlay-panel dark:bg-overlay-fill`,
         controls,
       };
     case "html-preview":
       return {
-        overlay: OVERLAY_DARK,
+        overlay: OVERLAY_TONE,
         controls,
-        shell: "bg-neutral-950 text-text-overlay-dark",
+        shell: "bg-neutral-950 text-overlay-ink",
       };
     case "photo-graph":
       return {
-        overlay: darkMode
-          ? OVERLAY_DARK
-          : `${OVERLAY_LIGHT_BASE} bg-surface-overlay-light-soft`,
+        overlay: `${OVERLAY_TONE_BASE} bg-overlay-fill-soft dark:bg-overlay-fill`,
         controls,
         shell: darkMode
           ? "bg-neutral-950 text-neutral-100"
           : "bg-stone-100 text-neutral-950",
-        modal: darkMode
-          ? "bg-surface-overlay-dark-modal text-text-overlay-dark"
-          : "bg-surface-overlay-light-modal text-text-overlay-light",
+        modal: "bg-overlay-modal text-overlay-ink",
       };
     case "spotify":
       return {
-        overlay: darkMode
-          ? OVERLAY_DARK
-          : `${OVERLAY_LIGHT_BASE} bg-surface-overlay-light`,
+        overlay: `${OVERLAY_TONE_BASE} bg-overlay-fill`,
         controls,
         shell: darkMode
           ? "bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.22),_transparent_40%),linear-gradient(160deg,#04120b_0%,#071a12_45%,#020617_100%)] text-neutral-100"
           : "bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.16),_transparent_45%),linear-gradient(160deg,#f6fff9_0%,#e7f8ef_48%,#f8fafc_100%)] text-neutral-950",
-        surface: darkMode ? PANEL_DARK : PANEL_LIGHT,
-        button: darkMode ? BUTTON_DARK : BUTTON_LIGHT,
-        item: darkMode ? ITEM_DARK : ITEM_LIGHT,
-        emptyState: darkMode ? BORDER_DARK_STRONG : BORDER_LIGHT_STRONG,
-        avatar: darkMode ? BORDER_DARK : BORDER_LIGHT,
+        surface: PANEL,
+        button: BUTTON,
+        item: ITEM,
+        emptyState: BORDER_STRONG,
+        avatar: BORDER,
       };
     case "grailed-plus":
       return {
-        overlay: darkMode
-          ? `${BORDER_DARK_STRONG} bg-surface-overlay-dark-strong text-text-overlay-dark`
-          : `${OVERLAY_LIGHT_BASE} bg-surface-overlay-light-strong`,
+        overlay: `${OVERLAY_TONE_BASE} bg-overlay-fill-strong dark:border-overlay-border-strong`,
         controls,
         shell: darkMode
           ? "bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.18),_transparent_45%),linear-gradient(168deg,#23160b_0%,#17130f_55%,#090909_100%)] text-neutral-100"
           : "bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.2),_transparent_45%),linear-gradient(168deg,#fff8f2_0%,#f8f2ee_55%,#f6f5f4_100%)] text-neutral-950",
-        surface: darkMode
-          ? PANEL_DARK
-          : `${BORDER_LIGHT} bg-surface-overlay-light-panel-strong`,
-        button: darkMode
-          ? BUTTON_DARK
-          : `${BORDER_LIGHT} bg-surface-overlay-light-button-strong text-text-overlay-light hover:bg-surface-overlay-light-panel-strong`,
-        item: darkMode
-          ? `${BORDER_DARK} bg-surface-overlay-dark-item-strong`
-          : ITEM_LIGHT,
+        surface: `${BORDER} bg-overlay-panel-strong`,
+        button: BUTTON_STRONG,
+        item: ITEM_STRONG,
       };
   }
 }

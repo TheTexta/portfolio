@@ -19,7 +19,7 @@ export default function HomePageContent() {
         onToggleDarkMode={toggleTheme}
         toneClass={chrome.controls.icon}
         containerMode="sticky"
-        className="top-5 ml-auto mr-5 z-20"
+        className="top-5 z-20 mr-5 ml-auto"
         ariaLabel="Site controls"
       />
       <AboutSection />

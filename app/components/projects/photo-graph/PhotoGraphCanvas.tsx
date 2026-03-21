@@ -152,7 +152,7 @@ const overlayPanelClass =
   "absolute left-[1vmin] top-[1vmin] z-[5] space-y-2 p-1.5 text-center backdrop-blur-[2px]";
 const overlayTextClass = "m-0 p-0 text-xs";
 const sliderClass =
-  "range-sm h-1 rounded-full border-none bg-black/15 accent-page-fg dark:bg-white/35 dark:accent-page-fg-dark";
+  "range-sm h-1 rounded-full border-none bg-black/15 accent-ink dark:bg-white/35";
 const DEFAULT_CHARGE_MULT = 1;
 const INITIAL_DIST_MAX_MULT = 5;
 const DEFAULT_DIST_MAX_MULT = 1;
@@ -1595,6 +1595,7 @@ export default function PhotoGraphCanvas({
               <X className="h-4 w-4" />
             </OverlayControlButton>
 
+            {/* eslint-disable-next-line @next/next/no-img-element -- This inspect overlay needs the raw image element for natural-size reads and unrestricted sizing. */}
             <img
               src={inspectTarget.url}
               alt=""

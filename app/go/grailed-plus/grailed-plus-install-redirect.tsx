@@ -173,20 +173,15 @@ export default function GrailedPlusInstallRedirect({
   }, [googleAdsSendTo, redirectToStore]);
 
   return (
-    <main className="min-h-dvh px-5 py-8 sm:px-8 sm:py-12 bg-page-bg text-page-fg dark:bg-page-bg-dark dark:text-page-fg-dark font-sans">
-      <section className="mx-auto flex flex-col items-center justify-center min-h-[calc(100dvh-4rem)] max-w-3xl">
-        <p className="text-[0.72rem] font-medium tracking-[0.3em] uppercase mb-2" style={{ color: 'var(--color-text-overlay-light)', opacity: 0.5 }}>
-          Chrome extension for Grailed
-        </p>
-        <h1 className="text-5xl font-bold sm:text-7xl text-center mb-4" style={{ color: 'var(--color-page-fg)' }}>
+    <main className="bg-canvas text-ink font-light">
+      <div className="m-auto flex h-screen max-w-3xl flex-col items-center justify-center">
+        <h1 className="mb-4 text-center text-5xl font-bold sm:text-7xl">
           Grailed +
         </h1>
-        <div className="space-y-2 text-sm leading-6 sm:text-base text-center mb-6" style={{ color: 'var(--color-text-overlay-light)', opacity: 0.7 }}>
+        <div className="text-overlay-ink/70 mb-6 space-y-2 text-center text-sm leading-6 sm:text-base">
           <p>
-            Dark mode, price insights, seller metadata, and custom currency in one lightweight extension for Grailed.
-          </p>
-          <p>
-            Preview the changes below, then install directly from the Chrome Web Store.
+            Dark mode, price insights, seller metadata, and custom currency in
+            one lightweight extension for Grailed.
           </p>
         </div>
         <a
@@ -195,7 +190,7 @@ export default function GrailedPlusInstallRedirect({
           aria-disabled={isRedirecting}
           className={cn(
             "inline-flex items-center justify-center rounded-full px-8 text-center text-sm font-medium tracking-[0.16em] uppercase transition-colors duration-200",
-            "overlay-button-dark overlay-button-light bg-black text-white dark:bg-white dark:text-black",
+            "border-overlay-border bg-ink text-canvas dark:border-overlay-border-strong hover:bg-overlay-fill-dark-button-hover",
             "h-12 min-w-45 sm:min-w-55",
             isRedirecting && "pointer-events-none opacity-70",
           )}
@@ -215,13 +210,64 @@ export default function GrailedPlusInstallRedirect({
         >
           {isRedirecting ? CTA_OPENING_LABEL : CTA_LABEL}
         </a>
-        <p className="mt-3 text-center text-xs" style={{ color: 'var(--color-text-overlay-light)', opacity: 0.45 }}>
+        <p className="text-overlay-ink/45 mt-3 text-center text-xs italic">
           Installs from the official Chrome Web Store listing.
         </p>
-        <div className="relative aspect-video w-full max-w-3xl overflow-hidden rounded-md mt-8">
-          <GrailedPlusPreview />
+      </div>
+
+      <div className=" flex w-full flex-col">
+        <div className="my-20 flex h-125 w-full flex-row">
+          <div className="max-h-full w-2/3">
+            <GrailedPlusPreview comparisonId="price-trend" />
+          </div>
+          <div className="mx-5 mb-4 h-full w-1/3 text-right">
+            <h2 className="text-3xl font-bold sm:text-5xl">PRICING INSIGHTS</h2>
+            <p className="text-break text-xl md:text-3xl">
+              Depop price comparisons and historical price drop data
+              directly on every listing page — no extra tabs, no manual
+              searching. See what the same item is moving for across markets,
+              track how long a listing has been sitting, and spot a motivated
+              seller before anyone else does.
+            </p>
+          </div>
         </div>
-      </section>
+        <div className="my-20 flex h-125 w-full flex-row">
+          <div className="mx-5 mb-4 h-full w-1/3 text-left">
+            <h2 className="text-3xl font-bold sm:text-5xl">
+              CUSTOM SITE-WIDE CURRENCY
+            </h2>
+            <p className="text-xl md:text-3xl">
+              Grailed Plus converts every price into whatever currency you
+              actually use, sitewide and in real time. Hover any converted price
+              to see the original USD value. Rates are pulled from Frankfurter
+              and cached hourly so you&apos;re always working with fresh
+              numbers. Set it once, forget it.
+            </p>
+          </div>
+          <div className="max-h-full w-2/3">
+            <GrailedPlusPreview
+              comparisonId="custom-currency"
+              scrollStartPercent={10}
+              zoomAmount={1.25}
+            />
+          </div>
+        </div>
+        <div className="my-20 flex h-125 w-full flex-row">
+          <div className="max-h-full w-2/3">
+            <GrailedPlusPreview comparisonId="dm" />
+          </div>
+          <div className="mx-5 mb-4 h-full w-1/3 text-right">
+            <h2 className="text-3xl font-bold sm:text-5xl">DARK MODE</h2>
+            <p className="text-xl md:text-3xl">
+              Fully native dark mode across every page of the site — match your
+              device theme automatically or lock it permanently. Fine-tune it
+              further with a custom primary color to make it feel exactly right.
+              No eye strain, no jarring white flashes, just a clean browsing
+              experience built for long sessions.
+            </p>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }

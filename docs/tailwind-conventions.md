@@ -2,7 +2,8 @@
 
 ## Core Rules
 
-- Prefer semantic theme tokens from `app/globals.css` over raw color literals.
+- Prefer a flat, semantic token set in `tailwind.config.js` for shared colors over raw color literals.
+- Back shared color tokens with CSS variables in `app/globals.css` so light/dark values stay centralized.
 - Keep class names in markup unless reuse or variants justify extraction.
 - Use `cn(...)` for composed class strings and conflict-safe merges.
 - Use `cva(...)` when a component has repeated visual variants.
@@ -11,7 +12,7 @@
 ## When Arbitrary Values Are Allowed
 
 - Use arbitrary values only when Tailwind utilities and theme tokens cannot express the value.
-- Prefer extracting repeated arbitrary values into `@theme` tokens.
+- Prefer extracting repeated arbitrary values into semantic Tailwind tokens before reaching for local arbitrary values.
 - Keep one-off arbitrary values local to the component where they are needed.
 
 ## When To Extract Variants

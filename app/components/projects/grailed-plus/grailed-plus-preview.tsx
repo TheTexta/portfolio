@@ -24,6 +24,9 @@ import beforePriceTrend from "./before-price-trend.png";
 
 type GrailedPlusPreviewProps = {
   forcedDarkMode?: boolean;
+  comparisonId?: ComparePage["id"];
+  scrollStartPercent?: number;
+  zoomAmount?: number;
 };
 
 type ComparePage = {
@@ -78,8 +81,19 @@ function clampSplit(value: number) {
   return Math.min(100, Math.max(0, Math.round(value)));
 }
 
+function clampPercent(value: number) {
+  return Math.min(100, Math.max(0, value));
+}
+
+function clampZoom(value: number) {
+  return Math.min(2, Math.max(1, value));
+}
+
 export default function GrailedPlusPreview({
   forcedDarkMode,
+  comparisonId,
+  scrollStartPercent = 0,
+  zoomAmount = 1,
 }: GrailedPlusPreviewProps) {
   const { darkMode: siteDarkMode } = useTheme();
   const darkMode = forcedDarkMode ?? siteDarkMode;
@@ -91,8 +105,16 @@ export default function GrailedPlusPreview({
   );
   const rootRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const activePage = COMPARE_PAGES[activeIndex];
+  const selectedComparison =
+    comparisonId == null
+      ? null
+      : (COMPARE_PAGES.find((page) => page.id === comparisonId) ?? null);
+  const activePage = selectedComparison ?? COMPARE_PAGES[activeIndex];
+  const showPageNavigation = selectedComparison == null;
   const controlToneClass = chrome.controls.icon;
+  const clampedZoomAmount = clampZoom(zoomAmount);
+  const visibleContentRatio = 1 / clampedZoomAmount;
+  const hiddenContentRatio = (1 - visibleContentRatio) / 2;
 
   const updateSplitFromClientX = (clientX: number) => {
     const bounds = rootRef.current?.getBoundingClientRect();
@@ -124,7 +146,7 @@ export default function GrailedPlusPreview({
     event.currentTarget.setPointerCapture(event.pointerId);
     updateSplitFromClientX(event.clientX);
   };
-// TODO handle pages of different heights better
+  // TODO handle pages of different heights better
   const handleSliderPointerMove = (
     event: ReactPointerEvent<HTMLButtonElement>,
   ) => {
@@ -176,8 +198,18 @@ export default function GrailedPlusPreview({
     }
   };
 
+  const contentSplitPercent = clampPercent(
+    (hiddenContentRatio + (splitPercent / 100) * visibleContentRatio) * 100,
+  );
   const beforeScaleWidth =
-    splitPercent === 0 ? "100%" : `${10000 / splitPercent}%`;
+    contentSplitPercent === 0 ? "100%" : `${10000 / contentSplitPercent}%`;
+  const zoomedContentStyle =
+    clampedZoomAmount === 1
+      ? undefined
+      : {
+          width: `${clampedZoomAmount * 100}%`,
+          marginLeft: `${-hiddenContentRatio * 100}%`,
+        };
 
   useEffect(() => {
     const scrollElement = scrollRef.current;
@@ -190,27 +222,23 @@ export default function GrailedPlusPreview({
       return;
     }
 
-    // Remove tiny scroll for DM showcase
-    const targetRatio = 0;
+    const targetRatio = clampPercent(scrollStartPercent) / 100;
     scrollElement.scrollTop = maxScroll * targetRatio;
-  }, [activePage.id]);
+  }, [activePage.id, clampedZoomAmount, scrollStartPercent]);
 
   return (
     <div
       ref={rootRef}
       className={cn(
         grailedPreviewShell(),
-        chrome.surface ??
-          (darkMode
-            ? "bg-surface-overlay-dark-panel"
-            : "bg-surface-overlay-light-button"),
+        chrome.surface ?? "bg-overlay-button dark:bg-overlay-panel",
       )}
     >
       <div
         ref={scrollRef}
-        className="relative h-full overflow-x-hidden overflow-y-auto"
+        className="relative h-full overflow-x-hidden overflow-y-auto scrollbar-hide"
       >
-        <div className="relative w-full">
+        <div className="relative w-full" style={zoomedContentStyle}>
           <Image
             src={activePage.after}
             alt={activePage.afterAlt}
@@ -221,7 +249,7 @@ export default function GrailedPlusPreview({
           />
           <div
             className="pointer-events-none absolute inset-y-0 left-0 overflow-hidden"
-            style={{ width: `${splitPercent}%` }}
+            style={{ width: `${contentSplitPercent}%` }}
           >
             {splitPercent > 0 ? (
               <div style={{ width: beforeScaleWidth }}>
@@ -241,10 +269,7 @@ export default function GrailedPlusPreview({
 
       <div className="pointer-events-none absolute inset-0">
         <div
-          className={cn(
-            "absolute inset-y-0 w-px",
-            darkMode ? "bg-divider-overlay-dark" : "bg-divider-overlay-light",
-          )}
+          className="bg-overlay-rule absolute inset-y-0 w-px"
           style={{ left: `${splitPercent}%`, transform: "translateX(-0.5px)" }}
         />
         <OverlayControlButton
@@ -274,45 +299,49 @@ export default function GrailedPlusPreview({
       </div>
 
       <div
-        className="absolute top-3 right-3 z-10 px-1 py-1 text-xs font-semibold tracking-[0.14em] text-white uppercase mix-blend-difference pointer-events-none"
+        className="pointer-events-none absolute top-3 right-3 z-10 px-1 py-1 text-xs font-semibold tracking-[0.14em] text-white uppercase mix-blend-difference"
         style={{ filter: GRAILED_OVERLAY_MONO_FILTER }}
       >
         {activePage.label}
       </div>
 
       <div
-        className="absolute bottom-3 left-3 z-10 text-[10px] font-semibold tracking-[0.22em] text-white uppercase mix-blend-difference pointer-events-none"
+        className="pointer-events-none absolute bottom-3 left-3 z-10 text-[10px] font-semibold tracking-[0.22em] text-white uppercase mix-blend-difference"
         style={{ filter: GRAILED_OVERLAY_MONO_FILTER, opacity: 0.42 }}
       >
         Before
       </div>
       <div
-        className="absolute right-3 bottom-3 z-10 text-[10px] font-semibold tracking-[0.22em] text-white uppercase mix-blend-difference pointer-events-none"
+        className="pointer-events-none absolute right-3 bottom-3 z-10 text-[10px] font-semibold tracking-[0.22em] text-white uppercase mix-blend-difference"
         style={{ filter: GRAILED_OVERLAY_MONO_FILTER, opacity: 0.42 }}
       >
         After
       </div>
 
-      <OverlayControlButton
-        layout="icon"
-        shape="round"
-        toneClass={controlToneClass}
-        onClick={handlePrevious}
-        aria-label="Previous before and after page"
-        className="absolute top-1/2 left-3 z-10 -translate-y-1/2 md:left-4"
-      >
-        <ArrowLeft aria-hidden />
-      </OverlayControlButton>
-      <OverlayControlButton
-        layout="icon"
-        shape="round"
-        toneClass={controlToneClass}
-        onClick={handleNext}
-        aria-label="Next before and after page"
-        className="absolute top-1/2 right-3 z-10 -translate-y-1/2 md:right-4"
-      >
-        <ArrowRight aria-hidden />
-      </OverlayControlButton>
+      {showPageNavigation ? (
+        <>
+          <OverlayControlButton
+            layout="icon"
+            shape="round"
+            toneClass={controlToneClass}
+            onClick={handlePrevious}
+            aria-label="Previous before and after page"
+            className="absolute top-1/2 left-3 z-10 -translate-y-1/2 md:left-4"
+          >
+            <ArrowLeft aria-hidden />
+          </OverlayControlButton>
+          <OverlayControlButton
+            layout="icon"
+            shape="round"
+            toneClass={controlToneClass}
+            onClick={handleNext}
+            aria-label="Next before and after page"
+            className="absolute top-1/2 right-3 z-10 -translate-y-1/2 md:right-4"
+          >
+            <ArrowRight aria-hidden />
+          </OverlayControlButton>
+        </>
+      ) : null}
     </div>
   );
 }

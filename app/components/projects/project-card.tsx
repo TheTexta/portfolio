@@ -12,18 +12,21 @@ type ProjectCardProps = {
   children: ReactNode;
 };
 
-const projectCard = cva("w-full max-w-3xl justify-self-center mx-auto rounded-xl", {
-  variants: {
-    width: {
-      fluid: "md:w-5/6",
+const projectCard = cva(
+  "mx-auto w-full max-w-3xl justify-self-center rounded-xl",
+  {
+    variants: {
+      width: {
+        fluid: "md:w-5/6",
+      },
+    },
+    defaultVariants: {
+      width: "fluid",
     },
   },
-  defaultVariants: {
-    width: "fluid",
-  },
-});
+);
 
-const projectChip = cva("bg-surface-chip rounded-md px-2 py-1 text-xs");
+const projectChip = cva("bg-overlay-chip rounded-md px-2 py-1 text-xs");
 
 const projectPreviewFrame = cva(
   "relative mx-auto aspect-video overflow-hidden rounded-md",
@@ -64,7 +67,10 @@ export default function ProjectCard({
                   >
                     {link.label}
                   </a>
-                  <ArrowUpRight className="ml-1 inline-block h-4 w-4" strokeWidth={1} />
+                  <ArrowUpRight
+                    className="ml-1 inline-block h-4 w-4"
+                    strokeWidth={1}
+                  />
                 </li>
               ))}
             </ul>
