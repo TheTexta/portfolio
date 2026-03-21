@@ -5,6 +5,8 @@ import { useCallback, useRef, useState } from "react";
 import GrailedPlusPreview from "@/app/components/projects/grailed-plus/grailed-plus-preview";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import { cn } from "@/lib/cn";
+import { ChevronsDown } from 'lucide-react';
+
 
 type GrailedPlusInstallRedirectProps = {
   googleAdsSendTo?: string;
@@ -172,6 +174,11 @@ export default function GrailedPlusInstallRedirect({
     dispatchGoogleAdsConversion();
   }, [googleAdsSendTo, redirectToStore]);
 
+  const detailsView = useRef<HTMLDivElement>(null);
+  const scrollToDetails = () => {
+    detailsView.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <main className="bg-canvas text-ink font-light">
       <div className="my-auto flex h-screen max-w-3xl flex-col items-center justify-center mx-5 md:mx-auto">
@@ -213,9 +220,11 @@ export default function GrailedPlusInstallRedirect({
         <p className="text-overlay-ink/45 mt-3 text-center text-xs italic">
           Installs from the official Chrome Web Store listing.
         </p>
+
+        {<ChevronsDown className="bottom-10 absolute hover:cursor-pointer animate-hover" onClick={scrollToDetails}/>}
       </div>
 
-      <div className="flex w-full flex-col">
+      <div className="flex w-full flex-col" ref={detailsView}>
         <div className="my-20 flex h-125 w-full flex-row">
           <div className="max-h-full w-2/3">
             <GrailedPlusPreview comparisonId="price-trend" />
@@ -240,8 +249,8 @@ export default function GrailedPlusInstallRedirect({
               Grailed Plus converts every price into whatever currency you
               actually use, sitewide and in real time. Hover any converted price
               to see the original USD value. Rates are pulled from Frankfurter
-              and cached hourly so you&apos;re always working with fresh
-              numbers. Set it once, forget it.
+              and cached hourly so you're always working with fresh
+              numbers. 
             </p>
           </div>
           <div className="max-h-full w-2/3">
@@ -261,13 +270,17 @@ export default function GrailedPlusInstallRedirect({
             <p className="text-xl md:text-3xl">
               Fully native dark mode across every page of the site — match your
               device theme automatically or lock it permanently. Fine-tune it
-              further with a custom primary color to make it feel exactly right.
+              further with a custom primary color to make it yours.
               No eye strain, no jarring white flashes, just a clean browsing
               experience built for long sessions.
             </p>
           </div>
         </div>
       </div>
+      <footer className="flex justify-center mt-20">
+        <a href="/" className="text-overlay-ink/45">dextery.dev</a>
+      </footer>
     </main>
+    
   );
 }
