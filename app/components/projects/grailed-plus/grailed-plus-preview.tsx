@@ -90,14 +90,11 @@ function clampZoom(value: number) {
 }
 
 export default function GrailedPlusPreview({
-  forcedDarkMode,
   comparisonId,
   scrollStartPercent = 0,
   zoomAmount = 1,
 }: GrailedPlusPreviewProps) {
-  const { darkMode: siteDarkMode } = useTheme();
-  const darkMode = forcedDarkMode ?? siteDarkMode;
-  const chrome = getProjectChrome("grailed-plus", darkMode);
+  const chrome = getProjectChrome("grailed-plus");
   const [activeIndex, setActiveIndex] = useState(0);
   const [splitPercent, setSplitPercent] = useState(50);
   const [draggingPointerId, setDraggingPointerId] = useState<number | null>(
@@ -288,10 +285,9 @@ export default function GrailedPlusPreview({
           onPointerCancel={handleSliderPointerUp}
           onLostPointerCapture={() => setDraggingPointerId(null)}
           onKeyDown={handleSliderKeyDown}
-          className="pointer-events-auto absolute top-1/2 touch-none"
+          className="pointer-events-auto absolute top-1/2 touch-none -translate-x-1/2 -translate-y-1/2 z-20"
           style={{
             left: `${splitPercent}%`,
-            transform: "translate(-50%, -50%)",
           }}
         >
           <ArrowLeftRight aria-hidden />
@@ -299,21 +295,18 @@ export default function GrailedPlusPreview({
       </div>
 
       <div
-        className="pointer-events-none absolute top-3 right-3 z-10 px-1 py-1 text-xs font-semibold tracking-[0.14em] text-white uppercase mix-blend-difference"
-        style={{ filter: GRAILED_OVERLAY_MONO_FILTER }}
+        className="absolute top-3 right-3 z-10 px-1 py-1 overlay-text"
       >
         {activePage.label}
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-3 left-3 z-10 text-[10px] font-semibold tracking-[0.22em] text-white uppercase mix-blend-difference"
-        style={{ filter: GRAILED_OVERLAY_MONO_FILTER, opacity: 0.42 }}
+        className="pointer-events-none absolute bottom-3 left-3 z-10  overlay-text text-[10px] tracking-[0.22em]"
       >
         Before
       </div>
       <div
-        className="pointer-events-none absolute right-3 bottom-3 z-10 text-[10px] font-semibold tracking-[0.22em] text-white uppercase mix-blend-difference"
-        style={{ filter: GRAILED_OVERLAY_MONO_FILTER, opacity: 0.42 }}
+        className="pointer-events-none absolute right-3 bottom-3 z-10 overlay-text text-[10px] tracking-[0.22em]"
       >
         After
       </div>

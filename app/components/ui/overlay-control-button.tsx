@@ -14,9 +14,6 @@ const overlayControlBase = cva(
     variants: {
       layout: {
         icon: "focus-visible:ring-accent/70 cursor-pointer p-0 [line-height:1] focus-visible:ring-2 focus-visible:ring-offset-0 [&_svg]:pointer-events-none [&_svg]:m-auto [&_svg]:block [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0",
-        // Icon Sizing Standardization:
-        // All icons in OverlayControlButton/Link/Anchor should use h-4 w-4 (16px) for consistency.
-        // If a different size is required for visual balance, document the reason inline.
         action: "leading-none font-medium",
       },
       size: {
@@ -30,36 +27,12 @@ const overlayControlBase = cva(
       },
     },
     compoundVariants: [
-      {
-        layout: "icon",
-        size: "sm",
-        class: "h-7 w-7",
-      },
-      {
-        layout: "icon",
-        size: "md",
-        class: "h-8 w-8",
-      },
-      {
-        layout: "icon",
-        size: "lg",
-        class: "h-10 w-10",
-      },
-      {
-        layout: "action",
-        size: "sm",
-        class: "px-2 py-1 text-xs",
-      },
-      {
-        layout: "action",
-        size: "md",
-        class: "px-3 py-1.5 text-sm",
-      },
-      {
-        layout: "action",
-        size: "lg",
-        class: "px-4 py-2 text-sm",
-      },
+      { layout: "icon", size: "sm", class: "h-7 w-7" },
+      { layout: "icon", size: "md", class: "h-8 w-8" },
+      { layout: "icon", size: "lg", class: "h-10 w-10" },
+      { layout: "action", size: "sm", class: "px-2 py-1 text-xs" },
+      { layout: "action", size: "md", class: "px-3 py-1.5 text-sm" },
+      { layout: "action", size: "lg", class: "px-4 py-2 text-sm" },
     ],
     defaultVariants: {
       layout: "icon",
@@ -69,53 +42,39 @@ const overlayControlBase = cva(
   },
 );
 
+
 type OverlayControlLayout = "icon" | "action";
 type OverlayControlShape = "square" | "round";
 type OverlayControlSize = "sm" | "md" | "lg";
 
-type OverlayControlButtonProps = {
+type SharedProps = {
   toneClass: string;
   layout?: OverlayControlLayout;
   size?: OverlayControlSize;
   shape?: OverlayControlShape;
   className?: string;
   children: ReactNode;
-} & ButtonHTMLAttributes<HTMLButtonElement>;
-
-type OverlayControlLinkProps = {
-  href: string;
-  toneClass: string;
-  layout?: OverlayControlLayout;
-  size?: OverlayControlSize;
-  shape?: OverlayControlShape;
-  className?: string;
-  children: ReactNode;
-  "aria-label": string;
 };
 
-type OverlayControlAnchorProps = {
-  toneClass: string;
-  layout?: OverlayControlLayout;
-  size?: OverlayControlSize;
-  shape?: OverlayControlShape;
-  className?: string;
-  children: ReactNode;
-} & AnchorHTMLAttributes<HTMLAnchorElement>;
+type OverlayControlButtonProps = SharedProps & ButtonHTMLAttributes<HTMLButtonElement>;
+type OverlayControlLinkProps = SharedProps & { href: string; "aria-label": string };
+type OverlayControlAnchorProps = SharedProps & AnchorHTMLAttributes<HTMLAnchorElement>;
+type OverlayControlLabelProps = SharedProps & LabelHTMLAttributes<HTMLLabelElement>;
 
-type OverlayControlLabelProps = {
-  toneClass: string;
-  layout?: OverlayControlLayout;
-  size?: OverlayControlSize;
-  shape?: OverlayControlShape;
-  className?: string;
-  children: ReactNode;
-} & LabelHTMLAttributes<HTMLLabelElement>;
+
+function getOverlayControlClass({ layout = "icon", size = "md", shape = "square", toneClass, className }: SharedProps) {
+  return cn(
+    overlayControlBase({ layout, size, shape }),
+    toneClass,
+    className,
+  );
+}
 
 export function OverlayControlButton({
-  toneClass,
   layout = "icon",
   size = "md",
   shape = "square",
+  toneClass,
   className,
   children,
   type = "button",
@@ -124,11 +83,7 @@ export function OverlayControlButton({
   return (
     <button
       type={type}
-      className={cn(
-        overlayControlBase({ layout, size, shape }),
-        toneClass,
-        className,
-      )}
+      className={getOverlayControlClass({ layout, size, shape, toneClass, className, children })}
       {...props}
     >
       {children}
@@ -138,10 +93,10 @@ export function OverlayControlButton({
 
 export function OverlayControlLink({
   href,
-  toneClass,
   layout = "icon",
   size = "md",
   shape = "square",
+  toneClass,
   className,
   children,
   ...props
@@ -149,11 +104,7 @@ export function OverlayControlLink({
   return (
     <Link
       href={href}
-      className={cn(
-        overlayControlBase({ layout, size, shape }),
-        toneClass,
-        className,
-      )}
+      className={getOverlayControlClass({ layout, size, shape, toneClass, className, children })}
       {...props}
     >
       {children}
@@ -162,21 +113,17 @@ export function OverlayControlLink({
 }
 
 export function OverlayControlAnchor({
-  toneClass,
   layout = "action",
   size = "md",
   shape = "square",
+  toneClass,
   className,
   children,
   ...props
 }: OverlayControlAnchorProps) {
   return (
     <a
-      className={cn(
-        overlayControlBase({ layout, size, shape }),
-        toneClass,
-        className,
-      )}
+      className={getOverlayControlClass({ layout, size, shape, toneClass, className, children })}
       {...props}
     >
       {children}
@@ -185,10 +132,10 @@ export function OverlayControlAnchor({
 }
 
 export function OverlayControlLabel({
-  toneClass,
   layout = "action",
   size = "md",
   shape = "square",
+  toneClass,
   className,
   children,
   ...props
@@ -197,11 +144,9 @@ export function OverlayControlLabel({
   return (
     <label
       className={cn(
-        overlayControlBase({ layout, size, shape }),
+        getOverlayControlClass({ layout, size, shape, toneClass, className, children }),
         "cursor-pointer",
-        disabled && "pointer-events-none opacity-50",
-        toneClass,
-        className,
+        disabled && "pointer-events-none opacity-50"
       )}
       {...props}
     >

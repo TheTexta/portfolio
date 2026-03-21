@@ -35,9 +35,7 @@ export const projectCatalog: ProjectDefinition[] = [
         ariaLabel: "Open Grailed Plus on Chrome Web Store",
       },
     ],
-    renderPreview: (darkMode) => (
-      <GrailedPlusPreview forcedDarkMode={darkMode} />
-    ),
+    renderPreview: (darkMode) => <GrailedPlusPreview forcedDarkMode={darkMode} />,
   },
   {
     id: "photo-graph",

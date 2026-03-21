@@ -10,7 +10,7 @@ import OverlayNavBar from "@/app/components/ui/overlay-nav-bar";
 
 export default function HomePageContent() {
   const { darkMode, toggleTheme } = useTheme();
-  const chrome = getProjectChrome("home", darkMode);
+  const chrome = getProjectChrome("home");
 
   return (
     <div className="relative min-h-dvh w-full pb-16 font-light">

@@ -1490,7 +1490,7 @@ export default function PhotoGraphCanvas({
     alpha < 0.01
       ? "text-emerald-700 dark:text-emerald-300"
       : "text-red-700 dark:text-red-300";
-  const chrome = getProjectChrome("photo-graph", activeDarkMode);
+  const chrome = getProjectChrome("photo-graph");
   const isFullPageRoute = usePathname() === PROJECT_ROUTES.photoGraph;
   return (
     <div className={`static h-full w-full transition-colors ${chrome.shell}`}>
