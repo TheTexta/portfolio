@@ -27,11 +27,11 @@ const OVERLAY_TONE = "overlay-tone";
 const OVERLAY_TONE_BASE = "overlay-tone-base";
 const PANEL = "overlay-panel";
 const BUTTON = "overlay-button";
-const BUTTON_STRONG = "overlay-button-strong";
+
 const ITEM = "overlay-item";
-const ITEM_STRONG = "overlay-item-strong";
+
 const BORDER = "overlay-border";
-const BORDER_STRONG = "overlay-border-strong";
+
 const CONTROL_ICON = "overlay-control-icon";
 const CONTROL_DANGER = "overlay-button-danger";
 
@@ -85,19 +85,18 @@ export function getProjectChrome(
         surface: PANEL,
         button: BUTTON,
         item: ITEM,
-        emptyState: BORDER_STRONG,
+        emptyState: BORDER,
         avatar: BORDER,
       };
     case "grailed-plus":
       return {
-        overlay: `${OVERLAY_TONE_BASE} bg-overlay-fill-strong dark:border-overlay-border-strong`,
+        overlay: `${OVERLAY_TONE_BASE} bg-overlay-fill dark:border-overlay-border`,
         controls,
         shell: darkMode
           ? "bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.18),_transparent_45%),linear-gradient(168deg,#23160b_0%,#17130f_55%,#090909_100%)] text-neutral-100"
           : "bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.2),_transparent_45%),linear-gradient(168deg,#fff8f2_0%,#f8f2ee_55%,#f6f5f4_100%)] text-neutral-950",
-        surface: `${BORDER} bg-overlay-panel-strong`,
-        button: BUTTON_STRONG,
-        item: ITEM_STRONG,
+        button: BUTTON,
+        item: ITEM,
       };
   }
 }

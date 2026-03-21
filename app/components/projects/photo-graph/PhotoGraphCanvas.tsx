@@ -12,6 +12,7 @@ import {
   useState,
 } from "react";
 import * as d3 from "d3";
+// TODO: Migrate to d3-react
 
 import { Download, Menu, X } from "lucide-react";
 
@@ -1522,12 +1523,7 @@ export default function PhotoGraphCanvas({
           className={`rounded-md select-none ${overlayPanelClass} border ${chrome.overlay}`}
         >
           <div className="flex w-full items-start">
-            <div className="flex-1 text-center">
-              <p className={`mx-2 ${overlayTextClass}`}>Simulation Alpha</p>
-              <p className={`${overlayTextClass} ${alphaColorClass}`}>
-                {alpha.toFixed(3)}
-              </p>
-            </div>
+            
 
             <OverlayControlButton
               onClick={() => setMenuOpen(false)}
@@ -1538,6 +1534,12 @@ export default function PhotoGraphCanvas({
             >
               <X className="h-4 w-4" />
             </OverlayControlButton>
+            <div className="flex-1 text-center">
+              <p className={`mx-2 ${overlayTextClass}`}>Simulation Alpha</p>
+              <p className={`${overlayTextClass} ${alphaColorClass}`}>
+                {alpha.toFixed(3)}
+              </p>
+            </div>
           </div>
 
           <label
@@ -1560,7 +1562,6 @@ export default function PhotoGraphCanvas({
                 type="range"
                 min={min}
                 max={max}
-                step="any"
                 value={controls[key] / scale}
                 onChange={(event) =>
                   setControlValue(key, Number(event.target.value) * scale)

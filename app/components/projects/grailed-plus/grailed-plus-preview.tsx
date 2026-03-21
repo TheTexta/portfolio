@@ -231,7 +231,7 @@ export default function GrailedPlusPreview({
       ref={rootRef}
       className={cn(
         grailedPreviewShell(),
-        chrome.surface ?? "bg-overlay-button dark:bg-overlay-panel",
+        "bg-overlay-button dark:bg-overlay-panel",
       )}
     >
       <div

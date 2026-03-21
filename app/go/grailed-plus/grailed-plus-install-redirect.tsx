@@ -278,7 +278,7 @@ export default function GrailedPlusInstallRedirect({
         </div>
       </div>
       <footer className="flex justify-center mt-20">
-        <a href="/" className="text-overlay-ink/45">dextery.dev</a>
+        <a href="/" className="text-overlay-ink/45 hover:no-underline">dextery.dev</a>
       </footer>
     </main>
     
