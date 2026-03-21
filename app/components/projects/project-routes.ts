@@ -10,5 +10,5 @@ export const PROJECT_ROUTES = {
     "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd?authuser=1&hl=en",
   nepobabies: "/components/projects/nepobabiesruntheunderground",
   nepobabiesPreview:
-    "https://thetexta.github.io/nepobabiesruntheunderground/index.html",
+    "https://thetexta.github.io/nepobabiesruntheunderground/",
 } as const;
