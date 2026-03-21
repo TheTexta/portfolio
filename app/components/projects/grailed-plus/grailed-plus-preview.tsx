@@ -45,9 +45,9 @@ const COMPARE_PAGES: ComparePage[] = [
     before: beforeDm,
     after: afterDm,
     beforeAlt:
-      "Grailed listing page before Grailed Plus dark mode and enhancements",
+      "Grailed listing page before Grailed Plus dark mode feature",
     afterAlt:
-      "Grailed listing page after Grailed Plus dark mode and enhancements",
+      "Grailed listing page after Grailed Plus dark mode feature",
   },
   {
     id: "price-trend",

@@ -174,7 +174,7 @@ export default function GrailedPlusInstallRedirect({
 
   return (
     <main className="bg-canvas text-ink font-light">
-      <div className="m-auto flex h-screen max-w-3xl flex-col items-center justify-center">
+      <div className="my-auto flex h-screen max-w-3xl flex-col items-center justify-center mx-5 md:mx-auto">
         <h1 className="mb-4 text-center text-5xl font-bold sm:text-7xl">
           Grailed +
         </h1>
@@ -189,8 +189,8 @@ export default function GrailedPlusInstallRedirect({
           aria-busy={isRedirecting}
           aria-disabled={isRedirecting}
           className={cn(
-            "inline-flex items-center justify-center rounded-full px-8 text-center text-sm font-medium tracking-[0.16em] uppercase transition-colors duration-200",
-            "border-overlay-border bg-ink text-canvas dark:border-overlay-border-strong hover:bg-overlay-fill-dark-button-hover",
+            "inline-flex items-center justify-center rounded-full px-8 text-center text-sm font-medium uppercase ",
+            " bg-black dark:bg-white hover:bg-white hover:dark:bg-black text-canvas  hover:text-black dark:hover:text-white hover:border-black dark:hover:border-white border-2",
             "h-12 min-w-45 sm:min-w-55",
             isRedirecting && "pointer-events-none opacity-70",
           )}
@@ -215,7 +215,7 @@ export default function GrailedPlusInstallRedirect({
         </p>
       </div>
 
-      <div className=" flex w-full flex-col">
+      <div className="flex w-full flex-col">
         <div className="my-20 flex h-125 w-full flex-row">
           <div className="max-h-full w-2/3">
             <GrailedPlusPreview comparisonId="price-trend" />
@@ -223,11 +223,11 @@ export default function GrailedPlusInstallRedirect({
           <div className="mx-5 mb-4 h-full w-1/3 text-right">
             <h2 className="text-3xl font-bold sm:text-5xl">PRICING INSIGHTS</h2>
             <p className="text-break text-xl md:text-3xl">
-              Depop price comparisons and historical price drop data
-              directly on every listing page — no extra tabs, no manual
-              searching. See what the same item is moving for across markets,
-              track how long a listing has been sitting, and spot a motivated
-              seller before anyone else does.
+              Depop price comparisons and historical price drop data directly on
+              every listing page — no extra tabs, no manual searching. See what
+              the same item is moving for across markets, track how long a
+              listing has been sitting, and spot a motivated seller before
+              anyone else does.
             </p>
           </div>
         </div>
