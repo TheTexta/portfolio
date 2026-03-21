@@ -1,14 +1,5 @@
 # Dexter Young Portfolio
-
-Personal portfolio built with Next.js, React, TypeScript, Tailwind, D3, and Firebase Storage.
-
-## What is in the project
-
-- A D3-powered image graph rendered on `<canvas>` for better performance with many nodes
-- Progressive image loading that upgrades image quality based on viewport size and zoom level
-- Firebase Storage-backed image delivery for the graph data set
-
-## Tech stack
+## Stack
 
 - Next.js
 - React
@@ -17,8 +8,6 @@ Personal portfolio built with Next.js, React, TypeScript, Tailwind, D3, and Fire
 - D3.js
 - Firebase Storage
 - Lucide
-
-Tailwind conventions and styling rules live in [`docs/tailwind-conventions.md`](./docs/tailwind-conventions.md).
 
 ## How the photo graph works
 
@@ -31,10 +20,6 @@ Tailwind conventions and styling rules live in [`docs/tailwind-conventions.md`](
 - admin page for image uploads at [text](https://dextery.dev/admin/photo-graph/login)
 
 Images are loaded from Firebase Storage at runtime. The graph starts by loading usable image sizes quickly, then requests larger versions for visible nodes as the user zooms in.
-
-## Notes
-
-- The portfolio is a WIP - the landing page is temporarily minimal.
 
 ## TODO
 

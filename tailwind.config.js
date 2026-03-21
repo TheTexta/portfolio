@@ -15,20 +15,14 @@ module.exports = {
 
         "overlay-fill": solidColor("--color-overlay-fill"),
         "overlay-fill-soft": solidColor("--color-overlay-fill-soft"),
-
         "overlay-panel": solidColor("--color-overlay-panel"),
-
         "overlay-button": solidColor("--color-overlay-button"),
         "overlay-button-hover": solidColor("--color-overlay-button-hover"),
-
-
         "overlay-control": solidColor("--color-overlay-control"),
         "overlay-control-hover": solidColor("--color-overlay-control-hover"),
         "overlay-control-active": solidColor("--color-overlay-control-active"),
         "overlay-item": solidColor("--color-overlay-item"),
-
-        "overlay-modal": solidColor("--color-overlay-modal"),
-        "overlay-chip": solidColor("--color-overlay-chip"),
+        "overlay-item": solidColor("--color-overlay-item"),
         "overlay-rule": solidColor("--color-overlay-rule"),
       },
     },

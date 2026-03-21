@@ -5,7 +5,6 @@ import { cva } from "class-variance-authority";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/app/components/theme/theme-provider";
-import { getProjectChrome } from "@/app/components/projects/project-chrome";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import { OverlayControlButton } from "@/app/components/ui/overlay-control-button";
 import OverlayNavBar from "@/app/components/ui/overlay-nav-bar";
@@ -41,6 +40,8 @@ const spotifyTrackItem = cva(
 const spotifyEmptyState = cva(
   "mt-4 rounded-2xl border border-dashed px-4 py-6 text-sm opacity-75",
 );
+const spotifyShellTone =
+  "bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.16),_transparent_45%),linear-gradient(160deg,#f6fff9_0%,#e7f8ef_48%,#f8fafc_100%)] text-neutral-950";
 
 export default function SpotifyNodify({ forcedDarkMode }: SpotifyNodifyProps) {
   const { session, connect, disconnect } = useSpotifySession();
@@ -49,12 +50,11 @@ export default function SpotifyNodify({ forcedDarkMode }: SpotifyNodifyProps) {
   const isFullPageRoute = pathname === PROJECT_ROUTES.spotifyNodify;
   const visibleTracks = session.topTracks.slice(0, isFullPageRoute ? 10 : 5);
   const darkMode = forcedDarkMode ?? siteDarkMode;
-  const chrome = getProjectChrome("spotify", darkMode);
 
   const projectPath = PROJECT_ROUTES.spotifyNodify;
 
   return (
-    <div className={cn(spotifyShell(), chrome.shell)}>
+    <div className={cn(spotifyShell(), spotifyShellTone)}>
       <OverlayNavBar
         darkMode={isFullPageRoute ? darkMode : undefined}
         onToggleDarkMode={
@@ -64,7 +64,6 @@ export default function SpotifyNodify({ forcedDarkMode }: SpotifyNodifyProps) {
         }
         expandHref={isFullPageRoute ? undefined : projectPath}
         exitHref={isFullPageRoute ? PROJECT_ROUTES.home : undefined}
-        toneClass={chrome.controls.icon}
         ariaLabel="spotify-nodify controls"
       />
 
@@ -89,7 +88,7 @@ export default function SpotifyNodify({ forcedDarkMode }: SpotifyNodifyProps) {
           ) : null}
 
           {session.status === "checking" ? (
-            <div className={cn(spotifySurface(), "text-sm", chrome.surface)}>
+            <div className={cn(spotifySurface(), "text-sm", "overlay-panel")}>
               Checking Spotify session...
             </div>
           ) : null}
@@ -99,7 +98,7 @@ export default function SpotifyNodify({ forcedDarkMode }: SpotifyNodifyProps) {
               <section
                 className={cn(
                   spotifySurface({ alignment: "profile" }),
-                  chrome.surface,
+                  "overlay-panel",
                 )}
               >
                 <div className="flex flex-col items-center gap-4 lg:items-start">
@@ -109,7 +108,7 @@ export default function SpotifyNodify({ forcedDarkMode }: SpotifyNodifyProps) {
                       alt={`${getProfileName(session.profile)} avatar`}
                       width={112}
                       height={112}
-                      className={`h-28 w-28 rounded-full border object-cover ${chrome.avatar}`}
+                      className="overlay-border h-28 w-28 rounded-full border object-cover"
                     />
                   ) : (
                     <div className="flex h-28 w-28 items-center justify-center rounded-full border border-dashed text-3xl opacity-60">
@@ -134,14 +133,12 @@ export default function SpotifyNodify({ forcedDarkMode }: SpotifyNodifyProps) {
                     <OverlayControlButton
                       onClick={connect}
                       layout="action"
-                      toneClass={chrome.controls.action}
                     >
                       Reconnect Spotify
                     </OverlayControlButton>
                     <OverlayControlButton
                       onClick={disconnect}
                       layout="action"
-                      toneClass={chrome.controls.action}
                     >
                       Clear Connection
                     </OverlayControlButton>
@@ -149,7 +146,7 @@ export default function SpotifyNodify({ forcedDarkMode }: SpotifyNodifyProps) {
                 </div>
               </section>
 
-              <section className={cn(spotifySurface(), chrome.surface)}>
+              <section className={cn(spotifySurface(), "overlay-panel")}>
                 <div className="flex items-end justify-between gap-3">
                   <div>
                     <p className="text-[11px] tracking-[0.3em] uppercase opacity-60">
@@ -167,7 +164,7 @@ export default function SpotifyNodify({ forcedDarkMode }: SpotifyNodifyProps) {
                     {visibleTracks.map((track, index) => (
                       <li
                         key={track.id}
-                        className={cn(spotifyTrackItem(), chrome.item)}
+                        className={cn(spotifyTrackItem(), "overlay-item")}
                       >
                         <span className="pt-0.5 text-xs font-semibold tracking-[0.2em] uppercase opacity-50">
                           {(index + 1).toString().padStart(2, "0")}
@@ -185,7 +182,7 @@ export default function SpotifyNodify({ forcedDarkMode }: SpotifyNodifyProps) {
                     ))}
                   </ol>
                 ) : (
-                  <div className={cn(spotifyEmptyState(), chrome.emptyState)}>
+                  <div className={cn(spotifyEmptyState(), "overlay-border")}>
                     No past-month top tracks available yet.
                   </div>
                 )}
@@ -197,7 +194,7 @@ export default function SpotifyNodify({ forcedDarkMode }: SpotifyNodifyProps) {
             <section
               className={cn(
                 spotifySurface({ spacing: "roomy" }),
-                chrome.surface,
+                "overlay-panel",
               )}
             >
               <p className="text-sm tracking-[0.25em] uppercase opacity-60">
@@ -211,7 +208,6 @@ export default function SpotifyNodify({ forcedDarkMode }: SpotifyNodifyProps) {
                 <OverlayControlButton
                   onClick={connect}
                   layout="action"
-                  toneClass={chrome.controls.action}
                 >
                   Connect Spotify
                 </OverlayControlButton>

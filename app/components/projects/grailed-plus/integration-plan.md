@@ -43,10 +43,9 @@
   - Add `grailedPlus` route constant.
 - `app/components/projects/project-catalog.tsx`
   - Register Grailed Plus project metadata and preview renderer.
-- `app/components/projects/project-chrome.ts`
-  - Add `grailed-plus` visual chrome variant.
 - `app/components/projects/grailed-plus/grailed-plus-preview.tsx`
   - Implement card/full-page preview UI.
+  - Own the Grailed Plus-specific preview chrome locally.
   - Implement interactive panel switcher.
   - Add external link buttons and media placeholder guidance.
 - `app/components/projects/grailed-plus/page.tsx`

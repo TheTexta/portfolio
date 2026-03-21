@@ -1,5 +1,4 @@
 import { cva } from "class-variance-authority";
-import { getProjectChrome } from "@/app/components/projects/project-chrome";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import OverlayNavBar from "@/app/components/ui/overlay-nav-bar";
 import { cn } from "@/lib/cn";
@@ -18,6 +17,7 @@ const htmlPreviewShell = cva(
 const htmlPreviewFrame = cva(
   "absolute inset-0 h-full w-full border-0 bg-neutral-950",
 );
+const htmlPreviewShellTone = "bg-neutral-950 text-overlay-ink";
 
 export default function HtmlProjectPreview({
   title,
@@ -26,10 +26,8 @@ export default function HtmlProjectPreview({
   exitHref = PROJECT_ROUTES.home,
   isFullPage = false,
 }: HtmlProjectPreviewProps) {
-  const chrome = getProjectChrome("html-preview", true);
-
   return (
-    <div className={cn(htmlPreviewShell(), chrome.shell)}>
+    <div className={cn(htmlPreviewShell(), htmlPreviewShellTone)}>
       <iframe
         title={`${title} preview`}
         src={previewSrc}
@@ -38,7 +36,6 @@ export default function HtmlProjectPreview({
       />
 
       <OverlayNavBar
-        toneClass={chrome.controls.icon}
         expandHref={isFullPage ? undefined : projectHref}
         exitHref={isFullPage ? exitHref : undefined}
         ariaLabel={`${title} controls`}

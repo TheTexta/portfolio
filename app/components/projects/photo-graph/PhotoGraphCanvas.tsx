@@ -17,7 +17,6 @@ import * as d3 from "d3";
 import { Download, Menu, X } from "lucide-react";
 
 import { useTheme } from "@/app/components/theme/theme-provider";
-import { getProjectChrome } from "@/app/components/projects/project-chrome";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import {
   buildOptimizedImageUrl,
@@ -152,6 +151,9 @@ const GRAPH_CONFIG = {
 const overlayPanelClass =
   "absolute left-[1vmin] top-[1vmin] z-[5] space-y-2 p-1.5 text-center backdrop-blur-[2px]";
 const overlayTextClass = "m-0 p-0 text-xs";
+const photoGraphShellClass = "bg-neutral-950 text-neutral-100";
+const photoGraphOverlayClass = "overlay-tone-base bg-overlay-fill-soft";
+const photoGraphModalClass = "bg-overlay-panel text-overlay-ink";
 const sliderClass =
   "range-sm h-1 rounded-full border-none bg-black/15 accent-ink dark:bg-white/35";
 const DEFAULT_CHARGE_MULT = 1;
@@ -1490,14 +1492,12 @@ export default function PhotoGraphCanvas({
     alpha < 0.01
       ? "text-emerald-700 dark:text-emerald-300"
       : "text-red-700 dark:text-red-300";
-  const chrome = getProjectChrome("photo-graph");
   const isFullPageRoute = usePathname() === PROJECT_ROUTES.photoGraph;
   return (
-    <div className={`static h-full w-full transition-colors ${chrome.shell}`}>
+    <div className={`static h-full w-full transition-colors ${photoGraphShellClass}`}>
       {!menuOpen && (
         <OverlayControlButton
           onClick={() => setMenuOpen(true)}
-          toneClass={chrome.controls.icon}
           className="absolute top-[1vmin] left-[1vmin] z-6"
           aria-label="Open graph controls"
         >
@@ -1514,20 +1514,18 @@ export default function PhotoGraphCanvas({
         }
         expandHref={isFullPageRoute ? undefined : PROJECT_ROUTES.photoGraph}
         exitHref={isFullPageRoute ? PROJECT_ROUTES.home : undefined}
-        toneClass={chrome.controls.icon}
         ariaLabel="Photo graph controls"
       />
 
       {menuOpen && (
         <div
-          className={`rounded-md select-none ${overlayPanelClass} border ${chrome.overlay}`}
+          className={`rounded-md select-none ${overlayPanelClass} border ${photoGraphOverlayClass}`}
         >
           <div className="flex w-full items-start">
             
 
             <OverlayControlButton
               onClick={() => setMenuOpen(false)}
-              toneClass={chrome.controls.icon}
               size="sm"
               className="ml-auto"
               aria-label="Close graph controls"
@@ -1579,7 +1577,7 @@ export default function PhotoGraphCanvas({
       {inspectTarget && (
         <div
           onClick={() => setInspectTarget(null)}
-          className={`absolute inset-0 z-10 m-auto flex max-h-9/12 max-w-9/12 items-center justify-center ${chrome.modal} backdrop-blur-sm`}
+          className={`absolute inset-0 z-10 m-auto flex max-h-9/12 max-w-9/12 items-center justify-center ${photoGraphModalClass} backdrop-blur-sm`}
           // TODO: add colour swatches to inspect view
           // TODO: add fadein/out animations and fade the other ui elements while doing so through the flex container holding all of them.
         >
@@ -1589,7 +1587,6 @@ export default function PhotoGraphCanvas({
           >
             <OverlayControlButton
               onClick={() => setInspectTarget(null)}
-              toneClass={chrome.controls.icon}
               className="absolute top-0 right-0 mx-2 my-2"
               aria-label="Close image inspection"
             >
@@ -1633,7 +1630,6 @@ export default function PhotoGraphCanvas({
               <OverlayControlAnchor
                 href={inspectMetadata?.downloadUrl ?? undefined}
                 download={inspectMetadata?.filename}
-                toneClass={chrome.controls.action}
                 layout="action"
                 size="sm"
                 className={`gap-1 ${
@@ -1653,7 +1649,7 @@ export default function PhotoGraphCanvas({
 
       <canvas
         ref={canvasRef}
-        className="relative m-0 block h-full w-full [image-rendering:pixelated] bg-white dark:bg-black"
+        className="relative m-0 block h-full w-full bg-white [image-rendering:pixelated] dark:bg-black"
       />
     </div>
   );

@@ -47,8 +47,12 @@ type OverlayControlLayout = "icon" | "action";
 type OverlayControlShape = "square" | "round";
 type OverlayControlSize = "sm" | "md" | "lg";
 
+export const OVERLAY_CONTROL_ICON_CLASS = "overlay-control-icon";
+export const OVERLAY_CONTROL_ACTION_CLASS = "overlay-button";
+export const OVERLAY_CONTROL_DANGER_CLASS = "overlay-button-danger";
+
 type SharedProps = {
-  toneClass: string;
+  toneClass?: string;
   layout?: OverlayControlLayout;
   size?: OverlayControlSize;
   shape?: OverlayControlShape;
@@ -62,10 +66,23 @@ type OverlayControlAnchorProps = SharedProps & AnchorHTMLAttributes<HTMLAnchorEl
 type OverlayControlLabelProps = SharedProps & LabelHTMLAttributes<HTMLLabelElement>;
 
 
+function resolveOverlayToneClass(
+  layout: OverlayControlLayout,
+  toneClass?: string,
+) {
+  if (toneClass) {
+    return toneClass;
+  }
+
+  return layout === "action"
+    ? OVERLAY_CONTROL_ACTION_CLASS
+    : OVERLAY_CONTROL_ICON_CLASS;
+}
+
 function getOverlayControlClass({ layout = "icon", size = "md", shape = "square", toneClass, className }: SharedProps) {
   return cn(
     overlayControlBase({ layout, size, shape }),
-    toneClass,
+    resolveOverlayToneClass(layout, toneClass),
     className,
   );
 }

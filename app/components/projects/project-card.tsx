@@ -26,7 +26,7 @@ const projectCard = cva(
   },
 );
 
-const projectChip = cva("bg-overlay-chip rounded-md px-2 py-1 text-xs");
+const projectChip = cva("bg-overlay-item rounded-md px-2 py-1 text-xs");
 
 const projectPreviewFrame = cva(
   "relative mx-auto aspect-video overflow-hidden rounded-md",

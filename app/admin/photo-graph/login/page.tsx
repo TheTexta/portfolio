@@ -2,7 +2,6 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ADMIN_CONTROL_CHROME } from "@/app/components/projects/project-chrome";
 import { OverlayControlButton } from "@/app/components/ui/overlay-control-button";
 
 export default function PhotoGraphAdminLoginPage() {
@@ -76,7 +75,6 @@ export default function PhotoGraphAdminLoginPage() {
             type="submit"
             disabled={submitting}
             layout="action"
-            toneClass={ADMIN_CONTROL_CHROME.action}
             className="font-medium"
           >
             {submitting ? "Signing in..." : "Sign In"}

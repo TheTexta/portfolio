@@ -10,7 +10,7 @@ type OverlayNavBarProps = {
   onToggleDarkMode?: () => void;
   expandHref?: string;
   exitHref?: string;
-  toneClass: string;
+  toneClass?: string;
   className?: string;
   iconClassName?: string;
   ariaLabel?: string;

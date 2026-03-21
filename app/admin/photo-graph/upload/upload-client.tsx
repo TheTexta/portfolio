@@ -12,8 +12,8 @@ import {
 import NextImage from "next/image";
 import { useRouter } from "next/navigation";
 
-import { ADMIN_CONTROL_CHROME } from "@/app/components/projects/project-chrome";
 import {
+  OVERLAY_CONTROL_DANGER_CLASS,
   OverlayControlButton,
   OverlayControlLabel,
 } from "@/app/components/ui/overlay-control-button";
@@ -746,7 +746,6 @@ export default function PhotoGraphUploadClient() {
         <OverlayControlButton
           onClick={handleLogout}
           layout="action"
-          toneClass={ADMIN_CONTROL_CHROME.action}
         >
           Log Out
         </OverlayControlButton>
@@ -761,7 +760,6 @@ export default function PhotoGraphUploadClient() {
         <p className="my-2 text-xs opacity-70">or</p>
         <OverlayControlLabel
           layout="action"
-          toneClass={ADMIN_CONTROL_CHROME.action}
         >
           Select Files
           <input
@@ -798,7 +796,6 @@ export default function PhotoGraphUploadClient() {
           disabled={uploadDisabled}
           layout="action"
           size="lg"
-          toneClass={ADMIN_CONTROL_CHROME.action}
           className="font-medium"
         >
           {isProcessing ? "Processing..." : "Upload + Generate Edges"}
@@ -809,7 +806,6 @@ export default function PhotoGraphUploadClient() {
             onClick={() => setFiles([])}
             disabled={isProcessing}
             layout="action"
-            toneClass={ADMIN_CONTROL_CHROME.action}
           >
             Clear
           </OverlayControlButton>
@@ -818,7 +814,6 @@ export default function PhotoGraphUploadClient() {
         <OverlayControlButton
           onClick={() => setVerbosePanelOpen((current) => !current)}
           layout="action"
-          toneClass={ADMIN_CONTROL_CHROME.action}
         >
           {verbosePanelOpen ? "Hide Verbose Panel" : "Show Verbose Panel"}
         </OverlayControlButton>
@@ -826,7 +821,6 @@ export default function PhotoGraphUploadClient() {
         <OverlayControlButton
           onClick={clearVerboseLogs}
           layout="action"
-          toneClass={ADMIN_CONTROL_CHROME.action}
         >
           Clear Logs
         </OverlayControlButton>
@@ -859,7 +853,6 @@ export default function PhotoGraphUploadClient() {
               }
               layout="action"
               size="sm"
-              toneClass={ADMIN_CONTROL_CHROME.action}
             >
               {loadingGraphNodes ? "Refreshing..." : "Refresh"}
             </OverlayControlButton>
@@ -927,7 +920,7 @@ export default function PhotoGraphUploadClient() {
                         }
                         layout="action"
                         size="sm"
-                        toneClass={ADMIN_CONTROL_CHROME.danger}
+                        toneClass={OVERLAY_CONTROL_DANGER_CLASS}
                       >
                         {isDeleting ? "Deleting..." : "Delete"}
                       </OverlayControlButton>

@@ -5,14 +5,11 @@ import { ArrowLeft, ArrowLeftRight, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import type { StaticImageData } from "next/image";
 import {
-  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   useEffect,
   useRef,
   useState,
 } from "react";
-import { getProjectChrome } from "@/app/components/projects/project-chrome";
-import { useTheme } from "@/app/components/theme/theme-provider";
 import { OverlayControlButton } from "@/app/components/ui/overlay-control-button";
 import { cn } from "@/lib/cn";
 import afterCustomCurrency from "./after-custom-currency.png";
@@ -73,7 +70,6 @@ const COMPARE_PAGES: ComparePage[] = [
 
 const IMAGE_SIZES = "(min-width: 1024px) 960px, (min-width: 768px) 80vw, 100vw";
 const GRAILED_PREVIEW_IMAGE_QUALITY = 75;
-const GRAILED_OVERLAY_MONO_FILTER = "grayscale(1) brightness(1.35)";
 
 const grailedPreviewShell = cva("relative h-full w-full overflow-hidden");
 
@@ -94,7 +90,6 @@ export default function GrailedPlusPreview({
   scrollStartPercent = 0,
   zoomAmount = 1,
 }: GrailedPlusPreviewProps) {
-  const chrome = getProjectChrome("grailed-plus");
   const [activeIndex, setActiveIndex] = useState(0);
   const [splitPercent, setSplitPercent] = useState(50);
   const [draggingPointerId, setDraggingPointerId] = useState<number | null>(
@@ -108,7 +103,6 @@ export default function GrailedPlusPreview({
       : (COMPARE_PAGES.find((page) => page.id === comparisonId) ?? null);
   const activePage = selectedComparison ?? COMPARE_PAGES[activeIndex];
   const showPageNavigation = selectedComparison == null;
-  const controlToneClass = chrome.controls.icon;
   const clampedZoomAmount = clampZoom(zoomAmount);
   const visibleContentRatio = 1 / clampedZoomAmount;
   const hiddenContentRatio = (1 - visibleContentRatio) / 2;
@@ -206,7 +200,7 @@ export default function GrailedPlusPreview({
     >
       <div
         ref={scrollRef}
-        className="relative h-full overflow-x-hidden overflow-y-auto scrollbar-hide"
+        className="scrollbar-hide relative h-full overflow-x-hidden overflow-y-auto"
       >
         <div className="relative w-full" style={zoomedContentStyle}>
           <Image
@@ -245,7 +239,6 @@ export default function GrailedPlusPreview({
         <OverlayControlButton
           layout="icon"
           shape="round"
-          toneClass={controlToneClass}
           role="slider"
           aria-label="Before and after comparison slider"
           aria-valuemin={0}
@@ -258,7 +251,7 @@ export default function GrailedPlusPreview({
           onPointerCancel={handleSliderPointerUp}
           onLostPointerCapture={() => setDraggingPointerId(null)}
 
-          className="pointer-events-auto absolute top-1/2 touch-none -translate-x-1/2 -translate-y-1/2 z-20"
+          className="pointer-events-auto absolute top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 touch-none"
           style={{
             left: `${splitPercent}%`,
           }}
@@ -268,18 +261,18 @@ export default function GrailedPlusPreview({
       </div>
 
       <div
-        className="absolute top-3 right-3 z-10 px-1 py-1 overlay-text"
+        className="overlay-text absolute top-3 right-3 z-10 px-1 py-1"
       >
         {activePage.label}
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-3 left-3 z-10  overlay-text text-[10px] tracking-[0.22em]"
+        className="overlay-text pointer-events-none absolute bottom-3 left-3  z-10 text-[10px] tracking-[0.22em]"
       >
         Before
       </div>
       <div
-        className="pointer-events-none absolute right-3 bottom-3 z-10 overlay-text text-[10px] tracking-[0.22em]"
+        className="overlay-text pointer-events-none absolute right-3 bottom-3 z-10 text-[10px] tracking-[0.22em]"
       >
         After
       </div>
@@ -289,7 +282,6 @@ export default function GrailedPlusPreview({
           <OverlayControlButton
             layout="icon"
             shape="round"
-            toneClass={controlToneClass}
             onClick={handlePrevious}
             aria-label="Previous before and after page"
             className="absolute top-1/2 left-3 z-10 -translate-y-1/2 md:left-4"
@@ -299,7 +291,6 @@ export default function GrailedPlusPreview({
           <OverlayControlButton
             layout="icon"
             shape="round"
-            toneClass={controlToneClass}
             onClick={handleNext}
             aria-label="Next before and after page"
             className="absolute top-1/2 right-3 z-10 -translate-y-1/2 md:right-4"
