@@ -168,33 +168,6 @@ export default function GrailedPlusPreview({
     setDraggingPointerId(null);
   };
 
-  const handleSliderKeyDown = (
-    event: ReactKeyboardEvent<HTMLButtonElement>,
-  ) => {
-    if (event.key === "ArrowLeft") {
-      event.preventDefault();
-      setSplitPercent((current) => clampSplit(current - 2));
-      return;
-    }
-
-    if (event.key === "ArrowRight") {
-      event.preventDefault();
-      setSplitPercent((current) => clampSplit(current + 2));
-      return;
-    }
-
-    if (event.key === "Home") {
-      event.preventDefault();
-      setSplitPercent(0);
-      return;
-    }
-
-    if (event.key === "End") {
-      event.preventDefault();
-      setSplitPercent(100);
-    }
-  };
-
   const contentSplitPercent = clampPercent(
     (hiddenContentRatio + (splitPercent / 100) * visibleContentRatio) * 100,
   );
@@ -284,7 +257,7 @@ export default function GrailedPlusPreview({
           onPointerUp={handleSliderPointerUp}
           onPointerCancel={handleSliderPointerUp}
           onLostPointerCapture={() => setDraggingPointerId(null)}
-          onKeyDown={handleSliderKeyDown}
+
           className="pointer-events-auto absolute top-1/2 touch-none -translate-x-1/2 -translate-y-1/2 z-20"
           style={{
             left: `${splitPercent}%`,

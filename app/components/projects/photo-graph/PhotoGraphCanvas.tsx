@@ -1653,7 +1653,7 @@ export default function PhotoGraphCanvas({
 
       <canvas
         ref={canvasRef}
-        className="relative m-0 block h-full w-full [image-rendering:pixelated]"
+        className="relative m-0 block h-full w-full [image-rendering:pixelated] bg-white dark:bg-black"
       />
     </div>
   );
