@@ -10,7 +10,6 @@
 - Lucide
 
 ## TODO
-
 - possibly do subtle (low saturation) gradient (masked) versions of all my favourite images that scroll in random paralaxes in the background
 - adding to the above I want to make a full design philosophy for myself.
 - auto recentering on zoomout of graph-view-image

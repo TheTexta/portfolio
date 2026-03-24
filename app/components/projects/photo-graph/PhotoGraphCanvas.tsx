@@ -48,6 +48,7 @@ type SimNode = d3.SimulationNodeDatum & {
   sourceUrl: string;
   baseSize: number;
   aspectRatio: number;
+  hasKnownAspectRatio: boolean;
   layerNoise: number;
   w: number;
   h: number;
@@ -156,6 +157,7 @@ const photoGraphOverlayClass = "overlay-tone-base bg-overlay-fill-soft";
 const photoGraphModalClass = "bg-overlay-panel text-overlay-ink";
 const sliderClass =
   "range-sm h-1 rounded-full border-none bg-black/15 accent-ink dark:bg-white/35";
+const INSPECT_OVERLAY_TRANSITION_MS = 220;
 const DEFAULT_CHARGE_MULT = 1;
 const INITIAL_DIST_MAX_MULT = 5;
 const DEFAULT_DIST_MAX_MULT = 1;
@@ -318,6 +320,7 @@ async function buildGraph(data: RawNode[], imageBasePath: string) {
         sourceUrl: await resolveNodeSourceUrl(entry, id, imageBasePath),
         baseSize: box,
         aspectRatio,
+        hasKnownAspectRatio: Boolean(entry.dimensions),
         layerNoise: computeNodeLayerNoise(id),
         w: box,
         h: box,
@@ -721,6 +724,7 @@ export default function PhotoGraphCanvas({
   const [inspectTarget, setInspectTarget] = useState<InspectTarget | null>(
     null,
   );
+  const [inspectOverlayOpen, setInspectOverlayOpen] = useState(false);
   const [inspectMetadata, setInspectMetadata] =
     useState<InspectMetadata | null>(null);
   const patchInspectMetadata = useCallback(
@@ -737,6 +741,12 @@ export default function PhotoGraphCanvas({
     },
     [],
   );
+  const openInspectTarget = useCallback((target: InspectTarget) => {
+    setInspectTarget(target);
+  }, []);
+  const closeInspectTarget = useCallback(() => {
+    setInspectOverlayOpen(false);
+  }, []);
 
   const syncAlpha = useCallback(() => {
     const simAlpha = simRef.current?.alpha() ?? 0;
@@ -1010,7 +1020,10 @@ export default function PhotoGraphCanvas({
       | undefined;
     collideForce?.initialize?.(nodesRef.current);
 
-    nudgeSimulation(0.08, 220);
+    if (introCompactionFrameRef.current === null) {
+      nudgeSimulation(0.08, 220);
+    }
+
     requestRender();
   }, [nudgeSimulation, requestRender]);
 
@@ -1027,7 +1040,11 @@ export default function PhotoGraphCanvas({
         return;
       }
 
-      sizeNodeFromImage(node, image);
+      if (!node.hasKnownAspectRatio) {
+        sizeNodeFromImage(node, image);
+        node.hasKnownAspectRatio = true;
+      }
+
       node.loadedWidth = loadedWidth;
       imagesRef.current.set(node.id, image);
       refreshNodeAfterImageLoad();
@@ -1115,10 +1132,51 @@ export default function PhotoGraphCanvas({
     [loadNodeImage],
   );
 
-  const preloadImages = useCallback(
+  const getInitialLoadQueue = useCallback((nodes: SimNode[]) => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return nodes;
+    }
+
+    const viewportWidth = canvas.clientWidth;
+    const viewportHeight = canvas.clientHeight;
+    if (!viewportWidth || !viewportHeight) {
+      return nodes;
+    }
+
+    const transform = transformRef.current;
+    const viewportCenterX = (viewportWidth / 2 - transform.x) / transform.k;
+    const viewportCenterY = (viewportHeight / 2 - transform.y) / transform.k;
+    const visibleNodes: { node: SimNode; distance: number }[] = [];
+    const remainingNodes: SimNode[] = [];
+
+    for (const node of nodes) {
+      if (isNodeVisible(node, transform, viewportWidth, viewportHeight)) {
+        const deltaX = (node.x ?? 0) - viewportCenterX;
+        const deltaY = (node.y ?? 0) - viewportCenterY;
+
+        visibleNodes.push({
+          node,
+          distance: Math.hypot(deltaX, deltaY),
+        });
+        continue;
+      }
+
+      remainingNodes.push(node);
+    }
+
+    visibleNodes.sort((left, right) => left.distance - right.distance);
+
+    return [
+      ...visibleNodes.map(({ node }) => node),
+      ...remainingNodes,
+    ];
+  }, []);
+
+  const loadInitialImages = useCallback(
     (nodes: SimNode[], signal: AbortSignal) =>
-      runNodeQueue(nodes, signal, getNodeTargetWidth),
-    [getNodeTargetWidth, runNodeQueue],
+      runNodeQueue(getInitialLoadQueue(nodes), signal, getNodeTargetWidth),
+    [getInitialLoadQueue, getNodeTargetWidth, runNodeQueue],
   );
 
   const upgradeVisibleImages = useCallback(
@@ -1231,7 +1289,7 @@ export default function PhotoGraphCanvas({
       const handleClick = (event: MouseEvent) => {
         const node = hitNode(event, canvas);
         if (node) {
-          setInspectTarget({ id: node.id, url: node.sourceUrl });
+          openInspectTarget({ id: node.id, url: node.sourceUrl });
         }
       };
 
@@ -1249,7 +1307,7 @@ export default function PhotoGraphCanvas({
         selection.on(".drag", null);
       };
     },
-    [hitNode, requestRender, getWorldPoint],
+    [hitNode, requestRender, getWorldPoint, openInspectTarget],
   );
 
   const activeDarkMode = forcedDarkMode ?? siteDarkMode;
@@ -1322,11 +1380,6 @@ export default function PhotoGraphCanvas({
 
       const { nodes, links } = await buildGraph(data, imageBasePath);
       resetRuntimeCollections();
-      await preloadImages(nodes, abortController.signal);
-      if (abortController.signal.aborted) {
-        return;
-      }
-
       nodesRef.current = nodes;
       linksRef.current = links;
 
@@ -1336,6 +1389,7 @@ export default function PhotoGraphCanvas({
         requestRender,
         INITIAL_LAYOUT_CONTROLS,
       );
+      simRef.current = simulation;
       warmupSimulationLayout(
         simulation,
         getInitialLayoutTickCount(nodes.length),
@@ -1351,6 +1405,7 @@ export default function PhotoGraphCanvas({
       applyNodePositions(nodes, expandedPositions);
       applyConnectionVisibility(controlsRef.current.hideConnections);
       requestRender();
+      void loadInitialImages(nodes, abortController.signal);
       await animateInitialCompaction(
         nodes,
         expandedPositions,
@@ -1361,7 +1416,6 @@ export default function PhotoGraphCanvas({
         return;
       }
 
-      simRef.current = simulation;
       simulation.alpha(GRAPH_CONFIG.initialRenderAlpha).restart();
       requestRender();
 
@@ -1406,7 +1460,7 @@ export default function PhotoGraphCanvas({
     applyInitialZoom,
     animateInitialCompaction,
     bindInteractions,
-    preloadImages,
+    loadInitialImages,
     requestRender,
     scheduleUpgradePass,
     updateSimulationForces,
@@ -1431,6 +1485,7 @@ export default function PhotoGraphCanvas({
 
   useEffect(() => {
     if (!inspectTarget) {
+      setInspectOverlayOpen(false);
       setInspectMetadata(null);
       return;
     }
@@ -1487,6 +1542,30 @@ export default function PhotoGraphCanvas({
     };
   }, [inspectTarget, patchInspectMetadata]);
 
+  useEffect(() => {
+    if (!inspectTarget) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      setInspectOverlayOpen(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [inspectTarget]);
+
+  useEffect(() => {
+    if (!inspectTarget || inspectOverlayOpen) return;
+
+    const timeout = window.setTimeout(() => {
+      setInspectTarget((current) => (current === inspectTarget ? null : current));
+    }, INSPECT_OVERLAY_TRANSITION_MS);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [inspectOverlayOpen, inspectTarget]);
+
   // TODO: make this fade between colours instead of hard switching.
   const alphaColorClass =
     alpha < 0.01
@@ -1495,98 +1574,112 @@ export default function PhotoGraphCanvas({
   const isFullPageRoute = usePathname() === PROJECT_ROUTES.photoGraph;
   return (
     <div className={`static h-full w-full transition-colors ${photoGraphShellClass}`}>
-      {!menuOpen && (
-        <OverlayControlButton
-          onClick={() => setMenuOpen(true)}
-          className="absolute top-[1vmin] left-[1vmin] z-6"
-          aria-label="Open graph controls"
-        >
-          <Menu className="h-4 w-4" />
-        </OverlayControlButton>
-      )}
-
-      <OverlayNavBar
-        darkMode={isFullPageRoute ? activeDarkMode : undefined}
-        onToggleDarkMode={
-          isFullPageRoute && forcedDarkMode === undefined
-            ? toggleTheme
-            : undefined
-        }
-        expandHref={isFullPageRoute ? undefined : PROJECT_ROUTES.photoGraph}
-        exitHref={isFullPageRoute ? PROJECT_ROUTES.home : undefined}
-        ariaLabel="Photo graph controls"
-      />
-
-      {menuOpen && (
-        <div
-          className={`rounded-md select-none ${overlayPanelClass} border ${photoGraphOverlayClass}`}
-        >
-          <div className="flex w-full items-start">
-            
-
-            <OverlayControlButton
-              onClick={() => setMenuOpen(false)}
-              size="sm"
-              className="ml-auto"
-              aria-label="Close graph controls"
-            >
-              <X className="h-4 w-4" />
-            </OverlayControlButton>
-            <div className="flex-1 text-center">
-              <p className={`mx-2 ${overlayTextClass}`}>Simulation Alpha</p>
-              <p className={`${overlayTextClass} ${alphaColorClass}`}>
-                {alpha.toFixed(3)}
-              </p>
-            </div>
-          </div>
-
-          <label
-            className={`flex items-center justify-center gap-1 ${overlayTextClass}`}
+      <div
+        className={`h-full w-full transition-[opacity,filter] duration-200 ${
+          inspectTarget ? "pointer-events-none opacity-35 blur-[1px]" : "opacity-100"
+        }`}
+      >
+        {!menuOpen && (
+          <OverlayControlButton
+            onClick={() => setMenuOpen(true)}
+            className="absolute top-[1vmin] left-[1vmin] z-6"
+            aria-label="Open graph controls"
           >
-            Hide Connections{" "}
-            <input
-              type="checkbox"
-              checked={controls.hideConnections}
-              onChange={(event) =>
-                setControlValue("hideConnections", event.target.checked)
-              }
-              className="m-0 h-2.5"
-            />
-          </label>
+            <Menu className="h-4 w-4" />
+          </OverlayControlButton>
+        )}
 
-          {GRAPH_CONTROL_SLIDERS.map(({ key, label, min, max, scale = 1 }) => (
-            <Fragment key={key}>
+        <OverlayNavBar
+          darkMode={isFullPageRoute ? activeDarkMode : undefined}
+          onToggleDarkMode={
+            isFullPageRoute && forcedDarkMode === undefined
+              ? toggleTheme
+              : undefined
+          }
+          expandHref={isFullPageRoute ? undefined : PROJECT_ROUTES.photoGraph}
+          exitHref={isFullPageRoute ? PROJECT_ROUTES.home : undefined}
+          ariaLabel="Photo graph controls"
+        />
+
+        {menuOpen && (
+          <div
+            className={`rounded-md select-none ${overlayPanelClass} border ${photoGraphOverlayClass}`}
+          >
+            <div className="flex w-full items-start">
+              <OverlayControlButton
+                onClick={() => setMenuOpen(false)}
+                size="sm"
+                className="ml-auto"
+                aria-label="Close graph controls"
+              >
+                <X className="h-4 w-4" />
+              </OverlayControlButton>
+              <div className="flex-1 text-center">
+                <p className={`mx-2 ${overlayTextClass}`}>Simulation Alpha</p>
+                <p className={`${overlayTextClass} ${alphaColorClass}`}>
+                  {alpha.toFixed(3)}
+                </p>
+              </div>
+            </div>
+
+            <label
+              className={`flex items-center justify-center gap-1 ${overlayTextClass}`}
+            >
+              Hide Connections{" "}
               <input
-                type="range"
-                min={min}
-                max={max}
-                value={controls[key] / scale}
+                type="checkbox"
+                checked={controls.hideConnections}
                 onChange={(event) =>
-                  setControlValue(key, Number(event.target.value) * scale)
+                  setControlValue("hideConnections", event.target.checked)
                 }
-                className={sliderClass}
+                className="m-0 h-2.5"
               />
-              <p className={overlayTextClass}>
-                {label}: {controls[key].toFixed(2)}
-              </p>
-            </Fragment>
-          ))}
-        </div>
-      )}
+            </label>
+
+            {GRAPH_CONTROL_SLIDERS.map(({ key, label, min, max, scale = 1 }) => (
+              <Fragment key={key}>
+                <input
+                  type="range"
+                  min={min}
+                  max={max}
+                  value={controls[key] / scale}
+                  onChange={(event) =>
+                    setControlValue(key, Number(event.target.value) * scale)
+                  }
+                  className={sliderClass}
+                />
+                <p className={overlayTextClass}>
+                  {label}: {controls[key].toFixed(2)}
+                </p>
+              </Fragment>
+            ))}
+          </div>
+        )}
+
+        <canvas
+          ref={canvasRef}
+          className="relative m-0 block h-full w-full bg-white [image-rendering:pixelated] dark:bg-black"
+        />
+      </div>
 
       {inspectTarget && (
         <div
-          onClick={() => setInspectTarget(null)}
-          className={`absolute inset-0 z-10 m-auto flex max-h-9/12 max-w-9/12 items-center justify-center ${photoGraphModalClass} backdrop-blur-sm`}
+          onClick={closeInspectTarget}
+          className={`absolute inset-0 z-10 m-auto flex max-h-9/12 max-w-9/12 items-center justify-center transition-[opacity,backdrop-filter] duration-200 ${photoGraphModalClass} ${
+            inspectOverlayOpen ? "opacity-100 backdrop-blur-sm" : "backdrop-blur-0 opacity-0"
+          }`}
           // TODO: add colour swatches to inspect view
-          // TODO: add fadein/out animations and fade the other ui elements while doing so through the flex container holding all of them.
         >
           <div
-            className="relative flex h-full w-full flex-col items-center justify-center"
+            className={`relative flex h-full w-full flex-col items-center justify-center transition-[opacity,transform,filter] duration-200 ease-out ${
+              inspectOverlayOpen
+                ? "blur-0 scale-100 opacity-100"
+                : "scale-[1.06] opacity-0 blur-[2px]"
+            }`}
             onClick={(event) => event.stopPropagation()}
           >
             <OverlayControlButton
-              onClick={() => setInspectTarget(null)}
+              onClick={closeInspectTarget}
               className="absolute top-0 right-0 mx-2 my-2"
               aria-label="Close image inspection"
             >
@@ -1597,7 +1690,9 @@ export default function PhotoGraphCanvas({
             <img
               src={inspectTarget.url}
               alt=""
-              className="my-auto max-h-9/12 max-w-5/6 place-self-center align-middle"
+              className={`my-auto max-h-9/12 max-w-5/6 place-self-center align-middle transition-transform duration-200 ease-out ${
+                inspectOverlayOpen ? "scale-100" : "scale-[1.1]"
+              }`}
               onLoad={(event) => {
                 const { naturalWidth, naturalHeight } = event.currentTarget;
                 patchInspectMetadata({
@@ -1610,7 +1705,9 @@ export default function PhotoGraphCanvas({
             />
 
             <div
-              className={`absolute bottom-0 flex h-1/8 w-full items-center justify-between gap-4 px-4 text-[9px] sm:text-xs ${overlayTextClass}`}
+              className={`absolute bottom-0 flex h-1/8 w-full items-center justify-between gap-4 px-4 text-[9px] transition-opacity duration-200 sm:text-xs ${overlayTextClass} ${
+                inspectOverlayOpen ? "opacity-100" : "opacity-0"
+              }`}
             >
               <div className="flex items-center gap-4">
                 <p>
@@ -1646,11 +1743,6 @@ export default function PhotoGraphCanvas({
           </div>
         </div>
       )}
-
-      <canvas
-        ref={canvasRef}
-        className="relative m-0 block h-full w-full bg-white [image-rendering:pixelated] dark:bg-black"
-      />
     </div>
   );
 }
