@@ -1,10 +1,12 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 
 import {
   Fragment,
   type Dispatch,
+  type ReactElement,
   type SetStateAction,
   useCallback,
   useEffect,
@@ -12,7 +14,7 @@ import {
   useState,
 } from "react";
 import * as d3 from "d3";
-// TODO: Migrate to d3-react
+import type { ForceGraphMethods, LinkObject, NodeObject } from "react-force-graph-2d";
 
 import { Download, Menu, X } from "lucide-react";
 
@@ -42,7 +44,14 @@ type RawNode = {
   dimensions?: GraphImageDimensions;
 };
 
-type SimNode = d3.SimulationNodeDatum & {
+type NodeDrawBounds = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
+type PhotoGraphNodeBase = {
   id: string;
   colour?: string;
   sourceUrl: string;
@@ -55,31 +64,41 @@ type SimNode = d3.SimulationNodeDatum & {
   renderArea: number;
   loadedWidth?: number;
   requestedWidth?: number;
-  hasInitialImage?: boolean;
-  fx?: number | null;
-  fy?: number | null;
-  _grab?: { dx: number; dy: number };
+  __drawBounds?: NodeDrawBounds;
 };
 
-type SimLink = d3.SimulationLinkDatum<SimNode> & {
-  source: string | SimNode;
-  target: string | SimNode;
+type PhotoGraphNode = NodeObject<PhotoGraphNodeBase> & PhotoGraphNodeBase;
+
+type PhotoGraphLinkBase = {
+  source: string | PhotoGraphNode;
+  target: string | PhotoGraphNode;
   value: number;
   _baseValue?: number;
 };
 
-type RectangleCollisionForce = {
-  (alpha: number): void;
-  initialize: (nodes: SimNode[] | ArrayLike<SimNode>) => void;
+type PhotoGraphLink = LinkObject<PhotoGraphNode, PhotoGraphLinkBase> &
+  PhotoGraphLinkBase;
+
+type PhotoGraphData = {
+  nodes: PhotoGraphNode[];
+  links: PhotoGraphLink[];
 };
 
-type TickableSimulation = d3.Simulation<SimNode, SimLink> & {
+type PhotoGraphInstance = ForceGraphMethods<PhotoGraphNode, PhotoGraphLink>;
+type RuntimeForce = Parameters<PhotoGraphInstance["d3Force"]>[1];
+
+type RectangleCollisionForce = {
+  (alpha: number): void;
+  initialize: (nodes: PhotoGraphNode[] | ArrayLike<PhotoGraphNode>) => void;
+};
+
+type TickableSimulation = d3.Simulation<PhotoGraphNode, PhotoGraphLink> & {
   tick: (iterations?: number) => TickableSimulation;
 };
 
-type NodePositionSnapshot = { x: number; y: number }[];
+type NodePositionSnapshot = Record<string, { x: number; y: number }>;
 
-type CanvasInputEvent = MouseEvent | TouchEvent | PointerEvent | WheelEvent;
+type GraphTransform = { k: number; x: number; y: number };
 
 type PhotoGraphCanvasProps = {
   graphUrl?: string;
@@ -114,6 +133,16 @@ type InspectMetadata = {
   filename: string;
 };
 
+type IntroLayout = {
+  expanded: NodePositionSnapshot;
+  compacted: NodePositionSnapshot;
+};
+
+const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
+  ssr: false,
+  loading: () => <div className="h-full w-full bg-white dark:bg-black" />,
+}) as unknown as (props: Record<string, unknown>) => ReactElement;
+
 const DEFAULT_IMAGE_BASE_PATH = "photography-images";
 
 const GRAPH_CONFIG = {
@@ -137,7 +166,6 @@ const GRAPH_CONFIG = {
   charge: -420,
   zoomExtent: [0.25, 4] as [number, number],
   initialZoom: 0.8,
-  initialRenderAlpha: 0.12,
   initialLayoutTicksMin: 90,
   initialLayoutTicksMax: 220,
   initialLayoutTicksPerSqrtNode: 18,
@@ -147,6 +175,9 @@ const GRAPH_CONFIG = {
   imageConcurrency: 5,
   upgradeDebounceMs: 120,
   viewportBufferRatio: 0.15,
+  alphaMin: 0.001,
+  xForceStrength: 0.03,
+  yForceStrength: 0.09,
 };
 
 const overlayPanelClass =
@@ -219,7 +250,6 @@ function resolveNodeId(node: RawNode, index: number) {
 }
 
 function computeNodeLayerNoise(id: string) {
-  // Deterministic per-node noise in [-1, 1] to softly blur strict layering.
   let hash = 0;
   for (let index = 0; index < id.length; index += 1) {
     hash = (hash * 31 + id.charCodeAt(index)) >>> 0;
@@ -253,7 +283,7 @@ function resolveRawAspectRatio(dimensions: GraphImageDimensions | undefined) {
   );
 }
 
-function sizeNodeFromAspectRatio(node: SimNode) {
+function sizeNodeFromAspectRatio(node: PhotoGraphNode) {
   const aspectRatio = normalizeAspectRatio(node.aspectRatio);
   const baseSize = Math.max(1, node.baseSize);
   const deviation = Math.abs(Math.log2(aspectRatio));
@@ -294,7 +324,7 @@ async function resolveNodeSourceUrl(
   return getDownloadURL(ref(storage, storagePath));
 }
 
-function sizeNodeFromImage(node: SimNode, image: HTMLImageElement) {
+function sizeNodeFromImage(node: PhotoGraphNode, image: HTMLImageElement) {
   const width = image.naturalWidth || image.width;
   const height = image.naturalHeight || image.height;
 
@@ -305,7 +335,7 @@ function sizeNodeFromImage(node: SimNode, image: HTMLImageElement) {
 }
 
 async function buildGraph(data: RawNode[], imageBasePath: string) {
-  const nodes: SimNode[] = await Promise.all(
+  const nodes: PhotoGraphNode[] = await Promise.all(
     data.map(async (entry, index) => {
       const id = resolveNodeId(entry, index);
       const box = clamp(
@@ -314,7 +344,7 @@ async function buildGraph(data: RawNode[], imageBasePath: string) {
         GRAPH_CONFIG.maxBox,
       );
       const aspectRatio = resolveRawAspectRatio(entry.dimensions);
-      const node: SimNode = {
+      const node: PhotoGraphNode = {
         id,
         colour: entry.colour,
         sourceUrl: await resolveNodeSourceUrl(entry, id, imageBasePath),
@@ -334,7 +364,7 @@ async function buildGraph(data: RawNode[], imageBasePath: string) {
   );
 
   const nodeMap = new Map(nodes.map((node) => [node.id, node]));
-  const links: SimLink[] = [];
+  const links: PhotoGraphLink[] = [];
 
   for (const [index, entry] of data.entries()) {
     const sourceId = resolveNodeId(entry, index);
@@ -366,7 +396,7 @@ function createRectangleCollideForce(
   strength = GRAPH_CONFIG.collideStrength,
   iterations = GRAPH_CONFIG.collideIterations,
 ): RectangleCollisionForce {
-  let nodes: SimNode[] = [];
+  let nodes: PhotoGraphNode[] = [];
 
   const force: RectangleCollisionForce = (alpha) => {
     if (!nodes.length) return;
@@ -436,18 +466,18 @@ function createRectangleCollideForce(
   return force;
 }
 
-function getLinkValue(link: SimLink) {
+function getLinkValue(link: PhotoGraphLink) {
   return clamp(link._baseValue ?? link.value ?? 0, 0, 1);
 }
 
-function resolveLinkNodes(link: SimLink) {
+function resolveLinkNodes(link: PhotoGraphLink) {
   const source = typeof link.source === "object" ? link.source : null;
   const target = typeof link.target === "object" ? link.target : null;
   return { source, target };
 }
 
 function computeLinkDistance(
-  link: SimLink,
+  link: PhotoGraphLink,
   minDistance: number,
   maxDistance: number,
 ) {
@@ -467,7 +497,7 @@ function computeLinkDistance(
   return Math.max(desiredDistance, minAxisDistance);
 }
 
-function computeLinkStrength(link: SimLink) {
+function computeLinkStrength(link: PhotoGraphLink) {
   const value = getLinkValue(link);
   return (
     GRAPH_CONFIG.linkStrengthMin +
@@ -476,14 +506,14 @@ function computeLinkStrength(link: SimLink) {
 }
 
 function applySimulationForces(
-  simulation: d3.Simulation<SimNode, SimLink>,
+  simulation: d3.Simulation<PhotoGraphNode, PhotoGraphLink>,
   controls: GraphControls,
 ) {
   const minDistance = GRAPH_CONFIG.distMin * controls.distMinMult;
   const maxDistance = GRAPH_CONFIG.distMax * controls.distMaxMult;
 
   const linkForce = simulation.force("link") as
-    | d3.ForceLink<SimNode, SimLink>
+    | d3.ForceLink<PhotoGraphNode, PhotoGraphLink>
     | undefined;
   if (linkForce) {
     linkForce.distance((link) =>
@@ -493,28 +523,26 @@ function applySimulationForces(
   }
 
   const chargeForce = simulation.force("charge") as
-    | d3.ForceManyBody<SimNode>
+    | d3.ForceManyBody<PhotoGraphNode>
     | undefined;
   chargeForce?.strength(controls.chargeMult * GRAPH_CONFIG.charge);
 }
 
-function createSimulation(
-  nodes: SimNode[],
-  links: SimLink[],
-  onTick: () => void,
+function createPrelayoutSimulation(
+  nodes: PhotoGraphNode[],
+  links: PhotoGraphLink[],
   controls: GraphControls,
 ) {
   const simulation = d3
-    .forceSimulation<SimNode>(nodes)
+    .forceSimulation<PhotoGraphNode>(nodes)
     .force(
       "link",
-      d3.forceLink<SimNode, SimLink>(links).id((node) => node.id),
+      d3.forceLink<PhotoGraphNode, PhotoGraphLink>(links).id((node) => node.id),
     )
-    .force("charge", d3.forceManyBody<SimNode>())
-    .force("x", d3.forceX<SimNode>().strength(0.03))
-    .force("y", d3.forceY<SimNode>().strength(0.09))
-    .force("collide", createRectangleCollideForce(GRAPH_CONFIG.collidePad))
-    .on("tick", onTick);
+    .force("charge", d3.forceManyBody<PhotoGraphNode>())
+    .force("x", d3.forceX<PhotoGraphNode>().strength(GRAPH_CONFIG.xForceStrength))
+    .force("y", d3.forceY<PhotoGraphNode>().strength(GRAPH_CONFIG.yForceStrength))
+    .force("collide", createRectangleCollideForce(GRAPH_CONFIG.collidePad));
 
   applySimulationForces(simulation, controls);
   return simulation;
@@ -542,7 +570,7 @@ function getInitialCompactionTickCount(nodeCount: number) {
 }
 
 function warmupSimulationLayout(
-  simulation: d3.Simulation<SimNode, SimLink>,
+  simulation: d3.Simulation<PhotoGraphNode, PhotoGraphLink>,
   tickCount: number,
   alpha = 1,
 ) {
@@ -552,20 +580,25 @@ function warmupSimulationLayout(
   tickableSimulation.tick(tickCount);
 }
 
-function captureNodePositions(nodes: SimNode[]): NodePositionSnapshot {
-  return nodes.map((node) => ({
-    x: node.x ?? 0,
-    y: node.y ?? 0,
-  }));
+function captureNodePositions(nodes: PhotoGraphNode[]): NodePositionSnapshot {
+  return Object.fromEntries(
+    nodes.map((node) => [
+      node.id,
+      {
+        x: node.x ?? 0,
+        y: node.y ?? 0,
+      },
+    ]),
+  );
 }
 
 function applyNodePositions(
-  nodes: SimNode[],
+  nodes: PhotoGraphNode[],
   positions: NodePositionSnapshot,
   progress = 1,
 ) {
-  nodes.forEach((node, index) => {
-    const position = positions[index];
+  nodes.forEach((node) => {
+    const position = positions[node.id];
     if (!position) return;
 
     node.x = (node.x ?? 0) + (position.x - (node.x ?? 0)) * progress;
@@ -613,35 +646,7 @@ function loadImage(url: string, signal: AbortSignal) {
   });
 }
 
-function isNodeVisible(
-  node: SimNode,
-  transform: d3.ZoomTransform,
-  viewportWidth: number,
-  viewportHeight: number,
-) {
-  const bufferX = viewportWidth * GRAPH_CONFIG.viewportBufferRatio;
-  const bufferY = viewportHeight * GRAPH_CONFIG.viewportBufferRatio;
-  const halfWidth = (node.w * transform.k) / 2;
-  const halfHeight = (node.h * transform.k) / 2;
-  const screenX = (node.x ?? 0) * transform.k + transform.x;
-  const screenY = (node.y ?? 0) * transform.k + transform.y;
-
-  return (
-    screenX + halfWidth >= -bufferX &&
-    screenX - halfWidth <= viewportWidth + bufferX &&
-    screenY + halfHeight >= -bufferY &&
-    screenY - halfHeight <= viewportHeight + bufferY
-  );
-}
-
-function getNodeTopLeft(node: SimNode) {
-  return {
-    x: (node.x ?? 0) - node.w / 2,
-    y: (node.y ?? 0) - node.h / 2,
-  };
-}
-
-function getNodeRenderArea(node: SimNode) {
+function getNodeRenderArea(node: PhotoGraphNode) {
   if (Number.isFinite(node.renderArea) && node.renderArea > 0) {
     return node.renderArea;
   }
@@ -649,15 +654,15 @@ function getNodeRenderArea(node: SimNode) {
   return Math.max(1, node.w * node.h);
 }
 
-function getNodeLayerArea(node: SimNode) {
+function getNodeLayerArea(node: PhotoGraphNode) {
   const baseArea = getNodeRenderArea(node);
   const blurScale =
     1 + clamp(node.layerNoise, -1, 1) * GRAPH_CONFIG.layerAreaBlurStrength;
   return Math.max(1, baseArea * blurScale);
 }
 
-function getRenderOrderedNodes(nodes: SimNode[]) {
-  return [...nodes].sort((left, right) => {
+function sortNodesForRender(nodes: PhotoGraphNode[]) {
+  nodes.sort((left, right) => {
     const areaDelta = getNodeLayerArea(right) - getNodeLayerArea(left);
     if (Math.abs(areaDelta) > 1e-6) {
       return areaDelta;
@@ -665,6 +670,10 @@ function getRenderOrderedNodes(nodes: SimNode[]) {
 
     return left.id.localeCompare(right.id);
   });
+}
+
+function getCurrentDevicePixelRatio() {
+  return typeof window === "undefined" ? 1 : window.devicePixelRatio || 1;
 }
 
 function buildInspectFilename(
@@ -690,49 +699,82 @@ function convertSizeToMb(sizeInBytes: number) {
   return sizeInBytes / (1024 * 1024);
 }
 
+function clearNodePins(nodes: PhotoGraphNode[]) {
+  nodes.forEach((node) => {
+    node.fx = undefined;
+    node.fy = undefined;
+  });
+}
+
+function getNodeBounds(node: PhotoGraphNode): NodeDrawBounds {
+  return (
+    node.__drawBounds ?? {
+      left: (node.x ?? 0) - node.w / 2,
+      top: (node.y ?? 0) - node.h / 2,
+      width: node.w,
+      height: node.h,
+    }
+  );
+}
+
 export default function PhotoGraphCanvas({
   graphUrl = "/api/photo-graph/graph",
   imageBasePath = DEFAULT_IMAGE_BASE_PATH,
   forcedDarkMode,
 }: PhotoGraphCanvasProps) {
   const { darkMode: siteDarkMode, toggleTheme } = useTheme();
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const nodesRef = useRef<SimNode[]>([]);
-  const linksRef = useRef<SimLink[]>([]);
+  const activeDarkMode = forcedDarkMode ?? siteDarkMode;
+  const isFullPageRoute = usePathname() === PROJECT_ROUTES.photoGraph;
+
+  const fgRef = useRef<PhotoGraphInstance | undefined>(undefined);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const nodesRef = useRef<PhotoGraphNode[]>([]);
   const imagesRef = useRef<Map<string, HTMLImageElement>>(new Map());
   const pendingWidthsRef = useRef<Map<string, Set<number>>>(new Map());
   const errorLogRef = useRef<Set<string>>(new Set());
-  const simRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null);
-  const zoomRef = useRef<d3.ZoomBehavior<HTMLCanvasElement, unknown> | null>(
-    null,
-  );
-  const transformRef = useRef(d3.zoomIdentity);
-  const dprRef = useRef(1);
-  const frameRef = useRef<number | null>(null);
-  const introCompactionFrameRef = useRef<number | null>(null);
-  const settleTimeoutRef = useRef<number | null>(null);
-  const upgradeTimeoutRef = useRef<number | null>(null);
-  const alphaRef = useRef({ value: 1, updatedAt: 0 });
-  const darkModeRef = useRef(false);
   const controlsRef = useRef<GraphControls>({ ...DEFAULT_GRAPH_CONTROLS });
+  const darkModeRef = useRef(activeDarkMode);
+  const transformRef = useRef<GraphTransform>({
+    k: GRAPH_CONFIG.initialZoom,
+    x: 0,
+    y: 0,
+  });
+  const initAbortRef = useRef<AbortController | null>(null);
+  const introLayoutRef = useRef<IntroLayout | null>(null);
+  const introFrameRef = useRef<number | null>(null);
+  const introActiveRef = useRef(false);
+  const introCancelledRef = useRef(false);
+  const initialViewAppliedRef = useRef(false);
+  const applyingInitialViewRef = useRef(false);
+  const upgradeTimeoutRef = useRef<number | null>(null);
+  const engineRunningRef = useRef(false);
 
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [graphData, setGraphData] = useState<PhotoGraphData>({
+    nodes: [],
+    links: [],
+  });
   const [menuOpen, setMenuOpen] = useState(false);
   const [controls, setControls] = useState<GraphControls>(() => ({
     ...DEFAULT_GRAPH_CONTROLS,
   }));
-  const [alpha, setAlpha] = useState(1);
+  const [engineStatus, setEngineStatus] = useState<"settling" | "settled">(
+    "settled",
+  );
   const [inspectTarget, setInspectTarget] = useState<InspectTarget | null>(
     null,
   );
   const [inspectOverlayOpen, setInspectOverlayOpen] = useState(false);
   const [inspectMetadata, setInspectMetadata] =
     useState<InspectMetadata | null>(null);
+
   const patchInspectMetadata = useCallback(
     (patch: Partial<InspectMetadata>) => {
       patchNullableState(setInspectMetadata, patch);
     },
     [],
   );
+
   const setControlValue = useCallback(
     <K extends keyof GraphControls>(key: K, value: GraphControls[K]) => {
       setControls((current) =>
@@ -741,261 +783,153 @@ export default function PhotoGraphCanvas({
     },
     [],
   );
+
   const openInspectTarget = useCallback((target: InspectTarget) => {
     setInspectTarget(target);
   }, []);
+
   const closeInspectTarget = useCallback(() => {
     setInspectOverlayOpen(false);
   }, []);
 
-  const syncAlpha = useCallback(() => {
-    const simAlpha = simRef.current?.alpha() ?? 0;
-    const now = performance.now();
-    const { value, updatedAt } = alphaRef.current;
+  const configureRuntimeForces = useCallback(() => {
+    const graph = fgRef.current;
+    if (!graph) return;
 
-    if (
-      Math.abs(simAlpha - value) < 0.01 &&
-      now - updatedAt < 120 &&
-      simAlpha >= 0.01
-    ) {
-      return;
+    graph.d3Force("center", null);
+    graph.d3Force(
+      "x",
+      d3.forceX<PhotoGraphNode>().strength(
+        GRAPH_CONFIG.xForceStrength,
+      ) as unknown as RuntimeForce,
+    );
+    graph.d3Force(
+      "y",
+      d3.forceY<PhotoGraphNode>().strength(
+        GRAPH_CONFIG.yForceStrength,
+      ) as unknown as RuntimeForce,
+    );
+    graph.d3Force(
+      "collide",
+      createRectangleCollideForce(
+        GRAPH_CONFIG.collidePad,
+      ) as unknown as RuntimeForce,
+    );
+
+    const linkForce = graph.d3Force("link") as
+      | d3.ForceLink<PhotoGraphNode, PhotoGraphLink>
+      | undefined;
+    if (linkForce) {
+      const minDistance = GRAPH_CONFIG.distMin * controlsRef.current.distMinMult;
+      const maxDistance = GRAPH_CONFIG.distMax * controlsRef.current.distMaxMult;
+      linkForce.distance((link) =>
+        computeLinkDistance(link as PhotoGraphLink, minDistance, maxDistance),
+      );
+      linkForce.strength((link) => computeLinkStrength(link as PhotoGraphLink));
     }
 
-    alphaRef.current = { value: simAlpha, updatedAt: now };
-    setAlpha((current) =>
-      Math.abs(current - simAlpha) < 0.01 ? current : simAlpha,
-    );
+    const chargeForce = graph.d3Force("charge") as
+      | d3.ForceManyBody<PhotoGraphNode>
+      | undefined;
+    chargeForce?.strength(controlsRef.current.chargeMult * GRAPH_CONFIG.charge);
   }, []);
 
-  const paint = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !canvas.width) return;
+  const reinitializeCollisionForce = useCallback(() => {
+    const collideForce = fgRef.current?.d3Force("collide") as
+      | RectangleCollisionForce
+      | undefined;
+    collideForce?.initialize?.(nodesRef.current);
+  }, []);
 
-    const context = canvas.getContext("2d");
-    if (!context) return;
+  const cancelIntroCompaction = useCallback(() => {
+    if (!introActiveRef.current) return;
 
-    context.save();
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    introCancelledRef.current = true;
+    introActiveRef.current = false;
+    cancelAnimationFrameRef(introFrameRef);
+    clearNodePins(nodesRef.current);
+  }, []);
 
-    const transform = transformRef.current;
-    const dpr = dprRef.current;
-    const isDarkMode = darkModeRef.current;
-    context.setTransform(
-      transform.k * dpr,
-      0,
-      0,
-      transform.k * dpr,
-      transform.x * dpr,
-      transform.y * dpr,
-    );
+  const nodeCanvasObjectMode = useCallback(() => "replace", []);
+  const linkCanvasObjectMode = useCallback(() => "replace", []);
 
-    context.strokeStyle = isDarkMode ? "rgba(255, 255, 255, 0.72)" : "#000";
-    context.lineWidth = 1;
+  const nodeCanvasObject = useCallback(
+    (node: PhotoGraphNode, context: CanvasRenderingContext2D) => {
+      const left = (node.x ?? 0) - node.w / 2;
+      const top = (node.y ?? 0) - node.h / 2;
+      node.__drawBounds = {
+        left,
+        top,
+        width: node.w,
+        height: node.h,
+      };
 
-    for (const link of linksRef.current) {
-      const opacity = link.value ?? 0;
-      if (opacity <= 0) continue;
-
-      const source = link.source as SimNode;
-      const target = link.target as SimNode;
-      if (!source || !target) continue;
-
-      context.globalAlpha = opacity;
-      context.beginPath();
-      context.moveTo(source.x ?? 0, source.y ?? 0);
-      context.lineTo(target.x ?? 0, target.y ?? 0);
-      context.stroke();
-    }
-
-    context.globalAlpha = 1;
-
-    const renderNodes = getRenderOrderedNodes(nodesRef.current);
-    for (const node of renderNodes) {
-      const { x, y } = getNodeTopLeft(node);
       const image = imagesRef.current.get(node.id);
-
       if (image) {
-        context.drawImage(image, x, y, node.w, node.h);
-        continue;
+        context.drawImage(image, left, top, node.w, node.h);
+        return;
       }
 
-      context.fillStyle = isDarkMode
+      context.fillStyle = darkModeRef.current
         ? "rgba(255, 255, 255, 0.12)"
         : "#ffffff46";
-      context.fillRect(x, y, node.w, node.h);
-    }
-
-    context.restore();
-    syncAlpha();
-  }, [syncAlpha]);
-
-  const requestRender = useCallback(() => {
-    if (frameRef.current !== null) return;
-
-    frameRef.current = window.requestAnimationFrame(() => {
-      frameRef.current = null;
-      paint();
-    });
-  }, [paint]);
-
-  const animateInitialCompaction = useCallback(
-    (
-      nodes: SimNode[],
-      fromPositions: NodePositionSnapshot,
-      toPositions: NodePositionSnapshot,
-      signal: AbortSignal,
-    ) =>
-      new Promise<void>((resolve) => {
-        applyNodePositions(nodes, fromPositions);
-        requestRender();
-
-        const finish = () => {
-          cancelAnimationFrameRef(introCompactionFrameRef);
-          applyNodePositions(nodes, toPositions);
-          requestRender();
-          resolve();
-        };
-
-        if (signal.aborted) {
-          finish();
-          return;
-        }
-
-        const startedAt = performance.now();
-
-        const step = (now: number) => {
-          if (signal.aborted) {
-            finish();
-            return;
-          }
-
-          const progress = clamp(
-            (now - startedAt) / GRAPH_CONFIG.initialCompactionDurationMs,
-            0,
-            1,
-          );
-          const easedProgress = easeOutExponential(progress);
-
-          nodes.forEach((node, index) => {
-            const fromPosition = fromPositions[index];
-            const toPosition = toPositions[index];
-            if (!fromPosition || !toPosition) return;
-
-            node.x =
-              fromPosition.x + (toPosition.x - fromPosition.x) * easedProgress;
-            node.y =
-              fromPosition.y + (toPosition.y - fromPosition.y) * easedProgress;
-            node.vx = 0;
-            node.vy = 0;
-          });
-
-          requestRender();
-
-          if (progress < 1) {
-            introCompactionFrameRef.current =
-              window.requestAnimationFrame(step);
-            return;
-          }
-
-          introCompactionFrameRef.current = null;
-          resolve();
-        };
-
-        introCompactionFrameRef.current = window.requestAnimationFrame(step);
-      }),
-    [requestRender],
-  );
-
-  const getWorldPoint = useCallback(
-    (event: CanvasInputEvent, canvas: HTMLCanvasElement) => {
-      const point = d3.pointer(event, canvas) as [number, number];
-      return transformRef.current.invert(point) as [number, number];
+      context.fillRect(left, top, node.w, node.h);
     },
     [],
   );
 
-  const hitNode = useCallback(
-    (event: CanvasInputEvent, canvas: HTMLCanvasElement) => {
-      const [mouseX, mouseY] = getWorldPoint(event, canvas);
-      const renderNodes = getRenderOrderedNodes(nodesRef.current);
-
-      for (let index = renderNodes.length - 1; index >= 0; index -= 1) {
-        const node = renderNodes[index];
-        const { x, y } = getNodeTopLeft(node);
-
-        if (
-          mouseX >= x &&
-          mouseX <= x + node.w &&
-          mouseY >= y &&
-          mouseY <= y + node.h
-        ) {
-          return node;
-        }
-      }
-
-      return null;
+  const nodePointerAreaPaint = useCallback(
+    (node: PhotoGraphNode, color: string, context: CanvasRenderingContext2D) => {
+      const bounds = getNodeBounds(node);
+      context.fillStyle = color;
+      context.fillRect(bounds.left, bounds.top, bounds.width, bounds.height);
     },
-    [getWorldPoint],
+    [],
   );
 
-  const applyInitialZoom = useCallback((canvas: HTMLCanvasElement) => {
-    const rect = canvas.getBoundingClientRect();
-    const initialTransform = d3.zoomIdentity
-      .translate(rect.width / 2, rect.height / 2)
-      .scale(GRAPH_CONFIG.initialZoom);
+  const linkCanvasObject = useCallback(
+    (link: PhotoGraphLink, context: CanvasRenderingContext2D) => {
+      const source = typeof link.source === "object" ? link.source : null;
+      const target = typeof link.target === "object" ? link.target : null;
+      if (!source || !target) return;
 
-    transformRef.current = initialTransform;
-    const zoomBehavior = zoomRef.current;
-    if (zoomBehavior) {
-      d3.select(canvas).call(zoomBehavior.transform, initialTransform);
-    }
-  }, []);
-
-  const applyConnectionVisibility = useCallback(
-    (hidden: boolean) => {
-      for (const link of linksRef.current) {
-        const baseValue = link._baseValue ?? link.value ?? 0;
-        link._baseValue = baseValue;
-        link.value = hidden ? 0 : baseValue;
-      }
-
-      requestRender();
+      context.save();
+      context.globalAlpha = getLinkValue(link);
+      context.strokeStyle = darkModeRef.current
+        ? "rgba(255, 255, 255, 0.72)"
+        : "#000";
+      context.lineWidth = 1;
+      context.beginPath();
+      context.moveTo(source.x ?? 0, source.y ?? 0);
+      context.lineTo(target.x ?? 0, target.y ?? 0);
+      context.stroke();
+      context.restore();
     },
-    [requestRender],
+    [],
   );
 
-  const updateSimulationForces = useCallback(() => {
-    const simulation = simRef.current;
-    if (!simulation) return;
+  const linkPointerAreaPaint = useCallback(() => {}, []);
 
-    applySimulationForces(simulation, controlsRef.current);
-  }, []);
-
-  const nudgeSimulation = useCallback(
-    (target = 0.75, settleDelay = 150) => {
-      const simulation = simRef.current;
-      if (!simulation) return;
-
-      updateSimulationForces();
-      simulation.alphaTarget(target).restart();
-
-      clearTimeoutRef(settleTimeoutRef);
-      settleTimeoutRef.current = window.setTimeout(() => {
-        settleTimeoutRef.current = null;
-        simRef.current?.alphaTarget(0);
-      }, settleDelay);
-    },
-    [updateSimulationForces],
+  const linkVisibility = useCallback(
+    (link: PhotoGraphLink) =>
+      !controlsRef.current.hideConnections && getLinkValue(link) > 0,
+    [],
   );
 
-  const syncPendingRequestWidth = useCallback((node: SimNode) => {
+  const showPointerCursor = useCallback(
+    (obj: PhotoGraphNode | PhotoGraphLink | undefined) =>
+      Boolean(obj && "sourceUrl" in obj),
+    [],
+  );
+
+  const syncPendingRequestWidth = useCallback((node: PhotoGraphNode) => {
     const widths = pendingWidthsRef.current.get(node.id);
     node.requestedWidth =
       widths && widths.size ? Math.max(...widths) : undefined;
   }, []);
 
   const trackPendingWidth = useCallback(
-    (node: SimNode, width: number, pending: boolean) => {
+    (node: PhotoGraphNode, width: number, pending: boolean) => {
       const current =
         pendingWidthsRef.current.get(node.id) ?? new Set<number>();
 
@@ -1014,22 +948,21 @@ export default function PhotoGraphCanvas({
     [syncPendingRequestWidth],
   );
 
-  const refreshNodeAfterImageLoad = useCallback(() => {
-    const collideForce = simRef.current?.force("collide") as
-      | RectangleCollisionForce
-      | undefined;
-    collideForce?.initialize?.(nodesRef.current);
+  const refreshGraphAfterNodeMutation = useCallback(
+    (resortNodes = false) => {
+      if (resortNodes) {
+        sortNodesForRender(nodesRef.current);
+      }
 
-    if (introCompactionFrameRef.current === null) {
-      nudgeSimulation(0.08, 220);
-    }
-
-    requestRender();
-  }, [nudgeSimulation, requestRender]);
+      reinitializeCollisionForce();
+      fgRef.current?.d3ReheatSimulation();
+    },
+    [reinitializeCollisionForce],
+  );
 
   const applyLoadedImage = useCallback(
     (
-      node: SimNode,
+      node: PhotoGraphNode,
       image: HTMLImageElement,
       loadedWidth: number,
       onlyIfMissing = false,
@@ -1040,19 +973,21 @@ export default function PhotoGraphCanvas({
         return;
       }
 
+      let resortNodes = false;
       if (!node.hasKnownAspectRatio) {
         sizeNodeFromImage(node, image);
         node.hasKnownAspectRatio = true;
+        resortNodes = true;
       }
 
       node.loadedWidth = loadedWidth;
       imagesRef.current.set(node.id, image);
-      refreshNodeAfterImageLoad();
+      refreshGraphAfterNodeMutation(resortNodes);
     },
-    [refreshNodeAfterImageLoad],
+    [refreshGraphAfterNodeMutation],
   );
 
-  const logNodeImageError = useCallback((node: SimNode, error: unknown) => {
+  const logNodeImageError = useCallback((node: PhotoGraphNode, error: unknown) => {
     const errorKey = node.id;
     if (errorLogRef.current.has(errorKey)) return;
 
@@ -1061,13 +996,17 @@ export default function PhotoGraphCanvas({
   }, []);
 
   const getNodeTargetWidth = useCallback(
-    (node: SimNode) =>
-      computeTargetImageWidth(node, transformRef.current.k, dprRef.current),
+    (node: PhotoGraphNode) =>
+      computeTargetImageWidth(
+        node,
+        transformRef.current.k,
+        getCurrentDevicePixelRatio(),
+      ),
     [],
   );
 
   const loadNodeImage = useCallback(
-    async (node: SimNode, targetWidth: number, signal: AbortSignal) => {
+    async (node: PhotoGraphNode, targetWidth: number, signal: AbortSignal) => {
       if (signal.aborted) return;
       if (!shouldUpgradeWidth(node.loadedWidth, targetWidth)) return;
       if ((node.requestedWidth ?? 0) >= targetWidth) return;
@@ -1104,9 +1043,9 @@ export default function PhotoGraphCanvas({
 
   const runNodeQueue = useCallback(
     async (
-      nodes: SimNode[],
+      nodes: PhotoGraphNode[],
       signal: AbortSignal,
-      resolveWidth: (node: SimNode) => number,
+      resolveWidth: (node: PhotoGraphNode) => number,
     ) => {
       if (!nodes.length) return;
 
@@ -1132,29 +1071,43 @@ export default function PhotoGraphCanvas({
     [loadNodeImage],
   );
 
-  const getInitialLoadQueue = useCallback((nodes: SimNode[]) => {
-    const canvas = canvasRef.current;
-    if (!canvas) {
+  const isNodeVisible = useCallback(
+    (node: PhotoGraphNode) => {
+      const graph = fgRef.current;
+      if (!graph || !dimensions.width || !dimensions.height) {
+        return true;
+      }
+
+      const { x, y } = graph.graph2ScreenCoords(node.x ?? 0, node.y ?? 0);
+      const bufferX = dimensions.width * GRAPH_CONFIG.viewportBufferRatio;
+      const bufferY = dimensions.height * GRAPH_CONFIG.viewportBufferRatio;
+      const halfWidth = (node.w * transformRef.current.k) / 2;
+      const halfHeight = (node.h * transformRef.current.k) / 2;
+
+      return (
+        x + halfWidth >= -bufferX &&
+        x - halfWidth <= dimensions.width + bufferX &&
+        y + halfHeight >= -bufferY &&
+        y - halfHeight <= dimensions.height + bufferY
+      );
+    },
+    [dimensions.height, dimensions.width],
+  );
+
+  const getInitialLoadQueue = useCallback((nodes: PhotoGraphNode[]) => {
+    const graph = fgRef.current;
+    if (!graph || !dimensions.width || !dimensions.height) {
       return nodes;
     }
 
-    const viewportWidth = canvas.clientWidth;
-    const viewportHeight = canvas.clientHeight;
-    if (!viewportWidth || !viewportHeight) {
-      return nodes;
-    }
-
-    const transform = transformRef.current;
-    const viewportCenterX = (viewportWidth / 2 - transform.x) / transform.k;
-    const viewportCenterY = (viewportHeight / 2 - transform.y) / transform.k;
-    const visibleNodes: { node: SimNode; distance: number }[] = [];
-    const remainingNodes: SimNode[] = [];
+    const center = graph.centerAt();
+    const visibleNodes: { node: PhotoGraphNode; distance: number }[] = [];
+    const remainingNodes: PhotoGraphNode[] = [];
 
     for (const node of nodes) {
-      if (isNodeVisible(node, transform, viewportWidth, viewportHeight)) {
-        const deltaX = (node.x ?? 0) - viewportCenterX;
-        const deltaY = (node.y ?? 0) - viewportCenterY;
-
+      if (isNodeVisible(node)) {
+        const deltaX = (node.x ?? 0) - center.x;
+        const deltaY = (node.y ?? 0) - center.y;
         visibleNodes.push({
           node,
           distance: Math.hypot(deltaX, deltaY),
@@ -1171,31 +1124,20 @@ export default function PhotoGraphCanvas({
       ...visibleNodes.map(({ node }) => node),
       ...remainingNodes,
     ];
-  }, []);
+  }, [dimensions.height, dimensions.width, isNodeVisible]);
 
   const loadInitialImages = useCallback(
-    (nodes: SimNode[], signal: AbortSignal) =>
+    (nodes: PhotoGraphNode[], signal: AbortSignal) =>
       runNodeQueue(getInitialLoadQueue(nodes), signal, getNodeTargetWidth),
     [getInitialLoadQueue, getNodeTargetWidth, runNodeQueue],
   );
 
   const upgradeVisibleImages = useCallback(
     async (signal: AbortSignal) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const viewportWidth = canvas.clientWidth;
-      const viewportHeight = canvas.clientHeight;
-      if (!viewportWidth || !viewportHeight) return;
-
-      const transform = transformRef.current;
-      const visibleNodes = nodesRef.current.filter((node) =>
-        isNodeVisible(node, transform, viewportWidth, viewportHeight),
-      );
-
+      const visibleNodes = nodesRef.current.filter(isNodeVisible);
       await runNodeQueue(visibleNodes, signal, getNodeTargetWidth);
     },
-    [getNodeTargetWidth, runNodeQueue],
+    [getNodeTargetWidth, isNodeVisible, runNodeQueue],
   );
 
   const scheduleUpgradePass = useCallback(
@@ -1209,161 +1151,183 @@ export default function PhotoGraphCanvas({
     [upgradeVisibleImages],
   );
 
-  const bindInteractions = useCallback(
-    (canvas: HTMLCanvasElement, onZoomOrPan: () => void) => {
-      const selection = d3.select(canvas);
+  const runIntroCompaction = useCallback(
+    (layout: IntroLayout, signal: AbortSignal) => {
+      introCancelledRef.current = false;
+      introActiveRef.current = true;
+      applyNodePositions(nodesRef.current, layout.expanded);
 
-      const zoom = d3
-        .zoom<HTMLCanvasElement, unknown>()
-        .scaleExtent(GRAPH_CONFIG.zoomExtent)
-        .filter((event: CanvasInputEvent) => {
-          if (event.type === "wheel") return true;
-          if ("touches" in event && event.touches.length > 1) return true;
-          return !hitNode(event, canvas);
-        })
-        .on("zoom", (event: d3.D3ZoomEvent<HTMLCanvasElement, unknown>) => {
-          transformRef.current = event.transform;
-          requestRender();
-          onZoomOrPan();
+      const finish = () => {
+        cancelAnimationFrameRef(introFrameRef);
+        clearNodePins(nodesRef.current);
+        introActiveRef.current = false;
+      };
+
+      const step = (now: number, startedAt = now) => {
+        if (signal.aborted || introCancelledRef.current) {
+          finish();
+          return;
+        }
+
+        const progress = clamp(
+          (now - startedAt) / GRAPH_CONFIG.initialCompactionDurationMs,
+          0,
+          1,
+        );
+        const easedProgress = easeOutExponential(progress);
+
+        nodesRef.current.forEach((node) => {
+          const fromPosition = layout.expanded[node.id];
+          const toPosition = layout.compacted[node.id];
+          if (!fromPosition || !toPosition) return;
+
+          node.x =
+            fromPosition.x + (toPosition.x - fromPosition.x) * easedProgress;
+          node.y =
+            fromPosition.y + (toPosition.y - fromPosition.y) * easedProgress;
+          node.vx = 0;
+          node.vy = 0;
+          node.fx = node.x;
+          node.fy = node.y;
         });
 
-      zoomRef.current = zoom;
-      selection.call(zoom);
-
-      const drag = d3
-        .drag<HTMLCanvasElement, SimNode>()
-        .container(() => canvas)
-        .subject((event: CanvasInputEvent) => hitNode(event, canvas) ?? null)
-        .on(
-          "start",
-          (event: d3.D3DragEvent<HTMLCanvasElement, SimNode, SimNode>) => {
-            const simulation = simRef.current;
-            if (!simulation) return;
-
-            canvas.style.cursor = "grabbing";
-            if (!event.active) simulation.alphaTarget(0.35).restart();
-
-            const [mouseX, mouseY] = getWorldPoint(
-              event.sourceEvent as CanvasInputEvent,
-              canvas,
-            );
-            event.subject._grab = {
-              dx: (event.subject.x ?? 0) - mouseX,
-              dy: (event.subject.y ?? 0) - mouseY,
-            };
-            event.subject.fx = event.subject.x;
-            event.subject.fy = event.subject.y;
-          },
-        )
-        .on(
-          "drag",
-          (event: d3.D3DragEvent<HTMLCanvasElement, SimNode, SimNode>) => {
-            const [mouseX, mouseY] = getWorldPoint(
-              event.sourceEvent as CanvasInputEvent,
-              canvas,
-            );
-            const grab = event.subject._grab ?? { dx: 0, dy: 0 };
-
-            event.subject.fx = mouseX + grab.dx;
-            event.subject.fy = mouseY + grab.dy;
-            requestRender();
-          },
-        )
-        .on(
-          "end",
-          (event: d3.D3DragEvent<HTMLCanvasElement, SimNode, SimNode>) => {
-            canvas.style.cursor = "default";
-
-            if (!event.active) {
-              simRef.current?.alphaTarget(0);
-            }
-
-            event.subject.fx = null;
-            event.subject.fy = null;
-            delete event.subject._grab;
-          },
-        );
-
-      selection.call(drag);
-
-      const handleClick = (event: MouseEvent) => {
-        const node = hitNode(event, canvas);
-        if (node) {
-          openInspectTarget({ id: node.id, url: node.sourceUrl });
+        if (progress < 1) {
+          introFrameRef.current = window.requestAnimationFrame((nextNow) =>
+            step(nextNow, startedAt),
+          );
+          return;
         }
+
+        finish();
       };
 
-      const handleMouseMove = (event: MouseEvent) => {
-        canvas.style.cursor = hitNode(event, canvas) ? "pointer" : "default";
-      };
-
-      canvas.addEventListener("click", handleClick);
-      canvas.addEventListener("mousemove", handleMouseMove);
-
-      return () => {
-        canvas.removeEventListener("click", handleClick);
-        canvas.removeEventListener("mousemove", handleMouseMove);
-        selection.on(".zoom", null);
-        selection.on(".drag", null);
-      };
+      introFrameRef.current = window.requestAnimationFrame((now) => step(now));
     },
-    [hitNode, requestRender, getWorldPoint, openInspectTarget],
+    [],
   );
 
-  const activeDarkMode = forcedDarkMode ?? siteDarkMode;
+  const handleNodeDrag = useCallback(() => {
+    cancelIntroCompaction();
+    engineRunningRef.current = true;
+    setEngineStatus("settling");
+  }, [cancelIntroCompaction]);
+
+  const handleZoom = useCallback(
+    (transform: GraphTransform) => {
+      transformRef.current = transform;
+
+      if (introActiveRef.current && !applyingInitialViewRef.current) {
+        cancelIntroCompaction();
+      }
+
+      const abortController = initAbortRef.current;
+      if (abortController) {
+        scheduleUpgradePass(abortController.signal);
+      }
+    },
+    [cancelIntroCompaction, scheduleUpgradePass],
+  );
+
+  const handleZoomEnd = useCallback(
+    (transform: GraphTransform) => {
+      transformRef.current = transform;
+
+      const abortController = initAbortRef.current;
+      if (abortController) {
+        scheduleUpgradePass(abortController.signal, 0);
+      }
+    },
+    [scheduleUpgradePass],
+  );
+
+  const handleEngineTick = useCallback(() => {
+    if (engineRunningRef.current) return;
+
+    engineRunningRef.current = true;
+    setEngineStatus("settling");
+  }, []);
+
+  const handleEngineStop = useCallback(() => {
+    if (!engineRunningRef.current) return;
+
+    engineRunningRef.current = false;
+    setEngineStatus("settled");
+  }, []);
 
   useEffect(() => {
     darkModeRef.current = activeDarkMode;
-    requestRender();
-  }, [activeDarkMode, requestRender]);
+
+    if (nodesRef.current.length) {
+      fgRef.current?.d3ReheatSimulation();
+    }
+  }, [activeDarkMode]);
+
+  useEffect(() => {
+    controlsRef.current = controls;
+  }, [controls]);
+
+  useEffect(() => {
+    if (!nodesRef.current.length) return;
+
+    configureRuntimeForces();
+    fgRef.current?.d3ReheatSimulation();
+  }, [
+    controls.chargeMult,
+    controls.distMinMult,
+    controls.distMaxMult,
+    controls.hideConnections,
+    configureRuntimeForces,
+  ]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+
+      const width = Math.max(1, Math.round(entry.contentRect.width));
+      const height = Math.max(1, Math.round(entry.contentRect.height));
+
+      setDimensions((current) =>
+        current.width === width && current.height === height
+          ? current
+          : { width, height },
+      );
+    });
+
+    resizeObserver.observe(container);
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     let disposed = false;
     const abortController = new AbortController();
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    initAbortRef.current = abortController;
+    introLayoutRef.current = null;
+    introCancelledRef.current = false;
+    introActiveRef.current = false;
+    initialViewAppliedRef.current = false;
+    applyingInitialViewRef.current = false;
+    cancelAnimationFrameRef(introFrameRef);
+    clearTimeoutRef(upgradeTimeoutRef);
+    clearNodePins(nodesRef.current);
 
-    const scheduleCurrentUpgradePass = () => {
-      scheduleUpgradePass(abortController.signal);
-    };
+    imagesRef.current = new Map();
+    pendingWidthsRef.current = new Map();
+    errorLogRef.current = new Set();
+    nodesRef.current = [];
+    engineRunningRef.current = false;
+    setEngineStatus("settled");
+    setGraphData({ nodes: [], links: [] });
 
-    const resizeCanvas = () => {
-      dprRef.current = window.devicePixelRatio || 1;
-
-      const rect = canvas.getBoundingClientRect();
-      const cssWidth = Math.max(1, Math.round(rect.width));
-      const cssHeight = Math.max(1, Math.round(rect.height));
-
-      const nextWidth = Math.round(cssWidth * dprRef.current);
-      const nextHeight = Math.round(cssHeight * dprRef.current);
-
-      if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
-        canvas.width = nextWidth;
-        canvas.height = nextHeight;
-        requestRender();
-        scheduleCurrentUpgradePass();
-      }
-    };
-
-    const cleanupInteractions = bindInteractions(
-      canvas,
-      scheduleCurrentUpgradePass,
-    );
-
-    const resizeObserver = new ResizeObserver(resizeCanvas);
-    resizeObserver.observe(canvas);
-
-    resizeCanvas();
-
-    applyInitialZoom(canvas);
-
-    window.addEventListener("resize", resizeCanvas);
-
-    const resetRuntimeCollections = () => {
-      imagesRef.current = new Map();
-      pendingWidthsRef.current = new Map();
-      errorLogRef.current = new Set();
-    };
+    const graph = fgRef.current;
+    if (graph) {
+      configureRuntimeForces();
+    }
 
     const initializeGraph = async () => {
       const response = await fetch(graphUrl, {
@@ -1376,111 +1340,98 @@ export default function PhotoGraphCanvas({
       }
 
       const data = (await response.json()) as RawNode[];
-      if (disposed) return;
+      if (disposed || abortController.signal.aborted) return;
 
       const { nodes, links } = await buildGraph(data, imageBasePath);
-      resetRuntimeCollections();
-      nodesRef.current = nodes;
-      linksRef.current = links;
+      if (disposed || abortController.signal.aborted) return;
 
-      const simulation = createSimulation(
+      const prelayoutSimulation = createPrelayoutSimulation(
         nodes,
         links,
-        requestRender,
         INITIAL_LAYOUT_CONTROLS,
       );
-      simRef.current = simulation;
       warmupSimulationLayout(
-        simulation,
+        prelayoutSimulation,
         getInitialLayoutTickCount(nodes.length),
       );
-      const expandedPositions = captureNodePositions(nodes);
-      applySimulationForces(simulation, controlsRef.current);
+      const expanded = captureNodePositions(nodes);
+      applySimulationForces(prelayoutSimulation, controlsRef.current);
       warmupSimulationLayout(
-        simulation,
+        prelayoutSimulation,
         getInitialCompactionTickCount(nodes.length),
         GRAPH_CONFIG.initialCompactionAlpha,
       );
-      const compactedPositions = captureNodePositions(nodes);
-      applyNodePositions(nodes, expandedPositions);
-      applyConnectionVisibility(controlsRef.current.hideConnections);
-      requestRender();
-      void loadInitialImages(nodes, abortController.signal);
-      await animateInitialCompaction(
-        nodes,
-        expandedPositions,
-        compactedPositions,
-        abortController.signal,
-      );
-      if (abortController.signal.aborted) {
-        return;
+      const compacted = captureNodePositions(nodes);
+      applyNodePositions(nodes, expanded);
+      clearNodePins(nodes);
+      sortNodesForRender(nodes);
+
+      introLayoutRef.current = { expanded, compacted };
+      nodesRef.current = nodes;
+      setGraphData({ nodes, links });
+    };
+
+    void initializeGraph().catch((error: unknown) => {
+      if (!isAbortError(error)) {
+        console.error(error);
       }
-
-      simulation.alpha(GRAPH_CONFIG.initialRenderAlpha).restart();
-      requestRender();
-
-      scheduleUpgradePass(abortController.signal, 0);
-    };
-
-    const cleanupRuntime = () => {
-      window.removeEventListener("resize", resizeCanvas);
-      resizeObserver.disconnect();
-      cleanupInteractions();
-
-      cancelAnimationFrameRef(frameRef);
-      cancelAnimationFrameRef(introCompactionFrameRef);
-      clearTimeoutRef(settleTimeoutRef);
-      clearTimeoutRef(upgradeTimeoutRef);
-
-      simRef.current?.stop();
-      simRef.current = null;
-    };
-
-    const init = async () => {
-      try {
-        await initializeGraph();
-      } catch (error) {
-        if (!isAbortError(error)) {
-          console.error(error);
-        }
-      }
-    };
-
-    void init();
+    });
 
     return () => {
       disposed = true;
       abortController.abort();
-      cleanupRuntime();
+      if (initAbortRef.current === abortController) {
+        initAbortRef.current = null;
+      }
+      cancelAnimationFrameRef(introFrameRef);
+      clearTimeoutRef(upgradeTimeoutRef);
+      clearNodePins(nodesRef.current);
+      introActiveRef.current = false;
+      introCancelledRef.current = true;
     };
+  }, [configureRuntimeForces, graphUrl, imageBasePath]);
+
+  useEffect(() => {
+    if (!graphData.nodes.length || !dimensions.width || !dimensions.height) {
+      return;
+    }
+
+    const graph = fgRef.current;
+    const abortController = initAbortRef.current;
+    const introLayout = introLayoutRef.current;
+    if (!graph || !abortController || !introLayout) {
+      return;
+    }
+
+    configureRuntimeForces();
+    reinitializeCollisionForce();
+
+    if (initialViewAppliedRef.current) {
+      return;
+    }
+
+    initialViewAppliedRef.current = true;
+    applyingInitialViewRef.current = true;
+    graph.centerAt(0, 0, 0);
+    graph.zoom(GRAPH_CONFIG.initialZoom, 0);
+
+    window.requestAnimationFrame(() => {
+      applyingInitialViewRef.current = false;
+      if (abortController.signal.aborted) return;
+
+      void loadInitialImages(nodesRef.current, abortController.signal);
+      scheduleUpgradePass(abortController.signal, 0);
+      runIntroCompaction(introLayout, abortController.signal);
+    });
   }, [
-    graphUrl,
-    imageBasePath,
-    applyConnectionVisibility,
-    applyInitialZoom,
-    animateInitialCompaction,
-    bindInteractions,
+    configureRuntimeForces,
+    dimensions.height,
+    dimensions.width,
+    graphData.nodes.length,
     loadInitialImages,
-    requestRender,
+    reinitializeCollisionForce,
+    runIntroCompaction,
     scheduleUpgradePass,
-    updateSimulationForces,
-  ]);
-
-  useEffect(() => {
-    controlsRef.current = controls;
-  }, [controls]);
-
-  useEffect(() => {
-    applyConnectionVisibility(controls.hideConnections);
-  }, [controls.hideConnections, applyConnectionVisibility]);
-
-  useEffect(() => {
-    nudgeSimulation();
-  }, [
-    controls.chargeMult,
-    controls.distMinMult,
-    controls.distMaxMult,
-    nudgeSimulation,
   ]);
 
   useEffect(() => {
@@ -1566,12 +1517,11 @@ export default function PhotoGraphCanvas({
     };
   }, [inspectOverlayOpen, inspectTarget]);
 
-  // TODO: make this fade between colours instead of hard switching.
-  const alphaColorClass =
-    alpha < 0.01
+  const engineStatusClass =
+    engineStatus === "settled"
       ? "text-emerald-700 dark:text-emerald-300"
       : "text-red-700 dark:text-red-300";
-  const isFullPageRoute = usePathname() === PROJECT_ROUTES.photoGraph;
+
   return (
     <div className={`static h-full w-full transition-colors ${photoGraphShellClass}`}>
       <div
@@ -1615,9 +1565,9 @@ export default function PhotoGraphCanvas({
                 <X className="h-4 w-4" />
               </OverlayControlButton>
               <div className="flex-1 text-center">
-                <p className={`mx-2 ${overlayTextClass}`}>Simulation Alpha</p>
-                <p className={`${overlayTextClass} ${alphaColorClass}`}>
-                  {alpha.toFixed(3)}
+                <p className={`mx-2 ${overlayTextClass}`}>Simulation Status</p>
+                <p className={`${overlayTextClass} ${engineStatusClass}`}>
+                  {engineStatus === "settled" ? "Settled" : "Settling"}
                 </p>
               </div>
             </div>
@@ -1656,10 +1606,42 @@ export default function PhotoGraphCanvas({
           </div>
         )}
 
-        <canvas
-          ref={canvasRef}
-          className="relative m-0 block h-full w-full bg-white [image-rendering:pixelated] dark:bg-black"
-        />
+        <div
+          ref={containerRef}
+          className="relative h-full w-full bg-white [image-rendering:pixelated] dark:bg-black [&_canvas]:[image-rendering:pixelated]"
+        >
+          {dimensions.width > 0 && dimensions.height > 0 && (
+            <ForceGraph2D
+              ref={fgRef}
+              graphData={graphData}
+              width={dimensions.width}
+              height={dimensions.height}
+              minZoom={GRAPH_CONFIG.zoomExtent[0]}
+              maxZoom={GRAPH_CONFIG.zoomExtent[1]}
+              d3AlphaMin={GRAPH_CONFIG.alphaMin}
+              cooldownTime={Number.POSITIVE_INFINITY}
+              cooldownTicks={Number.POSITIVE_INFINITY}
+              nodeCanvasObjectMode={nodeCanvasObjectMode}
+              nodeCanvasObject={nodeCanvasObject}
+              nodePointerAreaPaint={nodePointerAreaPaint}
+              linkCanvasObjectMode={linkCanvasObjectMode}
+              linkCanvasObject={linkCanvasObject}
+              linkPointerAreaPaint={linkPointerAreaPaint}
+              linkVisibility={linkVisibility}
+              showPointerCursor={showPointerCursor}
+              onNodeClick={(node: PhotoGraphNode) =>
+                openInspectTarget({ id: node.id, url: node.sourceUrl })
+              }
+              onNodeDrag={handleNodeDrag}
+              onNodeDragEnd={handleNodeDrag}
+              onZoom={handleZoom}
+              onZoomEnd={handleZoomEnd}
+              onEngineTick={handleEngineTick}
+              onEngineStop={handleEngineStop}
+              enableNodeDrag
+            />
+          )}
+        </div>
       </div>
 
       {inspectTarget && (
