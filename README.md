@@ -25,11 +25,11 @@ If your Coolify Postgres container is internal-only, `photo-graph:doctor` will w
 
 ## Self-hosted render cache
 
-Self-hosted Supabase image transforms need a real edge cache in front of `/storage/v1/render/image/public/` if you want hard refreshes to reuse generated images. The repo includes a deployment bundle in [deploy/supabase-image-cache](./deploy/supabase-image-cache) for a Redis-backed HTTP cache sidecar plus a higher-priority Traefik router.
+Self-hosted Supabase image transforms need a real edge cache in front of `/storage/v1/render/image/public/` if you want hard refreshes to reuse generated images. The repo includes a deployment bundle in [deploy/supabase-image-cache](./deploy/supabase-image-cache) for a standalone Redis-backed HTTP cache sidecar plus a higher-priority Traefik router.
 
 Files:
 
-- [docker-compose.yml](./deploy/supabase-image-cache/docker-compose.yml) defines the `supabase-image-cache` service, joins it to the external `coolify` network plus your Supabase internal network, and routes only the render path through Traefik.
+- [docker-compose.yml](./deploy/supabase-image-cache/docker-compose.yml) defines a standalone `supabase-image-cache` service, joins it to the external `coolify` network plus your Supabase internal network, and routes only the render path through Traefik.
 - [server.mjs](./deploy/supabase-image-cache/server.mjs) proxies to the internal Kong service and stores rendered image responses in Redis by full request URI plus a normalized output-format bucket from `Accept`.
 - [.env.example](./deploy/supabase-image-cache/.env.example) lists the required deployment variables.
 
@@ -37,7 +37,7 @@ Deployment notes:
 
 1. Set `SUPABASE_PUBLIC_HOST` to the existing public Supabase hostname, `SUPABASE_KONG_UPSTREAM` to the internal Kong URL, `SUPABASE_INTERNAL_NETWORK` to the Docker network shared by the Supabase stack, and `SUPABASE_IMAGE_CACHE_REDIS_URL` to the internal Redis URL from Coolify.
 2. If you need to discover the internal network name on the server, use `docker network ls` and find the network attached to the Supabase containers.
-3. In Coolify, enable `Connect to Predefined Network` for the cache stack so the sidecar can reach the managed Redis database on the shared `coolify` network while still talking to Supabase on the stack network.
+3. Deploy the cache as its own Compose stack instead of patching the managed Supabase service directly. In Coolify, enable `Connect to Predefined Network` for the cache stack so the sidecar can reach the managed Redis database on the shared `coolify` network while still talking to Supabase on the stack network.
 4. Keep the router priority above the normal Supabase router so only `/storage/v1/render/image/public/` is intercepted. All other Supabase traffic should continue to hit the existing service directly.
 5. Coolify may rewrite the live `traefik.docker.network` label to the stack network during deployment. That live rewrite is expected and does not mean the stack is misconfigured.
 6. Configure the dedicated Redis cache with a bounded in-memory profile, for example:

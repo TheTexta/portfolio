@@ -10,7 +10,7 @@ export const CANVAS_IMAGE_WIDTHS = [
   ...new Set([...CANVAS_IMAGE_SIZES, ...CANVAS_IMAGE_DEVICE_SIZES]),
 ].sort((left, right) => left - right);
 
-export const CANVAS_IMAGE_QUALITY = 75;
+export const CANVAS_IMAGE_QUALITY = 60;
 
 export const PHOTO_GRAPH_IMAGE_WIDTHS = [
   48, 64, 80, 96, 112, 128, 144, 160, 192, 224, 256, 288, 320, 384, 448,

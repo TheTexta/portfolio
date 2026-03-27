@@ -1,8 +1,6 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { TransformOptions } from "@supabase/storage-js";
 
 const DEFAULT_PHOTO_GRAPH_BUCKET = "dextery.dev";
-let publicStorageClient: SupabaseClient | null = null;
 
 function readRequiredEnv(name: string) {
   const value = process.env[name];
@@ -18,28 +16,90 @@ function trimTrailingSlash(value: string) {
   return value.replace(/\/+$/, "");
 }
 
-function getPublicStorageClient() {
-  if (publicStorageClient) {
-    return publicStorageClient;
+function readRequiredPublicEnv(
+  value: string | undefined,
+  name: "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+) {
+  if (!value) {
+    throw new Error(`Missing required Supabase env var: ${name}`);
   }
 
-  publicStorageClient = createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
-    auth: {
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-      persistSession: false,
-    },
-  });
+  return value;
+}
 
-  return publicStorageClient;
+function normalizeObjectPath(value: string) {
+  return value.replace(/^\/|\/$/g, "").replace(/\/+/g, "/");
+}
+
+function encodeStoragePath(value: string) {
+  return normalizeObjectPath(value)
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+}
+
+function appendTransformOptions(
+  searchParams: URLSearchParams,
+  options: TransformOptions | undefined,
+) {
+  if (!options) {
+    return;
+  }
+
+  if (options.width) {
+    searchParams.set("width", String(options.width));
+  }
+
+  if (options.height) {
+    searchParams.set("height", String(options.height));
+  }
+
+  if (options.resize) {
+    searchParams.set("resize", options.resize);
+  }
+
+  if (options.format) {
+    searchParams.set("format", options.format);
+  }
+
+  if (options.quality) {
+    searchParams.set("quality", String(options.quality));
+  }
+}
+
+function buildSupabaseStorageUrl(
+  route: "object" | "render/image",
+  objectPath: string,
+  bucket: string,
+  options?: TransformOptions,
+) {
+  const encodedBucket = encodeURIComponent(bucket);
+  const encodedObjectPath = encodeStoragePath(objectPath);
+  const url = new URL(
+    `${route}/public/${encodedBucket}/${encodedObjectPath}`,
+    `${getSupabaseUrl()}/storage/v1/`,
+  );
+
+  appendTransformOptions(url.searchParams, options);
+
+  return url.toString();
 }
 
 export function getSupabaseUrl() {
-  return trimTrailingSlash(readRequiredEnv("NEXT_PUBLIC_SUPABASE_URL"));
+  // Next only inlines NEXT_PUBLIC_* vars for static property access in client bundles.
+  return trimTrailingSlash(
+    readRequiredPublicEnv(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      "NEXT_PUBLIC_SUPABASE_URL",
+    ),
+  );
 }
 
 export function getSupabaseAnonKey() {
-  return readRequiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  return readRequiredPublicEnv(
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  );
 }
 
 export function getSupabaseServiceRoleKey() {
@@ -62,8 +122,7 @@ export function buildSupabaseStoragePublicUrl(
   objectPath: string,
   bucket = getPhotoGraphStorageBucket(),
 ) {
-  return getPublicStorageClient().storage.from(bucket).getPublicUrl(objectPath)
-    .data.publicUrl;
+  return buildSupabaseStorageUrl("object", objectPath, bucket);
 }
 
 export function buildSupabaseStorageRenderUrl(
@@ -71,9 +130,5 @@ export function buildSupabaseStorageRenderUrl(
   options: TransformOptions,
   bucket = getPhotoGraphStorageBucket(),
 ) {
-  return getPublicStorageClient()
-    .storage.from(bucket)
-    .getPublicUrl(objectPath, {
-      transform: options,
-    }).data.publicUrl;
+  return buildSupabaseStorageUrl("render/image", objectPath, bucket, options);
 }
