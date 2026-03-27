@@ -9,7 +9,6 @@ import {
   useRef,
   useState,
 } from "react";
-import NextImage from "next/image";
 import { useRouter } from "next/navigation";
 
 import {
@@ -21,6 +20,8 @@ import {
   MIN_CORRELATION,
   computeCorrelation,
 } from "@/lib/photo-graph/correlation";
+import { PHOTO_GRAPH_CACHE_CONTROL_SECONDS } from "@/lib/photo-graph/config";
+import { getBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { featureFromRgb, rgbToHex } from "@/lib/photo-graph/feature-extraction";
 import type {
   GraphFeature,
@@ -36,9 +37,10 @@ type UploadApiResponse = {
 
 type UploadUrlResponse = {
   ok: boolean;
+  bucket: string;
   objectPath: string;
-  uploadUrl: string;
-  requiredHeaders?: Record<string, string>;
+  token: string;
+  signedUrl: string;
   expiresInSeconds: number;
   error?: string;
 };
@@ -56,7 +58,7 @@ type AdminGraphNode = {
 };
 
 type AdminGraphResponse = {
-  source: "runtime" | "static";
+  source: "database" | "static";
   nodes: AdminGraphNode[];
   error?: string;
 };
@@ -549,6 +551,7 @@ export default function PhotoGraphUploadClient() {
       return;
     }
 
+    const supabase = getBrowserSupabaseClient();
     correlationProgressRef.current = -1;
     setIsProcessing(true);
     setErrorMessage(null);
@@ -599,22 +602,24 @@ export default function PhotoGraphUploadClient() {
         }
 
         setStatusWithLog(
-          `Uploading directly to Firebase (${index + 1}/${files.length}): ${file.name}`,
+          `Uploading directly to Supabase (${index + 1}/${files.length}): ${file.name}`,
         );
 
-        const directUploadResponse = await fetch(uploadUrlBody.uploadUrl, {
-          method: "PUT",
-          headers: uploadUrlBody.requiredHeaders ?? {
-            "content-type": file.type,
-          },
-          body: file,
-        });
+        const { error: uploadError } = await supabase.storage
+          .from(uploadUrlBody.bucket)
+          .uploadToSignedUrl(
+            uploadUrlBody.objectPath,
+            uploadUrlBody.token,
+            file,
+            {
+              cacheControl: PHOTO_GRAPH_CACHE_CONTROL_SECONDS,
+              contentType: file.type,
+            },
+          );
 
-        if (!directUploadResponse.ok) {
-          const failureText = await directUploadResponse.text();
+        if (uploadError) {
           throw new Error(
-            failureText.trim() ||
-              `Direct upload failed for ${file.name} (status ${directUploadResponse.status}).`,
+            uploadError.message || `Direct upload failed for ${file.name}.`,
           );
         }
 
@@ -738,15 +743,12 @@ export default function PhotoGraphUploadClient() {
         <div>
           <h1 className="text-2xl font-semibold">Photo Graph Upload Admin</h1>
           <p className="mt-1 text-sm opacity-70">
-            Batch upload images directly to Firebase, then your browser
+            Batch upload images directly to Supabase, then your browser
             generates node correlations and syncs updates.
           </p>
         </div>
 
-        <OverlayControlButton
-          onClick={handleLogout}
-          layout="action"
-        >
+        <OverlayControlButton onClick={handleLogout} layout="action">
           Log Out
         </OverlayControlButton>
       </div>
@@ -758,9 +760,7 @@ export default function PhotoGraphUploadClient() {
       >
         <p className="text-sm">Drag and drop images here</p>
         <p className="my-2 text-xs opacity-70">or</p>
-        <OverlayControlLabel
-          layout="action"
-        >
+        <OverlayControlLabel layout="action">
           Select Files
           <input
             type="file"
@@ -818,10 +818,7 @@ export default function PhotoGraphUploadClient() {
           {verbosePanelOpen ? "Hide Verbose Panel" : "Show Verbose Panel"}
         </OverlayControlButton>
 
-        <OverlayControlButton
-          onClick={clearVerboseLogs}
-          layout="action"
-        >
+        <OverlayControlButton onClick={clearVerboseLogs} layout="action">
           Clear Logs
         </OverlayControlButton>
       </div>
@@ -884,12 +881,12 @@ export default function PhotoGraphUploadClient() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-start gap-2">
                         {node.previewUrl ? (
-                          <NextImage
+                          // eslint-disable-next-line @next/next/no-img-element -- This preview intentionally uses the Supabase render URL directly to bypass Vercel image transforms.
+                          <img
                             src={node.previewUrl}
                             alt={`Node ${node.id}`}
                             width={44}
                             height={44}
-                            sizes="44px"
                             className="h-11 w-11 rounded object-cover"
                           />
                         ) : (

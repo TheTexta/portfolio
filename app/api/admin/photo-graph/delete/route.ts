@@ -7,11 +7,16 @@ import {
   loadGraphWithFallback,
   writeRuntimeGraph,
 } from "@/lib/photo-graph/graph-store";
-import { getFirebaseAdminBucket } from "@/lib/server/firebase-admin";
+import {
+  deletePhotoGraphNodeRecord,
+  upsertPhotoGraphNodes,
+} from "@/lib/photo-graph/database";
 import {
   ADMIN_SESSION_COOKIE_NAME,
   isValidAdminSessionToken,
 } from "@/lib/server/admin-session";
+import { getServiceRoleSupabase } from "@/lib/server/supabase";
+import { getPhotoGraphStorageBucket } from "@/lib/supabase/config";
 
 type DeletePhotoPayload = {
   nodeId?: string;
@@ -75,13 +80,19 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  await writeRuntimeGraph(nodes);
+  if (loaded.source === "static") {
+    await writeRuntimeGraph(nodes);
+  } else {
+    await deletePhotoGraphNodeRecord(nodeId);
+    await upsertPhotoGraphNodes(nodes);
+  }
 
   if (deletedNode.storagePath) {
     try {
-      await getFirebaseAdminBucket().file(deletedNode.storagePath).delete({
-        ignoreNotFound: true,
-      });
+      const supabase = getServiceRoleSupabase();
+      await supabase.storage
+        .from(getPhotoGraphStorageBucket())
+        .remove([deletedNode.storagePath]);
     } catch {
       // Ignore storage deletion failures so metadata deletion still succeeds.
     }

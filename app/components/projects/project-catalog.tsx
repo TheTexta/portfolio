@@ -35,14 +35,16 @@ export const projectCatalog: ProjectDefinition[] = [
         ariaLabel: "Open Grailed Plus on Chrome Web Store",
       },
     ],
-    renderPreview: (darkMode) => <GrailedPlusPreview forcedDarkMode={darkMode} />,
+    renderPreview: (darkMode) => (
+      <GrailedPlusPreview forcedDarkMode={darkMode} />
+    ),
   },
   {
     id: "photo-graph",
     title: "Photo Node-Gallery",
     description:
       "Interactive force-directed gallery that uses color-similarity mapping to cluster and link photographs within a dynamic node graph.",
-    tags: ["Next.js", "D3", "Firebase"],
+    tags: ["Next.js", "D3", "Supabase"],
     renderPreview: (darkMode) => <PhotoGraphCanvas forcedDarkMode={darkMode} />,
   },
   {

@@ -6,6 +6,7 @@ import {
   loadGraphWithFallback,
   writeRuntimeGraph,
 } from "@/lib/photo-graph/graph-store";
+import { replacePhotoGraphEdges } from "@/lib/photo-graph/database";
 import {
   ADMIN_SESSION_COOKIE_NAME,
   isValidAdminSessionToken,
@@ -134,7 +135,11 @@ export async function POST(request: NextRequest) {
   }
 
   if (appliedCount > 0) {
-    await writeRuntimeGraph(nodes);
+    if (loaded.source === "static") {
+      await writeRuntimeGraph(nodes);
+    } else {
+      await replacePhotoGraphEdges(nodes);
+    }
   }
 
   return NextResponse.json({

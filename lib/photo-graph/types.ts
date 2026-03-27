@@ -22,20 +22,35 @@ export type GraphNode = {
   url?: string;
 };
 
-export type GraphLoadSource = "runtime" | "static";
-
-export type PhotoGraphJobStatus = "queued" | "running" | "completed" | "failed";
-
-export type PhotoGraphJobDocument = {
-  status: PhotoGraphJobStatus;
-  newNodeIds: string[];
-  progress: number;
-  totalComparisons: number;
-  doneComparisons: number;
-  pairCursor: number;
-  createdAtMs: number;
-  updatedAtMs: number;
-  errorMessage?: string;
-};
+export type GraphLoadSource = "database" | "static";
 
 export type PublicGraphNode = Omit<GraphNode, "feature">;
+
+export type PhotoGraphNodeRow = {
+  id: number;
+  scale: number;
+  colour: string;
+  storage_path: string | null;
+  external_url: string | null;
+  feature_rgb_r: number | null;
+  feature_rgb_g: number | null;
+  feature_rgb_b: number | null;
+  feature_lab_l: number | null;
+  feature_lab_a: number | null;
+  feature_lab_b: number | null;
+  feature_hue: number | null;
+  feature_long_side: number | null;
+  image_width: number | null;
+  image_height: number | null;
+  image_aspect_ratio: number | null;
+  created_at?: string;
+  updated_at: string;
+};
+
+export type PhotoGraphEdgeRow = {
+  left_node_id: number;
+  right_node_id: number;
+  correlation: number;
+  created_at?: string;
+  updated_at: string;
+};

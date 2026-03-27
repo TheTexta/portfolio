@@ -4,23 +4,38 @@ import {
   CANVAS_IMAGE_SIZES,
 } from "./lib/image-optimization";
 
+function supabaseImageRemotePattern() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (!supabaseUrl) {
+    return [];
+  }
+
+  const hostname = new URL(supabaseUrl).hostname;
+
+  return [
+    {
+      protocol: "https" as const,
+      hostname,
+      pathname: "/storage/v1/object/public/**",
+    },
+    {
+      protocol: "https" as const,
+      hostname,
+      pathname: "/storage/v1/render/image/public/**",
+    },
+  ];
+}
+
+const supabasePatterns = supabaseImageRemotePattern();
+
 const nextConfig: NextConfig = {
   images: {
     deviceSizes: CANVAS_IMAGE_DEVICE_SIZES,
     imageSizes: CANVAS_IMAGE_SIZES,
     qualities: [72, 75],
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "firebasestorage.googleapis.com",
-        pathname:
-          "/v0/b/portfolio-site-firebase-41fab.firebasestorage.app/o/**",
-      },
-      {
-        protocol: "https",
-        hostname: "storage.googleapis.com",
-        pathname: "/portfolio-site-firebase-41fab.firebasestorage.app/**",
-      },
+      ...supabasePatterns,
       {
         protocol: "https",
         hostname: "i.scdn.co",
