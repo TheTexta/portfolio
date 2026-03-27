@@ -1,19 +1,19 @@
 import { randomUUID } from "node:crypto";
-import path from "node:path";
 
 import { NextRequest, NextResponse } from "next/server";
 
-import { photoGraphImageBasePath } from "@/lib/photo-graph/graph-store";
-import { getFirebaseAdminBucket } from "@/lib/server/firebase-admin";
+import { buildPendingPhotoGraphStoragePath } from "@/lib/photo-graph/config";
 import {
   ADMIN_SESSION_COOKIE_NAME,
   isValidAdminSessionToken,
 } from "@/lib/server/admin-session";
+import { getServiceRoleSupabase } from "@/lib/server/supabase";
+import { getPhotoGraphStorageBucket } from "@/lib/supabase/config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const SIGNED_URL_TTL_MS = 15 * 60 * 1000;
+const SIGNED_URL_TTL_SECONDS = 2 * 60 * 60;
 const ALLOWED_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 
 type UploadUrlRequest = {
@@ -31,9 +31,7 @@ function extensionForUpload(filename: string | undefined, contentType: string) {
   if (contentType === "image/jpeg") return "jpg";
   if (contentType === "image/webp") return "webp";
 
-  const extension = filename
-    ? path.extname(filename).replace(".", "").toLowerCase()
-    : "";
+  const extension = filename?.split(".").pop()?.toLowerCase() ?? "";
 
   if (!extension) return "png";
   if (extension === "jpeg") return "jpg";
@@ -66,24 +64,33 @@ export async function POST(request: NextRequest) {
   }
 
   const extension = extensionForUpload(body.filename, contentType);
-  const objectPath = `${photoGraphImageBasePath().replace(/\/$/, "")}/${randomUUID()}.${extension}`;
+  const objectPath = buildPendingPhotoGraphStoragePath(
+    randomUUID(),
+    extension,
+  );
+  const bucket = getPhotoGraphStorageBucket();
+  const supabase = getServiceRoleSupabase();
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUploadUrl(objectPath, {
+      upsert: false,
+    });
 
-  const file = getFirebaseAdminBucket().file(objectPath);
-
-  const [uploadUrl] = await file.getSignedUrl({
-    version: "v4",
-    action: "write",
-    expires: Date.now() + SIGNED_URL_TTL_MS,
-    contentType,
-  });
+  if (error || !data) {
+    return NextResponse.json(
+      {
+        error: error?.message ?? "Failed to create signed upload URL.",
+      },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({
     ok: true,
+    bucket,
     objectPath,
-    uploadUrl,
-    requiredHeaders: {
-      "content-type": contentType,
-    },
-    expiresInSeconds: Math.floor(SIGNED_URL_TTL_MS / 1000),
+    token: data.token,
+    signedUrl: data.signedUrl,
+    expiresInSeconds: SIGNED_URL_TTL_SECONDS,
   });
 }

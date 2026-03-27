@@ -14,7 +14,11 @@ import {
   useState,
 } from "react";
 import * as d3 from "d3";
-import type { ForceGraphMethods, LinkObject, NodeObject } from "react-force-graph-2d";
+import type {
+  ForceGraphMethods,
+  LinkObject,
+  NodeObject,
+} from "react-force-graph-2d";
 
 import { Download, Menu, X } from "lucide-react";
 
@@ -30,9 +34,7 @@ import {
   OverlayControlButton,
 } from "@/app/components/ui/overlay-control-button";
 import OverlayNavBar from "@/app/components/ui/overlay-nav-bar";
-import { storage } from "@/lib/firebase/client";
 import type { GraphImageDimensions } from "@/lib/photo-graph/types";
-import { getDownloadURL, ref } from "firebase/storage";
 
 type RawNode = {
   id?: string | number;
@@ -54,6 +56,7 @@ type NodeDrawBounds = {
 type PhotoGraphNodeBase = {
   id: string;
   colour?: string;
+  storagePath?: string;
   sourceUrl: string;
   baseSize: number;
   aspectRatio: number;
@@ -92,17 +95,10 @@ type RectangleCollisionForce = {
   initialize: (nodes: PhotoGraphNode[] | ArrayLike<PhotoGraphNode>) => void;
 };
 
-type TickableSimulation = d3.Simulation<PhotoGraphNode, PhotoGraphLink> & {
-  tick: (iterations?: number) => TickableSimulation;
-};
-
-type NodePositionSnapshot = Record<string, { x: number; y: number }>;
-
 type GraphTransform = { k: number; x: number; y: number };
 
 type PhotoGraphCanvasProps = {
   graphUrl?: string;
-  imageBasePath?: string;
   forcedDarkMode?: boolean;
 };
 
@@ -133,17 +129,10 @@ type InspectMetadata = {
   filename: string;
 };
 
-type IntroLayout = {
-  expanded: NodePositionSnapshot;
-  compacted: NodePositionSnapshot;
-};
-
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
   ssr: false,
   loading: () => <div className="h-full w-full bg-white dark:bg-black" />,
 }) as unknown as (props: Record<string, unknown>) => ReactElement;
-
-const DEFAULT_IMAGE_BASE_PATH = "photography-images";
 
 const GRAPH_CONFIG = {
   baseBox: 220,
@@ -166,14 +155,12 @@ const GRAPH_CONFIG = {
   charge: -420,
   zoomExtent: [0.25, 4] as [number, number],
   initialZoom: 0.8,
-  initialLayoutTicksMin: 90,
-  initialLayoutTicksMax: 220,
-  initialLayoutTicksPerSqrtNode: 18,
-  initialCompactionAlpha: 0.6,
-  initialCompactionTickFactor: 0.7,
-  initialCompactionDurationMs: 1500,
   imageConcurrency: 5,
+  initialImageMaxWidth: 192,
+  initialVisibleImageCount: 36,
+  initialImageFallbackCount: 12,
   upgradeDebounceMs: 120,
+  zoomUpgradeIdleMs: 180,
   viewportBufferRatio: 0.15,
   alphaMin: 0.001,
   xForceStrength: 0.03,
@@ -190,17 +177,12 @@ const sliderClass =
   "range-sm h-1 rounded-full border-none bg-black/15 accent-ink dark:bg-white/35";
 const INSPECT_OVERLAY_TRANSITION_MS = 220;
 const DEFAULT_CHARGE_MULT = 1;
-const INITIAL_DIST_MAX_MULT = 5;
 const DEFAULT_DIST_MAX_MULT = 1;
 const DEFAULT_GRAPH_CONTROLS: GraphControls = {
   hideConnections: false,
   chargeMult: DEFAULT_CHARGE_MULT,
   distMinMult: 1,
   distMaxMult: DEFAULT_DIST_MAX_MULT,
-};
-const INITIAL_LAYOUT_CONTROLS: GraphControls = {
-  ...DEFAULT_GRAPH_CONTROLS,
-  distMaxMult: INITIAL_DIST_MAX_MULT,
 };
 const GRAPH_CONTROL_SLIDERS: readonly GraphSliderConfig[] = [
   { key: "chargeMult", label: "Charge Mult", min: 0, max: 5 },
@@ -212,23 +194,8 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-function easeOutExponential(progress: number, decay = 6) {
-  if (progress <= 0) return 0;
-  if (progress >= 1) return 1;
-
-  const normalizedDecay = 1 - Math.exp(-decay);
-  return (1 - Math.exp(-decay * progress)) / normalizedDecay;
-}
-
 function isAbortError(error: unknown) {
   return error instanceof DOMException && error.name === "AbortError";
-}
-
-function cancelAnimationFrameRef(frameRef: { current: number | null }) {
-  if (frameRef.current === null) return;
-
-  window.cancelAnimationFrame(frameRef.current);
-  frameRef.current = null;
 }
 
 function clearTimeoutRef(timeoutRef: { current: number | null }) {
@@ -313,15 +280,10 @@ function sizeNodeFromAspectRatio(node: PhotoGraphNode) {
   node.renderArea = Math.max(1, width * height);
 }
 
-async function resolveNodeSourceUrl(
-  node: RawNode,
-  id: string,
-  imageBasePath: string,
-) {
+async function resolveNodeSourceUrl(node: RawNode, id: string) {
   if (node.url) return node.url;
-  const storagePath =
-    node.storagePath ?? `${imageBasePath.replace(/\/$/, "")}/${id}.png`;
-  return getDownloadURL(ref(storage, storagePath));
+
+  throw new Error(`Missing source URL for photo graph node ${id}.`);
 }
 
 function sizeNodeFromImage(node: PhotoGraphNode, image: HTMLImageElement) {
@@ -334,7 +296,7 @@ function sizeNodeFromImage(node: PhotoGraphNode, image: HTMLImageElement) {
   sizeNodeFromAspectRatio(node);
 }
 
-async function buildGraph(data: RawNode[], imageBasePath: string) {
+async function buildGraph(data: RawNode[]) {
   const nodes: PhotoGraphNode[] = await Promise.all(
     data.map(async (entry, index) => {
       const id = resolveNodeId(entry, index);
@@ -347,7 +309,8 @@ async function buildGraph(data: RawNode[], imageBasePath: string) {
       const node: PhotoGraphNode = {
         id,
         colour: entry.colour,
-        sourceUrl: await resolveNodeSourceUrl(entry, id, imageBasePath),
+        storagePath: entry.storagePath,
+        sourceUrl: await resolveNodeSourceUrl(entry, id),
         baseSize: box,
         aspectRatio,
         hasKnownAspectRatio: Boolean(entry.dimensions),
@@ -505,109 +468,6 @@ function computeLinkStrength(link: PhotoGraphLink) {
   );
 }
 
-function applySimulationForces(
-  simulation: d3.Simulation<PhotoGraphNode, PhotoGraphLink>,
-  controls: GraphControls,
-) {
-  const minDistance = GRAPH_CONFIG.distMin * controls.distMinMult;
-  const maxDistance = GRAPH_CONFIG.distMax * controls.distMaxMult;
-
-  const linkForce = simulation.force("link") as
-    | d3.ForceLink<PhotoGraphNode, PhotoGraphLink>
-    | undefined;
-  if (linkForce) {
-    linkForce.distance((link) =>
-      computeLinkDistance(link, minDistance, maxDistance),
-    );
-    linkForce.strength((link) => computeLinkStrength(link));
-  }
-
-  const chargeForce = simulation.force("charge") as
-    | d3.ForceManyBody<PhotoGraphNode>
-    | undefined;
-  chargeForce?.strength(controls.chargeMult * GRAPH_CONFIG.charge);
-}
-
-function createPrelayoutSimulation(
-  nodes: PhotoGraphNode[],
-  links: PhotoGraphLink[],
-  controls: GraphControls,
-) {
-  const simulation = d3
-    .forceSimulation<PhotoGraphNode>(nodes)
-    .force(
-      "link",
-      d3.forceLink<PhotoGraphNode, PhotoGraphLink>(links).id((node) => node.id),
-    )
-    .force("charge", d3.forceManyBody<PhotoGraphNode>())
-    .force("x", d3.forceX<PhotoGraphNode>().strength(GRAPH_CONFIG.xForceStrength))
-    .force("y", d3.forceY<PhotoGraphNode>().strength(GRAPH_CONFIG.yForceStrength))
-    .force("collide", createRectangleCollideForce(GRAPH_CONFIG.collidePad));
-
-  applySimulationForces(simulation, controls);
-  return simulation;
-}
-
-function getInitialLayoutTickCount(nodeCount: number) {
-  return clamp(
-    Math.round(
-      Math.sqrt(Math.max(1, nodeCount)) *
-        GRAPH_CONFIG.initialLayoutTicksPerSqrtNode,
-    ),
-    GRAPH_CONFIG.initialLayoutTicksMin,
-    GRAPH_CONFIG.initialLayoutTicksMax,
-  );
-}
-
-function getInitialCompactionTickCount(nodeCount: number) {
-  return Math.max(
-    1,
-    Math.round(
-      getInitialLayoutTickCount(nodeCount) *
-        GRAPH_CONFIG.initialCompactionTickFactor,
-    ),
-  );
-}
-
-function warmupSimulationLayout(
-  simulation: d3.Simulation<PhotoGraphNode, PhotoGraphLink>,
-  tickCount: number,
-  alpha = 1,
-) {
-  const tickableSimulation = simulation as TickableSimulation;
-  tickableSimulation.stop();
-  tickableSimulation.alpha(alpha);
-  tickableSimulation.tick(tickCount);
-}
-
-function captureNodePositions(nodes: PhotoGraphNode[]): NodePositionSnapshot {
-  return Object.fromEntries(
-    nodes.map((node) => [
-      node.id,
-      {
-        x: node.x ?? 0,
-        y: node.y ?? 0,
-      },
-    ]),
-  );
-}
-
-function applyNodePositions(
-  nodes: PhotoGraphNode[],
-  positions: NodePositionSnapshot,
-  progress = 1,
-) {
-  nodes.forEach((node) => {
-    const position = positions[node.id];
-    if (!position) return;
-
-    node.x = (node.x ?? 0) + (position.x - (node.x ?? 0)) * progress;
-    node.y = (node.y ?? 0) + (position.y - (node.y ?? 0)) * progress;
-    node.vx = 0;
-    node.vy = 0;
-  });
-}
-
 function loadImage(url: string, signal: AbortSignal) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     if (signal.aborted) {
@@ -699,13 +559,6 @@ function convertSizeToMb(sizeInBytes: number) {
   return sizeInBytes / (1024 * 1024);
 }
 
-function clearNodePins(nodes: PhotoGraphNode[]) {
-  nodes.forEach((node) => {
-    node.fx = undefined;
-    node.fy = undefined;
-  });
-}
-
 function getNodeBounds(node: PhotoGraphNode): NodeDrawBounds {
   return (
     node.__drawBounds ?? {
@@ -719,7 +572,6 @@ function getNodeBounds(node: PhotoGraphNode): NodeDrawBounds {
 
 export default function PhotoGraphCanvas({
   graphUrl = "/api/photo-graph/graph",
-  imageBasePath = DEFAULT_IMAGE_BASE_PATH,
   forcedDarkMode,
 }: PhotoGraphCanvasProps) {
   const { darkMode: siteDarkMode, toggleTheme } = useTheme();
@@ -740,14 +592,13 @@ export default function PhotoGraphCanvas({
     y: 0,
   });
   const initAbortRef = useRef<AbortController | null>(null);
-  const introLayoutRef = useRef<IntroLayout | null>(null);
-  const introFrameRef = useRef<number | null>(null);
-  const introActiveRef = useRef(false);
-  const introCancelledRef = useRef(false);
   const initialViewAppliedRef = useRef(false);
-  const applyingInitialViewRef = useRef(false);
   const upgradeTimeoutRef = useRef<number | null>(null);
+  const zoomIdleTimeoutRef = useRef<number | null>(null);
+  const upgradeAbortRef = useRef<AbortController | null>(null);
   const engineRunningRef = useRef(false);
+  const dragActiveRef = useRef(false);
+  const zoomActiveRef = useRef(false);
 
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [graphData, setGraphData] = useState<PhotoGraphData>({
@@ -799,15 +650,15 @@ export default function PhotoGraphCanvas({
     graph.d3Force("center", null);
     graph.d3Force(
       "x",
-      d3.forceX<PhotoGraphNode>().strength(
-        GRAPH_CONFIG.xForceStrength,
-      ) as unknown as RuntimeForce,
+      d3
+        .forceX<PhotoGraphNode>()
+        .strength(GRAPH_CONFIG.xForceStrength) as unknown as RuntimeForce,
     );
     graph.d3Force(
       "y",
-      d3.forceY<PhotoGraphNode>().strength(
-        GRAPH_CONFIG.yForceStrength,
-      ) as unknown as RuntimeForce,
+      d3
+        .forceY<PhotoGraphNode>()
+        .strength(GRAPH_CONFIG.yForceStrength) as unknown as RuntimeForce,
     );
     graph.d3Force(
       "collide",
@@ -820,8 +671,10 @@ export default function PhotoGraphCanvas({
       | d3.ForceLink<PhotoGraphNode, PhotoGraphLink>
       | undefined;
     if (linkForce) {
-      const minDistance = GRAPH_CONFIG.distMin * controlsRef.current.distMinMult;
-      const maxDistance = GRAPH_CONFIG.distMax * controlsRef.current.distMaxMult;
+      const minDistance =
+        GRAPH_CONFIG.distMin * controlsRef.current.distMinMult;
+      const maxDistance =
+        GRAPH_CONFIG.distMax * controlsRef.current.distMaxMult;
       linkForce.distance((link) =>
         computeLinkDistance(link as PhotoGraphLink, minDistance, maxDistance),
       );
@@ -841,17 +694,7 @@ export default function PhotoGraphCanvas({
     collideForce?.initialize?.(nodesRef.current);
   }, []);
 
-  const cancelIntroCompaction = useCallback(() => {
-    if (!introActiveRef.current) return;
-
-    introCancelledRef.current = true;
-    introActiveRef.current = false;
-    cancelAnimationFrameRef(introFrameRef);
-    clearNodePins(nodesRef.current);
-  }, []);
-
   const nodeCanvasObjectMode = useCallback(() => "replace", []);
-  const linkCanvasObjectMode = useCallback(() => "replace", []);
 
   const nodeCanvasObject = useCallback(
     (node: PhotoGraphNode, context: CanvasRenderingContext2D) => {
@@ -879,7 +722,11 @@ export default function PhotoGraphCanvas({
   );
 
   const nodePointerAreaPaint = useCallback(
-    (node: PhotoGraphNode, color: string, context: CanvasRenderingContext2D) => {
+    (
+      node: PhotoGraphNode,
+      color: string,
+      context: CanvasRenderingContext2D,
+    ) => {
       const bounds = getNodeBounds(node);
       context.fillStyle = color;
       context.fillRect(bounds.left, bounds.top, bounds.width, bounds.height);
@@ -887,34 +734,13 @@ export default function PhotoGraphCanvas({
     [],
   );
 
-  const linkCanvasObject = useCallback(
-    (link: PhotoGraphLink, context: CanvasRenderingContext2D) => {
-      const source = typeof link.source === "object" ? link.source : null;
-      const target = typeof link.target === "object" ? link.target : null;
-      if (!source || !target) return;
+  const linkColor = useCallback((link: PhotoGraphLink) => {
+    const alpha = getLinkValue(link);
 
-      context.save();
-      context.globalAlpha = getLinkValue(link);
-      context.strokeStyle = darkModeRef.current
-        ? "rgba(255, 255, 255, 0.72)"
-        : "#000";
-      context.lineWidth = 1;
-      context.beginPath();
-      context.moveTo(source.x ?? 0, source.y ?? 0);
-      context.lineTo(target.x ?? 0, target.y ?? 0);
-      context.stroke();
-      context.restore();
-    },
-    [],
-  );
-
-  const linkPointerAreaPaint = useCallback(() => {}, []);
-
-  const linkVisibility = useCallback(
-    (link: PhotoGraphLink) =>
-      !controlsRef.current.hideConnections && getLinkValue(link) > 0,
-    [],
-  );
+    return darkModeRef.current
+      ? `rgba(255, 255, 255, ${0.72 * alpha})`
+      : `rgba(0, 0, 0, ${alpha})`;
+  }, []);
 
   const showPointerCursor = useCallback(
     (obj: PhotoGraphNode | PhotoGraphLink | undefined) =>
@@ -952,24 +778,17 @@ export default function PhotoGraphCanvas({
     (resortNodes = false) => {
       if (resortNodes) {
         sortNodesForRender(nodesRef.current);
+        reinitializeCollisionForce();
       }
 
-      reinitializeCollisionForce();
       fgRef.current?.d3ReheatSimulation();
     },
     [reinitializeCollisionForce],
   );
 
   const applyLoadedImage = useCallback(
-    (
-      node: PhotoGraphNode,
-      image: HTMLImageElement,
-      loadedWidth: number,
-      onlyIfMissing = false,
-    ) => {
-      if (onlyIfMissing) {
-        if (imagesRef.current.has(node.id)) return;
-      } else if (!shouldUpgradeWidth(node.loadedWidth, loadedWidth)) {
+    (node: PhotoGraphNode, image: HTMLImageElement, loadedWidth: number) => {
+      if (!shouldUpgradeWidth(node.loadedWidth, loadedWidth)) {
         return;
       }
 
@@ -982,18 +801,22 @@ export default function PhotoGraphCanvas({
 
       node.loadedWidth = loadedWidth;
       imagesRef.current.set(node.id, image);
+
       refreshGraphAfterNodeMutation(resortNodes);
     },
     [refreshGraphAfterNodeMutation],
   );
 
-  const logNodeImageError = useCallback((node: PhotoGraphNode, error: unknown) => {
-    const errorKey = node.id;
-    if (errorLogRef.current.has(errorKey)) return;
+  const logNodeImageError = useCallback(
+    (node: PhotoGraphNode, error: unknown) => {
+      const errorKey = node.id;
+      if (errorLogRef.current.has(errorKey)) return;
 
-    errorLogRef.current.add(errorKey);
-    console.error(`Failed to load image for node ${node.id}`, error);
-  }, []);
+      errorLogRef.current.add(errorKey);
+      console.error(`Failed to load image for node ${node.id}`, error);
+    },
+    [],
+  );
 
   const getNodeTargetWidth = useCallback(
     (node: PhotoGraphNode) =>
@@ -1003,6 +826,12 @@ export default function PhotoGraphCanvas({
         getCurrentDevicePixelRatio(),
       ),
     [],
+  );
+
+  const getInitialNodeTargetWidth = useCallback(
+    (node: PhotoGraphNode) =>
+      Math.min(getNodeTargetWidth(node), GRAPH_CONFIG.initialImageMaxWidth),
+    [getNodeTargetWidth],
   );
 
   const loadNodeImage = useCallback(
@@ -1016,23 +845,21 @@ export default function PhotoGraphCanvas({
       try {
         try {
           const optimizedUrl = buildOptimizedImageUrl(
+            node.storagePath,
             node.sourceUrl,
             targetWidth,
           );
+          if (!optimizedUrl) {
+            throw new Error(
+              `Missing image URL for photo graph node ${node.id}.`,
+            );
+          }
           const optimizedImage = await loadImage(optimizedUrl, signal);
           if (signal.aborted) return;
           applyLoadedImage(node, optimizedImage, targetWidth);
         } catch (error) {
           if (isAbortError(error)) return;
-
-          try {
-            const fallbackImage = await loadImage(node.sourceUrl, signal);
-            if (signal.aborted) return;
-            applyLoadedImage(node, fallbackImage, 0, true);
-          } catch (fallbackError) {
-            if (isAbortError(fallbackError)) return;
-            logNodeImageError(node, fallbackError);
-          }
+          logNodeImageError(node, error);
         }
       } finally {
         trackPendingWidth(node, targetWidth, false);
@@ -1094,42 +921,56 @@ export default function PhotoGraphCanvas({
     [dimensions.height, dimensions.width],
   );
 
-  const getInitialLoadQueue = useCallback((nodes: PhotoGraphNode[]) => {
-    const graph = fgRef.current;
-    if (!graph || !dimensions.width || !dimensions.height) {
-      return nodes;
-    }
+  const linkVisibility = useCallback(
+    (link: PhotoGraphLink) =>
+      !zoomActiveRef.current &&
+      !controlsRef.current.hideConnections &&
+      getLinkValue(link) > 0,
+    [],
+  );
 
-    const center = graph.centerAt();
-    const visibleNodes: { node: PhotoGraphNode; distance: number }[] = [];
-    const remainingNodes: PhotoGraphNode[] = [];
+  const getInitialLoadQueue = useCallback(
+    (nodes: PhotoGraphNode[]) => {
+      const graph = fgRef.current;
+      if (!graph || !dimensions.width || !dimensions.height) {
+        return nodes.slice(0, GRAPH_CONFIG.initialImageFallbackCount);
+      }
 
-    for (const node of nodes) {
-      if (isNodeVisible(node)) {
+      const center = graph.centerAt();
+      const visibleNodes: { node: PhotoGraphNode; distance: number }[] = [];
+
+      for (const node of nodes) {
+        if (!isNodeVisible(node)) continue;
+
         const deltaX = (node.x ?? 0) - center.x;
         const deltaY = (node.y ?? 0) - center.y;
         visibleNodes.push({
           node,
           distance: Math.hypot(deltaX, deltaY),
         });
-        continue;
       }
 
-      remainingNodes.push(node);
-    }
+      visibleNodes.sort((left, right) => left.distance - right.distance);
 
-    visibleNodes.sort((left, right) => left.distance - right.distance);
+      const prioritizedVisibleNodes = visibleNodes
+        .slice(0, GRAPH_CONFIG.initialVisibleImageCount)
+        .map(({ node }) => node);
 
-    return [
-      ...visibleNodes.map(({ node }) => node),
-      ...remainingNodes,
-    ];
-  }, [dimensions.height, dimensions.width, isNodeVisible]);
+      return prioritizedVisibleNodes.length
+        ? prioritizedVisibleNodes
+        : nodes.slice(0, GRAPH_CONFIG.initialImageFallbackCount);
+    },
+    [dimensions.height, dimensions.width, isNodeVisible],
+  );
 
   const loadInitialImages = useCallback(
     (nodes: PhotoGraphNode[], signal: AbortSignal) =>
-      runNodeQueue(getInitialLoadQueue(nodes), signal, getNodeTargetWidth),
-    [getInitialLoadQueue, getNodeTargetWidth, runNodeQueue],
+      runNodeQueue(
+        getInitialLoadQueue(nodes),
+        signal,
+        getInitialNodeTargetWidth,
+      ),
+    [getInitialLoadQueue, getInitialNodeTargetWidth, runNodeQueue],
   );
 
   const upgradeVisibleImages = useCallback(
@@ -1140,104 +981,84 @@ export default function PhotoGraphCanvas({
     [getNodeTargetWidth, isNodeVisible, runNodeQueue],
   );
 
+  const abortUpgradePass = useCallback(() => {
+    const upgradeAbortController = upgradeAbortRef.current;
+    if (!upgradeAbortController) return;
+
+    upgradeAbortRef.current = null;
+    upgradeAbortController.abort();
+  }, []);
+
   const scheduleUpgradePass = useCallback(
-    (signal: AbortSignal, delay = GRAPH_CONFIG.upgradeDebounceMs) => {
+    (delay = GRAPH_CONFIG.upgradeDebounceMs) => {
       clearTimeoutRef(upgradeTimeoutRef);
       upgradeTimeoutRef.current = window.setTimeout(() => {
         upgradeTimeoutRef.current = null;
-        void upgradeVisibleImages(signal);
+        if (zoomActiveRef.current) return;
+
+        const initAbortController = initAbortRef.current;
+        if (!initAbortController || initAbortController.signal.aborted) {
+          return;
+        }
+
+        abortUpgradePass();
+
+        const upgradeAbortController = new AbortController();
+        upgradeAbortRef.current = upgradeAbortController;
+
+        void upgradeVisibleImages(upgradeAbortController.signal).finally(() => {
+          if (upgradeAbortRef.current === upgradeAbortController) {
+            upgradeAbortRef.current = null;
+          }
+        });
       }, delay);
     },
-    [upgradeVisibleImages],
+    [abortUpgradePass, upgradeVisibleImages],
   );
 
-  const runIntroCompaction = useCallback(
-    (layout: IntroLayout, signal: AbortSignal) => {
-      introCancelledRef.current = false;
-      introActiveRef.current = true;
-      applyNodePositions(nodesRef.current, layout.expanded);
+  const scheduleZoomIdleUpgrade = useCallback(() => {
+    clearTimeoutRef(zoomIdleTimeoutRef);
+    zoomIdleTimeoutRef.current = window.setTimeout(() => {
+      zoomIdleTimeoutRef.current = null;
+      zoomActiveRef.current = false;
+      scheduleUpgradePass(0);
+    }, GRAPH_CONFIG.zoomUpgradeIdleMs);
+  }, [scheduleUpgradePass]);
 
-      const finish = () => {
-        cancelAnimationFrameRef(introFrameRef);
-        clearNodePins(nodesRef.current);
-        introActiveRef.current = false;
-      };
-
-      const step = (now: number, startedAt = now) => {
-        if (signal.aborted || introCancelledRef.current) {
-          finish();
-          return;
-        }
-
-        const progress = clamp(
-          (now - startedAt) / GRAPH_CONFIG.initialCompactionDurationMs,
-          0,
-          1,
-        );
-        const easedProgress = easeOutExponential(progress);
-
-        nodesRef.current.forEach((node) => {
-          const fromPosition = layout.expanded[node.id];
-          const toPosition = layout.compacted[node.id];
-          if (!fromPosition || !toPosition) return;
-
-          node.x =
-            fromPosition.x + (toPosition.x - fromPosition.x) * easedProgress;
-          node.y =
-            fromPosition.y + (toPosition.y - fromPosition.y) * easedProgress;
-          node.vx = 0;
-          node.vy = 0;
-          node.fx = node.x;
-          node.fy = node.y;
-        });
-
-        if (progress < 1) {
-          introFrameRef.current = window.requestAnimationFrame((nextNow) =>
-            step(nextNow, startedAt),
-          );
-          return;
-        }
-
-        finish();
-      };
-
-      introFrameRef.current = window.requestAnimationFrame((now) => step(now));
-    },
-    [],
-  );
+  const markZoomInteractionActive = useCallback(() => {
+    zoomActiveRef.current = true;
+    clearTimeoutRef(upgradeTimeoutRef);
+    abortUpgradePass();
+    scheduleZoomIdleUpgrade();
+  }, [abortUpgradePass, scheduleZoomIdleUpgrade]);
 
   const handleNodeDrag = useCallback(() => {
-    cancelIntroCompaction();
+    dragActiveRef.current = true;
     engineRunningRef.current = true;
     setEngineStatus("settling");
-  }, [cancelIntroCompaction]);
+  }, []);
+
+  const handleNodeDragEnd = useCallback(() => {
+    dragActiveRef.current = false;
+    engineRunningRef.current = true;
+    setEngineStatus("settling");
+    fgRef.current?.d3ReheatSimulation();
+  }, []);
 
   const handleZoom = useCallback(
     (transform: GraphTransform) => {
       transformRef.current = transform;
-
-      if (introActiveRef.current && !applyingInitialViewRef.current) {
-        cancelIntroCompaction();
-      }
-
-      const abortController = initAbortRef.current;
-      if (abortController) {
-        scheduleUpgradePass(abortController.signal);
-      }
+      markZoomInteractionActive();
     },
-    [cancelIntroCompaction, scheduleUpgradePass],
+    [markZoomInteractionActive],
   );
 
   const handleZoomEnd = useCallback(
     (transform: GraphTransform) => {
       transformRef.current = transform;
-
-      const abortController = initAbortRef.current;
-      if (abortController) {
-        scheduleUpgradePass(abortController.signal, 0);
-      }
+      scheduleZoomIdleUpgrade();
     },
-    [scheduleUpgradePass],
+    [scheduleZoomIdleUpgrade],
   );
 
   const handleEngineTick = useCallback(() => {
@@ -1248,6 +1069,10 @@ export default function PhotoGraphCanvas({
   }, []);
 
   const handleEngineStop = useCallback(() => {
+    if (dragActiveRef.current) {
+      return;
+    }
+
     if (!engineRunningRef.current) return;
 
     engineRunningRef.current = false;
@@ -1307,20 +1132,17 @@ export default function PhotoGraphCanvas({
     let disposed = false;
     const abortController = new AbortController();
     initAbortRef.current = abortController;
-    introLayoutRef.current = null;
-    introCancelledRef.current = false;
-    introActiveRef.current = false;
     initialViewAppliedRef.current = false;
-    applyingInitialViewRef.current = false;
-    cancelAnimationFrameRef(introFrameRef);
     clearTimeoutRef(upgradeTimeoutRef);
-    clearNodePins(nodesRef.current);
+    clearTimeoutRef(zoomIdleTimeoutRef);
+    abortUpgradePass();
 
     imagesRef.current = new Map();
     pendingWidthsRef.current = new Map();
     errorLogRef.current = new Set();
     nodesRef.current = [];
     engineRunningRef.current = false;
+    zoomActiveRef.current = false;
     setEngineStatus("settled");
     setGraphData({ nodes: [], links: [] });
 
@@ -1342,31 +1164,11 @@ export default function PhotoGraphCanvas({
       const data = (await response.json()) as RawNode[];
       if (disposed || abortController.signal.aborted) return;
 
-      const { nodes, links } = await buildGraph(data, imageBasePath);
+      const { nodes, links } = await buildGraph(data);
       if (disposed || abortController.signal.aborted) return;
 
-      const prelayoutSimulation = createPrelayoutSimulation(
-        nodes,
-        links,
-        INITIAL_LAYOUT_CONTROLS,
-      );
-      warmupSimulationLayout(
-        prelayoutSimulation,
-        getInitialLayoutTickCount(nodes.length),
-      );
-      const expanded = captureNodePositions(nodes);
-      applySimulationForces(prelayoutSimulation, controlsRef.current);
-      warmupSimulationLayout(
-        prelayoutSimulation,
-        getInitialCompactionTickCount(nodes.length),
-        GRAPH_CONFIG.initialCompactionAlpha,
-      );
-      const compacted = captureNodePositions(nodes);
-      applyNodePositions(nodes, expanded);
-      clearNodePins(nodes);
       sortNodesForRender(nodes);
 
-      introLayoutRef.current = { expanded, compacted };
       nodesRef.current = nodes;
       setGraphData({ nodes, links });
     };
@@ -1383,13 +1185,13 @@ export default function PhotoGraphCanvas({
       if (initAbortRef.current === abortController) {
         initAbortRef.current = null;
       }
-      cancelAnimationFrameRef(introFrameRef);
       clearTimeoutRef(upgradeTimeoutRef);
-      clearNodePins(nodesRef.current);
-      introActiveRef.current = false;
-      introCancelledRef.current = true;
+      clearTimeoutRef(zoomIdleTimeoutRef);
+      abortUpgradePass();
+      dragActiveRef.current = false;
+      zoomActiveRef.current = false;
     };
-  }, [configureRuntimeForces, graphUrl, imageBasePath]);
+  }, [abortUpgradePass, configureRuntimeForces, graphUrl]);
 
   useEffect(() => {
     if (!graphData.nodes.length || !dimensions.width || !dimensions.height) {
@@ -1398,8 +1200,7 @@ export default function PhotoGraphCanvas({
 
     const graph = fgRef.current;
     const abortController = initAbortRef.current;
-    const introLayout = introLayoutRef.current;
-    if (!graph || !abortController || !introLayout) {
+    if (!graph || !abortController) {
       return;
     }
 
@@ -1411,17 +1212,14 @@ export default function PhotoGraphCanvas({
     }
 
     initialViewAppliedRef.current = true;
-    applyingInitialViewRef.current = true;
     graph.centerAt(0, 0, 0);
     graph.zoom(GRAPH_CONFIG.initialZoom, 0);
 
     window.requestAnimationFrame(() => {
-      applyingInitialViewRef.current = false;
       if (abortController.signal.aborted) return;
 
       void loadInitialImages(nodesRef.current, abortController.signal);
-      scheduleUpgradePass(abortController.signal, 0);
-      runIntroCompaction(introLayout, abortController.signal);
+      scheduleUpgradePass(0);
     });
   }, [
     configureRuntimeForces,
@@ -1430,7 +1228,6 @@ export default function PhotoGraphCanvas({
     graphData.nodes.length,
     loadInitialImages,
     reinitializeCollisionForce,
-    runIntroCompaction,
     scheduleUpgradePass,
   ]);
 
@@ -1509,7 +1306,9 @@ export default function PhotoGraphCanvas({
     if (!inspectTarget || inspectOverlayOpen) return;
 
     const timeout = window.setTimeout(() => {
-      setInspectTarget((current) => (current === inspectTarget ? null : current));
+      setInspectTarget((current) =>
+        current === inspectTarget ? null : current,
+      );
     }, INSPECT_OVERLAY_TRANSITION_MS);
 
     return () => {
@@ -1523,10 +1322,14 @@ export default function PhotoGraphCanvas({
       : "text-red-700 dark:text-red-300";
 
   return (
-    <div className={`static h-full w-full transition-colors ${photoGraphShellClass}`}>
+    <div
+      className={`static h-full w-full transition-colors ${photoGraphShellClass}`}
+    >
       <div
         className={`h-full w-full transition-[opacity,filter] duration-200 ${
-          inspectTarget ? "pointer-events-none opacity-35 blur-[1px]" : "opacity-100"
+          inspectTarget
+            ? "pointer-events-none opacity-35 blur-[1px]"
+            : "opacity-100"
         }`}
       >
         {!menuOpen && (
@@ -1586,23 +1389,25 @@ export default function PhotoGraphCanvas({
               />
             </label>
 
-            {GRAPH_CONTROL_SLIDERS.map(({ key, label, min, max, scale = 1 }) => (
-              <Fragment key={key}>
-                <input
-                  type="range"
-                  min={min}
-                  max={max}
-                  value={controls[key] / scale}
-                  onChange={(event) =>
-                    setControlValue(key, Number(event.target.value) * scale)
-                  }
-                  className={sliderClass}
-                />
-                <p className={overlayTextClass}>
-                  {label}: {controls[key].toFixed(2)}
-                </p>
-              </Fragment>
-            ))}
+            {GRAPH_CONTROL_SLIDERS.map(
+              ({ key, label, min, max, scale = 1 }) => (
+                <Fragment key={key}>
+                  <input
+                    type="range"
+                    min={min}
+                    max={max}
+                    value={controls[key] / scale}
+                    onChange={(event) =>
+                      setControlValue(key, Number(event.target.value) * scale)
+                    }
+                    className={sliderClass}
+                  />
+                  <p className={overlayTextClass}>
+                    {label}: {controls[key].toFixed(2)}
+                  </p>
+                </Fragment>
+              ),
+            )}
           </div>
         )}
 
@@ -1624,16 +1429,14 @@ export default function PhotoGraphCanvas({
               nodeCanvasObjectMode={nodeCanvasObjectMode}
               nodeCanvasObject={nodeCanvasObject}
               nodePointerAreaPaint={nodePointerAreaPaint}
-              linkCanvasObjectMode={linkCanvasObjectMode}
-              linkCanvasObject={linkCanvasObject}
-              linkPointerAreaPaint={linkPointerAreaPaint}
+              linkColor={linkColor}
               linkVisibility={linkVisibility}
               showPointerCursor={showPointerCursor}
               onNodeClick={(node: PhotoGraphNode) =>
                 openInspectTarget({ id: node.id, url: node.sourceUrl })
               }
               onNodeDrag={handleNodeDrag}
-              onNodeDragEnd={handleNodeDrag}
+              onNodeDragEnd={handleNodeDragEnd}
               onZoom={handleZoom}
               onZoomEnd={handleZoomEnd}
               onEngineTick={handleEngineTick}
@@ -1648,7 +1451,9 @@ export default function PhotoGraphCanvas({
         <div
           onClick={closeInspectTarget}
           className={`absolute inset-0 z-10 m-auto flex max-h-9/12 max-w-9/12 items-center justify-center transition-[opacity,backdrop-filter] duration-200 ${photoGraphModalClass} ${
-            inspectOverlayOpen ? "opacity-100 backdrop-blur-sm" : "backdrop-blur-0 opacity-0"
+            inspectOverlayOpen
+              ? "opacity-100 backdrop-blur-sm"
+              : "backdrop-blur-0 opacity-0"
           }`}
           // TODO: add colour swatches to inspect view
         >

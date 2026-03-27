@@ -1,7 +1,8 @@
 import {
   CANVAS_IMAGE_QUALITY,
-  CANVAS_IMAGE_WIDTHS,
+  PHOTO_GRAPH_IMAGE_WIDTHS,
 } from "@/lib/image-optimization";
+import { buildSupabaseStorageRenderUrl } from "@/lib/supabase/config";
 
 type OptimizableNode = {
   w: number;
@@ -9,16 +10,16 @@ type OptimizableNode = {
 
 export function pickAllowedWidth(targetWidth: number) {
   if (!Number.isFinite(targetWidth) || targetWidth <= 0) {
-    return CANVAS_IMAGE_WIDTHS[0];
+    return PHOTO_GRAPH_IMAGE_WIDTHS[0];
   }
 
-  for (const width of CANVAS_IMAGE_WIDTHS) {
+  for (const width of PHOTO_GRAPH_IMAGE_WIDTHS) {
     if (width >= targetWidth) {
       return width;
     }
   }
 
-  return CANVAS_IMAGE_WIDTHS[CANVAS_IMAGE_WIDTHS.length - 1];
+  return PHOTO_GRAPH_IMAGE_WIDTHS[PHOTO_GRAPH_IMAGE_WIDTHS.length - 1];
 }
 
 export function getNodeScreenWidth(node: OptimizableNode, zoom: number) {
@@ -30,7 +31,7 @@ export function computeTargetImageWidth(
   zoom: number,
   dpr: number,
 ) {
-  const desiredWidth = Math.ceil(getNodeScreenWidth(node, zoom) * dpr * 1.2);
+  const desiredWidth = Math.ceil(getNodeScreenWidth(node, zoom) * dpr);
   return pickAllowedWidth(desiredWidth);
 }
 
@@ -43,9 +44,21 @@ export function shouldUpgradeWidth(
 }
 
 export function buildOptimizedImageUrl(
-  sourceUrl: string,
+  storagePath: string | undefined,
+  sourceUrl: string | undefined,
   width: number,
   quality = CANVAS_IMAGE_QUALITY,
 ) {
-  return `/_next/image?url=${encodeURIComponent(sourceUrl)}&w=${width}&q=${quality}`;
+  if (!storagePath) {
+    return sourceUrl ?? null;
+  }
+
+  try {
+    return buildSupabaseStorageRenderUrl(storagePath, {
+      width,
+      quality,
+    });
+  } catch {
+    return sourceUrl ?? null;
+  }
 }

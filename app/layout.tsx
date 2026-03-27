@@ -5,7 +5,6 @@ import "./globals.css";
 
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { FirebaseAnalytics } from "@/app/components/firebase/firebase-analytics";
 import { ThemeProvider } from "@/app/components/theme/theme-provider";
 import { SITE_ORIGIN } from "@/lib/site-config";
 import { getThemeInitScript } from "@/lib/theme";
@@ -70,7 +69,6 @@ export default function RootLayout({
           {`document.documentElement.classList.toggle("windows", navigator.platform.startsWith("Win") || navigator.userAgent.includes("Windows"));`}
         </Script>
         <ThemeProvider>
-          <FirebaseAnalytics />
           {children}
           <Analytics />
           <SpeedInsights />

@@ -3,11 +3,10 @@ import { imageSize } from "image-size";
 
 import {
   cloneGraphNodes,
-  readRuntimeGraph,
+  readDatabaseGraph,
   writeRuntimeGraph,
 } from "../../lib/photo-graph/graph-store";
-import { getFirebaseAdminBucket } from "../../lib/server/firebase-admin";
-import type { Bucket } from "@google-cloud/storage";
+import { buildSupabaseStoragePublicUrl } from "../../lib/supabase/config";
 import type {
   GraphImageDimensions,
   GraphNode,
@@ -69,12 +68,25 @@ function normalizeDimensions(
   };
 }
 
-async function resolveNodeDimensions(node: GraphNode, bucket: Bucket) {
+async function resolveNodeDimensions(node: GraphNode) {
   if (!node.storagePath) {
     throw new Error("missing storagePath");
   }
 
-  const [buffer] = await bucket.file(node.storagePath).download();
+  const response = await fetch(
+    buildSupabaseStoragePublicUrl(node.storagePath),
+    {
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `failed to fetch image (${response.status} ${response.statusText})`,
+    );
+  }
+
+  const buffer = Buffer.from(await response.arrayBuffer());
   const probe = imageSize(buffer);
 
   if (!isFinitePositive(probe.width) || !isFinitePositive(probe.height)) {
@@ -112,7 +124,6 @@ async function checkCoverage(nodes: GraphNode[]) {
 async function backfillDimensions(nodes: GraphNode[]) {
   const invalidNodes: InvalidNode[] = [];
   let updatedCount = 0;
-  const bucket = getFirebaseAdminBucket();
 
   for (const node of nodes) {
     if (isValidDimensions(node.dimensions)) {
@@ -120,7 +131,7 @@ async function backfillDimensions(nodes: GraphNode[]) {
     }
 
     try {
-      node.dimensions = await resolveNodeDimensions(node, bucket);
+      node.dimensions = await resolveNodeDimensions(node);
       updatedCount += 1;
     } catch (error) {
       invalidNodes.push({
@@ -147,15 +158,15 @@ async function backfillDimensions(nodes: GraphNode[]) {
 async function run() {
   loadEnvConfig(process.cwd());
   const options = parseArgs(process.argv.slice(2));
-  const runtimeNodes = await readRuntimeGraph();
+  const databaseNodes = await readDatabaseGraph();
 
-  if (!runtimeNodes) {
+  if (!databaseNodes || databaseNodes.length === 0) {
     throw new Error(
-      "Runtime photo graph metadata is unavailable. Cannot backfill dimensions.",
+      "Database-backed photo graph metadata is unavailable. Cannot backfill dimensions.",
     );
   }
 
-  const nodes = cloneGraphNodes(runtimeNodes);
+  const nodes = cloneGraphNodes(databaseNodes);
 
   if (options.checkOnly) {
     await checkCoverage(nodes);

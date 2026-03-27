@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { loadGraphWithFallback } from "@/lib/photo-graph/graph-store";
-import { getFirebaseAdminBucket } from "@/lib/server/firebase-admin";
 import {
   ADMIN_SESSION_COOKIE_NAME,
   isValidAdminSessionToken,
 } from "@/lib/server/admin-session";
+import { buildSupabaseStorageRenderUrl } from "@/lib/supabase/config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-const PREVIEW_URL_TTL_MS = 60 * 60 * 1000;
+
+const ADMIN_PREVIEW_WIDTH = 96;
+const ADMIN_PREVIEW_QUALITY = 75;
 
 function isAuthorized(request: NextRequest) {
   const token = request.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
@@ -22,36 +24,15 @@ export async function GET(request: NextRequest) {
   }
 
   const { nodes, source } = await loadGraphWithFallback();
-  const bucket = getFirebaseAdminBucket();
-
-  const nodesWithPreview = await Promise.all(
-    nodes.map(async (node) => {
-      if (!node.storagePath) {
-        return {
-          ...node,
-          previewUrl: node.url,
-        };
-      }
-
-      try {
-        const [previewUrl] = await bucket.file(node.storagePath).getSignedUrl({
-          version: "v4",
-          action: "read",
-          expires: Date.now() + PREVIEW_URL_TTL_MS,
-        });
-
-        return {
-          ...node,
-          previewUrl,
-        };
-      } catch {
-        return {
-          ...node,
-          previewUrl: node.url,
-        };
-      }
-    }),
-  );
+  const nodesWithPreview = nodes.map((node) => ({
+    ...node,
+    previewUrl: node.storagePath
+      ? buildSupabaseStorageRenderUrl(node.storagePath, {
+          width: ADMIN_PREVIEW_WIDTH,
+          quality: ADMIN_PREVIEW_QUALITY,
+        })
+      : node.url,
+  }));
 
   return NextResponse.json(
     {

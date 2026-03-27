@@ -1,0 +1,45 @@
+﻿services:
+    a9nosy680kiw7yc5oja26tv6:
+        image: 'redis:7.2'
+        command: 'redis-server --requirepass z9yWb129TVHLJNMMXCy4uwhk7MuJhnJLNyc4CsghnsbEvwzzK54l6Ehc0dueD4EW --appendonly no --save "" --maxmemory 512mb --maxmemory-policy allkeys-lru --maxmemory-samples 10'
+        container_name: a9nosy680kiw7yc5oja26tv6
+        environment:
+            - REDIS_PASSWORD=z9yWb129TVHLJNMMXCy4uwhk7MuJhnJLNyc4CsghnsbEvwzzK54l6Ehc0dueD4EW
+            - REDIS_USERNAME=default
+        restart: unless-stopped
+        networks:
+            - coolify
+        labels:
+            - coolify.managed=true
+            - coolify.type=database
+            - coolify.databaseId=1
+            - coolify.resourceName=redis-database-a9nosy680kiw7yc5oja26tv6
+            - coolify.serviceName=redis-database-a9nosy680kiw7yc5oja26tv6
+            - coolify.projectName=dexterydev
+            - coolify.environmentName=production
+            - coolify.database.subType=standalone-redis
+        healthcheck:
+            test:
+                - CMD-SHELL
+                - 'redis-cli --no-auth-warning -a "$$REDIS_PASSWORD" ping | grep PONG'
+            interval: 5s
+            timeout: 5s
+            retries: 10
+            start_period: 5s
+        mem_limit: '768m'
+        memswap_limit: '768m'
+        mem_swappiness: 60
+        mem_reservation: '512m'
+        cpus: 0.0
+        cpu_shares: 1024
+        volumes:
+            - 'redis-data-a9nosy680kiw7yc5oja26tv6:/data'
+networks:
+    coolify:
+        external: true
+        name: coolify
+        attachable: true
+volumes:
+    redis-data-a9nosy680kiw7yc5oja26tv6:
+        name: redis-data-a9nosy680kiw7yc5oja26tv6
+        external: false

@@ -6,7 +6,15 @@ import {
   hexToRgb,
   rgbToHex,
 } from "@/lib/photo-graph/feature-extraction";
-import { getFirebaseAdminBucket } from "@/lib/server/firebase-admin";
+import {
+  imagePathForLegacyId,
+  photoGraphImageBasePath,
+} from "@/lib/photo-graph/config";
+import {
+  loadPhotoGraphFromDatabase,
+  replacePhotoGraphGraph,
+} from "@/lib/photo-graph/database";
+import { buildSupabaseStoragePublicUrl } from "@/lib/supabase/config";
 import type {
   GraphImageDimensions,
   GraphLoadSource,
@@ -15,8 +23,6 @@ import type {
 } from "@/lib/photo-graph/types";
 
 const FALLBACK_MAX_LONG_SIDE = 1000;
-const DEFAULT_GRAPH_OBJECT_PATH = "photo-graph/graph.json";
-const DEFAULT_IMAGE_BASE_PATH = "photography-images";
 
 type NormalizedGraphResult = {
   nodes: GraphNode[];
@@ -196,13 +202,19 @@ function normalizeGraphData(
   return { nodes, source };
 }
 
-function runtimeGraphPath() {
-  return process.env.PHOTO_GRAPH_GRAPH_OBJECT_PATH ?? DEFAULT_GRAPH_OBJECT_PATH;
+function isRecoverableDatabaseError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return (
+    error.message.includes("Missing required Supabase env var") ||
+    error.message.includes("photo_graph_nodes") ||
+    error.message.includes("photo_graph_edges")
+  );
 }
 
-export function photoGraphImageBasePath() {
-  return process.env.PHOTO_GRAPH_IMAGE_BASE_PATH ?? DEFAULT_IMAGE_BASE_PATH;
-}
+export { imagePathForLegacyId, photoGraphImageBasePath };
 
 export async function readStaticGraph() {
   const staticGraphPath = path.join(
@@ -212,29 +224,20 @@ export async function readStaticGraph() {
   );
   const buffer = await readFile(staticGraphPath);
   const raw = JSON.parse(buffer.toString("utf-8"));
-
-  return normalizeGraphData(raw, "static", photoGraphImageBasePath()).nodes;
+  const nodes = normalizeGraphData(
+    raw,
+    "static",
+    photoGraphImageBasePath(),
+  ).nodes;
+  ensureGraphStoragePaths(nodes);
+  return nodes;
 }
 
-export async function readRuntimeGraph() {
+export async function readDatabaseGraph() {
   try {
-    const bucket = getFirebaseAdminBucket();
-    const graphFile = bucket.file(runtimeGraphPath());
-    const [exists] = await graphFile.exists();
-
-    if (!exists) {
-      return null;
-    }
-
-    const [buffer] = await graphFile.download();
-    const raw = JSON.parse(buffer.toString("utf-8"));
-    return normalizeGraphData(raw, "runtime", photoGraphImageBasePath()).nodes;
+    return await loadPhotoGraphFromDatabase();
   } catch (error) {
-    if (
-      error instanceof Error &&
-      (error.message.includes("Missing required env var") ||
-        error.message.includes("No default Firebase app"))
-    ) {
+    if (isRecoverableDatabaseError(error)) {
       return null;
     }
 
@@ -243,12 +246,12 @@ export async function readRuntimeGraph() {
 }
 
 export async function loadGraphWithFallback() {
-  const runtimeNodes = await readRuntimeGraph();
+  const databaseNodes = await readDatabaseGraph();
 
-  if (runtimeNodes) {
+  if (databaseNodes && databaseNodes.length > 0) {
     return {
-      source: "runtime" as GraphLoadSource,
-      nodes: runtimeNodes,
+      source: "database" as GraphLoadSource,
+      nodes: databaseNodes,
     };
   }
 
@@ -259,17 +262,19 @@ export async function loadGraphWithFallback() {
 }
 
 export async function writeRuntimeGraph(nodes: GraphNode[]) {
-  const bucket = getFirebaseAdminBucket();
-  const graphFile = bucket.file(runtimeGraphPath());
-  const payload = JSON.stringify(nodes, null, 2);
+  await replacePhotoGraphGraph(nodes);
+}
 
-  await graphFile.save(payload, {
-    resumable: false,
-    contentType: "application/json; charset=utf-8",
-    metadata: {
-      cacheControl: "no-store",
-    },
-  });
+export function ensureGraphStoragePaths(nodes: GraphNode[]) {
+  for (const node of nodes) {
+    if (!node.storagePath && !node.url) {
+      node.storagePath = imagePathForLegacyId(node.id);
+    }
+
+    if (!node.url && node.storagePath) {
+      node.url = buildSupabaseStoragePublicUrl(node.storagePath);
+    }
+  }
 }
 
 export function cloneGraphNodes(nodes: GraphNode[]): GraphNode[] {
@@ -336,8 +341,4 @@ export function toPublicGraphNodes(nodes: GraphNode[]): PublicGraphNode[] {
     dimensions: node.dimensions ? { ...node.dimensions } : undefined,
     url: node.url,
   }));
-}
-
-export function imagePathForLegacyId(id: string) {
-  return `${photoGraphImageBasePath().replace(/\/$/, "")}/${id}.png`;
 }

@@ -1,18 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { buildCanonicalPhotoGraphStoragePath } from "@/lib/photo-graph/config";
 import { scaleFromLongSide } from "@/lib/photo-graph/correlation";
 import {
   cloneGraphNodes,
+  ensureGraphStoragePaths,
   ensureProcessingFeatures,
-  imagePathForLegacyId,
   loadGraphWithFallback,
   writeRuntimeGraph,
 } from "@/lib/photo-graph/graph-store";
+import { upsertPhotoGraphNodes } from "@/lib/photo-graph/database";
 import { featureFromRgb, rgbToHex } from "@/lib/photo-graph/feature-extraction";
 import {
   ADMIN_SESSION_COOKIE_NAME,
   isValidAdminSessionToken,
 } from "@/lib/server/admin-session";
+import { getServiceRoleSupabase } from "@/lib/server/supabase";
+import { getPhotoGraphStorageBucket } from "@/lib/supabase/config";
 import type {
   GraphFeature,
   GraphImageDimensions,
@@ -213,28 +217,44 @@ export async function POST(request: NextRequest) {
   const nodes = cloneGraphNodes(loaded.nodes);
 
   const existingMaxLongSide = ensureProcessingFeatures(nodes);
-
-  for (const node of nodes) {
-    if (!node.storagePath && !node.url) {
-      node.storagePath = imagePathForLegacyId(node.id);
-    }
-  }
+  ensureGraphStoragePaths(nodes);
 
   const createdIds: string[] = [];
   const createdNodes: GraphNode[] = [];
   let idCounter = nextNodeId(nodes);
+  const bucket = getPhotoGraphStorageBucket();
+  const supabase = getServiceRoleSupabase();
 
   for (const upload of uploads) {
     const id = String(idCounter);
     idCounter += 1;
     createdIds.push(id);
+    const canonicalStoragePath = buildCanonicalPhotoGraphStoragePath(
+      id,
+      upload.storagePath,
+    );
+
+    if (upload.storagePath !== canonicalStoragePath) {
+      const { error } = await supabase.storage
+        .from(bucket)
+        .move(upload.storagePath, canonicalStoragePath);
+
+      if (error) {
+        return NextResponse.json(
+          {
+            error: `Failed to finalize uploaded asset ${upload.storagePath}: ${error.message}`,
+          },
+          { status: 500 },
+        );
+      }
+    }
 
     createdNodes.push({
       id,
       scale: 1,
       colour: upload.colour,
       correlations: {},
-      storagePath: upload.storagePath,
+      storagePath: canonicalStoragePath,
       feature: upload.feature,
       dimensions: upload.dimensions,
     });
@@ -262,7 +282,11 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  await writeRuntimeGraph(nodes);
+  if (loaded.source === "static") {
+    await writeRuntimeGraph(nodes);
+  } else {
+    await upsertPhotoGraphNodes(nodes);
+  }
 
   return NextResponse.json({
     ok: true,

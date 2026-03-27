@@ -11,3 +11,10 @@ export const CANVAS_IMAGE_WIDTHS = [
 ].sort((left, right) => left - right);
 
 export const CANVAS_IMAGE_QUALITY = 75;
+
+export const PHOTO_GRAPH_IMAGE_WIDTHS = [
+  48, 64, 80, 96, 112, 128, 144, 160, 192, 224, 256, 288, 320, 384, 448,
+  512, 576, 640, 768, 896, 1024, 1152, 1280,
+];
+
+export const MIN_RENDER_CACHE_TTL_SECONDS = 60 * 60 * 24 * 7;
