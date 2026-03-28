@@ -19,29 +19,41 @@ function isAuthorized(request: NextRequest) {
   return isValidAdminSessionToken(token);
 }
 
+function buildAdminPreviewUrl(storagePath?: string, url?: string) {
+  if (!storagePath) {
+    return url;
+  }
+
+  try {
+    return buildSupabaseStorageRenderUrl(storagePath, {
+      width: ADMIN_PREVIEW_WIDTH,
+      quality: ADMIN_PREVIEW_QUALITY,
+    });
+  } catch {
+    return url;
+  }
+}
+
 export async function GET(request: NextRequest) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [{ nodes, source }, defaultEdgeGeneration] = await Promise.all([
-    loadGraphWithFallback(),
-    loadPhotoGraphEdgeGenerationConfig(),
-  ]);
+  const [{ nodes, source, databaseAvailable }, defaultEdgeGeneration] =
+    await Promise.all([
+      loadGraphWithFallback(),
+      loadPhotoGraphEdgeGenerationConfig(),
+    ]);
   const nodesWithPreview = nodes.map((node) => ({
     ...node,
-    previewUrl: node.storagePath
-      ? buildSupabaseStorageRenderUrl(node.storagePath, {
-          width: ADMIN_PREVIEW_WIDTH,
-          quality: ADMIN_PREVIEW_QUALITY,
-        })
-      : node.url,
+    previewUrl: buildAdminPreviewUrl(node.storagePath, node.url),
   }));
 
   return NextResponse.json(
     {
       source,
       nodes: nodesWithPreview,
+      writesEnabled: databaseAvailable,
       defaultEdgeGeneration,
     },
     {

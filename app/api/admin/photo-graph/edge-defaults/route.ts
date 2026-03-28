@@ -96,6 +96,16 @@ export async function POST(request: NextRequest) {
   }
 
   const loaded = await loadGraphWithFallback();
+  if (!loaded.databaseAvailable) {
+    return NextResponse.json(
+      {
+        error:
+          "Photo graph persistence is unavailable. Restore Supabase connectivity before saving LAB defaults.",
+      },
+      { status: 503 },
+    );
+  }
+
   const nodes = regenerateLabGraphCorrelations(
     cloneGraphNodes(loaded.nodes),
     config.params,

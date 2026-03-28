@@ -104,6 +104,16 @@ export async function POST(request: NextRequest) {
   }
 
   const loaded = await loadGraphWithFallback();
+  if (!loaded.databaseAvailable) {
+    return NextResponse.json(
+      {
+        error:
+          "Photo graph persistence is unavailable. Restore Supabase connectivity before applying edge updates.",
+      },
+      { status: 503 },
+    );
+  }
+
   const nodes = cloneGraphNodes(loaded.nodes);
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
   const touchedNodeIds = new Set<string>();

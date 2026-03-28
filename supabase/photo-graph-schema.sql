@@ -46,6 +46,13 @@ create table if not exists public.photo_graph_settings (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
+grant usage on schema public to postgres, anon, authenticated, service_role;
+grant all on table public.photo_graph_nodes to postgres, anon, authenticated, service_role;
+grant all on table public.photo_graph_edges to postgres, anon, authenticated, service_role;
+grant all on table public.photo_graph_settings to postgres, anon, authenticated, service_role;
+
 alter table public.photo_graph_nodes enable row level security;
 alter table public.photo_graph_edges enable row level security;
 alter table public.photo_graph_settings enable row level security;
+
+notify pgrst, 'reload schema';

@@ -65,6 +65,7 @@ type AdminGraphNode = {
 type AdminGraphResponse = {
   source: "database" | "static";
   nodes: AdminGraphNode[];
+  writesEnabled: boolean;
   defaultEdgeGeneration: PhotoGraphEdgeGenerationConfig;
   error?: string;
 };
@@ -311,6 +312,7 @@ export default function PhotoGraphUploadClient() {
   const [graphSource, setGraphSource] = useState<"database" | "static">(
     "database",
   );
+  const [writesEnabled, setWritesEnabled] = useState(true);
   const [loadingGraphNodes, setLoadingGraphNodes] = useState(false);
   const [deletingNodeId, setDeletingNodeId] = useState<string | null>(null);
   const [manageQuery, setManageQuery] = useState("");
@@ -367,6 +369,7 @@ export default function PhotoGraphUploadClient() {
     () => buildPreviewGraphUrl(debouncedPreviewParams, previewRevision),
     [debouncedPreviewParams, previewRevision],
   );
+  const persistenceUnavailable = !writesEnabled;
 
   const appendVerboseLog = useCallback(
     (message: string, level: VerboseLogLevel = "info") => {
@@ -432,6 +435,7 @@ export default function PhotoGraphUploadClient() {
 
         setGraphNodes(body.nodes);
         setGraphSource(body.source);
+        setWritesEnabled(body.writesEnabled);
         setSavedEdgeGeneration(body.defaultEdgeGeneration);
 
         if (syncPreviewParams) {
@@ -444,6 +448,12 @@ export default function PhotoGraphUploadClient() {
           `Admin panel refreshed (${body.nodes.length} node(s), ${countAdminGraphEdges(body.nodes)} persisted edge(s), source: ${body.source}).`,
           "success",
         );
+        if (!body.writesEnabled) {
+          appendVerboseLog(
+            "Supabase photo graph persistence is unavailable. Admin preview stays live, but save, upload, and delete actions are disabled.",
+            "warn",
+          );
+        }
       } catch (error) {
         const message =
           error instanceof Error
@@ -538,7 +548,11 @@ export default function PhotoGraphUploadClient() {
   }, [savedEdgeGeneration.params, setStatusWithLog]);
 
   const handleSaveEdgeDefaults = useCallback(async () => {
-    if (isSavingEdgeDefaults || previewMatchesSavedDefaults) {
+    if (
+      persistenceUnavailable ||
+      isSavingEdgeDefaults ||
+      previewMatchesSavedDefaults
+    ) {
       return;
     }
 
@@ -591,6 +605,7 @@ export default function PhotoGraphUploadClient() {
     appendVerboseLog,
     fetchGraphNodes,
     isSavingEdgeDefaults,
+    persistenceUnavailable,
     previewMatchesSavedDefaults,
     previewParams,
     setStatusWithLog,
@@ -598,6 +613,10 @@ export default function PhotoGraphUploadClient() {
 
   const handleDeleteNode = useCallback(
     async (node: AdminGraphNode) => {
+      if (persistenceUnavailable) {
+        return;
+      }
+
       const confirmed = window.confirm(
         `Delete node ${node.id}? This removes the photo and its graph edges.`,
       );
@@ -649,11 +668,11 @@ export default function PhotoGraphUploadClient() {
         setDeletingNodeId(null);
       }
     },
-    [appendVerboseLog, fetchGraphNodes, setStatusWithLog],
+    [appendVerboseLog, fetchGraphNodes, persistenceUnavailable, setStatusWithLog],
   );
 
   const handleUpload = async () => {
-    if (!files.length || isProcessing) {
+    if (!files.length || isProcessing || persistenceUnavailable) {
       return;
     }
 
@@ -804,7 +823,11 @@ export default function PhotoGraphUploadClient() {
     router.refresh();
   };
 
-  const uploadDisabled = !files.length || isProcessing || isSavingEdgeDefaults;
+  const uploadDisabled =
+    !files.length ||
+    isProcessing ||
+    isSavingEdgeDefaults ||
+    persistenceUnavailable;
   const adminBusy =
     isProcessing ||
     isSavingEdgeDefaults ||
@@ -847,6 +870,14 @@ export default function PhotoGraphUploadClient() {
                 minimum accepted similarity, then save if you want the public
                 graph snapshot to adopt the result.
               </p>
+              {persistenceUnavailable && (
+                <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs leading-5 text-amber-700 dark:text-amber-300">
+                  Supabase photo graph persistence is currently unavailable.
+                  Preview still works, but saving defaults, uploading, and
+                  deleting are disabled until the database connection is
+                  restored.
+                </p>
+              )}
 
               <div className="mt-5 space-y-4">
                 <div className="space-y-2">
@@ -922,7 +953,11 @@ export default function PhotoGraphUploadClient() {
               <div className="mt-5 flex flex-wrap gap-2">
                 <OverlayControlButton
                   onClick={() => void handleSaveEdgeDefaults()}
-                  disabled={adminBusy || previewMatchesSavedDefaults}
+                  disabled={
+                    adminBusy ||
+                    previewMatchesSavedDefaults ||
+                    persistenceUnavailable
+                  }
                   layout="action"
                   size="sm"
                 >
@@ -1193,6 +1228,7 @@ export default function PhotoGraphUploadClient() {
                       <OverlayControlButton
                         onClick={() => void handleDeleteNode(node)}
                         disabled={
+                          persistenceUnavailable ||
                           isProcessing ||
                           isSavingEdgeDefaults ||
                           loadingGraphNodes ||

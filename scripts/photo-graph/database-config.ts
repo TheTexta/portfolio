@@ -3,6 +3,13 @@ type DatabaseSocket = {
   port: number;
 };
 
+export type RemoteServerConfig = {
+  host: string;
+  username: string;
+  password?: string;
+  hostKey?: string;
+};
+
 function parseHostAndPort(value: string): DatabaseSocket {
   const [host, rawPort] = value.split(":");
   const port = rawPort ? Number(rawPort) : 5432;
@@ -77,4 +84,20 @@ export function readDatabaseSocket() {
   }
 
   return parseHostAndPort(directValue);
+}
+
+export function readRemoteServerConfig() {
+  const host = process.env.SERVER_LOCAL_IP?.trim();
+  const username = process.env.SERVER_USERNAME?.trim();
+
+  if (!host || !username) {
+    return null;
+  }
+
+  return {
+    host,
+    username,
+    password: process.env.SERVER_PASSWORD,
+    hostKey: process.env.SERVER_SSH_HOSTKEY,
+  } satisfies RemoteServerConfig;
 }

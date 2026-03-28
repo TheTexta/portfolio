@@ -14,6 +14,7 @@ import {
   loadPhotoGraphFromDatabase,
   replacePhotoGraphGraph,
 } from "@/lib/photo-graph/database";
+import { isRecoverablePhotoGraphDatabaseError } from "@/lib/photo-graph/database-errors";
 import { buildSupabaseStoragePublicUrl } from "@/lib/supabase/config";
 import type {
   GraphImageDimensions,
@@ -27,6 +28,10 @@ const FALLBACK_MAX_LONG_SIDE = 1000;
 type NormalizedGraphResult = {
   nodes: GraphNode[];
   source: GraphLoadSource;
+};
+
+type GraphLoadResult = NormalizedGraphResult & {
+  databaseAvailable: boolean;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -202,18 +207,6 @@ function normalizeGraphData(
   return { nodes, source };
 }
 
-function isRecoverableDatabaseError(error: unknown) {
-  if (!(error instanceof Error)) {
-    return false;
-  }
-
-  return (
-    error.message.includes("Missing required Supabase env var") ||
-    error.message.includes("photo_graph_nodes") ||
-    error.message.includes("photo_graph_edges")
-  );
-}
-
 export { imagePathForLegacyId, photoGraphImageBasePath };
 
 export async function readStaticGraph() {
@@ -237,7 +230,12 @@ export async function readDatabaseGraph() {
   try {
     return await loadPhotoGraphFromDatabase();
   } catch (error) {
-    if (isRecoverableDatabaseError(error)) {
+    if (
+      isRecoverablePhotoGraphDatabaseError(error, [
+        "photo_graph_nodes",
+        "photo_graph_edges",
+      ])
+    ) {
       return null;
     }
 
@@ -245,19 +243,22 @@ export async function readDatabaseGraph() {
   }
 }
 
-export async function loadGraphWithFallback() {
+export async function loadGraphWithFallback(): Promise<GraphLoadResult> {
   const databaseNodes = await readDatabaseGraph();
+  const databaseAvailable = databaseNodes !== null;
 
   if (databaseNodes && databaseNodes.length > 0) {
     return {
       source: "database" as GraphLoadSource,
       nodes: databaseNodes,
+      databaseAvailable,
     };
   }
 
   return {
     source: "static" as GraphLoadSource,
     nodes: await readStaticGraph(),
+    databaseAvailable,
   };
 }
 

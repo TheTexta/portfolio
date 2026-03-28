@@ -31,3 +31,7 @@ Take the node-photo-viewer and adapt it into a standalone application that can s
 - could even use flickr graph maker
 - could use p5.js
 - could be a real window water shader type thing
+
+
+## Kick Analyser
+take a kick and analyse it for the genre it stems from. scale by allowing analysis of other types of instruments

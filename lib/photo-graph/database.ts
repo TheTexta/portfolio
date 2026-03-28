@@ -1,4 +1,5 @@
 import { imagePathForLegacyId } from "@/lib/photo-graph/config";
+import { isRecoverablePhotoGraphDatabaseError } from "@/lib/photo-graph/database-errors";
 import {
   DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG,
   normalizePhotoGraphEdgeGenerationConfig,
@@ -332,22 +333,32 @@ export async function upsertPhotoGraphNodes(nodes: GraphNode[]) {
 }
 
 export async function loadPhotoGraphEdgeGenerationConfig() {
-  const supabase = getServiceRoleSupabase();
-  const { data, error } = await supabase
-    .from("photo_graph_settings")
-    .select("value")
-    .eq("key", DEFAULT_EDGE_GENERATION_SETTING_KEY)
-    .maybeSingle();
+  try {
+    const supabase = getServiceRoleSupabase();
+    const { data, error } = await supabase
+      .from("photo_graph_settings")
+      .select("value")
+      .eq("key", DEFAULT_EDGE_GENERATION_SETTING_KEY)
+      .maybeSingle();
 
-  if (error) {
-    if (isMissingTableError(error, "photo_graph_settings")) {
+    if (error) {
+      if (isMissingTableError(error, "photo_graph_settings")) {
+        return DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG;
+      }
+
+      assertNoSupabaseError(error, "Failed to load photo graph edge defaults");
+    }
+
+    return normalizePhotoGraphEdgeGenerationConfig(data?.value);
+  } catch (error) {
+    if (
+      isRecoverablePhotoGraphDatabaseError(error, ["photo_graph_settings"])
+    ) {
       return DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG;
     }
 
-    assertNoSupabaseError(error, "Failed to load photo graph edge defaults");
+    throw error;
   }
-
-  return normalizePhotoGraphEdgeGenerationConfig(data?.value);
 }
 
 export async function savePhotoGraphEdgeGenerationConfig(

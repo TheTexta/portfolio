@@ -223,6 +223,16 @@ export async function POST(request: NextRequest) {
   }
 
   const loaded = await loadGraphWithFallback();
+  if (!loaded.databaseAvailable) {
+    return NextResponse.json(
+      {
+        error:
+          "Photo graph persistence is unavailable. Restore Supabase connectivity before uploading new photos.",
+      },
+      { status: 503 },
+    );
+  }
+
   const nodes = cloneGraphNodes(loaded.nodes);
 
   const existingMaxLongSide = ensureProcessingFeatures(nodes);

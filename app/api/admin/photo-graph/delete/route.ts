@@ -53,6 +53,16 @@ export async function POST(request: NextRequest) {
   }
 
   const loaded = await loadGraphWithFallback();
+  if (!loaded.databaseAvailable) {
+    return NextResponse.json(
+      {
+        error:
+          "Photo graph persistence is unavailable. Restore Supabase connectivity before deleting photos.",
+      },
+      { status: 503 },
+    );
+  }
+
   const nodes = cloneGraphNodes(loaded.nodes);
 
   const targetIndex = nodes.findIndex((node) => node.id === nodeId);
