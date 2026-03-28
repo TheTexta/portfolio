@@ -16,7 +16,7 @@ export const GRAPH_CONFIG = {
   initialVisibleImageCount: 36,
   initialImageFallbackCount: 12,
   fitToCanvasDurationMs: 250,
-  fitToCanvasMinTicks: 6,
+  fitToCanvasMinTicks: 12,
   fitToCanvasPaddingRatio: 0.08,
   viewportBufferRatio: 0.15,
 } as const;

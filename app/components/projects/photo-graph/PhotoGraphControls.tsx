@@ -34,7 +34,7 @@ export default function PhotoGraphControls({
       {!menuOpen && (
         <OverlayControlButton
           onClick={onMenuOpen}
-          className="absolute top-[1vmin] left-[1vmin] z-[6]"
+          className="absolute top-[1vmin] left-[1vmin] z-6"
           aria-label="Open graph controls"
         >
           <Menu className="h-4 w-4" />
