@@ -14,7 +14,8 @@
     "photo-graph:migrate": "tsx scripts/photo-graph/migrate-firebase-to-supabase.ts",
     "photo-graph:rename-storage": "tsx scripts/photo-graph/rename-photo-graph-storage.ts",
     "photo-graph:backfill-dimensions": "tsx scripts/photo-graph/backfill-supabase-dimensions.ts",
-    "photo-graph:fix-cache-control": "tsx scripts/photo-graph/fix-cache-control.ts"
+    "photo-graph:fix-cache-control": "tsx scripts/photo-graph/fix-cache-control.ts",
+    "photo-graph:validate-edge-generation": "tsx scripts/photo-graph/validate-edge-generation.ts"
   },
   "dependencies": {
     "@spotify/web-api-ts-sdk": "^1.2.0",

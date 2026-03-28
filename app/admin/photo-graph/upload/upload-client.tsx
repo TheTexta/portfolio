@@ -6,32 +6,37 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
 
+import PhotoGraphCanvas from "@/app/components/projects/photo-graph/PhotoGraphCanvas";
 import {
   OVERLAY_CONTROL_DANGER_CLASS,
   OverlayControlButton,
   OverlayControlLabel,
 } from "@/app/components/ui/overlay-control-button";
 import {
-  MIN_CORRELATION,
-  computeCorrelation,
-} from "@/lib/photo-graph/correlation";
+  DEFAULT_LAB_EDGE_GENERATION_PARAMS,
+  DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG,
+  LAB_EDGE_PARAM_LIMITS,
+} from "@/lib/photo-graph/edge-generation";
 import { PHOTO_GRAPH_CACHE_CONTROL_SECONDS } from "@/lib/photo-graph/config";
-import { getBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { featureFromRgb, rgbToHex } from "@/lib/photo-graph/feature-extraction";
 import type {
   GraphFeature,
   GraphImageDimensions,
+  LabEdgeGenerationParams,
+  PhotoGraphEdgeGenerationConfig,
 } from "@/lib/photo-graph/types";
+import { getBrowserSupabaseClient } from "@/lib/supabase/browser";
 
 type UploadApiResponse = {
   ok: boolean;
   createdIds: string[];
   nodeCount: number;
+  edgeCount: number;
+  edgeGenerationConfig: PhotoGraphEdgeGenerationConfig;
   error?: string;
 };
 
@@ -60,13 +65,15 @@ type AdminGraphNode = {
 type AdminGraphResponse = {
   source: "database" | "static";
   nodes: AdminGraphNode[];
+  defaultEdgeGeneration: PhotoGraphEdgeGenerationConfig;
   error?: string;
 };
 
-type ApplyCorrelationsResponse = {
+type SaveEdgeDefaultsResponse = {
   ok: boolean;
-  appliedCount: number;
-  touchedNodeCount: number;
+  source: "database" | "static";
+  edgeCount: number;
+  config: PhotoGraphEdgeGenerationConfig;
   error?: string;
 };
 
@@ -75,12 +82,6 @@ type DeletePhotoResponse = {
   deletedId: string;
   nodeCount: number;
   error?: string;
-};
-
-type CorrelationUpdate = {
-  leftId: string;
-  rightId: string;
-  correlation: number | null;
 };
 
 type ComputedFeaturePayload = {
@@ -107,8 +108,12 @@ type VerboseLogEntry = {
   message: string;
 };
 
-const EDGE_UPDATE_BATCH_SIZE = 2000;
-const COMPUTE_YIELD_INTERVAL = 750;
+type FetchGraphNodesOptions = {
+  silent?: boolean;
+  syncPreviewParams?: boolean;
+};
+
+const PREVIEW_UPDATE_DEBOUNCE_MS = 250;
 
 function bytesToMb(size: number) {
   return `${(size / (1024 * 1024)).toFixed(2)} MB`;
@@ -118,6 +123,59 @@ function formatLogTimestamp(timestamp: number) {
   return new Date(timestamp).toLocaleTimeString(undefined, {
     hour12: false,
   });
+}
+
+function formatSigmaE(value: number) {
+  return value.toFixed(1);
+}
+
+function formatMinCorrelation(value: number) {
+  return `${(value * 100).toFixed(1)}%`;
+}
+
+function compareNodeIds(leftId: string, rightId: string) {
+  const leftNumber = Number(leftId);
+  const rightNumber = Number(rightId);
+
+  if (Number.isFinite(leftNumber) && Number.isFinite(rightNumber)) {
+    return leftNumber - rightNumber;
+  }
+
+  return leftId.localeCompare(rightId);
+}
+
+function areLabParamsEqual(
+  left: LabEdgeGenerationParams,
+  right: LabEdgeGenerationParams,
+) {
+  return (
+    Math.abs(left.sigmaE - right.sigmaE) < 1e-9 &&
+    Math.abs(left.minCorrelation - right.minCorrelation) < 1e-9
+  );
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function countAdminGraphEdges(nodes: AdminGraphNode[]) {
+  let count = 0;
+
+  for (const node of nodes) {
+    for (const [targetId, correlation] of Object.entries(node.correlations ?? {})) {
+      if (
+        !Number.isFinite(correlation) ||
+        correlation <= 0 ||
+        compareNodeIds(node.id, targetId) >= 0
+      ) {
+        continue;
+      }
+
+      count += 1;
+    }
+  }
+
+  return count;
 }
 
 async function parseJsonOrThrow<T>(response: Response): Promise<T> {
@@ -133,22 +191,7 @@ async function parseJsonOrThrow<T>(response: Response): Promise<T> {
 }
 
 function sortNodesById(nodes: AdminGraphNode[]) {
-  return [...nodes].sort((left, right) => {
-    const leftNumber = Number(left.id);
-    const rightNumber = Number(right.id);
-
-    if (Number.isFinite(leftNumber) && Number.isFinite(rightNumber)) {
-      return leftNumber - rightNumber;
-    }
-
-    return left.id.localeCompare(right.id);
-  });
-}
-
-async function yieldToMainThread() {
-  await new Promise<void>((resolve) => {
-    window.setTimeout(() => resolve(), 0);
-  });
+  return [...nodes].sort((left, right) => compareNodeIds(left.id, right.id));
 }
 
 async function loadImage(file: File) {
@@ -242,80 +285,47 @@ async function computeFeaturePayload(
   };
 }
 
-async function buildCorrelationUpdates(
-  nodes: AdminGraphNode[],
-  newNodeIds: string[],
-  onProgress: (processed: number, total: number) => void,
+function buildPreviewGraphUrl(
+  params: LabEdgeGenerationParams,
+  revision: number,
 ) {
-  const sortedNodes = sortNodesById(nodes);
-  const newNodeSet = new Set(newNodeIds.map(String));
-  const updates: CorrelationUpdate[] = [];
+  const searchParams = new URLSearchParams({
+    sigmaE: params.sigmaE.toString(),
+    minCorrelation: params.minCorrelation.toString(),
+    revision: revision.toString(),
+  });
 
-  let totalPairs = 0;
-  for (let index = 0; index < sortedNodes.length; index += 1) {
-    const left = sortedNodes[index];
-
-    for (let offset = index + 1; offset < sortedNodes.length; offset += 1) {
-      const right = sortedNodes[offset];
-      if (newNodeSet.has(left.id) || newNodeSet.has(right.id)) {
-        totalPairs += 1;
-      }
-    }
-  }
-
-  let processedPairs = 0;
-
-  for (let index = 0; index < sortedNodes.length; index += 1) {
-    const left = sortedNodes[index];
-
-    for (let offset = index + 1; offset < sortedNodes.length; offset += 1) {
-      const right = sortedNodes[offset];
-      if (!(newNodeSet.has(left.id) || newNodeSet.has(right.id))) {
-        continue;
-      }
-
-      processedPairs += 1;
-
-      if (left.feature && right.feature) {
-        const correlation = computeCorrelation(left.feature, right.feature);
-
-        updates.push({
-          leftId: left.id,
-          rightId: right.id,
-          correlation: correlation >= MIN_CORRELATION ? correlation : null,
-        });
-      }
-
-      if (processedPairs % COMPUTE_YIELD_INTERVAL === 0) {
-        onProgress(processedPairs, totalPairs);
-        await yieldToMainThread();
-      }
-    }
-  }
-
-  onProgress(totalPairs, totalPairs);
-
-  return {
-    updates,
-    totalPairs,
-  };
+  return `/api/admin/photo-graph/graph-preview?${searchParams.toString()}`;
 }
 
 export default function PhotoGraphUploadClient() {
   const router = useRouter();
-  const correlationProgressRef = useRef(-1);
 
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSavingEdgeDefaults, setIsSavingEdgeDefaults] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [createdIds, setCreatedIds] = useState<string[]>([]);
   const [graphNodes, setGraphNodes] = useState<AdminGraphNode[]>([]);
+  const [graphSource, setGraphSource] = useState<"database" | "static">(
+    "database",
+  );
   const [loadingGraphNodes, setLoadingGraphNodes] = useState(false);
   const [deletingNodeId, setDeletingNodeId] = useState<string | null>(null);
   const [manageQuery, setManageQuery] = useState("");
   const [verbosePanelOpen, setVerbosePanelOpen] = useState(true);
   const [verboseLogs, setVerboseLogs] = useState<VerboseLogEntry[]>([]);
+  const [savedEdgeGeneration, setSavedEdgeGeneration] =
+    useState<PhotoGraphEdgeGenerationConfig>(
+      DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG,
+    );
+  const [previewParams, setPreviewParams] = useState<LabEdgeGenerationParams>(
+    DEFAULT_LAB_EDGE_GENERATION_PARAMS,
+  );
+  const [debouncedPreviewParams, setDebouncedPreviewParams] =
+    useState<LabEdgeGenerationParams>(DEFAULT_LAB_EDGE_GENERATION_PARAMS);
+  const [previewRevision, setPreviewRevision] = useState(0);
 
   const totalBytes = useMemo(
     () => files.reduce((sum, file) => sum + file.size, 0),
@@ -337,6 +347,26 @@ export default function PhotoGraphUploadClient() {
       );
     });
   }, [graphNodes, manageQuery]);
+
+  const persistedEdgeCount = useMemo(
+    () => countAdminGraphEdges(graphNodes),
+    [graphNodes],
+  );
+
+  const previewMatchesSavedDefaults = useMemo(
+    () => areLabParamsEqual(previewParams, savedEdgeGeneration.params),
+    [previewParams, savedEdgeGeneration.params],
+  );
+
+  const previewIsUpdating = useMemo(
+    () => !areLabParamsEqual(previewParams, debouncedPreviewParams),
+    [debouncedPreviewParams, previewParams],
+  );
+
+  const previewGraphUrl = useMemo(
+    () => buildPreviewGraphUrl(debouncedPreviewParams, previewRevision),
+    [debouncedPreviewParams, previewRevision],
+  );
 
   const appendVerboseLog = useCallback(
     (message: string, level: VerboseLogLevel = "info") => {
@@ -367,8 +397,21 @@ export default function PhotoGraphUploadClient() {
     setVerboseLogs([]);
   }, []);
 
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedPreviewParams(previewParams);
+    }, PREVIEW_UPDATE_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [previewParams]);
+
   const fetchGraphNodes = useCallback(
-    async (silent = false) => {
+    async ({
+      silent = false,
+      syncPreviewParams = false,
+    }: FetchGraphNodesOptions = {}) => {
       if (!silent) {
         setStatusWithLog("Loading graph nodes for admin panel...");
       }
@@ -388,8 +431,17 @@ export default function PhotoGraphUploadClient() {
         }
 
         setGraphNodes(body.nodes);
+        setGraphSource(body.source);
+        setSavedEdgeGeneration(body.defaultEdgeGeneration);
+
+        if (syncPreviewParams) {
+          setPreviewParams(body.defaultEdgeGeneration.params);
+          setDebouncedPreviewParams(body.defaultEdgeGeneration.params);
+        }
+
+        setPreviewRevision((current) => current + 1);
         appendVerboseLog(
-          `Admin panel refreshed (${body.nodes.length} node(s), source: ${body.source}).`,
+          `Admin panel refreshed (${body.nodes.length} node(s), ${countAdminGraphEdges(body.nodes)} persisted edge(s), source: ${body.source}).`,
           "success",
         );
       } catch (error) {
@@ -406,7 +458,10 @@ export default function PhotoGraphUploadClient() {
   );
 
   useEffect(() => {
-    void fetchGraphNodes(true);
+    void fetchGraphNodes({
+      silent: true,
+      syncPreviewParams: true,
+    });
   }, [fetchGraphNodes]);
 
   const addFiles = useCallback((incomingFiles: FileList | File[]) => {
@@ -447,50 +502,99 @@ export default function PhotoGraphUploadClient() {
     addFiles(event.dataTransfer.files);
   };
 
-  const applyCorrelationBatches = async (updates: CorrelationUpdate[]) => {
-    if (!updates.length) {
-      appendVerboseLog("No correlation updates to apply.", "warn");
+  const handleEdgeParamChange = useCallback(
+    (key: keyof LabEdgeGenerationParams, value: number) => {
+      setPreviewParams((current) => {
+        const nextValue =
+          key === "sigmaE"
+            ? clamp(
+                value,
+                LAB_EDGE_PARAM_LIMITS.sigmaE.min,
+                LAB_EDGE_PARAM_LIMITS.sigmaE.max,
+              )
+            : clamp(
+                value,
+                LAB_EDGE_PARAM_LIMITS.minCorrelation.min,
+                LAB_EDGE_PARAM_LIMITS.minCorrelation.max,
+              );
+
+        if (current[key] === nextValue) {
+          return current;
+        }
+
+        return {
+          ...current,
+          [key]: nextValue,
+        };
+      });
+    },
+    [],
+  );
+
+  const handleResetPreview = useCallback(() => {
+    setPreviewParams(savedEdgeGeneration.params);
+    setDebouncedPreviewParams(savedEdgeGeneration.params);
+    setStatusWithLog("Preview reset to the saved LAB defaults.", "info");
+  }, [savedEdgeGeneration.params, setStatusWithLog]);
+
+  const handleSaveEdgeDefaults = useCallback(async () => {
+    if (isSavingEdgeDefaults || previewMatchesSavedDefaults) {
       return;
     }
 
-    const totalBatches = Math.ceil(updates.length / EDGE_UPDATE_BATCH_SIZE);
-    appendVerboseLog(
-      `Applying ${updates.length} edge updates in ${totalBatches} batch(es).`,
-      "info",
-    );
+    setIsSavingEdgeDefaults(true);
+    setErrorMessage(null);
+    setStatusWithLog("Saving LAB edge defaults on the server...");
 
-    for (let batchIndex = 0; batchIndex < totalBatches; batchIndex += 1) {
-      const start = batchIndex * EDGE_UPDATE_BATCH_SIZE;
-      const end = start + EDGE_UPDATE_BATCH_SIZE;
-      const batch = updates.slice(start, end);
-
-      setStatusWithLog(
-        `Applying edge updates (${batchIndex + 1}/${totalBatches})...`,
-      );
-
-      const response = await fetch(
-        "/api/admin/photo-graph/apply-correlations",
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({ updates: batch }),
+    try {
+      const response = await fetch("/api/admin/photo-graph/edge-defaults", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          config: {
+            mode: "lab",
+            params: previewParams,
+          },
+        }),
+      });
 
-      const body = await parseJsonOrThrow<ApplyCorrelationsResponse>(response);
-
+      const body = await parseJsonOrThrow<SaveEdgeDefaultsResponse>(response);
       if (!response.ok || !body.ok) {
-        throw new Error(body.error ?? "Failed to apply correlation updates.");
+        throw new Error(body.error ?? "Failed to save edge defaults.");
       }
 
-      appendVerboseLog(
-        `Applied batch ${batchIndex + 1}/${totalBatches} (${batch.length} updates).`,
+      setSavedEdgeGeneration(body.config);
+      setPreviewParams(body.config.params);
+      setDebouncedPreviewParams(body.config.params);
+      await fetchGraphNodes({
+        silent: true,
+        syncPreviewParams: false,
+      });
+
+      setStatusWithLog(
+        `Saved LAB defaults (${body.edgeCount} persisted edges, sigmaE ${formatSigmaE(body.config.params.sigmaE)}, min correlation ${formatMinCorrelation(body.config.params.minCorrelation)}).`,
         "success",
       );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Saving LAB defaults failed unexpectedly.";
+      setErrorMessage(message);
+      appendVerboseLog(`Saving LAB defaults failed: ${message}`, "error");
+    } finally {
+      setIsSavingEdgeDefaults(false);
     }
-  };
+  }, [
+    appendVerboseLog,
+    fetchGraphNodes,
+    isSavingEdgeDefaults,
+    previewMatchesSavedDefaults,
+    previewParams,
+    setStatusWithLog,
+  ]);
 
   const handleDeleteNode = useCallback(
     async (node: AdminGraphNode) => {
@@ -527,7 +631,9 @@ export default function PhotoGraphUploadClient() {
         );
 
         setCreatedIds((current) => current.filter((id) => id !== node.id));
-        await fetchGraphNodes(true);
+        await fetchGraphNodes({
+          silent: true,
+        });
         setStatusWithLog(`Node ${body.deletedId} deleted.`, "success");
       } catch (error) {
         const message =
@@ -552,7 +658,6 @@ export default function PhotoGraphUploadClient() {
     }
 
     const supabase = getBrowserSupabaseClient();
-    correlationProgressRef.current = -1;
     setIsProcessing(true);
     setErrorMessage(null);
     setStatusWithLog("Starting upload pipeline...", "info");
@@ -640,7 +745,7 @@ export default function PhotoGraphUploadClient() {
         );
       }
 
-      setStatusWithLog("Registering uploaded files as graph nodes...");
+      setStatusWithLog("Registering uploaded files and regenerating edges...");
 
       const registerResponse = await fetch("/api/admin/photo-graph/upload", {
         method: "POST",
@@ -666,53 +771,17 @@ export default function PhotoGraphUploadClient() {
         `Registered ${registerBody.createdIds.length} new node(s): ${registerBody.createdIds.join(", ")}.`,
         "success",
       );
+      appendVerboseLog(
+        `Server regenerated ${registerBody.edgeCount} persisted edge(s) using sigmaE ${formatSigmaE(registerBody.edgeGenerationConfig.params.sigmaE)} and min correlation ${formatMinCorrelation(registerBody.edgeGenerationConfig.params.minCorrelation)}.`,
+        "success",
+      );
 
-      setStatusWithLog("Fetching graph snapshot for local edge generation...");
-
-      const graphResponse = await fetch("/api/admin/photo-graph/graph", {
-        method: "GET",
-        cache: "no-store",
+      await fetchGraphNodes({
+        silent: true,
       });
 
-      const graphBody =
-        await parseJsonOrThrow<AdminGraphResponse>(graphResponse);
-
-      if (!graphResponse.ok || !Array.isArray(graphBody.nodes)) {
-        throw new Error(graphBody.error ?? "Failed to load graph metadata.");
-      }
-
-      appendVerboseLog(
-        `Loaded graph snapshot (${graphBody.nodes.length} node(s), source: ${graphBody.source}).`,
-        "success",
-      );
-
-      const correlationBuild = await buildCorrelationUpdates(
-        graphBody.nodes,
-        registerBody.createdIds,
-        (processed, total) => {
-          const ratio = total > 0 ? Math.round((processed / total) * 100) : 100;
-          setStatusWithLog(`Generating edges in browser (${ratio}%)...`);
-
-          if (ratio >= correlationProgressRef.current + 10 || ratio === 100) {
-            correlationProgressRef.current = ratio;
-            appendVerboseLog(
-              `Edge generation progress: ${processed}/${total} (${ratio}%).`,
-              "info",
-            );
-          }
-        },
-      );
-
-      appendVerboseLog(
-        `Edge generation complete (${correlationBuild.totalPairs} comparisons, ${correlationBuild.updates.length} updates).`,
-        "success",
-      );
-
-      await applyCorrelationBatches(correlationBuild.updates);
-      await fetchGraphNodes(true);
-
       setStatusWithLog(
-        `Done. Added ${registerBody.createdIds.length} image(s) and generated ${correlationBuild.updates.length} edge updates.`,
+        `Done. Added ${registerBody.createdIds.length} image(s) and regenerated ${registerBody.edgeCount} default edges on the server.`,
         "success",
       );
     } catch (error) {
@@ -735,16 +804,28 @@ export default function PhotoGraphUploadClient() {
     router.refresh();
   };
 
-  const uploadDisabled = !files.length || isProcessing;
+  const uploadDisabled = !files.length || isProcessing || isSavingEdgeDefaults;
+  const adminBusy =
+    isProcessing ||
+    isSavingEdgeDefaults ||
+    loadingGraphNodes ||
+    deletingNodeId !== null;
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-10">
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Photo Graph Upload Admin</h1>
-          <p className="mt-1 text-sm opacity-70">
-            Batch upload images directly to Supabase, then your browser
-            generates node correlations and syncs updates.
+    <main className="mx-auto w-full max-w-7xl px-4 py-10">
+      <div className="mb-6 flex flex-col gap-4 border-b border-black/10 pb-6 sm:flex-row sm:items-end sm:justify-between dark:border-white/10">
+        <div className="max-w-3xl">
+          <p className="text-[11px] font-medium tracking-[0.28em] uppercase opacity-55">
+            Server-Side LAB Edge Studio
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+            Photo Graph Upload Admin
+          </h1>
+          <p className="mt-2 text-sm leading-6 opacity-70">
+            Uploads still extract image features in the browser, but edge
+            generation, live preview, and saved defaults now run on the server.
+            The public project graph continues to read the persisted edge
+            snapshot.
           </p>
         </div>
 
@@ -753,88 +834,287 @@ export default function PhotoGraphUploadClient() {
         </OverlayControlButton>
       </div>
 
-      <div
-        onDrop={handleDrop}
-        onDragOver={(event) => event.preventDefault()}
-        className="rounded-lg border border-dashed border-black/30 p-6 text-center dark:border-white/30"
-      >
-        <p className="text-sm">Drag and drop images here</p>
-        <p className="my-2 text-xs opacity-70">or</p>
-        <OverlayControlLabel layout="action">
-          Select Files
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            multiple
-            onChange={handleInputChange}
-            className="hidden"
-          />
-        </OverlayControlLabel>
-      </div>
+      <section className="overflow-hidden rounded-[1.5rem] border border-black/10 bg-[linear-gradient(180deg,rgba(238,237,232,0.8),rgba(255,255,255,0.96))] p-4 shadow-[0_24px_80px_-48px_rgba(27,31,35,0.45)] sm:p-5 dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(26,26,24,0.9),rgba(13,13,12,0.98))]">
+        <div className="grid gap-5 xl:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)]">
+          <div className="flex flex-col gap-4">
+            <div className="rounded-[1.25rem] border border-black/10 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5">
+              <div className="flex items-center justify-between gap-3 text-[11px] tracking-[0.22em] uppercase opacity-60">
+                <span>Saved Defaults</span>
+                <span>{graphSource}</span>
+              </div>
+              <p className="mt-3 text-sm leading-6 opacity-75">
+                Preview uses pure LAB distance only. Adjust the falloff and the
+                minimum accepted similarity, then save if you want the public
+                graph snapshot to adopt the result.
+              </p>
 
-      <div className="mt-4 flex items-center justify-between text-sm">
-        <p>{files.length} file(s) selected</p>
-        <p>{bytesToMb(totalBytes)}</p>
-      </div>
+              <div className="mt-5 space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-end justify-between gap-3">
+                    <label
+                      htmlFor="photo-graph-sigma-e"
+                      className="text-sm font-medium"
+                    >
+                      Sigma E
+                    </label>
+                    <output
+                      htmlFor="photo-graph-sigma-e"
+                      className="text-sm opacity-70"
+                    >
+                      {formatSigmaE(previewParams.sigmaE)}
+                    </output>
+                  </div>
+                  <input
+                    id="photo-graph-sigma-e"
+                    type="range"
+                    min={LAB_EDGE_PARAM_LIMITS.sigmaE.min}
+                    max={LAB_EDGE_PARAM_LIMITS.sigmaE.max}
+                    step={0.5}
+                    value={previewParams.sigmaE}
+                    onChange={(event) =>
+                      handleEdgeParamChange("sigmaE", Number(event.target.value))
+                    }
+                    className="range-sm h-2 w-full rounded-full border-none bg-black/10 accent-black dark:bg-white/20 dark:accent-white"
+                  />
+                  <p className="text-xs leading-5 opacity-60">
+                    Higher values widen the LAB similarity falloff and create
+                    denser edge neighborhoods.
+                  </p>
+                </div>
 
-      {files.length > 0 && (
-        <ul className="mt-3 max-h-56 overflow-y-auto rounded-md border border-black/20 p-3 text-sm dark:border-white/20">
-          {files.map((file) => (
-            <li
-              key={`${file.name}-${file.size}-${file.lastModified}`}
-              className="py-1"
-            >
-              {file.name} ({bytesToMb(file.size)})
-            </li>
-          ))}
-        </ul>
-      )}
+                <div className="space-y-2">
+                  <div className="flex items-end justify-between gap-3">
+                    <label
+                      htmlFor="photo-graph-min-correlation"
+                      className="text-sm font-medium"
+                    >
+                      Minimum correlation
+                    </label>
+                    <output
+                      htmlFor="photo-graph-min-correlation"
+                      className="text-sm opacity-70"
+                    >
+                      {formatMinCorrelation(previewParams.minCorrelation)}
+                    </output>
+                  </div>
+                  <input
+                    id="photo-graph-min-correlation"
+                    type="range"
+                    min={LAB_EDGE_PARAM_LIMITS.minCorrelation.min}
+                    max={LAB_EDGE_PARAM_LIMITS.minCorrelation.max}
+                    step={0.01}
+                    value={previewParams.minCorrelation}
+                    onChange={(event) =>
+                      handleEdgeParamChange(
+                        "minCorrelation",
+                        Number(event.target.value),
+                      )
+                    }
+                    className="range-sm h-2 w-full rounded-full border-none bg-black/10 accent-black dark:bg-white/20 dark:accent-white"
+                  />
+                  <p className="text-xs leading-5 opacity-60">
+                    Higher thresholds prune weak matches sooner and preserve a
+                    tighter persisted graph.
+                  </p>
+                </div>
+              </div>
 
-      <div className="mt-5 flex items-center gap-3">
-        <OverlayControlButton
-          onClick={handleUpload}
-          disabled={uploadDisabled}
-          layout="action"
-          size="lg"
-          className="font-medium"
+              <div className="mt-5 flex flex-wrap gap-2">
+                <OverlayControlButton
+                  onClick={() => void handleSaveEdgeDefaults()}
+                  disabled={adminBusy || previewMatchesSavedDefaults}
+                  layout="action"
+                  size="sm"
+                >
+                  {isSavingEdgeDefaults ? "Saving..." : "Save as Default"}
+                </OverlayControlButton>
+                <OverlayControlButton
+                  onClick={handleResetPreview}
+                  disabled={adminBusy || previewMatchesSavedDefaults}
+                  layout="action"
+                  size="sm"
+                >
+                  Reset to Saved Defaults
+                </OverlayControlButton>
+                <OverlayControlButton
+                  onClick={() =>
+                    void fetchGraphNodes({
+                      syncPreviewParams: false,
+                    })
+                  }
+                  disabled={adminBusy}
+                  layout="action"
+                  size="sm"
+                >
+                  {loadingGraphNodes ? "Refreshing..." : "Refresh Graph"}
+                </OverlayControlButton>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+              <div className="rounded-[1rem] border border-black/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
+                <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
+                  Stored Graph
+                </p>
+                <p className="mt-2 text-2xl font-semibold">
+                  {persistedEdgeCount}
+                </p>
+                <p className="mt-1 text-xs opacity-65">
+                  persisted edge(s) across {graphNodes.length} node(s)
+                </p>
+              </div>
+
+              <div className="rounded-[1rem] border border-black/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
+                <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
+                  Saved LAB Defaults
+                </p>
+                <p className="mt-2 text-sm font-medium">
+                  sigmaE {formatSigmaE(savedEdgeGeneration.params.sigmaE)}
+                </p>
+                <p className="mt-1 text-xs opacity-65">
+                  min correlation{" "}
+                  {formatMinCorrelation(
+                    savedEdgeGeneration.params.minCorrelation,
+                  )}
+                </p>
+              </div>
+
+              <div className="rounded-[1rem] border border-black/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
+                <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
+                  Preview Status
+                </p>
+                <p className="mt-2 text-sm font-medium">
+                  {previewIsUpdating
+                    ? "Updating preview..."
+                    : previewMatchesSavedDefaults
+                      ? "Matches saved defaults"
+                      : "Unsaved preview"}
+                </p>
+                <p className="mt-1 text-xs opacity-65">
+                  Preview refresh is debounced by {PREVIEW_UPDATE_DEBOUNCE_MS}{" "}
+                  ms.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-[1.5rem] border border-black/10 bg-black/5 dark:border-white/10 dark:bg-white/5">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-black/10 px-4 py-3 text-xs dark:border-white/10">
+              <div>
+                <p className="font-medium">Server Preview Graph</p>
+                <p className="mt-1 opacity-65">
+                  Generated from LAB parameters without touching the persisted
+                  public snapshot until you save.
+                </p>
+              </div>
+              <div className="rounded-full border border-black/10 px-3 py-1 text-[11px] tracking-[0.18em] uppercase opacity-70 dark:border-white/10">
+                {previewIsUpdating
+                  ? "Updating"
+                  : previewMatchesSavedDefaults
+                    ? "Saved Default View"
+                    : "Preview Only"}
+              </div>
+            </div>
+
+            <div className="h-[min(42rem,70vh)] min-h-[22rem]">
+              <PhotoGraphCanvas
+                graphUrl={previewGraphUrl}
+                fitToCanvas
+                showNavigation={false}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-6 rounded-md border border-black/20 p-4 dark:border-white/20">
+        <div
+          onDrop={handleDrop}
+          onDragOver={(event) => event.preventDefault()}
+          className="rounded-lg border border-dashed border-black/30 p-6 text-center dark:border-white/30"
         >
-          {isProcessing ? "Processing..." : "Upload + Generate Edges"}
-        </OverlayControlButton>
+          <p className="text-sm">Drag and drop images here</p>
+          <p className="my-2 text-xs opacity-70">or</p>
+          <OverlayControlLabel layout="action">
+            Select Files
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              multiple
+              onChange={handleInputChange}
+              className="hidden"
+            />
+          </OverlayControlLabel>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <p>{files.length} file(s) selected</p>
+          <p>{bytesToMb(totalBytes)}</p>
+        </div>
 
         {files.length > 0 && (
-          <OverlayControlButton
-            onClick={() => setFiles([])}
-            disabled={isProcessing}
-            layout="action"
-          >
-            Clear
-          </OverlayControlButton>
+          <ul className="mt-3 max-h-56 overflow-y-auto rounded-md border border-black/20 p-3 text-sm dark:border-white/20">
+            {files.map((file) => (
+              <li
+                key={`${file.name}-${file.size}-${file.lastModified}`}
+                className="py-1"
+              >
+                {file.name} ({bytesToMb(file.size)})
+              </li>
+            ))}
+          </ul>
         )}
 
-        <OverlayControlButton
-          onClick={() => setVerbosePanelOpen((current) => !current)}
-          layout="action"
-        >
-          {verbosePanelOpen ? "Hide Verbose Panel" : "Show Verbose Panel"}
-        </OverlayControlButton>
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <OverlayControlButton
+            onClick={handleUpload}
+            disabled={uploadDisabled}
+            layout="action"
+            size="lg"
+            className="font-medium"
+          >
+            {isProcessing ? "Processing..." : "Upload + Regenerate Defaults"}
+          </OverlayControlButton>
 
-        <OverlayControlButton onClick={clearVerboseLogs} layout="action">
-          Clear Logs
-        </OverlayControlButton>
-      </div>
+          {files.length > 0 && (
+            <OverlayControlButton
+              onClick={() => setFiles([])}
+              disabled={isProcessing}
+              layout="action"
+            >
+              Clear
+            </OverlayControlButton>
+          )}
 
-      {statusMessage && (
-        <p className="mt-4 text-sm text-blue-700">{statusMessage}</p>
-      )}
-      {errorMessage && (
-        <p className="mt-2 text-sm text-red-600">{errorMessage}</p>
-      )}
+          <OverlayControlButton
+            onClick={() => setVerbosePanelOpen((current) => !current)}
+            layout="action"
+          >
+            {verbosePanelOpen ? "Hide Verbose Panel" : "Show Verbose Panel"}
+          </OverlayControlButton>
 
-      {createdIds.length > 0 && (
-        <p className="mt-2 text-xs opacity-70">
-          Created node IDs: {createdIds.join(", ")}
-        </p>
-      )}
+          <OverlayControlButton onClick={clearVerboseLogs} layout="action">
+            Clear Logs
+          </OverlayControlButton>
+        </div>
+
+        {statusMessage && (
+          <p className="mt-4 text-sm text-blue-700 dark:text-blue-300">
+            {statusMessage}
+          </p>
+        )}
+        {errorMessage && (
+          <p className="mt-2 text-sm text-red-600 dark:text-red-300">
+            {errorMessage}
+          </p>
+        )}
+
+        {createdIds.length > 0 && (
+          <p className="mt-2 text-xs opacity-70">
+            Created node IDs: {createdIds.join(", ")}
+          </p>
+        )}
+      </section>
 
       <section className="mt-6 rounded-md border border-black/20 p-4 dark:border-white/20">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -844,10 +1124,12 @@ export default function PhotoGraphUploadClient() {
               {graphNodes.length} total node(s)
             </span>
             <OverlayControlButton
-              onClick={() => void fetchGraphNodes()}
-              disabled={
-                loadingGraphNodes || isProcessing || deletingNodeId !== null
+              onClick={() =>
+                void fetchGraphNodes({
+                  syncPreviewParams: false,
+                })
               }
+              disabled={adminBusy}
               layout="action"
               size="sm"
             >
@@ -912,6 +1194,7 @@ export default function PhotoGraphUploadClient() {
                         onClick={() => void handleDeleteNode(node)}
                         disabled={
                           isProcessing ||
+                          isSavingEdgeDefaults ||
                           loadingGraphNodes ||
                           (deletingNodeId !== null && !isDeleting)
                         }
@@ -950,12 +1233,12 @@ export default function PhotoGraphUploadClient() {
                     <span
                       className={
                         entry.level === "error"
-                          ? "text-red-600"
+                          ? "text-red-600 dark:text-red-300"
                           : entry.level === "warn"
-                            ? "text-amber-600"
+                            ? "text-amber-600 dark:text-amber-300"
                             : entry.level === "success"
-                              ? "text-green-600"
-                              : "text-blue-600"
+                              ? "text-green-600 dark:text-green-300"
+                              : "text-blue-600 dark:text-blue-300"
                       }
                     >
                       {entry.level.toUpperCase()}

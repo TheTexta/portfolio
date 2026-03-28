@@ -126,6 +126,8 @@ function buildInspectPreviewUrl(node: PhotoGraphNode) {
 export default function PhotoGraphCanvas({
   forcedDarkMode,
   fitToCanvas = false,
+  graphUrl,
+  showNavigation = true,
 }: PhotoGraphCanvasProps) {
   const { darkMode: siteDarkMode, toggleTheme } = useTheme();
   const activeDarkMode = forcedDarkMode ?? siteDarkMode;
@@ -145,7 +147,7 @@ export default function PhotoGraphCanvas({
     null,
   );
 
-  const graphData = usePhotoGraphData();
+  const graphData = usePhotoGraphData(graphUrl);
   const { reinitializeCollisionForce } = usePhotoGraphForces({
     fgRef,
     nodes: graphData.nodes,
@@ -281,17 +283,19 @@ export default function PhotoGraphCanvas({
           onControlChange={setControlValue}
         />
 
-        <OverlayNavBar
-          darkMode={isFullPageRoute ? activeDarkMode : undefined}
-          onToggleDarkMode={
-            isFullPageRoute && forcedDarkMode === undefined
-              ? toggleTheme
-              : undefined
-          }
-          expandHref={isFullPageRoute ? undefined : PROJECT_ROUTES.photoGraph}
-          exitHref={isFullPageRoute ? PROJECT_ROUTES.home : undefined}
-          ariaLabel="Photo graph controls"
-        />
+        {showNavigation && (
+          <OverlayNavBar
+            darkMode={isFullPageRoute ? activeDarkMode : undefined}
+            onToggleDarkMode={
+              isFullPageRoute && forcedDarkMode === undefined
+                ? toggleTheme
+                : undefined
+            }
+            expandHref={isFullPageRoute ? undefined : PROJECT_ROUTES.photoGraph}
+            exitHref={isFullPageRoute ? PROJECT_ROUTES.home : undefined}
+            ariaLabel="Photo graph controls"
+          />
+        )}
 
         <div
           ref={containerRef}

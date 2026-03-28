@@ -5,6 +5,16 @@ export type GraphFeature = {
   longSide: number;
 };
 
+export type LabEdgeGenerationParams = {
+  sigmaE: number;
+  minCorrelation: number;
+};
+
+export type PhotoGraphEdgeGenerationConfig = {
+  mode: "lab";
+  params: LabEdgeGenerationParams;
+};
+
 export type GraphImageDimensions = {
   width: number;
   height: number;
@@ -77,5 +87,11 @@ export type PhotoGraphEdgeRow = {
   right_node_id: number;
   correlation: number;
   created_at?: string;
+  updated_at: string;
+};
+
+export type PhotoGraphSettingRow = {
+  key: string;
+  value: unknown;
   updated_at: string;
 };

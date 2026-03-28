@@ -1,6 +1,7 @@
 import type {
   PhotoGraphEdgeRow,
   PhotoGraphNodeRow,
+  PhotoGraphSettingRow,
 } from "@/lib/photo-graph/types";
 
 type TableDefinition<Row, Insert, Update> = {
@@ -22,6 +23,11 @@ export type SupabaseDatabase = {
         PhotoGraphEdgeRow,
         Omit<PhotoGraphEdgeRow, "created_at">,
         Partial<Omit<PhotoGraphEdgeRow, "created_at">>
+      >;
+      photo_graph_settings: TableDefinition<
+        PhotoGraphSettingRow,
+        PhotoGraphSettingRow,
+        Partial<PhotoGraphSettingRow>
       >;
     };
     Views: Record<string, never>;

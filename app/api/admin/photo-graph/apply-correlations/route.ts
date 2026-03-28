@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { MIN_CORRELATION } from "@/lib/photo-graph/correlation";
 import {
   cloneGraphNodes,
   loadGraphWithFallback,
@@ -118,10 +117,7 @@ export async function POST(request: NextRequest) {
       continue;
     }
 
-    if (
-      typeof update.correlation === "number" &&
-      update.correlation >= MIN_CORRELATION
-    ) {
+    if (typeof update.correlation === "number" && update.correlation > 0) {
       left.correlations[right.id] = update.correlation;
       right.correlations[left.id] = update.correlation;
     } else {

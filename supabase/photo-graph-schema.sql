@@ -40,5 +40,12 @@ create table if not exists public.photo_graph_edges (
 create index if not exists photo_graph_edges_right_node_id_idx
   on public.photo_graph_edges (right_node_id);
 
+create table if not exists public.photo_graph_settings (
+  key text primary key,
+  value jsonb not null,
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
 alter table public.photo_graph_nodes enable row level security;
 alter table public.photo_graph_edges enable row level security;
+alter table public.photo_graph_settings enable row level security;

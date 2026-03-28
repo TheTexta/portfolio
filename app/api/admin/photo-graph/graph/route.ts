@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { loadPhotoGraphEdgeGenerationConfig } from "@/lib/photo-graph/database";
 import { loadGraphWithFallback } from "@/lib/photo-graph/graph-store";
 import {
   ADMIN_SESSION_COOKIE_NAME,
@@ -23,7 +24,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { nodes, source } = await loadGraphWithFallback();
+  const [{ nodes, source }, defaultEdgeGeneration] = await Promise.all([
+    loadGraphWithFallback(),
+    loadPhotoGraphEdgeGenerationConfig(),
+  ]);
   const nodesWithPreview = nodes.map((node) => ({
     ...node,
     previewUrl: node.storagePath
@@ -38,6 +42,7 @@ export async function GET(request: NextRequest) {
     {
       source,
       nodes: nodesWithPreview,
+      defaultEdgeGeneration,
     },
     {
       headers: {

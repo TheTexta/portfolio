@@ -1,9 +1,14 @@
-import { MIN_CORRELATION } from "@/lib/photo-graph/correlation";
 import { imagePathForLegacyId } from "@/lib/photo-graph/config";
+import {
+  DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG,
+  normalizePhotoGraphEdgeGenerationConfig,
+} from "@/lib/photo-graph/edge-generation";
 import type {
   GraphNode,
   PhotoGraphEdgeRow,
   PhotoGraphNodeRow,
+  PhotoGraphEdgeGenerationConfig,
+  PhotoGraphSettingRow,
 } from "@/lib/photo-graph/types";
 import { getServiceRoleSupabase } from "@/lib/server/supabase";
 import {
@@ -12,9 +17,11 @@ import {
 } from "@/lib/supabase/config";
 
 const PAGE_SIZE = 1_000;
+const DEFAULT_EDGE_GENERATION_SETTING_KEY = "default_edge_generation";
 
 type PhotoGraphNodeInsert = Omit<PhotoGraphNodeRow, "created_at">;
 type PhotoGraphEdgeInsert = Omit<PhotoGraphEdgeRow, "created_at">;
+type PhotoGraphSettingInsert = PhotoGraphSettingRow;
 
 function compareNodeIds(leftId: string, rightId: string) {
   const leftNumber = Number(leftId);
@@ -36,6 +43,10 @@ function assertNoSupabaseError<T extends { message?: string }>(
   }
 
   throw new Error(`${message}: ${error.message ?? "Unknown Supabase error"}`);
+}
+
+function isMissingTableError(error: { message?: string } | null, tableName: string) {
+  return Boolean(error?.message?.includes(tableName));
 }
 
 function toNodeId(value: number | string) {
@@ -163,7 +174,7 @@ function graphNodesToEdgeRows(nodes: GraphNode[]): PhotoGraphEdgeInsert[] {
 
   for (const node of nodes) {
     for (const [targetId, correlation] of Object.entries(node.correlations)) {
-      if (!Number.isFinite(correlation) || correlation < MIN_CORRELATION) {
+      if (!Number.isFinite(correlation) || correlation <= 0) {
         continue;
       }
 
@@ -263,6 +274,19 @@ async function insertEdgeRows(rows: PhotoGraphEdgeInsert[]) {
   }
 }
 
+async function upsertSettingRows(rows: PhotoGraphSettingInsert[]) {
+  if (!rows.length) {
+    return;
+  }
+
+  const supabase = getServiceRoleSupabase();
+  const { error } = await supabase
+    .from("photo_graph_settings")
+    .upsert(rows, { onConflict: "key" });
+
+  assertNoSupabaseError(error, "Failed to upsert photo graph settings");
+}
+
 export async function loadPhotoGraphFromDatabase() {
   const supabase = getServiceRoleSupabase();
   const [nodeRows, edgeRows] = await Promise.all([
@@ -305,6 +329,37 @@ export async function loadPhotoGraphFromDatabase() {
 
 export async function upsertPhotoGraphNodes(nodes: GraphNode[]) {
   await upsertNodeRows(nodes.map(toNodeRow));
+}
+
+export async function loadPhotoGraphEdgeGenerationConfig() {
+  const supabase = getServiceRoleSupabase();
+  const { data, error } = await supabase
+    .from("photo_graph_settings")
+    .select("value")
+    .eq("key", DEFAULT_EDGE_GENERATION_SETTING_KEY)
+    .maybeSingle();
+
+  if (error) {
+    if (isMissingTableError(error, "photo_graph_settings")) {
+      return DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG;
+    }
+
+    assertNoSupabaseError(error, "Failed to load photo graph edge defaults");
+  }
+
+  return normalizePhotoGraphEdgeGenerationConfig(data?.value);
+}
+
+export async function savePhotoGraphEdgeGenerationConfig(
+  config: PhotoGraphEdgeGenerationConfig,
+) {
+  await upsertSettingRows([
+    {
+      key: DEFAULT_EDGE_GENERATION_SETTING_KEY,
+      value: config,
+      updated_at: new Date().toISOString(),
+    },
+  ]);
 }
 
 export async function replacePhotoGraphEdges(nodes: GraphNode[]) {

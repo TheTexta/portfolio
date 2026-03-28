@@ -328,6 +328,7 @@ async function run() {
     checkBucket(),
     checkTable("photo_graph_nodes", "id"),
     checkTable("photo_graph_edges", "left_node_id"),
+    checkTable("photo_graph_settings", "key"),
     checkImageRender(),
     checkDatabaseSocket(),
   ]);

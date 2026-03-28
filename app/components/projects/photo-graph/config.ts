@@ -9,7 +9,7 @@ export const GRAPH_CONFIG = {
   distMin: 10,
   distMax: 1600,
   charge: -420,
-  zoomExtent: [0.25, 4] as [number, number],
+  zoomExtent: [0.20, 4] as [number, number],
   initialZoom: 0.8,
   imageConcurrency: 5,
   initialImageMaxWidth: 192,
@@ -38,7 +38,7 @@ export const DEFAULT_GRAPH_CONTROLS: GraphControls = {
   hideConnections: false,
   chargeMult: 1,
   distMinMult: 0,
-  distMaxMult: 0,
+  distMaxMult: 1,
 };
 
 export const GRAPH_CONTROL_SLIDERS: readonly GraphSliderConfig[] = [

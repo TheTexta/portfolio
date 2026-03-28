@@ -3,13 +3,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { buildCanonicalPhotoGraphStoragePath } from "@/lib/photo-graph/config";
 import { scaleFromLongSide } from "@/lib/photo-graph/correlation";
 import {
+  countGraphEdges,
+  regenerateLabGraphCorrelations,
+} from "@/lib/photo-graph/edge-generation";
+import {
   cloneGraphNodes,
   ensureGraphStoragePaths,
   ensureProcessingFeatures,
   loadGraphWithFallback,
   writeRuntimeGraph,
 } from "@/lib/photo-graph/graph-store";
-import { upsertPhotoGraphNodes } from "@/lib/photo-graph/database";
+import {
+  loadPhotoGraphEdgeGenerationConfig,
+  replacePhotoGraphEdges,
+  savePhotoGraphEdgeGenerationConfig,
+  upsertPhotoGraphNodes,
+} from "@/lib/photo-graph/database";
 import { featureFromRgb, rgbToHex } from "@/lib/photo-graph/feature-extraction";
 import {
   ADMIN_SESSION_COOKIE_NAME,
@@ -282,16 +291,27 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const edgeGenerationConfig = await loadPhotoGraphEdgeGenerationConfig();
+  const generatedNodes = regenerateLabGraphCorrelations(
+    cloneGraphNodes(nodes),
+    edgeGenerationConfig.params,
+  );
+
   if (loaded.source === "static") {
-    await writeRuntimeGraph(nodes);
+    await writeRuntimeGraph(generatedNodes);
   } else {
     await upsertPhotoGraphNodes(nodes);
+    await replacePhotoGraphEdges(generatedNodes);
   }
+
+  await savePhotoGraphEdgeGenerationConfig(edgeGenerationConfig);
 
   return NextResponse.json({
     ok: true,
     createdIds,
     source: loaded.source,
     nodeCount: nodes.length,
+    edgeCount: countGraphEdges(generatedNodes),
+    edgeGenerationConfig,
   });
 }

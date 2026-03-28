@@ -52,6 +52,8 @@ export type GraphTransform = { k: number; x: number; y: number };
 export type PhotoGraphCanvasProps = {
   forcedDarkMode?: boolean;
   fitToCanvas?: boolean;
+  graphUrl?: string;
+  showNavigation?: boolean;
 };
 
 export type GraphControls = {

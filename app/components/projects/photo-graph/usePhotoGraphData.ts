@@ -13,7 +13,9 @@ const EMPTY_GRAPH_DATA: PhotoGraphData = {
   links: [],
 };
 
-export function usePhotoGraphData() {
+const DEFAULT_GRAPH_URL = "/api/photo-graph/graph";
+
+export function usePhotoGraphData(graphUrl = DEFAULT_GRAPH_URL) {
   const [graphData, setGraphData] = useState<PhotoGraphData>(EMPTY_GRAPH_DATA);
 
   useEffect(() => {
@@ -21,7 +23,7 @@ export function usePhotoGraphData() {
     const abortController = new AbortController();
 
     const loadGraph = async () => {
-      const response = await fetch("/api/photo-graph/graph", {
+      const response = await fetch(graphUrl, {
         cache: "no-store",
         signal: abortController.signal,
       });
@@ -48,7 +50,7 @@ export function usePhotoGraphData() {
       disposed = true;
       abortController.abort();
     };
-  }, []);
+  }, [graphUrl]);
 
   return graphData;
 }
