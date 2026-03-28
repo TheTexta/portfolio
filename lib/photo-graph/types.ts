@@ -26,6 +26,31 @@ export type GraphLoadSource = "database" | "static";
 
 export type PublicGraphNode = Omit<GraphNode, "feature">;
 
+export type PhotoGraphPayloadNode = {
+  id: string;
+  sourceUrl: string;
+  storagePath?: string;
+  baseSize: number;
+  aspectRatio: number;
+  hasKnownAspectRatio: boolean;
+  layerNoise: number;
+  w: number;
+  h: number;
+  renderArea: number;
+};
+
+export type PhotoGraphPayloadLink = {
+  source: string;
+  target: string;
+  value: number;
+  baseValue: number;
+};
+
+export type PhotoGraphPayload = {
+  nodes: PhotoGraphPayloadNode[];
+  links: PhotoGraphPayloadLink[];
+};
+
 export type PhotoGraphNodeRow = {
   id: number;
   scale: number;

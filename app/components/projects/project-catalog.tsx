@@ -45,7 +45,9 @@ export const projectCatalog: ProjectDefinition[] = [
     description:
       "Interactive force-directed gallery that uses color-similarity mapping to cluster and link photographs within a dynamic node graph.",
     tags: ["Next.js", "D3", "Supabase"],
-    renderPreview: (darkMode) => <PhotoGraphCanvas forcedDarkMode={darkMode} />,
+    renderPreview: (darkMode) => (
+      <PhotoGraphCanvas forcedDarkMode={darkMode} fitToCanvas />
+    ),
   },
   {
     id: "nepobabiesruntheunderground",
