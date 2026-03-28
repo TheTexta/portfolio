@@ -67,6 +67,7 @@ export type GraphSliderConfig = {
   min: number;
   max: number;
   scale?: number;
+  formatValue: (value: number) => string;
 };
 
 export type InspectTarget = {

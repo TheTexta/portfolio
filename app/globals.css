@@ -17,6 +17,7 @@
 
   /* Overlay backgrounds (primary surface for overlays) */
   --color-overlay-fill: 255 255 255 / 0.5; /* Main overlay surface */
+  --color-overlay-fill-soft: 255 255 255 / 0.58;
   --color-overlay-panel: 255 255 255 / 0.7; /* Panel/modal surface */
 
   /* Overlay button/control backgrounds */
@@ -29,11 +30,10 @@
   --color-overlay-control-active: 255 255 255 / 0.85;
 
   /* Overlay item/chip backgrounds  */
-  --color-overlay-item: 0 0 0 / 0.03; 
+  --color-overlay-item: 0 0 0 / 0.03;
 
   /* Overlay rule/divider */
   --color-overlay-rule: 0 0 0 / 0.35;
-
 }
 
 html.dark {
@@ -44,6 +44,7 @@ html.dark {
 
   /* Overlay backgrounds (primary surface for overlays) */
   --color-overlay-fill: 0 0 0 / 0.35;
+  --color-overlay-fill-soft: 0 0 0 / 0.42;
   --color-overlay-panel: 0 0 0 / 0.3;
 
   /* Overlay button/control backgrounds */
@@ -168,7 +169,6 @@ html.dark {
   }
 }
 
-
 @layer components {
   .overlay-text {
     @apply pointer-events-none absolute z-10 text-xs font-semibold tracking-[0.14em] text-white uppercase;
@@ -176,7 +176,6 @@ html.dark {
     filter: contrast(1.5) brightness(1.2) greyscale(1);
   }
 }
-
 
 body {
   @apply bg-canvas text-ink font-sans;
