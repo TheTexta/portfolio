@@ -19,12 +19,15 @@ import {
   getPhotoGraphLinkValue,
   sortPhotoGraphNodesForRender,
 } from "@/lib/photo-graph/force-graph";
+import { buildSupabaseStorageRenderUrl } from "@/lib/supabase/config";
 
 import PhotoGraphControls from "./PhotoGraphControls";
 import PhotoGraphInspectOverlay from "./PhotoGraphInspectOverlay";
 import {
   DEFAULT_GRAPH_CONTROLS,
   GRAPH_CONFIG,
+  PHOTO_GRAPH_INSPECT_PREVIEW_QUALITY,
+  PHOTO_GRAPH_INSPECT_PREVIEW_WIDTH,
   photoGraphShellClass,
 } from "./config";
 import type {
@@ -107,6 +110,17 @@ function fitGraphToWeightedCenter(
 
   graph.centerAt(centerX, centerY, GRAPH_CONFIG.fitToCanvasDurationMs);
   graph.zoom(zoom, GRAPH_CONFIG.fitToCanvasDurationMs);
+}
+
+function buildInspectPreviewUrl(node: PhotoGraphNode) {
+  if (!node.storagePath) {
+    return node.sourceUrl;
+  }
+
+  return buildSupabaseStorageRenderUrl(node.storagePath, {
+    width: PHOTO_GRAPH_INSPECT_PREVIEW_WIDTH,
+    quality: PHOTO_GRAPH_INSPECT_PREVIEW_QUALITY,
+  });
 }
 
 export default function PhotoGraphCanvas({
@@ -302,7 +316,11 @@ export default function PhotoGraphCanvas({
               linkVisibility={linkVisibility}
               showPointerCursor={showPointerCursor}
               onNodeClick={(node: PhotoGraphNode) =>
-                setInspectTarget({ id: node.id, url: node.sourceUrl })
+                setInspectTarget({
+                  id: node.id,
+                  originalUrl: node.sourceUrl,
+                  previewUrl: buildInspectPreviewUrl(node),
+                })
               }
               onEngineTick={handleEngineTick}
               onZoom={handleZoom}

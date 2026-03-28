@@ -71,7 +71,8 @@ export type GraphSliderConfig = {
 
 export type InspectTarget = {
   id: string;
-  url: string;
+  originalUrl: string;
+  previewUrl: string;
 };
 
 export type InspectMetadata = {

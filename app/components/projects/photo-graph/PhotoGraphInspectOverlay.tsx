@@ -30,22 +30,25 @@ export default function PhotoGraphInspectOverlay({
   onCloseComplete,
 }: PhotoGraphInspectOverlayProps) {
   const [inspectOverlayOpen, setInspectOverlayOpen] = useState(false);
+  const [displayUrl, setDisplayUrl] = useState<string | null>(null);
   const [inspectMetadata, setInspectMetadata] =
     useState<InspectMetadata | null>(null);
 
   useEffect(() => {
     if (!target) {
       setInspectOverlayOpen(false);
+      setDisplayUrl(null);
       setInspectMetadata(null);
       return;
     }
 
     setInspectOverlayOpen(false);
+    setDisplayUrl(target.previewUrl);
     setInspectMetadata({
       resolution: null,
       sizeMb: null,
       downloadUrl: null,
-      filename: buildInspectFilename(target.id, target.url),
+      filename: buildInspectFilename(target.id, target.originalUrl),
     });
 
     const frame = window.requestAnimationFrame(() => {
@@ -67,7 +70,8 @@ export default function PhotoGraphInspectOverlay({
 
     const loadInspectMetadata = async () => {
       try {
-        const response = await fetch(target.url, {
+        const response = await fetch(target.originalUrl, {
+          cache: "no-store",
           signal: abortController.signal,
         });
 
@@ -83,13 +87,18 @@ export default function PhotoGraphInspectOverlay({
         }
 
         objectUrl = URL.createObjectURL(blob);
+        setDisplayUrl(objectUrl);
         setInspectMetadata((current) =>
           current
             ? {
                 ...current,
                 sizeMb: convertSizeToMb(blob.size),
                 downloadUrl: objectUrl,
-                filename: buildInspectFilename(target.id, target.url, blob.type),
+                filename: buildInspectFilename(
+                  target.id,
+                  target.originalUrl,
+                  blob.type,
+                ),
               }
             : current,
         );
@@ -155,7 +164,7 @@ export default function PhotoGraphInspectOverlay({
 
         {/* eslint-disable-next-line @next/next/no-img-element -- This inspect overlay needs the raw image element for natural-size reads and unrestricted sizing. */}
         <img
-          src={target.url}
+          src={displayUrl ?? target.previewUrl}
           alt=""
           className={`my-auto max-h-9/12 max-w-5/6 place-self-center align-middle transition-transform duration-200 ease-out ${
             inspectOverlayOpen ? "scale-100" : "scale-[1.1]"

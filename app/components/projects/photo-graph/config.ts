@@ -1,3 +1,4 @@
+import { PHOTO_GRAPH_IMAGE_WIDTHS } from "@/lib/image-optimization";
 import type { GraphControls, GraphSliderConfig } from "./types";
 
 export const GRAPH_CONFIG = {
@@ -29,6 +30,9 @@ export const photoGraphModalClass = "bg-overlay-panel text-overlay-ink";
 export const sliderClass =
   "range-sm h-1 rounded-full border-none bg-black/15 accent-ink dark:bg-white/35";
 export const PHOTO_GRAPH_INSPECT_TRANSITION_MS = 220;
+export const PHOTO_GRAPH_INSPECT_PREVIEW_WIDTH =
+  PHOTO_GRAPH_IMAGE_WIDTHS[PHOTO_GRAPH_IMAGE_WIDTHS.length - 1];
+export const PHOTO_GRAPH_INSPECT_PREVIEW_QUALITY = 75;
 
 export const DEFAULT_GRAPH_CONTROLS: GraphControls = {
   hideConnections: false,
