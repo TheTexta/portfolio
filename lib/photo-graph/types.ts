@@ -15,6 +15,13 @@ export type PhotoGraphEdgeGenerationConfig = {
   params: LabEdgeGenerationParams;
 };
 
+export type PhotoGraphRuntimeControls = {
+  hideConnections: boolean;
+  chargeMult: number;
+  distMinMult: number;
+  distMaxMult: number;
+};
+
 export type GraphImageDimensions = {
   width: number;
   height: number;
@@ -59,6 +66,10 @@ export type PhotoGraphPayloadLink = {
 export type PhotoGraphPayload = {
   nodes: PhotoGraphPayloadNode[];
   links: PhotoGraphPayloadLink[];
+};
+
+export type PhotoGraphPayloadResponse = PhotoGraphPayload & {
+  defaultGraphControls?: PhotoGraphRuntimeControls;
 };
 
 export type PhotoGraphNodeRow = {

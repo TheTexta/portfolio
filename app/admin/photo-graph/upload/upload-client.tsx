@@ -11,6 +11,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import PhotoGraphCanvas from "@/app/components/projects/photo-graph/PhotoGraphCanvas";
+import { GRAPH_CONTROL_SLIDERS } from "@/app/components/projects/photo-graph/config";
 import {
   OVERLAY_CONTROL_DANGER_CLASS,
   OverlayControlButton,
@@ -21,6 +22,10 @@ import {
   DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG,
   LAB_EDGE_PARAM_LIMITS,
 } from "@/lib/photo-graph/edge-generation";
+import {
+  DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS,
+  PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS,
+} from "@/lib/photo-graph/graph-controls";
 import { PHOTO_GRAPH_CACHE_CONTROL_SECONDS } from "@/lib/photo-graph/config";
 import { featureFromRgb, rgbToHex } from "@/lib/photo-graph/feature-extraction";
 import type {
@@ -28,6 +33,7 @@ import type {
   GraphImageDimensions,
   LabEdgeGenerationParams,
   PhotoGraphEdgeGenerationConfig,
+  PhotoGraphRuntimeControls,
 } from "@/lib/photo-graph/types";
 import { getBrowserSupabaseClient } from "@/lib/supabase/browser";
 
@@ -67,6 +73,7 @@ type AdminGraphResponse = {
   nodes: AdminGraphNode[];
   writesEnabled: boolean;
   defaultEdgeGeneration: PhotoGraphEdgeGenerationConfig;
+  defaultGraphControls: PhotoGraphRuntimeControls;
   error?: string;
 };
 
@@ -75,6 +82,12 @@ type SaveEdgeDefaultsResponse = {
   source: "database" | "static";
   edgeCount: number;
   config: PhotoGraphEdgeGenerationConfig;
+  error?: string;
+};
+
+type SaveGraphDefaultsResponse = {
+  ok: boolean;
+  controls: PhotoGraphRuntimeControls;
   error?: string;
 };
 
@@ -111,6 +124,7 @@ type VerboseLogEntry = {
 
 type FetchGraphNodesOptions = {
   silent?: boolean;
+  syncGraphControls?: boolean;
   syncPreviewParams?: boolean;
 };
 
@@ -152,6 +166,18 @@ function areLabParamsEqual(
   return (
     Math.abs(left.sigmaE - right.sigmaE) < 1e-9 &&
     Math.abs(left.minCorrelation - right.minCorrelation) < 1e-9
+  );
+}
+
+function areGraphControlsEqual(
+  left: PhotoGraphRuntimeControls,
+  right: PhotoGraphRuntimeControls,
+) {
+  return (
+    left.hideConnections === right.hideConnections &&
+    Math.abs(left.chargeMult - right.chargeMult) < 1e-9 &&
+    Math.abs(left.distMinMult - right.distMinMult) < 1e-9 &&
+    Math.abs(left.distMaxMult - right.distMaxMult) < 1e-9
   );
 }
 
@@ -305,6 +331,7 @@ export default function PhotoGraphUploadClient() {
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSavingEdgeDefaults, setIsSavingEdgeDefaults] = useState(false);
+  const [isSavingGraphDefaults, setIsSavingGraphDefaults] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [createdIds, setCreatedIds] = useState<string[]>([]);
@@ -322,11 +349,15 @@ export default function PhotoGraphUploadClient() {
     useState<PhotoGraphEdgeGenerationConfig>(
       DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG,
     );
+  const [savedGraphControls, setSavedGraphControls] =
+    useState<PhotoGraphRuntimeControls>(DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS);
   const [previewParams, setPreviewParams] = useState<LabEdgeGenerationParams>(
     DEFAULT_LAB_EDGE_GENERATION_PARAMS,
   );
   const [debouncedPreviewParams, setDebouncedPreviewParams] =
     useState<LabEdgeGenerationParams>(DEFAULT_LAB_EDGE_GENERATION_PARAMS);
+  const [previewGraphControls, setPreviewGraphControls] =
+    useState<PhotoGraphRuntimeControls>(DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS);
   const [previewRevision, setPreviewRevision] = useState(0);
 
   const totalBytes = useMemo(
@@ -359,6 +390,10 @@ export default function PhotoGraphUploadClient() {
     () => areLabParamsEqual(previewParams, savedEdgeGeneration.params),
     [previewParams, savedEdgeGeneration.params],
   );
+  const graphControlsMatchSavedDefaults = useMemo(
+    () => areGraphControlsEqual(previewGraphControls, savedGraphControls),
+    [previewGraphControls, savedGraphControls],
+  );
 
   const previewIsUpdating = useMemo(
     () => !areLabParamsEqual(previewParams, debouncedPreviewParams),
@@ -370,6 +405,29 @@ export default function PhotoGraphUploadClient() {
     [debouncedPreviewParams, previewRevision],
   );
   const persistenceUnavailable = !writesEnabled;
+  const previewStatusLabel = useMemo(() => {
+    if (previewIsUpdating) {
+      return "Updating LAB preview...";
+    }
+
+    if (!previewMatchesSavedDefaults && !graphControlsMatchSavedDefaults) {
+      return "Unsaved LAB + graph defaults";
+    }
+
+    if (!previewMatchesSavedDefaults) {
+      return "Unsaved LAB defaults";
+    }
+
+    if (!graphControlsMatchSavedDefaults) {
+      return "Unsaved graph defaults";
+    }
+
+    return "Matches saved defaults";
+  }, [
+    graphControlsMatchSavedDefaults,
+    previewIsUpdating,
+    previewMatchesSavedDefaults,
+  ]);
 
   const appendVerboseLog = useCallback(
     (message: string, level: VerboseLogLevel = "info") => {
@@ -413,6 +471,7 @@ export default function PhotoGraphUploadClient() {
   const fetchGraphNodes = useCallback(
     async ({
       silent = false,
+      syncGraphControls = false,
       syncPreviewParams = false,
     }: FetchGraphNodesOptions = {}) => {
       if (!silent) {
@@ -437,10 +496,14 @@ export default function PhotoGraphUploadClient() {
         setGraphSource(body.source);
         setWritesEnabled(body.writesEnabled);
         setSavedEdgeGeneration(body.defaultEdgeGeneration);
+        setSavedGraphControls(body.defaultGraphControls);
 
         if (syncPreviewParams) {
           setPreviewParams(body.defaultEdgeGeneration.params);
           setDebouncedPreviewParams(body.defaultEdgeGeneration.params);
+        }
+        if (syncGraphControls) {
+          setPreviewGraphControls(body.defaultGraphControls);
         }
 
         setPreviewRevision((current) => current + 1);
@@ -470,6 +533,7 @@ export default function PhotoGraphUploadClient() {
   useEffect(() => {
     void fetchGraphNodes({
       silent: true,
+      syncGraphControls: true,
       syncPreviewParams: true,
     });
   }, [fetchGraphNodes]);
@@ -541,11 +605,53 @@ export default function PhotoGraphUploadClient() {
     [],
   );
 
+  const handleGraphControlChange = useCallback(
+    (key: keyof PhotoGraphRuntimeControls, value: boolean | number) => {
+      setPreviewGraphControls((current) => {
+        const nextValue =
+          key === "hideConnections"
+            ? Boolean(value)
+            : key === "chargeMult"
+              ? clamp(
+                  Number(value),
+                  PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.chargeMult.min,
+                  PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.chargeMult.max,
+                )
+              : key === "distMinMult"
+                ? clamp(
+                    Number(value),
+                    PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMinMult.min,
+                    PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMinMult.max,
+                  )
+                : clamp(
+                    Number(value),
+                    PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMaxMult.min,
+                    PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMaxMult.max,
+                  );
+
+        if (current[key] === nextValue) {
+          return current;
+        }
+
+        return {
+          ...current,
+          [key]: nextValue,
+        };
+      });
+    },
+    [],
+  );
+
   const handleResetPreview = useCallback(() => {
     setPreviewParams(savedEdgeGeneration.params);
     setDebouncedPreviewParams(savedEdgeGeneration.params);
     setStatusWithLog("Preview reset to the saved LAB defaults.", "info");
   }, [savedEdgeGeneration.params, setStatusWithLog]);
+
+  const handleResetGraphControls = useCallback(() => {
+    setPreviewGraphControls(savedGraphControls);
+    setStatusWithLog("Graph controls reset to the saved defaults.", "info");
+  }, [savedGraphControls, setStatusWithLog]);
 
   const handleSaveEdgeDefaults = useCallback(async () => {
     if (
@@ -608,6 +714,60 @@ export default function PhotoGraphUploadClient() {
     persistenceUnavailable,
     previewMatchesSavedDefaults,
     previewParams,
+    setStatusWithLog,
+  ]);
+
+  const handleSaveGraphDefaults = useCallback(async () => {
+    if (
+      persistenceUnavailable ||
+      isSavingGraphDefaults ||
+      graphControlsMatchSavedDefaults
+    ) {
+      return;
+    }
+
+    setIsSavingGraphDefaults(true);
+    setErrorMessage(null);
+    setStatusWithLog("Saving graph runtime defaults on the server...");
+
+    try {
+      const response = await fetch("/api/admin/photo-graph/graph-defaults", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          controls: previewGraphControls,
+        }),
+      });
+
+      const body = await parseJsonOrThrow<SaveGraphDefaultsResponse>(response);
+      if (!response.ok || !body.ok) {
+        throw new Error(body.error ?? "Failed to save graph defaults.");
+      }
+
+      setSavedGraphControls(body.controls);
+      setPreviewGraphControls(body.controls);
+      setStatusWithLog(
+        `Saved graph defaults (lines ${body.controls.hideConnections ? "hidden" : "shown"}, repel ${body.controls.chargeMult.toFixed(1)}x).`,
+        "success",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Saving graph defaults failed unexpectedly.";
+      setErrorMessage(message);
+      appendVerboseLog(`Saving graph defaults failed: ${message}`, "error");
+    } finally {
+      setIsSavingGraphDefaults(false);
+    }
+  }, [
+    appendVerboseLog,
+    graphControlsMatchSavedDefaults,
+    isSavingGraphDefaults,
+    persistenceUnavailable,
+    previewGraphControls,
     setStatusWithLog,
   ]);
 
@@ -826,10 +986,12 @@ export default function PhotoGraphUploadClient() {
   const uploadDisabled =
     !files.length ||
     isProcessing ||
+    isSavingGraphDefaults ||
     isSavingEdgeDefaults ||
     persistenceUnavailable;
   const adminBusy =
     isProcessing ||
+    isSavingGraphDefaults ||
     isSavingEdgeDefaults ||
     loadingGraphNodes ||
     deletingNodeId !== null;
@@ -862,7 +1024,7 @@ export default function PhotoGraphUploadClient() {
           <div className="flex flex-col gap-4">
             <div className="rounded-[1.25rem] border border-black/10 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5">
               <div className="flex items-center justify-between gap-3 text-[11px] tracking-[0.22em] uppercase opacity-60">
-                <span>Saved Defaults</span>
+                <span>LAB Edge Defaults</span>
                 <span>{graphSource}</span>
               </div>
               <p className="mt-3 text-sm leading-6 opacity-75">
@@ -986,6 +1148,97 @@ export default function PhotoGraphUploadClient() {
               </div>
             </div>
 
+            <div className="rounded-[1.25rem] border border-black/10 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5">
+              <div className="flex items-center justify-between gap-3 text-[11px] tracking-[0.22em] uppercase opacity-60">
+                <span>Graph Defaults</span>
+                <span>Runtime Controls</span>
+              </div>
+              <p className="mt-3 text-sm leading-6 opacity-75">
+                These values seed the public graph controls at load time.
+                Visitors can still change them locally after the graph loads.
+              </p>
+
+              <div className="mt-5 space-y-4">
+                <label className="flex min-h-8 items-center justify-between gap-3 text-sm font-medium">
+                  <span>Show connecting lines</span>
+                  <input
+                    type="checkbox"
+                    checked={!previewGraphControls.hideConnections}
+                    onChange={(event) =>
+                      handleGraphControlChange(
+                        "hideConnections",
+                        !event.target.checked,
+                      )
+                    }
+                    className="m-0 h-4 w-4 shrink-0 accent-black dark:accent-white"
+                  />
+                </label>
+
+                {GRAPH_CONTROL_SLIDERS.map(
+                  ({ key, label, min, max, scale = 1, formatValue }) => {
+                    const inputId = `photo-graph-default-${key}`;
+                    const valueText = formatValue(previewGraphControls[key]);
+
+                    return (
+                      <div key={key} className="space-y-2">
+                        <div className="flex items-end justify-between gap-3">
+                          <label
+                            htmlFor={inputId}
+                            className="text-sm font-medium"
+                          >
+                            {label}
+                          </label>
+                          <output
+                            htmlFor={inputId}
+                            className="text-sm opacity-70"
+                          >
+                            {valueText}
+                          </output>
+                        </div>
+                        <input
+                          id={inputId}
+                          type="range"
+                          min={min}
+                          max={max}
+                          value={previewGraphControls[key] / scale}
+                          onChange={(event) =>
+                            handleGraphControlChange(
+                              key,
+                              Number(event.target.value) * scale,
+                            )
+                          }
+                          className="range-sm h-2 w-full rounded-full border-none bg-black/10 accent-black dark:bg-white/20 dark:accent-white"
+                        />
+                      </div>
+                    );
+                  },
+                )}
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                <OverlayControlButton
+                  onClick={() => void handleSaveGraphDefaults()}
+                  disabled={
+                    adminBusy ||
+                    graphControlsMatchSavedDefaults ||
+                    persistenceUnavailable
+                  }
+                  layout="action"
+                  size="sm"
+                >
+                  {isSavingGraphDefaults ? "Saving..." : "Save as Default"}
+                </OverlayControlButton>
+                <OverlayControlButton
+                  onClick={handleResetGraphControls}
+                  disabled={adminBusy || graphControlsMatchSavedDefaults}
+                  layout="action"
+                  size="sm"
+                >
+                  Reset to Saved Defaults
+                </OverlayControlButton>
+              </div>
+            </div>
+
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
               <div className="rounded-[1rem] border border-black/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
                 <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
@@ -1016,18 +1269,28 @@ export default function PhotoGraphUploadClient() {
 
               <div className="rounded-[1rem] border border-black/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
                 <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
-                  Preview Status
+                  Saved Graph Defaults
                 </p>
                 <p className="mt-2 text-sm font-medium">
-                  {previewIsUpdating
-                    ? "Updating preview..."
-                    : previewMatchesSavedDefaults
-                      ? "Matches saved defaults"
-                      : "Unsaved preview"}
+                  {savedGraphControls.hideConnections
+                    ? "Lines hidden"
+                    : "Lines shown"}
                 </p>
                 <p className="mt-1 text-xs opacity-65">
-                  Preview refresh is debounced by {PREVIEW_UPDATE_DEBOUNCE_MS}{" "}
-                  ms.
+                  repel {savedGraphControls.chargeMult.toFixed(1)}x, min{" "}
+                  {savedGraphControls.distMinMult.toFixed(1)}x, max{" "}
+                  {savedGraphControls.distMaxMult.toFixed(1)}x
+                </p>
+              </div>
+
+              <div className="rounded-[1rem] border border-black/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
+                <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
+                  Preview Status
+                </p>
+                <p className="mt-2 text-sm font-medium">{previewStatusLabel}</p>
+                <p className="mt-1 text-xs opacity-65">
+                  LAB preview refresh is debounced by{" "}
+                  {PREVIEW_UPDATE_DEBOUNCE_MS} ms. Graph controls apply live.
                 </p>
               </div>
             </div>
@@ -1045,7 +1308,7 @@ export default function PhotoGraphUploadClient() {
               <div className="rounded-full border border-black/10 px-3 py-1 text-[11px] tracking-[0.18em] uppercase opacity-70 dark:border-white/10">
                 {previewIsUpdating
                   ? "Updating"
-                  : previewMatchesSavedDefaults
+                  : previewMatchesSavedDefaults && graphControlsMatchSavedDefaults
                     ? "Saved Default View"
                     : "Preview Only"}
               </div>
@@ -1053,8 +1316,10 @@ export default function PhotoGraphUploadClient() {
 
             <div className="h-[min(42rem,70vh)] min-h-[22rem]">
               <PhotoGraphCanvas
+                controls={previewGraphControls}
                 graphUrl={previewGraphUrl}
                 fitToCanvas
+                showControls={false}
                 showNavigation={false}
               />
             </div>

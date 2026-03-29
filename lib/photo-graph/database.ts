@@ -4,11 +4,16 @@ import {
   DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG,
   normalizePhotoGraphEdgeGenerationConfig,
 } from "@/lib/photo-graph/edge-generation";
+import {
+  DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS,
+  normalizePhotoGraphRuntimeControls,
+} from "@/lib/photo-graph/graph-controls";
 import type {
   GraphNode,
   PhotoGraphEdgeRow,
   PhotoGraphNodeRow,
   PhotoGraphEdgeGenerationConfig,
+  PhotoGraphRuntimeControls,
   PhotoGraphSettingRow,
 } from "@/lib/photo-graph/types";
 import { getServiceRoleSupabase } from "@/lib/server/supabase";
@@ -19,6 +24,7 @@ import {
 
 const PAGE_SIZE = 1_000;
 const DEFAULT_EDGE_GENERATION_SETTING_KEY = "default_edge_generation";
+const DEFAULT_GRAPH_CONTROLS_SETTING_KEY = "default_graph_controls";
 
 type PhotoGraphNodeInsert = Omit<PhotoGraphNodeRow, "created_at">;
 type PhotoGraphEdgeInsert = Omit<PhotoGraphEdgeRow, "created_at">;
@@ -288,6 +294,49 @@ async function upsertSettingRows(rows: PhotoGraphSettingInsert[]) {
   assertNoSupabaseError(error, "Failed to upsert photo graph settings");
 }
 
+async function loadPhotoGraphSettingValue<T>(
+  key: string,
+  normalizeValue: (value: unknown) => T,
+  fallbackValue: T,
+) {
+  try {
+    const supabase = getServiceRoleSupabase();
+    const { data, error } = await supabase
+      .from("photo_graph_settings")
+      .select("value")
+      .eq("key", key)
+      .maybeSingle();
+
+    if (error) {
+      if (isMissingTableError(error, "photo_graph_settings")) {
+        return fallbackValue;
+      }
+
+      assertNoSupabaseError(error, "Failed to load photo graph setting");
+    }
+
+    return normalizeValue(data?.value);
+  } catch (error) {
+    if (
+      isRecoverablePhotoGraphDatabaseError(error, ["photo_graph_settings"])
+    ) {
+      return fallbackValue;
+    }
+
+    throw error;
+  }
+}
+
+async function savePhotoGraphSettingValue(key: string, value: unknown) {
+  await upsertSettingRows([
+    {
+      key,
+      value,
+      updated_at: new Date().toISOString(),
+    },
+  ]);
+}
+
 export async function loadPhotoGraphFromDatabase() {
   const supabase = getServiceRoleSupabase();
   const [nodeRows, edgeRows] = await Promise.all([
@@ -333,44 +382,31 @@ export async function upsertPhotoGraphNodes(nodes: GraphNode[]) {
 }
 
 export async function loadPhotoGraphEdgeGenerationConfig() {
-  try {
-    const supabase = getServiceRoleSupabase();
-    const { data, error } = await supabase
-      .from("photo_graph_settings")
-      .select("value")
-      .eq("key", DEFAULT_EDGE_GENERATION_SETTING_KEY)
-      .maybeSingle();
-
-    if (error) {
-      if (isMissingTableError(error, "photo_graph_settings")) {
-        return DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG;
-      }
-
-      assertNoSupabaseError(error, "Failed to load photo graph edge defaults");
-    }
-
-    return normalizePhotoGraphEdgeGenerationConfig(data?.value);
-  } catch (error) {
-    if (
-      isRecoverablePhotoGraphDatabaseError(error, ["photo_graph_settings"])
-    ) {
-      return DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG;
-    }
-
-    throw error;
-  }
+  return loadPhotoGraphSettingValue(
+    DEFAULT_EDGE_GENERATION_SETTING_KEY,
+    normalizePhotoGraphEdgeGenerationConfig,
+    DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG,
+  );
 }
 
 export async function savePhotoGraphEdgeGenerationConfig(
   config: PhotoGraphEdgeGenerationConfig,
 ) {
-  await upsertSettingRows([
-    {
-      key: DEFAULT_EDGE_GENERATION_SETTING_KEY,
-      value: config,
-      updated_at: new Date().toISOString(),
-    },
-  ]);
+  await savePhotoGraphSettingValue(DEFAULT_EDGE_GENERATION_SETTING_KEY, config);
+}
+
+export async function loadPhotoGraphRuntimeControls() {
+  return loadPhotoGraphSettingValue(
+    DEFAULT_GRAPH_CONTROLS_SETTING_KEY,
+    normalizePhotoGraphRuntimeControls,
+    DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS,
+  );
+}
+
+export async function savePhotoGraphRuntimeControls(
+  controls: PhotoGraphRuntimeControls,
+) {
+  await savePhotoGraphSettingValue(DEFAULT_GRAPH_CONTROLS_SETTING_KEY, controls);
 }
 
 export async function replacePhotoGraphEdges(nodes: GraphNode[]) {

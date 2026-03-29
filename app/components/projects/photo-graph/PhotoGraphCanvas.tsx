@@ -124,9 +124,13 @@ function buildInspectPreviewUrl(node: PhotoGraphNode) {
 }
 
 export default function PhotoGraphCanvas({
+  controls: controlledControls,
+  defaultControls = DEFAULT_GRAPH_CONTROLS,
   forcedDarkMode,
   fitToCanvas = false,
   graphUrl,
+  onControlsChange,
+  showControls = true,
   showNavigation = true,
 }: PhotoGraphCanvasProps) {
   const { darkMode: siteDarkMode, toggleTheme } = useTheme();
@@ -140,18 +144,27 @@ export default function PhotoGraphCanvas({
 
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [menuOpen, setMenuOpen] = useState(false);
-  const [controls, setControls] = useState<GraphControls>({
-    ...DEFAULT_GRAPH_CONTROLS,
+  const [uncontrolledControls, setUncontrolledControls] = useState<GraphControls>({
+    ...defaultControls,
   });
+  const [hasLocalControlOverride, setHasLocalControlOverride] = useState(false);
   const [inspectTarget, setInspectTarget] = useState<InspectTarget | null>(
     null,
   );
 
-  const graphData = usePhotoGraphData(graphUrl);
+  const {
+    defaultGraphControls: fetchedDefaultGraphControls,
+    graphData,
+  } = usePhotoGraphData(graphUrl);
+  const activeControls =
+    controlledControls ??
+    (hasLocalControlOverride
+      ? uncontrolledControls
+      : fetchedDefaultGraphControls ?? uncontrolledControls);
   const { reinitializeCollisionForce } = usePhotoGraphForces({
     fgRef,
     nodes: graphData.nodes,
-    controls,
+    controls: activeControls,
   });
 
   const handleNodeMutation = useCallback(
@@ -177,7 +190,7 @@ export default function PhotoGraphCanvas({
     activeDarkMode,
     dimensions,
     fgRef,
-    hideConnections: controls.hideConnections,
+    hideConnections: activeControls.hideConnections,
     nodes: graphData.nodes,
     onNodeMutation: handleNodeMutation,
   });
@@ -226,11 +239,22 @@ export default function PhotoGraphCanvas({
 
   const setControlValue = useCallback(
     (key: keyof GraphControls, value: boolean | number) => {
-      setControls((current) =>
-        current[key] === value ? current : { ...current, [key]: value },
+      const nextControls = {
+        ...activeControls,
+        [key]: value,
+      } as GraphControls;
+
+      if (controlledControls) {
+        onControlsChange?.(nextControls);
+        return;
+      }
+
+      setHasLocalControlOverride(true);
+      setUncontrolledControls((current) =>
+        current[key] === value ? current : nextControls,
       );
     },
-    [],
+    [activeControls, controlledControls, onControlsChange],
   );
 
   const handleEngineTick = useCallback(() => {
@@ -275,13 +299,15 @@ export default function PhotoGraphCanvas({
             : "opacity-100"
         }`}
       >
-        <PhotoGraphControls
-          menuOpen={menuOpen}
-          controls={controls}
-          onMenuOpen={() => setMenuOpen(true)}
-          onMenuClose={() => setMenuOpen(false)}
-          onControlChange={setControlValue}
-        />
+        {showControls && (
+          <PhotoGraphControls
+            menuOpen={menuOpen}
+            controls={activeControls}
+            onMenuOpen={() => setMenuOpen(true)}
+            onMenuClose={() => setMenuOpen(false)}
+            onControlChange={setControlValue}
+          />
+        )}
 
         {showNavigation && (
           <OverlayNavBar

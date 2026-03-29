@@ -13,7 +13,7 @@ import {
   sizePhotoGraphNode,
 } from "@/lib/photo-graph/force-graph";
 import {
-  buildOptimizedImageUrl,
+  buildOptimizedImageCandidates,
   computeTargetImageWidth,
   shouldUpgradeWidth,
 } from "@/app/components/projects/photo-graph/imageOptimizer";
@@ -128,12 +128,12 @@ export function usePhotoGraphImages({
         currentRequest.controller.abort();
       }
 
-      const optimizedUrl = buildOptimizedImageUrl(
+      const candidateUrls = buildOptimizedImageCandidates(
         node.storagePath,
         node.sourceUrl,
         targetWidth,
       );
-      if (!optimizedUrl) {
+      if (candidateUrls.length === 0) {
         logNodeImageError(
           node,
           new Error(`Missing image URL for photo graph node ${node.id}.`),
@@ -148,9 +148,31 @@ export function usePhotoGraphImages({
       });
 
       try {
-        const image = await loadImage(optimizedUrl, controller.signal);
+        let image: HTMLImageElement | null = null;
+        let lastError: unknown = null;
+
+        for (const candidateUrl of candidateUrls) {
+          try {
+            image = await loadImage(candidateUrl, controller.signal);
+            break;
+          } catch (error) {
+            if (isAbortError(error)) {
+              throw error;
+            }
+
+            lastError = error;
+          }
+        }
+
         if (controller.signal.aborted) {
           return;
+        }
+
+        if (!image) {
+          throw (
+            lastError ??
+            new Error(`Failed to load image for node ${node.id}.`)
+          );
         }
 
         const activeRequest = inFlightRef.current.get(node.id);

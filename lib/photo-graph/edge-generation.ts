@@ -5,7 +5,7 @@ import type {
   PhotoGraphEdgeGenerationConfig,
 } from "@/lib/photo-graph/types";
 import { clamp01 } from "@/lib/photo-graph/feature-extraction";
-import { ensureProcessingFeatures } from "@/lib/photo-graph/graph-store";
+import { ensureProcessingFeatures } from "@/lib/photo-graph/processing-features";
 
 export const DEFAULT_LAB_EDGE_GENERATION_PARAMS: LabEdgeGenerationParams = {
   sigmaE: 15,

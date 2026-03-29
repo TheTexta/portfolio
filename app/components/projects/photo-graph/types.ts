@@ -5,6 +5,7 @@ import type {
 } from "react-force-graph-2d";
 
 import type {
+  PhotoGraphRuntimeControls,
   PhotoGraphPayloadLink,
   PhotoGraphPayloadNode,
 } from "@/lib/photo-graph/types";
@@ -50,18 +51,17 @@ export type RectangleCollisionForce = {
 export type GraphTransform = { k: number; x: number; y: number };
 
 export type PhotoGraphCanvasProps = {
+  controls?: GraphControls;
+  defaultControls?: GraphControls;
   forcedDarkMode?: boolean;
   fitToCanvas?: boolean;
   graphUrl?: string;
+  onControlsChange?: (controls: GraphControls) => void;
+  showControls?: boolean;
   showNavigation?: boolean;
 };
 
-export type GraphControls = {
-  hideConnections: boolean;
-  chargeMult: number;
-  distMinMult: number;
-  distMaxMult: number;
-};
+export type GraphControls = PhotoGraphRuntimeControls;
 
 export type GraphSliderConfig = {
   key: Exclude<keyof GraphControls, "hideConnections">;

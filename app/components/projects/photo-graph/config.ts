@@ -1,4 +1,8 @@
 import { PHOTO_GRAPH_IMAGE_WIDTHS } from "@/lib/image-optimization";
+import {
+  DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS,
+  PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS,
+} from "@/lib/photo-graph/graph-controls";
 import type { GraphControls, GraphSliderConfig } from "./types";
 
 export const GRAPH_CONFIG = {
@@ -35,33 +39,30 @@ export const PHOTO_GRAPH_INSPECT_PREVIEW_WIDTH =
 export const PHOTO_GRAPH_INSPECT_PREVIEW_QUALITY = 75;
 
 export const DEFAULT_GRAPH_CONTROLS: GraphControls = {
-  hideConnections: false,
-  chargeMult: 1,
-  distMinMult: 0,
-  distMaxMult: 1,
+  ...DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS,
 };
 
 export const GRAPH_CONTROL_SLIDERS: readonly GraphSliderConfig[] = [
   {
     key: "chargeMult",
     label: "Repel strength",
-    min: 0,
-    max: 5,
+    min: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.chargeMult.min,
+    max: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.chargeMult.max,
     formatValue: (value) => `${value.toFixed(0)}x`,
   },
   {
     key: "distMinMult",
     label: "Closest link distance",
-    min: 0,
-    max: 500,
+    min: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMinMult.min / 0.1,
+    max: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMinMult.max / 0.1,
     scale: 0.1,
     formatValue: (value) => `${Math.round(GRAPH_CONFIG.distMin * value)} px`,
   },
   {
     key: "distMaxMult",
     label: "Widest link distance",
-    min: 0,
-    max: 50,
+    min: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMaxMult.min / 0.1,
+    max: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMaxMult.max / 0.1,
     scale: 0.1,
     formatValue: (value) => `${Math.round(GRAPH_CONFIG.distMax * value)} px`,
   },

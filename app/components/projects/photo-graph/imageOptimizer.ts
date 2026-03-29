@@ -62,3 +62,25 @@ export function buildOptimizedImageUrl(
     return sourceUrl ?? null;
   }
 }
+
+export function buildOptimizedImageCandidates(
+  storagePath: string | undefined,
+  sourceUrl: string | undefined,
+  width: number,
+  quality = CANVAS_IMAGE_QUALITY,
+) {
+  const optimizedUrl = buildOptimizedImageUrl(
+    storagePath,
+    sourceUrl,
+    width,
+    quality,
+  );
+  const candidates = [optimizedUrl, sourceUrl].filter(
+    (value, index, values): value is string =>
+      typeof value === "string" &&
+      value.length > 0 &&
+      values.indexOf(value) === index,
+  );
+
+  return candidates;
+}
