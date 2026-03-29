@@ -23,10 +23,10 @@ import type {
 } from "./types";
 
 function createRectangleCollideForce(
-  padding = 0,
-  boxScale = GRAPH_CONFIG.collideBoxScale,
-  strength = GRAPH_CONFIG.collideStrength,
-  iterations = GRAPH_CONFIG.collideIterations,
+  padding: number = 0,
+  boxScale: number = GRAPH_CONFIG.collideBoxScale,
+  strength: number = GRAPH_CONFIG.collideStrength,
+  iterations: number = GRAPH_CONFIG.collideIterations,
 ): RectangleCollisionForce {
   let nodes: PhotoGraphNode[] = [];
 
@@ -135,7 +135,10 @@ export function usePhotoGraphForces({
     graph.d3Force(
       "collide",
       createRectangleCollideForce(
-        GRAPH_CONFIG.collidePad,
+        controls.collidePad,
+        controls.collideBoxScale,
+        controls.collideStrength,
+        controls.collideIterations,
       ) as unknown as RuntimeForce,
     );
 
@@ -164,6 +167,10 @@ export function usePhotoGraphForces({
     chargeForce?.strength(controls.chargeMult * GRAPH_CONFIG.charge);
   }, [
     controls.chargeMult,
+    controls.collideBoxScale,
+    controls.collideIterations,
+    controls.collidePad,
+    controls.collideStrength,
     controls.distMaxMult,
     controls.distMinMult,
     fgRef,

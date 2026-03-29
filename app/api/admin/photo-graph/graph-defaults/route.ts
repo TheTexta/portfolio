@@ -15,12 +15,7 @@ import {
 } from "@/lib/server/admin-session";
 
 type SaveGraphDefaultsPayload = {
-  controls?: {
-    hideConnections?: unknown;
-    chargeMult?: unknown;
-    distMinMult?: unknown;
-    distMaxMult?: unknown;
-  };
+  controls?: Partial<Record<keyof PhotoGraphRuntimeControls, unknown>>;
 };
 
 export const runtime = "nodejs";

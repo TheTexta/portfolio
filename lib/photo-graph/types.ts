@@ -18,9 +18,18 @@ export type PhotoGraphEdgeGenerationConfig = {
 export type PhotoGraphRuntimeControls = {
   hideConnections: boolean;
   chargeMult: number;
+  collideBoxScale: number;
+  collideIterations: number;
+  collidePad: number;
+  collideStrength: number;
   distMinMult: number;
   distMaxMult: number;
 };
+
+export type PhotoGraphNumericControlKey = Exclude<
+  keyof PhotoGraphRuntimeControls,
+  "hideConnections"
+>;
 
 export type GraphImageDimensions = {
   width: number;

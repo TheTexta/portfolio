@@ -67,3 +67,36 @@ export const GRAPH_CONTROL_SLIDERS: readonly GraphSliderConfig[] = [
     formatValue: (value) => `${Math.round(GRAPH_CONFIG.distMax * value)} px`,
   },
 ];
+
+export const GRAPH_COLLISION_SLIDERS: readonly GraphSliderConfig[] = [
+  {
+    key: "collideStrength",
+    label: "Collision strength",
+    min: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.collideStrength.min / 0.1,
+    max: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.collideStrength.max / 0.1,
+    scale: 0.1,
+    formatValue: (value) => `${value.toFixed(1)}x`,
+  },
+  {
+    key: "collideBoxScale",
+    label: "Collision box scale",
+    min: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.collideBoxScale.min / 0.05,
+    max: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.collideBoxScale.max / 0.05,
+    scale: 0.05,
+    formatValue: (value) => `${value.toFixed(2)}x`,
+  },
+  {
+    key: "collidePad",
+    label: "Collision padding",
+    min: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.collidePad.min,
+    max: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.collidePad.max,
+    formatValue: (value) => `${value.toFixed(0)} px`,
+  },
+  {
+    key: "collideIterations",
+    label: "Collision passes",
+    min: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.collideIterations.min,
+    max: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.collideIterations.max,
+    formatValue: (value) => `${value.toFixed(0)}`,
+  },
+];

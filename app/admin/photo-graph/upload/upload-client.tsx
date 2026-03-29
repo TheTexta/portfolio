@@ -11,7 +11,10 @@ import {
 import { useRouter } from "next/navigation";
 
 import PhotoGraphCanvas from "@/app/components/projects/photo-graph/PhotoGraphCanvas";
-import { GRAPH_CONTROL_SLIDERS } from "@/app/components/projects/photo-graph/config";
+import {
+  GRAPH_COLLISION_SLIDERS,
+  GRAPH_CONTROL_SLIDERS,
+} from "@/app/components/projects/photo-graph/config";
 import {
   OVERLAY_CONTROL_DANGER_CLASS,
   OverlayControlButton,
@@ -176,6 +179,10 @@ function areGraphControlsEqual(
   return (
     left.hideConnections === right.hideConnections &&
     Math.abs(left.chargeMult - right.chargeMult) < 1e-9 &&
+    Math.abs(left.collideBoxScale - right.collideBoxScale) < 1e-9 &&
+    Math.abs(left.collideIterations - right.collideIterations) < 1e-9 &&
+    Math.abs(left.collidePad - right.collidePad) < 1e-9 &&
+    Math.abs(left.collideStrength - right.collideStrength) < 1e-9 &&
     Math.abs(left.distMinMult - right.distMinMult) < 1e-9 &&
     Math.abs(left.distMaxMult - right.distMaxMult) < 1e-9
   );
@@ -611,23 +618,18 @@ export default function PhotoGraphUploadClient() {
         const nextValue =
           key === "hideConnections"
             ? Boolean(value)
-            : key === "chargeMult"
-              ? clamp(
+            : (() => {
+                const limits = PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS[key];
+                const normalizedValue = clamp(
                   Number(value),
-                  PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.chargeMult.min,
-                  PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.chargeMult.max,
-                )
-              : key === "distMinMult"
-                ? clamp(
-                    Number(value),
-                    PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMinMult.min,
-                    PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMinMult.max,
-                  )
-                : clamp(
-                    Number(value),
-                    PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMaxMult.min,
-                    PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMaxMult.max,
-                  );
+                  limits.min,
+                  limits.max,
+                );
+
+                return limits.integer
+                  ? Math.round(normalizedValue)
+                  : normalizedValue;
+              })();
 
         if (current[key] === nextValue) {
           return current;
@@ -749,7 +751,7 @@ export default function PhotoGraphUploadClient() {
       setSavedGraphControls(body.controls);
       setPreviewGraphControls(body.controls);
       setStatusWithLog(
-        `Saved graph defaults (lines ${body.controls.hideConnections ? "hidden" : "shown"}, repel ${body.controls.chargeMult.toFixed(1)}x).`,
+        `Saved graph defaults (lines ${body.controls.hideConnections ? "hidden" : "shown"}, repel ${body.controls.chargeMult.toFixed(1)}x, collision ${body.controls.collideStrength.toFixed(1)}x).`,
         "success",
       );
     } catch (error) {
@@ -1151,30 +1153,87 @@ export default function PhotoGraphUploadClient() {
             <div className="rounded-[1.25rem] border border-black/10 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5">
               <div className="flex items-center justify-between gap-3 text-[11px] tracking-[0.22em] uppercase opacity-60">
                 <span>Graph Defaults</span>
-                <span>Runtime Controls</span>
+                <span>Runtime + Collision</span>
               </div>
               <p className="mt-3 text-sm leading-6 opacity-75">
                 These values seed the public graph controls at load time.
-                Visitors can still change them locally after the graph loads.
+                Visitors can still change the visible controls locally after the
+                graph loads. Collision tuning stays admin-only.
               </p>
 
               <div className="mt-5 space-y-4">
-                <label className="flex min-h-8 items-center justify-between gap-3 text-sm font-medium">
-                  <span>Show connecting lines</span>
-                  <input
-                    type="checkbox"
-                    checked={!previewGraphControls.hideConnections}
-                    onChange={(event) =>
-                      handleGraphControlChange(
-                        "hideConnections",
-                        !event.target.checked,
-                      )
-                    }
-                    className="m-0 h-4 w-4 shrink-0 accent-black dark:accent-white"
-                  />
-                </label>
+                <div className="space-y-4">
+                  <div className="text-[11px] font-medium tracking-[0.18em] uppercase opacity-55">
+                    Public Runtime Controls
+                  </div>
 
-                {GRAPH_CONTROL_SLIDERS.map(
+                  <label className="flex min-h-8 items-center justify-between gap-3 text-sm font-medium">
+                    <span>Show connecting lines</span>
+                    <input
+                      type="checkbox"
+                      checked={!previewGraphControls.hideConnections}
+                      onChange={(event) =>
+                        handleGraphControlChange(
+                          "hideConnections",
+                          !event.target.checked,
+                        )
+                      }
+                      className="m-0 h-4 w-4 shrink-0 accent-black dark:accent-white"
+                    />
+                  </label>
+
+                  {GRAPH_CONTROL_SLIDERS.map(
+                    ({ key, label, min, max, scale = 1, formatValue }) => {
+                      const inputId = `photo-graph-default-${key}`;
+                      const valueText = formatValue(previewGraphControls[key]);
+
+                      return (
+                        <div key={key} className="space-y-2">
+                          <div className="flex items-end justify-between gap-3">
+                            <label
+                              htmlFor={inputId}
+                              className="text-sm font-medium"
+                            >
+                              {label}
+                            </label>
+                            <output
+                              htmlFor={inputId}
+                              className="text-sm opacity-70"
+                            >
+                              {valueText}
+                            </output>
+                          </div>
+                          <input
+                            id={inputId}
+                            type="range"
+                            min={min}
+                            max={max}
+                            value={previewGraphControls[key] / scale}
+                            onChange={(event) =>
+                              handleGraphControlChange(
+                                key,
+                                Number(event.target.value) * scale,
+                              )
+                            }
+                            className="range-sm h-2 w-full rounded-full border-none bg-black/10 accent-black dark:bg-white/20 dark:accent-white"
+                          />
+                        </div>
+                      );
+                    },
+                  )}
+                </div>
+
+                <div className="border-t border-black/10 pt-4 dark:border-white/10">
+                  <div className="text-[11px] font-medium tracking-[0.18em] uppercase opacity-55">
+                    Admin Collision Tuning
+                  </div>
+                  <p className="mt-2 text-xs leading-5 opacity-60">
+                    These values affect the layout solver directly and apply to
+                    the public graph when you save them as defaults.
+                  </p>
+                </div>
+
+                {GRAPH_COLLISION_SLIDERS.map(
                   ({ key, label, min, max, scale = 1, formatValue }) => {
                     const inputId = `photo-graph-default-${key}`;
                     const valueText = formatValue(previewGraphControls[key]);
@@ -1281,6 +1340,12 @@ export default function PhotoGraphUploadClient() {
                   {savedGraphControls.distMinMult.toFixed(1)}x, max{" "}
                   {savedGraphControls.distMaxMult.toFixed(1)}x
                 </p>
+                <p className="mt-1 text-xs opacity-65">
+                  collision {savedGraphControls.collideStrength.toFixed(1)}x,
+                  box {savedGraphControls.collideBoxScale.toFixed(2)}x, pad{" "}
+                  {savedGraphControls.collidePad.toFixed(0)} px, passes{" "}
+                  {savedGraphControls.collideIterations.toFixed(0)}
+                </p>
               </div>
 
               <div className="rounded-[1rem] border border-black/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
@@ -1290,7 +1355,8 @@ export default function PhotoGraphUploadClient() {
                 <p className="mt-2 text-sm font-medium">{previewStatusLabel}</p>
                 <p className="mt-1 text-xs opacity-65">
                   LAB preview refresh is debounced by{" "}
-                  {PREVIEW_UPDATE_DEBOUNCE_MS} ms. Graph controls apply live.
+                  {PREVIEW_UPDATE_DEBOUNCE_MS} ms. Graph and collision controls
+                  apply live.
                 </p>
               </div>
             </div>

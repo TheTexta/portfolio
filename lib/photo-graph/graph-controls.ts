@@ -1,14 +1,58 @@
-import type { PhotoGraphRuntimeControls } from "@/lib/photo-graph/types";
+import type {
+  PhotoGraphNumericControlKey,
+  PhotoGraphRuntimeControls,
+} from "@/lib/photo-graph/types";
 
 export const DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS: PhotoGraphRuntimeControls = {
   hideConnections: false,
   chargeMult: 1,
+  collideBoxScale: 1,
+  collideIterations: 1,
+  collidePad: 0,
+  collideStrength: 2,
   distMinMult: 0,
   distMaxMult: 1,
 };
 
-export const PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS = {
+type PhotoGraphRuntimeControlLimits = {
+  max: number;
+  min: number;
+  integer?: boolean;
+};
+
+const NUMERIC_GRAPH_CONTROL_KEYS: readonly PhotoGraphNumericControlKey[] = [
+  "chargeMult",
+  "collideBoxScale",
+  "collideIterations",
+  "collidePad",
+  "collideStrength",
+  "distMinMult",
+  "distMaxMult",
+];
+
+export const PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS: Record<
+  PhotoGraphNumericControlKey,
+  PhotoGraphRuntimeControlLimits
+> = {
   chargeMult: {
+    min: 0,
+    max: 5,
+  },
+  collideBoxScale: {
+    min: 0.5,
+    max: 2,
+  },
+  collideIterations: {
+    min: 0,
+    max: 6,
+    integer: true,
+  },
+  collidePad: {
+    min: 0,
+    max: 48,
+    integer: true,
+  },
+  collideStrength: {
     min: 0,
     max: 5,
   },
@@ -48,42 +92,71 @@ function parseFiniteNumber(value: unknown) {
 function normalizeControlValue(
   value: unknown,
   fallback: number,
-  limits: { min: number; max: number },
+  limits: PhotoGraphRuntimeControlLimits,
 ) {
   const parsed = parseFiniteNumber(value);
   if (!Number.isFinite(parsed)) {
     return fallback;
   }
 
-  return clamp(parsed, limits.min, limits.max);
+  const normalized = limits.integer ? Math.round(parsed) : parsed;
+  return clamp(normalized, limits.min, limits.max);
+}
+
+export function normalizePhotoGraphRuntimeControlValue(
+  key: PhotoGraphNumericControlKey,
+  value: unknown,
+  fallback: number,
+) {
+  return normalizeControlValue(
+    value,
+    fallback,
+    PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS[key],
+  );
 }
 
 export function normalizePhotoGraphRuntimeControls(
   value: unknown,
 ): PhotoGraphRuntimeControls {
   const record = isRecord(value) ? value : {};
-
-  return {
+  const controls = {
     hideConnections:
       typeof record.hideConnections === "boolean"
         ? record.hideConnections
         : DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS.hideConnections,
-    chargeMult: normalizeControlValue(
-      record.chargeMult,
-      DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS.chargeMult,
-      PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.chargeMult,
-    ),
-    distMinMult: normalizeControlValue(
-      record.distMinMult,
-      DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS.distMinMult,
-      PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMinMult,
-    ),
-    distMaxMult: normalizeControlValue(
-      record.distMaxMult,
-      DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS.distMaxMult,
-      PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMaxMult,
-    ),
-  };
+  } as PhotoGraphRuntimeControls;
+
+  for (const key of NUMERIC_GRAPH_CONTROL_KEYS) {
+    controls[key] = normalizePhotoGraphRuntimeControlValue(
+      key,
+      record[key],
+      DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS[key],
+    );
+  }
+
+  return controls;
+}
+
+function parseNumericControlValue(
+  key: PhotoGraphNumericControlKey,
+  value: unknown,
+) {
+  const parsed = parseFiniteNumber(value);
+  const limits = PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS[key];
+
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+
+  if (limits.integer && !Number.isInteger(parsed)) {
+    return null;
+  }
+
+  if (parsed < limits.min || parsed > limits.max) {
+    return null;
+  }
+
+  return parsed;
 }
 
 export function parsePhotoGraphRuntimeControls(
@@ -93,28 +166,18 @@ export function parsePhotoGraphRuntimeControls(
     return null;
   }
 
-  const chargeMult = parseFiniteNumber(value.chargeMult);
-  const distMinMult = parseFiniteNumber(value.distMinMult);
-  const distMaxMult = parseFiniteNumber(value.distMaxMult);
+  const controls = {
+    hideConnections: value.hideConnections,
+  } as PhotoGraphRuntimeControls;
 
-  if (
-    !Number.isFinite(chargeMult) ||
-    !Number.isFinite(distMinMult) ||
-    !Number.isFinite(distMaxMult) ||
-    chargeMult < PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.chargeMult.min ||
-    chargeMult > PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.chargeMult.max ||
-    distMinMult < PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMinMult.min ||
-    distMinMult > PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMinMult.max ||
-    distMaxMult < PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMaxMult.min ||
-    distMaxMult > PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.distMaxMult.max
-  ) {
-    return null;
+  for (const key of NUMERIC_GRAPH_CONTROL_KEYS) {
+    const parsed = parseNumericControlValue(key, value[key]);
+    if (parsed === null) {
+      return null;
+    }
+
+    controls[key] = parsed;
   }
 
-  return {
-    hideConnections: value.hideConnections,
-    chargeMult,
-    distMinMult,
-    distMaxMult,
-  };
+  return controls;
 }
