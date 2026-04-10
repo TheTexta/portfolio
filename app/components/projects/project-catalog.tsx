@@ -25,8 +25,8 @@ export const projectCatalog: ProjectDefinition[] = [
     id: "grailed-plus",
     title: "Grailed Plus",
     description:
-      "Browser extension for grailed.com, a second-hand clothing marketplace, that injects embedding-based matching to compare listings across secondary clothing platforms, while adding price history, drop metrics, seller metadata, currency conversion, and dark mode controls.",
-    tags: ["Browser Extension", "Chrome MV3", "Firefox MV3", "JavaScript"],
+      "Browser extension injects embedding-based matching to compare listings across secondary clothing platforms. Also adds price history, drop metrics, seller metadata, non-usd currency support, and dark mode",
+    tags: ["Chrome MV3", "JavaScript"],
     // TODO: Firefox Webstore
     previewLinks: [
       {
@@ -43,7 +43,7 @@ export const projectCatalog: ProjectDefinition[] = [
     id: "photo-graph",
     title: "Photo Node-Gallery",
     description:
-      "Interactive force-directed gallery that uses color-similarity mapping to cluster and link photographs within a dynamic node graph.",
+      "Force-directed gallery maps photographs via color-similarity matching.",
     tags: ["Next.js", "D3", "Supabase"],
     renderPreview: (darkMode) => (
       <PhotoGraphCanvas forcedDarkMode={darkMode} fitToCanvas />
@@ -53,7 +53,7 @@ export const projectCatalog: ProjectDefinition[] = [
     id: "nepobabiesruntheunderground",
     title: "nepobabiesruntheunderground",
     description:
-      "Interactive UI project that layers custom typography, motion, collage imagery, and WebGL textures into a dense experimental digital environment.",
+      "Experimental UI project that layers custom typography, motion, collage imagery, and WebGL textures",
     tags: ["HTML", "CSS", "JavaScript", "WebGL"],
     previewLinks: [
       {
