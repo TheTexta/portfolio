@@ -33,6 +33,9 @@ export default function About() {
           Email
         </a>
       </div>
+      <div>
+        
+      </div>
     </div>
   );
 }
