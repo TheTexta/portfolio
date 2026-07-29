@@ -38,8 +38,16 @@ const DEMO_ORIGIN = normalizeDemoOrigin(
   process.env.NEXT_PUBLIC_GRAILED_PLUS_DEMO_ORIGIN,
 );
 const READY_TIMEOUT_MS = 8_000;
-const MIN_FRAME_HEIGHT = 560;
-const MAX_FRAME_HEIGHT = 820;
+const FRAME_HEIGHTS: Record<
+  GrailedPlusDemoFeature,
+  { min: number; max: number }
+> = {
+  overview: { min: 680, max: 820 },
+  pricing: { min: 320, max: 440 },
+  "market-compare": { min: 500, max: 660 },
+  currency: { min: 360, max: 520 },
+  "dark-mode": { min: 390, max: 540 },
+};
 const MESSAGE_SOURCE = "grailed-plus-demo";
 const PARENT_MESSAGE_SOURCE = "grailed-plus-site";
 const MESSAGE_VERSION = 1;
@@ -57,13 +65,16 @@ function normalizeDemoOrigin(value: string | undefined) {
   return DEFAULT_DEMO_ORIGIN;
 }
 
-function clampFrameHeight(value: unknown) {
+function clampFrameHeight(
+  value: unknown,
+  bounds: { min: number; max: number },
+) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) {
-    return MIN_FRAME_HEIGHT;
+    return bounds.min;
   }
 
-  return Math.min(MAX_FRAME_HEIGHT, Math.max(MIN_FRAME_HEIGHT, parsed));
+  return Math.min(bounds.max, Math.max(bounds.min, parsed));
 }
 
 function getDemoUrl(feature: GrailedPlusDemoFeature) {
@@ -84,8 +95,9 @@ export default function GrailedPlusLiveDemo({
   const readyTimeoutRef = useRef<number | null>(null);
   const playSentRef = useRef(false);
   const enteredViewportRef = useRef(eager);
+  const frameBounds = FRAME_HEIGHTS[feature];
   const [attempt, setAttempt] = useState(0);
-  const [frameHeight, setFrameHeight] = useState(MIN_FRAME_HEIGHT);
+  const [frameHeight, setFrameHeight] = useState(frameBounds.min);
   const [hasEnteredViewport, setHasEnteredViewport] = useState(eager);
   const [isReady, setIsReady] = useState(false);
   const [isUnavailable, setIsUnavailable] = useState(false);
@@ -121,6 +133,17 @@ export default function GrailedPlusLiveDemo({
       demoOrigin,
     );
   }, [demoOrigin, isReady]);
+
+  const requestReady = useCallback(() => {
+    iframeRef.current?.contentWindow?.postMessage(
+      {
+        source: PARENT_MESSAGE_SOURCE,
+        version: MESSAGE_VERSION,
+        type: "connect",
+      },
+      demoOrigin,
+    );
+  }, [demoOrigin]);
 
   useEffect(() => {
     if (eager) {
@@ -179,20 +202,25 @@ export default function GrailedPlusLiveDemo({
         clearReadyTimeout();
         setIsReady(true);
         setIsUnavailable(false);
-        setFrameHeight(clampFrameHeight(event.data.height));
+        setFrameHeight(clampFrameHeight(event.data.height, frameBounds));
         setExtensionVersion(
           typeof event.data.extensionVersion === "string"
             ? event.data.extensionVersion
             : null,
         );
       } else if (event.data.type === "resize") {
-        setFrameHeight(clampFrameHeight(event.data.height));
+        setFrameHeight(clampFrameHeight(event.data.height, frameBounds));
       }
     };
 
     window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, [clearReadyTimeout, demoOrigin, feature]);
+    const requestId = window.requestAnimationFrame(requestReady);
+
+    return () => {
+      window.cancelAnimationFrame(requestId);
+      window.removeEventListener("message", handleMessage);
+    };
+  }, [clearReadyTimeout, demoOrigin, feature, frameBounds, requestReady]);
 
   useEffect(() => {
     sendPlay();
@@ -209,7 +237,7 @@ export default function GrailedPlusLiveDemo({
     clearReadyTimeout();
     playSentRef.current = false;
     setExtensionVersion(null);
-    setFrameHeight(MIN_FRAME_HEIGHT);
+    setFrameHeight(frameBounds.min);
     setIsReady(false);
     setIsUnavailable(false);
     setAttempt((current) => current + 1);
@@ -219,9 +247,10 @@ export default function GrailedPlusLiveDemo({
     <div
       ref={containerRef}
       className={cn(
-        "grailed-plus-live-demo relative min-h-[35rem] overflow-hidden bg-[var(--gp-surface)]",
+        "grailed-plus-live-demo relative overflow-hidden bg-[var(--gp-surface)]",
         className,
       )}
+      style={{ minHeight: frameBounds.min + 40 }}
     >
       <div className="grailed-plus-rule flex min-h-10 items-center justify-between gap-4 border-b px-3 text-[0.625rem] font-semibold tracking-[0.14em] uppercase sm:px-4">
         <span>
@@ -257,7 +286,8 @@ export default function GrailedPlusLiveDemo({
         <>
           {!isReady ? (
             <div
-              className="grailed-plus-muted absolute inset-x-0 top-10 z-0 flex min-h-[35rem] items-center justify-center px-6 text-center text-xs tracking-[0.12em] uppercase"
+              className="grailed-plus-muted absolute inset-x-0 top-10 z-0 flex items-center justify-center px-6 text-center text-xs tracking-[0.12em] uppercase"
+              style={{ minHeight: frameBounds.min }}
               role="status"
             >
               {shouldLoad
@@ -275,6 +305,7 @@ export default function GrailedPlusLiveDemo({
               loading={eager ? "eager" : "lazy"}
               referrerPolicy="strict-origin"
               sandbox="allow-scripts allow-same-origin"
+              onLoad={requestReady}
               onError={() => setIsUnavailable(true)}
               className={cn(
                 "relative z-10 block w-full border-0 bg-transparent transition-opacity duration-300",
@@ -283,7 +314,7 @@ export default function GrailedPlusLiveDemo({
               style={{ height: frameHeight }}
             />
           ) : (
-            <div className="h-[35rem]" aria-hidden />
+            <div style={{ height: frameBounds.min }} aria-hidden />
           )}
         </>
       )}
