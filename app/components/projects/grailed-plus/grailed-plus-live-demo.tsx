@@ -267,7 +267,7 @@ export default function GrailedPlusLiveDemo({
   }, [hasEnteredViewport, isReady, sendPlay]);
 
   useEffect(() => {
-    if (shouldLoad) {
+    if (shouldLoad && isReady) {
       sendTheme();
     }
   }, [isReady, sendTheme, shouldLoad, siteDarkMode]);
