@@ -483,8 +483,6 @@ export default function GrailedPlusInstallRedirect({
         <div className="mx-auto max-w-[96rem] px-5 sm:px-8 lg:px-12">
           {FEATURES.map((feature, index) => {
             const textOnLeft = index % 2 === 0;
-            const isAtomicDemo =
-              feature.id === "market-compare" || feature.id === "pricing";
 
             return (
               <article
@@ -523,12 +521,7 @@ export default function GrailedPlusInstallRedirect({
                     textOnLeft ? "lg:order-2" : "lg:order-1",
                   )}
                 >
-                  <div
-                    className={cn(
-                      "overflow-hidden",
-                      !isAtomicDemo && "grailed-plus-preview-frame",
-                    )}
-                  >
+                  <div className="grailed-plus-preview-frame overflow-hidden">
                     <GrailedPlusLiveDemo
                       feature={feature.id}
                       fallbackComparisonId={feature.fallbackComparisonId}
