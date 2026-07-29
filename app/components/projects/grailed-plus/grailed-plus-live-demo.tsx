@@ -44,7 +44,7 @@ const FRAME_HEIGHTS: Record<
   { min: number; max: number }
 > = {
   overview: { min: 680, max: 820 },
-  pricing: { min: 300, max: 440 },
+  pricing: { min: 300, max: 520 },
   "market-compare": { min: 160, max: 360 },
   currency: { min: 360, max: 520 },
   "dark-mode": { min: 390, max: 540 },
