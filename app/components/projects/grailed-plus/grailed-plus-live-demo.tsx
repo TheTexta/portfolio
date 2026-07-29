@@ -29,7 +29,6 @@ type DemoMessage = {
   type?: unknown;
   feature?: unknown;
   height?: unknown;
-  extensionVersion?: unknown;
   state?: unknown;
 };
 
@@ -101,7 +100,6 @@ export default function GrailedPlusLiveDemo({
   const [hasEnteredViewport, setHasEnteredViewport] = useState(eager);
   const [isReady, setIsReady] = useState(false);
   const [isUnavailable, setIsUnavailable] = useState(false);
-  const [extensionVersion, setExtensionVersion] = useState<string | null>(null);
   const demoUrl = useMemo(() => getDemoUrl(feature), [feature]);
   const demoOrigin = useMemo(() => new URL(demoUrl).origin, [demoUrl]);
   const shouldLoad = eager || hasEnteredViewport;
@@ -216,11 +214,6 @@ export default function GrailedPlusLiveDemo({
         setIsReady(true);
         setIsUnavailable(false);
         setFrameHeight(clampFrameHeight(event.data.height, frameBounds));
-        setExtensionVersion(
-          typeof event.data.extensionVersion === "string"
-            ? event.data.extensionVersion
-            : null,
-        );
       } else if (event.data.type === "resize") {
         setFrameHeight(clampFrameHeight(event.data.height, frameBounds));
       }
@@ -249,7 +242,6 @@ export default function GrailedPlusLiveDemo({
   const retry = () => {
     clearReadyTimeout();
     playSentRef.current = false;
-    setExtensionVersion(null);
     setFrameHeight(frameBounds.min);
     setIsReady(false);
     setIsUnavailable(false);
@@ -263,17 +255,8 @@ export default function GrailedPlusLiveDemo({
         "grailed-plus-live-demo relative overflow-hidden bg-[var(--gp-surface)]",
         className,
       )}
-      style={{ minHeight: frameBounds.min + 40 }}
+      style={{ minHeight: frameBounds.min }}
     >
-      <div className="grailed-plus-rule flex min-h-10 items-center justify-between gap-4 border-b px-3 text-[0.625rem] font-semibold tracking-[0.14em] uppercase sm:px-4">
-        <span>
-          {isUnavailable ? "Static fallback" : "Current extension UI"}
-        </span>
-        <span className="grailed-plus-muted">
-          {extensionVersion ? `Source v${extensionVersion}` : "Live source"}
-        </span>
-      </div>
-
       {isUnavailable ? (
         <div className="relative h-[min(72vh,46rem)] min-h-[32rem]">
           <GrailedPlusPreview
@@ -299,7 +282,7 @@ export default function GrailedPlusLiveDemo({
         <>
           {!isReady ? (
             <div
-              className="grailed-plus-muted absolute inset-x-0 top-10 z-0 flex items-center justify-center px-6 text-center text-xs tracking-[0.12em] uppercase"
+              className="grailed-plus-muted absolute inset-x-0 top-0 z-0 flex items-center justify-center px-6 text-center text-xs tracking-[0.12em] uppercase"
               style={{ minHeight: frameBounds.min }}
               role="status"
             >
