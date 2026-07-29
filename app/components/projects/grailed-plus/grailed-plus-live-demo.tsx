@@ -3,6 +3,7 @@
 import { RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useTheme } from "@/app/components/theme/theme-provider";
 import { cn } from "@/lib/cn";
 import GrailedPlusPreview from "./grailed-plus-preview";
 
@@ -53,6 +54,10 @@ const MESSAGE_SOURCE = "grailed-plus-demo";
 const PARENT_MESSAGE_SOURCE = "grailed-plus-site";
 const MESSAGE_VERSION = 1;
 
+function isSiteDarkMode() {
+  return document.documentElement.classList.contains("dark");
+}
+
 function normalizeDemoOrigin(value: string | undefined) {
   try {
     const url = new URL(value || DEFAULT_DEMO_ORIGIN);
@@ -92,6 +97,7 @@ export default function GrailedPlusLiveDemo({
   onVersionChange,
   title,
 }: GrailedPlusLiveDemoProps) {
+  const { darkMode: siteDarkMode } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const readyTimeoutRef = useRef<number | null>(null);
@@ -154,6 +160,19 @@ export default function GrailedPlusLiveDemo({
         source: PARENT_MESSAGE_SOURCE,
         version: MESSAGE_VERSION,
         type: "connect",
+        darkMode: isSiteDarkMode(),
+      },
+      demoOrigin,
+    );
+  }, [demoOrigin]);
+
+  const sendTheme = useCallback(() => {
+    iframeRef.current?.contentWindow?.postMessage(
+      {
+        source: PARENT_MESSAGE_SOURCE,
+        version: MESSAGE_VERSION,
+        type: "theme",
+        darkMode: isSiteDarkMode(),
       },
       demoOrigin,
     );
@@ -246,6 +265,12 @@ export default function GrailedPlusLiveDemo({
   useEffect(() => {
     sendPlay();
   }, [hasEnteredViewport, isReady, sendPlay]);
+
+  useEffect(() => {
+    if (shouldLoad) {
+      sendTheme();
+    }
+  }, [isReady, sendTheme, shouldLoad, siteDarkMode]);
 
   useEffect(
     () => () => {
