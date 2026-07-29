@@ -252,7 +252,7 @@ export default function GrailedPlusLiveDemo({
     <div
       ref={containerRef}
       className={cn(
-        "grailed-plus-live-demo relative overflow-hidden bg-[var(--gp-surface)]",
+        "grailed-plus-live-demo relative overflow-hidden bg-transparent",
         className,
       )}
       style={{ minHeight: frameBounds.min }}

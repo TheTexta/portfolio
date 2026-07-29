@@ -225,7 +225,7 @@ html.dark {
 
   .grailed-plus-preview-frame {
     border: 1px solid var(--gp-rule);
-    background: var(--gp-surface);
+    background: transparent;
   }
 
   @media (hover: hover) {
