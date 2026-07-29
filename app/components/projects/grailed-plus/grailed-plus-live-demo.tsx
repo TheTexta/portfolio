@@ -237,6 +237,7 @@ export default function GrailedPlusLiveDemo({
           <GrailedPlusPreview
             comparisonId={fallbackComparisonId}
             interactiveScroll={false}
+            priority={eager}
           />
           <div className="absolute inset-x-3 bottom-3 z-30 flex items-center justify-between gap-3 bg-[var(--gp-canvas)] p-3 text-xs sm:inset-x-4 sm:bottom-4">
             <p className="grailed-plus-muted">
