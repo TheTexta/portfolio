@@ -20,6 +20,7 @@ type GrailedPlusLiveDemoProps = {
   eager?: boolean;
   fallbackComparisonId: PreviewFallback;
   feature: GrailedPlusDemoFeature;
+  onVersionChange?: (version: string | null) => void;
   title: string;
 };
 
@@ -29,6 +30,7 @@ type DemoMessage = {
   type?: unknown;
   feature?: unknown;
   height?: unknown;
+  extensionVersion?: unknown;
   state?: unknown;
 };
 
@@ -87,6 +89,7 @@ export default function GrailedPlusLiveDemo({
   eager = false,
   fallbackComparisonId,
   feature,
+  onVersionChange,
   title,
 }: GrailedPlusLiveDemoProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -214,6 +217,11 @@ export default function GrailedPlusLiveDemo({
         setIsReady(true);
         setIsUnavailable(false);
         setFrameHeight(clampFrameHeight(event.data.height, frameBounds));
+        onVersionChange?.(
+          typeof event.data.extensionVersion === "string"
+            ? event.data.extensionVersion
+            : null,
+        );
       } else if (event.data.type === "resize") {
         setFrameHeight(clampFrameHeight(event.data.height, frameBounds));
       }
@@ -226,7 +234,14 @@ export default function GrailedPlusLiveDemo({
       window.cancelAnimationFrame(requestId);
       window.removeEventListener("message", handleMessage);
     };
-  }, [clearReadyTimeout, demoOrigin, feature, frameBounds, requestReady]);
+  }, [
+    clearReadyTimeout,
+    demoOrigin,
+    feature,
+    frameBounds,
+    onVersionChange,
+    requestReady,
+  ]);
 
   useEffect(() => {
     sendPlay();

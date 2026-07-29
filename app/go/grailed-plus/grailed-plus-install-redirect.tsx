@@ -45,6 +45,7 @@ const GOOGLE_ADS_REDIRECT_FALLBACK_MS = 1200;
 const CTA_LABEL = "Add to Chrome";
 const CTA_MOBILE_LABEL = "View in Chrome Web Store";
 const CTA_OPENING_LABEL = "Opening Chrome Web Store...";
+const DEFAULT_EXTENSION_VERSION = "2.4.0";
 const TRACKED_QUERY_KEYS = [
   "gclid",
   "gbraid",
@@ -60,21 +61,21 @@ const TRACKED_QUERY_KEYS = [
 
 const FEATURES = [
   {
-    id: "pricing",
-    number: "01",
-    eyebrow: "Buy with context",
-    title: "Pricing insights",
-    description:
-      "Track price drops, estimate the next change, and see seller context without leaving the item page.",
-    fallbackComparisonId: "price-trend",
-  },
-  {
     id: "market-compare",
-    number: "02",
+    number: "01",
     eyebrow: "Search beyond Grailed",
     title: "Market compare",
     description:
       "Compare candidates from eBay and Depop, then refine them locally with product and image similarity.",
+    fallbackComparisonId: "price-trend",
+  },
+  {
+    id: "pricing",
+    number: "02",
+    eyebrow: "Buy with context",
+    title: "Pricing insights",
+    description:
+      "Track price drops, estimate the next change, and see seller context without leaving the item page.",
     fallbackComparisonId: "price-trend",
   },
   {
@@ -95,6 +96,13 @@ const FEATURES = [
       "Match your device, keep dark mode always on, and tune the interface with a custom primary color—without white flashes between pages.",
     fallbackComparisonId: "dm",
   },
+] as const;
+
+const HERO_FEATURE_LINKS = [
+  { href: "#feature-market-compare", label: "Market compare" },
+  { href: "#feature-pricing", label: "Price intelligence" },
+  { href: "#feature-currency", label: "Custom currency" },
+  { href: "#feature-dark-mode", label: "Dark mode" },
 ] as const;
 
 declare global {
@@ -201,6 +209,12 @@ export default function GrailedPlusInstallRedirect({
   googleAdsSendTo,
 }: GrailedPlusInstallRedirectProps) {
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [extensionVersion, setExtensionVersion] = useState(
+    DEFAULT_EXTENSION_VERSION,
+  );
+  const handleVersionChange = useCallback((version: string | null) => {
+    setExtensionVersion(version ?? DEFAULT_EXTENSION_VERSION);
+  }, []);
   const redirectStartedRef = useRef(false);
   const redirectCompletedRef = useRef(false);
   const timeoutIdsRef = useRef<Set<number>>(new Set());
@@ -310,7 +324,7 @@ export default function GrailedPlusInstallRedirect({
         <header className="grailed-plus-rule mx-auto grid min-h-14 w-full max-w-[96rem] grid-cols-[1fr_auto] items-center border-b px-5 text-[0.6875rem] font-semibold tracking-[0.16em] uppercase sm:grid-cols-3 sm:px-8 lg:px-12">
           <p>Grailed Plus</p>
           <p className="grailed-plus-muted hidden text-center sm:block">
-            Browser utility / Chrome
+            Browser utility / Chrome / {extensionVersion}
           </p>
           <nav
             aria-label="Grailed Plus page navigation"
@@ -374,10 +388,16 @@ export default function GrailedPlusInstallRedirect({
               className="grailed-plus-rule mt-8 flex flex-wrap gap-x-5 gap-y-2 border-y py-4 text-xs font-semibold tracking-[0.14em] uppercase"
               aria-label="Grailed Plus features"
             >
-              <li>Price intelligence</li>
-              <li>Market compare</li>
-              <li>Custom currency</li>
-              <li>Dark mode</li>
+              {HERO_FEATURE_LINKS.map((feature) => (
+                <li key={feature.href}>
+                  <a
+                    href={feature.href}
+                    className="inline-flex min-h-11 items-center underline-offset-4 transition-opacity hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+                  >
+                    {feature.label}
+                  </a>
+                </li>
+              ))}
             </ul>
 
             <div
@@ -429,6 +449,7 @@ export default function GrailedPlusInstallRedirect({
                 eager
                 feature="overview"
                 fallbackComparisonId="price-trend"
+                onVersionChange={handleVersionChange}
                 title="Live overview of the current Grailed Plus extension interface"
               />
             </div>
@@ -455,46 +476,61 @@ export default function GrailedPlusInstallRedirect({
         </header>
 
         <div className="mx-auto max-w-[96rem] px-5 sm:px-8 lg:px-12">
-          {FEATURES.map((feature) => (
-            <article
-              key={feature.id}
-              className="grailed-plus-rule grid gap-10 border-t py-16 sm:py-20 lg:grid-cols-12 lg:gap-12 lg:py-28"
-            >
-              <div className="min-w-0 lg:sticky lg:top-10 lg:col-span-4 lg:self-start">
-                <div className="flex items-start justify-between gap-6">
-                  <p className="grailed-plus-accent text-xs font-semibold tracking-[0.2em] uppercase">
-                    {feature.eyebrow}
-                  </p>
-                  <span
-                    aria-hidden
-                    className="grailed-plus-muted font-display text-sm"
-                  >
-                    / {feature.number}
-                  </span>
-                </div>
-                <h3 className="mt-6 max-w-md text-[clamp(2.5rem,5vw,5rem)] leading-[0.92] font-bold tracking-[-0.045em]">
-                  {feature.title}
-                </h3>
-                <p className="grailed-plus-muted mt-6 max-w-lg text-base leading-7 sm:text-lg sm:leading-8">
-                  {feature.description}
-                </p>
-              </div>
+          {FEATURES.map((feature, index) => {
+            const textOnLeft = index % 2 === 0;
 
-              <div className="min-w-0 lg:col-span-8">
-                <div className="grailed-plus-preview-frame overflow-hidden">
-                  <GrailedPlusLiveDemo
-                    feature={feature.id}
-                    fallbackComparisonId={feature.fallbackComparisonId}
-                    title={`Live Grailed Plus ${feature.title} demo`}
-                  />
+            return (
+              <article
+                key={feature.id}
+                id={`feature-${feature.id}`}
+                className="grailed-plus-rule grid gap-10 border-t py-16 sm:py-20 lg:grid-cols-12 lg:gap-12 lg:py-28"
+              >
+                <div
+                  className={cn(
+                    "min-w-0 lg:sticky lg:top-10 lg:col-span-4 lg:self-start",
+                    textOnLeft ? "lg:order-1" : "lg:order-2",
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-6">
+                    <p className="grailed-plus-accent text-xs font-semibold tracking-[0.2em] uppercase">
+                      {feature.eyebrow}
+                    </p>
+                    <span
+                      aria-hidden
+                      className="grailed-plus-muted font-display text-sm"
+                    >
+                      / {feature.number}
+                    </span>
+                  </div>
+                  <h3 className="mt-6 max-w-md text-[clamp(2.5rem,5vw,5rem)] leading-[0.92] font-bold tracking-[-0.045em]">
+                    {feature.title}
+                  </h3>
+                  <p className="grailed-plus-muted mt-6 max-w-lg text-base leading-7 sm:text-lg sm:leading-8">
+                    {feature.description}
+                  </p>
                 </div>
-                <p className="grailed-plus-muted mt-3 text-xs leading-5">
-                  Live from the extension repository. Interactions use
-                  deterministic sample data and never contact a marketplace.
-                </p>
-              </div>
-            </article>
-          ))}
+
+                <div
+                  className={cn(
+                    "min-w-0 lg:col-span-8",
+                    textOnLeft ? "lg:order-2" : "lg:order-1",
+                  )}
+                >
+                  <div className="grailed-plus-preview-frame overflow-hidden">
+                    <GrailedPlusLiveDemo
+                      feature={feature.id}
+                      fallbackComparisonId={feature.fallbackComparisonId}
+                      title={`Live Grailed Plus ${feature.title} demo`}
+                    />
+                  </div>
+                  <p className="grailed-plus-muted mt-3 text-xs leading-5">
+                    Live from the extension repository. Interactions use
+                    deterministic sample data and never contact a marketplace.
+                  </p>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
 
