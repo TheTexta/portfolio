@@ -135,7 +135,20 @@ export default function GrailedPlusLiveDemo({
   }, [demoOrigin, isReady]);
 
   const requestReady = useCallback(() => {
-    iframeRef.current?.contentWindow?.postMessage(
+    const demoWindow = iframeRef.current?.contentWindow;
+    if (!demoWindow) {
+      return;
+    }
+
+    try {
+      if (demoWindow.location.origin !== demoOrigin) {
+        return;
+      }
+    } catch {
+      // Cross-origin access failing means the frame has left its local placeholder.
+    }
+
+    demoWindow.postMessage(
       {
         source: PARENT_MESSAGE_SOURCE,
         version: MESSAGE_VERSION,
