@@ -321,18 +321,23 @@ export default function GrailedPlusInstallRedirect({
         {isRedirecting ? CTA_OPENING_LABEL : ""}
       </p>
       <section className="grailed-plus-hero grailed-plus-rule relative isolate border-b">
-        <header className="grailed-plus-rule mx-auto grid min-h-14 w-full max-w-[96rem] grid-cols-[1fr_auto] items-center border-b px-5 text-[0.6875rem] font-semibold tracking-[0.16em] uppercase sm:grid-cols-3 sm:px-8 lg:px-12">
-          <p>Grailed Plus</p>
+        <header className="grailed-plus-rule mx-auto grid min-h-8 w-full max-w-[96rem] grid-cols-[1fr_auto] items-center border-b px-5 text-[0.6875rem] font-semibold tracking-[0.16em] uppercase sm:grid-cols-3 sm:px-8 lg:px-12">
+          <a
+            href={PROJECT_ROUTES.grailedPlusInstall}
+            className="flex min-h-8 w-fit items-center transition-opacity hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+          >
+            Grailed Plus
+          </a>
           <p className="grailed-plus-muted hidden text-center sm:block">
-            Browser utility / Chrome / v{extensionVersion}
+            Chrome / v{extensionVersion}
           </p>
           <nav
             aria-label="Grailed Plus page navigation"
-            className="flex items-center justify-end gap-5"
+            className="flex min-h-8 items-center justify-end gap-5"
           >
             <a
               href="#features"
-              className="transition-opacity hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+              className="flex min-h-8 items-center transition-opacity hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
             >
               Index
             </a>
@@ -342,7 +347,7 @@ export default function GrailedPlusInstallRedirect({
               aria-disabled={isRedirecting}
               onClick={handleInstallClick}
               className={cn(
-                "transition-opacity hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current",
+                "flex min-h-8 items-center transition-opacity hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current",
                 isRedirecting && "pointer-events-none opacity-50",
               )}
             >
@@ -351,7 +356,7 @@ export default function GrailedPlusInstallRedirect({
           </nav>
         </header>
 
-        <div className="mx-auto grid min-h-[calc(100svh-3.5rem)] w-full max-w-[96rem] items-center gap-12 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-12 lg:gap-10 lg:px-12 lg:py-16">
+        <div className="mx-auto grid min-h-[calc(100svh-2rem)] w-full max-w-[96rem] items-center gap-12 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-12 lg:gap-10 lg:px-12 lg:py-16">
           <div className="relative z-10 lg:col-span-5">
             <p
               data-hero-item
