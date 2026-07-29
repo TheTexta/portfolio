@@ -1,0 +1,291 @@
+"use client";
+
+import { RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { cn } from "@/lib/cn";
+import GrailedPlusPreview from "./grailed-plus-preview";
+
+export type GrailedPlusDemoFeature =
+  | "overview"
+  | "pricing"
+  | "market-compare"
+  | "currency"
+  | "dark-mode";
+
+type PreviewFallback = "price-trend" | "custom-currency" | "dm";
+
+type GrailedPlusLiveDemoProps = {
+  className?: string;
+  eager?: boolean;
+  fallbackComparisonId: PreviewFallback;
+  feature: GrailedPlusDemoFeature;
+  title: string;
+};
+
+type DemoMessage = {
+  source?: unknown;
+  version?: unknown;
+  type?: unknown;
+  feature?: unknown;
+  height?: unknown;
+  extensionVersion?: unknown;
+  state?: unknown;
+};
+
+const DEFAULT_DEMO_ORIGIN = "https://grailed-plus-demo.dextery.dev";
+const DEMO_ORIGIN = normalizeDemoOrigin(
+  process.env.NEXT_PUBLIC_GRAILED_PLUS_DEMO_ORIGIN,
+);
+const READY_TIMEOUT_MS = 8_000;
+const MIN_FRAME_HEIGHT = 560;
+const MAX_FRAME_HEIGHT = 820;
+const MESSAGE_SOURCE = "grailed-plus-demo";
+const PARENT_MESSAGE_SOURCE = "grailed-plus-site";
+const MESSAGE_VERSION = 1;
+
+function normalizeDemoOrigin(value: string | undefined) {
+  try {
+    const url = new URL(value || DEFAULT_DEMO_ORIGIN);
+    if (url.protocol === "https:" || url.protocol === "http:") {
+      return url.origin;
+    }
+  } catch {
+    // Fall through to the production origin when an environment value is invalid.
+  }
+
+  return DEFAULT_DEMO_ORIGIN;
+}
+
+function clampFrameHeight(value: unknown) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return MIN_FRAME_HEIGHT;
+  }
+
+  return Math.min(MAX_FRAME_HEIGHT, Math.max(MIN_FRAME_HEIGHT, parsed));
+}
+
+function getDemoUrl(feature: GrailedPlusDemoFeature) {
+  const url = new URL(DEMO_ORIGIN);
+  url.searchParams.set("feature", feature);
+  return url.toString();
+}
+
+export default function GrailedPlusLiveDemo({
+  className,
+  eager = false,
+  fallbackComparisonId,
+  feature,
+  title,
+}: GrailedPlusLiveDemoProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const readyTimeoutRef = useRef<number | null>(null);
+  const playSentRef = useRef(false);
+  const enteredViewportRef = useRef(eager);
+  const [attempt, setAttempt] = useState(0);
+  const [frameHeight, setFrameHeight] = useState(MIN_FRAME_HEIGHT);
+  const [hasEnteredViewport, setHasEnteredViewport] = useState(eager);
+  const [isReady, setIsReady] = useState(false);
+  const [isUnavailable, setIsUnavailable] = useState(false);
+  const [extensionVersion, setExtensionVersion] = useState<string | null>(null);
+  const demoUrl = useMemo(() => getDemoUrl(feature), [feature]);
+  const demoOrigin = useMemo(() => new URL(demoUrl).origin, [demoUrl]);
+  const shouldLoad = eager || hasEnteredViewport;
+
+  const clearReadyTimeout = useCallback(() => {
+    if (readyTimeoutRef.current != null) {
+      window.clearTimeout(readyTimeoutRef.current);
+      readyTimeoutRef.current = null;
+    }
+  }, []);
+
+  const sendPlay = useCallback(() => {
+    if (
+      playSentRef.current ||
+      !enteredViewportRef.current ||
+      !isReady ||
+      !iframeRef.current?.contentWindow
+    ) {
+      return;
+    }
+
+    playSentRef.current = true;
+    iframeRef.current.contentWindow.postMessage(
+      {
+        source: PARENT_MESSAGE_SOURCE,
+        version: MESSAGE_VERSION,
+        type: "play",
+      },
+      demoOrigin,
+    );
+  }, [demoOrigin, isReady]);
+
+  useEffect(() => {
+    if (eager) {
+      return;
+    }
+
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) {
+          return;
+        }
+
+        enteredViewportRef.current = true;
+        setHasEnteredViewport(true);
+        observer.disconnect();
+      },
+      { rootMargin: "600px 0px" },
+    );
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [eager]);
+
+  useEffect(() => {
+    if (!shouldLoad || isUnavailable) {
+      return;
+    }
+
+    clearReadyTimeout();
+    readyTimeoutRef.current = window.setTimeout(() => {
+      setIsUnavailable(true);
+      setIsReady(false);
+    }, READY_TIMEOUT_MS);
+
+    return clearReadyTimeout;
+  }, [attempt, clearReadyTimeout, isUnavailable, shouldLoad]);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent<DemoMessage>) => {
+      if (
+        event.origin !== demoOrigin ||
+        event.source !== iframeRef.current?.contentWindow ||
+        event.data?.source !== MESSAGE_SOURCE ||
+        event.data.version !== MESSAGE_VERSION ||
+        event.data.feature !== feature
+      ) {
+        return;
+      }
+
+      if (event.data.type === "ready") {
+        clearReadyTimeout();
+        setIsReady(true);
+        setIsUnavailable(false);
+        setFrameHeight(clampFrameHeight(event.data.height));
+        setExtensionVersion(
+          typeof event.data.extensionVersion === "string"
+            ? event.data.extensionVersion
+            : null,
+        );
+      } else if (event.data.type === "resize") {
+        setFrameHeight(clampFrameHeight(event.data.height));
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [clearReadyTimeout, demoOrigin, feature]);
+
+  useEffect(() => {
+    sendPlay();
+  }, [hasEnteredViewport, isReady, sendPlay]);
+
+  useEffect(
+    () => () => {
+      clearReadyTimeout();
+    },
+    [clearReadyTimeout],
+  );
+
+  const retry = () => {
+    clearReadyTimeout();
+    playSentRef.current = false;
+    setExtensionVersion(null);
+    setFrameHeight(MIN_FRAME_HEIGHT);
+    setIsReady(false);
+    setIsUnavailable(false);
+    setAttempt((current) => current + 1);
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className={cn(
+        "grailed-plus-live-demo relative min-h-[35rem] overflow-hidden bg-[var(--gp-surface)]",
+        className,
+      )}
+    >
+      <div className="grailed-plus-rule flex min-h-10 items-center justify-between gap-4 border-b px-3 text-[0.625rem] font-semibold tracking-[0.14em] uppercase sm:px-4">
+        <span>
+          {isUnavailable ? "Static fallback" : "Current extension UI"}
+        </span>
+        <span className="grailed-plus-muted">
+          {extensionVersion ? `Source v${extensionVersion}` : "Live source"}
+        </span>
+      </div>
+
+      {isUnavailable ? (
+        <div className="relative h-[min(72vh,46rem)] min-h-[32rem]">
+          <GrailedPlusPreview
+            comparisonId={fallbackComparisonId}
+            interactiveScroll={false}
+          />
+          <div className="absolute inset-x-3 bottom-3 z-30 flex items-center justify-between gap-3 bg-[var(--gp-canvas)] p-3 text-xs sm:inset-x-4 sm:bottom-4">
+            <p className="grailed-plus-muted">
+              The live source is unavailable. Showing the saved PNG preview.
+            </p>
+            <button
+              type="button"
+              onClick={retry}
+              className="inline-flex min-h-11 shrink-0 items-center gap-2 border border-[var(--gp-rule)] px-3 font-semibold uppercase outline-none hover:bg-[var(--gp-surface)] focus-visible:ring-2 focus-visible:ring-[var(--gp-ink)]"
+            >
+              <RefreshCw aria-hidden className="h-3.5 w-3.5" />
+              Retry
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {!isReady ? (
+            <div
+              className="grailed-plus-muted absolute inset-x-0 top-10 z-0 flex min-h-[35rem] items-center justify-center px-6 text-center text-xs tracking-[0.12em] uppercase"
+              role="status"
+            >
+              {shouldLoad
+                ? "Connecting to the current extension build"
+                : "Live demo loads as it approaches"}
+            </div>
+          ) : null}
+
+          {shouldLoad ? (
+            <iframe
+              key={`${feature}-${attempt}`}
+              ref={iframeRef}
+              src={demoUrl}
+              title={title}
+              loading={eager ? "eager" : "lazy"}
+              referrerPolicy="strict-origin"
+              sandbox="allow-scripts allow-same-origin"
+              onError={() => setIsUnavailable(true)}
+              className={cn(
+                "relative z-10 block w-full border-0 bg-transparent transition-opacity duration-300",
+                isReady ? "opacity-100" : "opacity-0",
+              )}
+              style={{ height: frameHeight }}
+            />
+          ) : (
+            <div className="h-[35rem]" aria-hidden />
+          )}
+        </>
+      )}
+    </div>
+  );
+}

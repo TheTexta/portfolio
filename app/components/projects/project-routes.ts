@@ -7,8 +7,7 @@ export const PROJECT_ROUTES = {
   grailedPlus: "/components/projects/grailed-plus",
   grailedPlusInstall: "/go/grailed-plus",
   grailedPlusChromeWebStore:
-    "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd?authuser=1&hl=en",
+    "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd",
   nepobabies: "https://thetexta.github.io/nepobabiesruntheunderground/",
-  nepobabiesPreview:
-    "https://thetexta.github.io/nepobabiesruntheunderground/",
+  nepobabiesPreview: "https://thetexta.github.io/nepobabiesruntheunderground/",
 } as const;

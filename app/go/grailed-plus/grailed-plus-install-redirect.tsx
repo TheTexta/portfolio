@@ -1,12 +1,18 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import {
+  type MouseEvent as ReactMouseEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import Link from "next/link";
+import { ArrowDown, ArrowUpRight, LoaderCircle } from "lucide-react";
 
-import GrailedPlusPreview from "@/app/components/projects/grailed-plus/grailed-plus-preview";
+import GrailedPlusLiveDemo from "@/app/components/projects/grailed-plus/grailed-plus-live-demo";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import { cn } from "@/lib/cn";
-import { ChevronsDown } from 'lucide-react';
-
 
 type GrailedPlusInstallRedirectProps = {
   googleAdsSendTo?: string;
@@ -37,6 +43,7 @@ const CLICK_REDIRECT_DELAY_MS = 180;
 const GOOGLE_ADS_READY_WAIT_MS = 600;
 const GOOGLE_ADS_REDIRECT_FALLBACK_MS = 1200;
 const CTA_LABEL = "Add to Chrome";
+const CTA_MOBILE_LABEL = "View in Chrome Web Store";
 const CTA_OPENING_LABEL = "Opening Chrome Web Store...";
 const TRACKED_QUERY_KEYS = [
   "gclid",
@@ -51,11 +58,94 @@ const TRACKED_QUERY_KEYS = [
   "utm_content",
 ] as const;
 
+const FEATURES = [
+  {
+    id: "pricing",
+    number: "01",
+    eyebrow: "Buy with context",
+    title: "Pricing insights",
+    description:
+      "Track price drops, estimate the next change, and see seller context without leaving the item page.",
+    fallbackComparisonId: "price-trend",
+  },
+  {
+    id: "market-compare",
+    number: "02",
+    eyebrow: "Search beyond Grailed",
+    title: "Market compare",
+    description:
+      "Compare candidates from eBay and Depop, then refine them locally with product and image similarity.",
+    fallbackComparisonId: "price-trend",
+  },
+  {
+    id: "currency",
+    number: "03",
+    eyebrow: "Think in your currency",
+    title: "Site-wide conversion",
+    description:
+      "Choose the currency you actually use. Prices update across Grailed while the original USD value stays one hover away.",
+    fallbackComparisonId: "custom-currency",
+  },
+  {
+    id: "dark-mode",
+    number: "04",
+    eyebrow: "Browse after dark",
+    title: "Native-feeling dark mode",
+    description:
+      "Match your device, keep dark mode always on, and tune the interface with a custom primary color—without white flashes between pages.",
+    fallbackComparisonId: "dm",
+  },
+] as const;
+
 declare global {
   interface Window {
     dataLayer?: unknown[];
     gtag?: (...args: unknown[]) => void;
   }
+}
+
+type InstallLinkProps = {
+  className?: string;
+  isRedirecting: boolean;
+  onClick: (event: ReactMouseEvent<HTMLAnchorElement>) => void;
+};
+
+function InstallLink({ className, isRedirecting, onClick }: InstallLinkProps) {
+  return (
+    <a
+      href={PROJECT_ROUTES.grailedPlusChromeWebStore}
+      aria-busy={isRedirecting}
+      aria-disabled={isRedirecting}
+      className={cn(
+        "grailed-plus-primary group inline-flex min-h-12 items-center justify-center gap-3 px-6 py-3 text-center text-sm font-semibold tracking-[0.08em] uppercase transition-[transform,background-color,color,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--gp-ink)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--gp-canvas)] active:scale-[0.98] sm:px-8",
+        !isRedirecting && "hover:-translate-y-0.5",
+        isRedirecting && "pointer-events-none opacity-65",
+        className,
+      )}
+      onClick={onClick}
+    >
+      {isRedirecting ? (
+        <>
+          <LoaderCircle
+            aria-hidden
+            className="h-4 w-4 animate-spin"
+            strokeWidth={1.75}
+          />
+          <span>{CTA_OPENING_LABEL}</span>
+        </>
+      ) : (
+        <>
+          <span className="sm:hidden">{CTA_MOBILE_LABEL}</span>
+          <span className="hidden sm:inline">{CTA_LABEL}</span>
+          <ArrowUpRight
+            aria-hidden
+            className="h-4 w-4 transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            strokeWidth={1.75}
+          />
+        </>
+      )}
+    </a>
+  );
 }
 
 function readSearchValue(searchParams: URLSearchParams, key: string) {
@@ -113,6 +203,25 @@ export default function GrailedPlusInstallRedirect({
   const [isRedirecting, setIsRedirecting] = useState(false);
   const redirectStartedRef = useRef(false);
   const redirectCompletedRef = useRef(false);
+  const timeoutIdsRef = useRef<Set<number>>(new Set());
+
+  const schedule = useCallback((callback: () => void, delay: number) => {
+    const timeoutId = window.setTimeout(() => {
+      timeoutIdsRef.current.delete(timeoutId);
+      callback();
+    }, delay);
+    timeoutIdsRef.current.add(timeoutId);
+  }, []);
+
+  useEffect(
+    () => () => {
+      for (const timeoutId of timeoutIdsRef.current) {
+        window.clearTimeout(timeoutId);
+      }
+      timeoutIdsRef.current.clear();
+    },
+    [],
+  );
 
   const redirectToStore = useCallback(() => {
     if (redirectCompletedRef.current) {
@@ -137,7 +246,7 @@ export default function GrailedPlusInstallRedirect({
     queueTrackingRequest(trackingPayload);
 
     if (!googleAdsSendTo) {
-      window.setTimeout(redirectToStore, CLICK_REDIRECT_DELAY_MS);
+      schedule(redirectToStore, CLICK_REDIRECT_DELAY_MS);
       return;
     }
 
@@ -159,128 +268,268 @@ export default function GrailedPlusInstallRedirect({
           send_to: googleAdsSendTo,
           event_callback: completeRedirect,
         });
-        window.setTimeout(completeRedirect, GOOGLE_ADS_REDIRECT_FALLBACK_MS);
+        schedule(completeRedirect, GOOGLE_ADS_REDIRECT_FALLBACK_MS);
         return;
       }
 
       if (Date.now() < deadline) {
-        window.setTimeout(dispatchGoogleAdsConversion, 50);
+        schedule(dispatchGoogleAdsConversion, 50);
         return;
       }
 
-      window.setTimeout(redirectToStore, CLICK_REDIRECT_DELAY_MS);
+      schedule(redirectToStore, CLICK_REDIRECT_DELAY_MS);
     };
 
     dispatchGoogleAdsConversion();
-  }, [googleAdsSendTo, redirectToStore]);
+  }, [googleAdsSendTo, redirectToStore, schedule]);
 
-  const detailsView = useRef<HTMLDivElement>(null);
-  const scrollToDetails = () => {
-    detailsView.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const handleInstallClick = useCallback(
+    (event: ReactMouseEvent<HTMLAnchorElement>) => {
+      if (
+        event.button !== 0 ||
+        event.metaKey ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.shiftKey
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      beginRedirect();
+    },
+    [beginRedirect],
+  );
 
   return (
-    <main className="bg-canvas text-ink font-light">
-      <div className="my-auto flex h-screen max-w-3xl flex-col items-center justify-center mx-5 md:mx-auto">
-        <h1 className="mb-4 text-center text-5xl font-bold sm:text-7xl">
-          Grailed +
-        </h1>
-        <div className="text-overlay-ink/70 mb-6 space-y-2 text-center text-sm leading-6 sm:text-base">
-          <p>
-            Dark mode, price insights, seller metadata, and custom currency in
-            one lightweight extension for Grailed.
+    <main className="grailed-plus-page min-h-dvh overflow-clip font-light">
+      <p className="sr-only" aria-live="polite">
+        {isRedirecting ? CTA_OPENING_LABEL : ""}
+      </p>
+      <section className="grailed-plus-hero grailed-plus-rule relative isolate border-b">
+        <header className="grailed-plus-rule mx-auto grid min-h-14 w-full max-w-[96rem] grid-cols-[1fr_auto] items-center border-b px-5 text-[0.6875rem] font-semibold tracking-[0.16em] uppercase sm:grid-cols-3 sm:px-8 lg:px-12">
+          <p>Grailed Plus</p>
+          <p className="grailed-plus-muted hidden text-center sm:block">
+            Browser utility / Chrome
           </p>
-        </div>
-        <a
-          href={PROJECT_ROUTES.grailedPlusChromeWebStore}
-          aria-busy={isRedirecting}
-          aria-disabled={isRedirecting}
-          className={cn(
-            "inline-flex items-center justify-center rounded-full px-8 text-center text-sm font-medium uppercase ",
-            " bg-black dark:bg-white hover:bg-white hover:dark:bg-black text-canvas  hover:text-black dark:hover:text-white hover:border-black dark:hover:border-white border-2",
-            "h-12 min-w-45 sm:min-w-55",
-            isRedirecting && "pointer-events-none opacity-70",
-          )}
-          onClick={(event) => {
-            if (
-              event.button !== 0 ||
-              event.metaKey ||
-              event.altKey ||
-              event.ctrlKey ||
-              event.shiftKey
-            ) {
-              return;
-            }
-            event.preventDefault();
-            beginRedirect();
-          }}
-        >
-          {isRedirecting ? CTA_OPENING_LABEL : CTA_LABEL}
-        </a>
-        <p className="text-overlay-ink/45 mt-3 text-center text-xs italic">
-          Installs from the official Chrome Web Store listing.
-        </p>
+          <nav
+            aria-label="Grailed Plus page navigation"
+            className="flex items-center justify-end gap-5"
+          >
+            <a
+              href="#features"
+              className="transition-opacity hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+            >
+              Index
+            </a>
+            <a
+              href={PROJECT_ROUTES.grailedPlusChromeWebStore}
+              aria-busy={isRedirecting}
+              aria-disabled={isRedirecting}
+              onClick={handleInstallClick}
+              className={cn(
+                "transition-opacity hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current",
+                isRedirecting && "pointer-events-none opacity-50",
+              )}
+            >
+              {isRedirecting ? "Opening…" : "Install ↗"}
+            </a>
+          </nav>
+        </header>
 
-        {<ChevronsDown className="bottom-10 absolute hover:cursor-pointer animate-hover" onClick={scrollToDetails}/>}
-      </div>
+        <div className="mx-auto grid min-h-[calc(100svh-3.5rem)] w-full max-w-[96rem] items-center gap-12 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-12 lg:gap-10 lg:px-12 lg:py-16">
+          <div className="relative z-10 lg:col-span-5">
+            <p
+              data-hero-item
+              className="grailed-plus-accent mb-7 flex items-center gap-3 text-xs font-semibold tracking-[0.2em] uppercase"
+            >
+              <span aria-hidden className="h-px w-8 bg-current" />A sharper
+              layer for Grailed
+            </p>
 
-      <div className="flex w-full flex-col" ref={detailsView}>
-        <div className="my-20 flex h-125 w-full flex-row">
-          <div className="max-h-full w-2/3">
-            <GrailedPlusPreview comparisonId="price-trend" />
-          </div>
-          <div className="mx-5 mb-4 h-full w-1/3 text-right">
-            <h2 className="text-3xl font-bold sm:text-5xl">PRICING INSIGHTS</h2>
-            <p className="text-break text-xl md:text-3xl">
-              Depop price comparisons and historical price drop data directly on
-              every listing page — no extra tabs, no manual searching. See what
-              the same item is moving for across markets, track how long a
-              listing has been sitting, and spot a motivated seller before
-              anyone else does.
+            <h1
+              data-hero-item
+              className="text-[clamp(4.5rem,11vw,9.5rem)] leading-[0.78] font-black tracking-[-0.065em]"
+            >
+              Grailed
+              <span className="sr-only"> Plus</span>
+              <span
+                aria-hidden
+                className="grailed-plus-accent ml-[0.04em] inline-block"
+              >
+                +
+              </span>
+            </h1>
+
+            <p
+              data-hero-item
+              className="grailed-plus-muted mt-8 max-w-xl text-base leading-7 sm:text-lg sm:leading-8"
+            >
+              Market context, local currency, and a native-feeling dark mode,
+              directly inside the pages you already browse.
+            </p>
+
+            <ul
+              data-hero-item
+              className="grailed-plus-rule mt-8 flex flex-wrap gap-x-5 gap-y-2 border-y py-4 text-xs font-semibold tracking-[0.14em] uppercase"
+              aria-label="Grailed Plus features"
+            >
+              <li>Price intelligence</li>
+              <li>Market compare</li>
+              <li>Custom currency</li>
+              <li>Dark mode</li>
+            </ul>
+
+            <div
+              data-hero-item
+              className="mt-8 flex flex-col items-stretch gap-3 min-[430px]:flex-row min-[430px]:items-center"
+            >
+              <InstallLink
+                isRedirecting={isRedirecting}
+                onClick={handleInstallClick}
+              />
+              <a
+                href="#features"
+                className="grailed-plus-secondary group inline-flex min-h-12 items-center justify-center gap-3 px-6 py-3 text-sm font-semibold tracking-[0.08em] uppercase transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-[var(--gp-ink)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--gp-canvas)]"
+              >
+                Explore features
+                <ArrowDown
+                  aria-hidden
+                  className="h-4 w-4 transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0.5"
+                  strokeWidth={1.75}
+                />
+              </a>
+            </div>
+
+            <p
+              data-hero-item
+              className="grailed-plus-muted mt-4 text-sm leading-6"
+            >
+              <span className="hidden sm:inline">
+                Installs from the official Chrome Web Store.
+              </span>
+              <span className="sm:hidden">
+                Chrome extensions install on desktop. Open the Store now or
+                revisit this page on your computer.
+              </span>
             </p>
           </div>
+
+          <div data-hero-preview className="min-w-0 lg:col-span-7 lg:pl-4">
+            <div className="grailed-plus-rule mb-3 flex items-end justify-between gap-5 border-b pb-3">
+              <p className="text-xs font-semibold tracking-[0.18em] uppercase">
+                Live product
+              </p>
+              <p className="grailed-plus-muted text-right text-xs">
+                Running the extension’s current UI source.
+              </p>
+            </div>
+            <div className="grailed-plus-preview-frame overflow-hidden">
+              <GrailedPlusLiveDemo
+                eager
+                feature="overview"
+                fallbackComparisonId="price-trend"
+                title="Live overview of the current Grailed Plus extension interface"
+              />
+            </div>
+          </div>
         </div>
-        <div className="my-20 flex h-125 w-full flex-row">
-          <div className="mx-5 mb-4 h-full w-1/3 text-left">
-            <h2 className="text-3xl font-bold sm:text-5xl">
-              CUSTOM SITE-WIDE CURRENCY
+      </section>
+
+      <section id="features" className="scroll-mt-0">
+        <header className="mx-auto grid max-w-[96rem] gap-8 px-5 py-20 sm:px-8 sm:py-24 lg:grid-cols-12 lg:px-12 lg:py-32">
+          <p className="grailed-plus-accent text-xs font-semibold tracking-[0.2em] uppercase lg:col-span-3">
+            Feature index
+          </p>
+          <div className="lg:col-span-6">
+            <h2 className="text-[clamp(2.8rem,6vw,6rem)] leading-[0.92] font-bold tracking-[-0.045em]">
+              Four upgrades.
+              <br />
+              Zero workflow change.
             </h2>
-            <p className="text-xl md:text-3xl">
-              Grailed Plus converts every price into whatever currency you
-              actually use, sitewide and in real time. Hover any converted price
-              to see the original USD value. Rates are pulled from Frankfurter
-              and cached hourly so you're always working with fresh
-              numbers. 
-            </p>
           </div>
-          <div className="max-h-full w-2/3">
-            <GrailedPlusPreview
-              comparisonId="custom-currency"
-              scrollStartPercent={10}
-              zoomAmount={1.25}
+          <p className="grailed-plus-muted max-w-md text-base leading-7 lg:col-span-3 lg:pt-2">
+            Grailed Plus works where the decision happens—inside listings,
+            search results, and messages—not in another tab.
+          </p>
+        </header>
+
+        <div className="mx-auto max-w-[96rem] px-5 sm:px-8 lg:px-12">
+          {FEATURES.map((feature) => (
+            <article
+              key={feature.id}
+              className="grailed-plus-rule grid gap-10 border-t py-16 sm:py-20 lg:grid-cols-12 lg:gap-12 lg:py-28"
+            >
+              <div className="min-w-0 lg:sticky lg:top-10 lg:col-span-4 lg:self-start">
+                <div className="flex items-start justify-between gap-6">
+                  <p className="grailed-plus-accent text-xs font-semibold tracking-[0.2em] uppercase">
+                    {feature.eyebrow}
+                  </p>
+                  <span
+                    aria-hidden
+                    className="grailed-plus-muted font-display text-sm"
+                  >
+                    / {feature.number}
+                  </span>
+                </div>
+                <h3 className="mt-6 max-w-md text-[clamp(2.5rem,5vw,5rem)] leading-[0.92] font-bold tracking-[-0.045em]">
+                  {feature.title}
+                </h3>
+                <p className="grailed-plus-muted mt-6 max-w-lg text-base leading-7 sm:text-lg sm:leading-8">
+                  {feature.description}
+                </p>
+              </div>
+
+              <div className="min-w-0 lg:col-span-8">
+                <div className="grailed-plus-preview-frame overflow-hidden">
+                  <GrailedPlusLiveDemo
+                    feature={feature.id}
+                    fallbackComparisonId={feature.fallbackComparisonId}
+                    title={`Live Grailed Plus ${feature.title} demo`}
+                  />
+                </div>
+                <p className="grailed-plus-muted mt-3 text-xs leading-5">
+                  Live from the extension repository. Interactions use
+                  deterministic sample data and never contact a marketplace.
+                </p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="grailed-plus-rule border-y">
+        <div className="mx-auto grid max-w-[96rem] items-end gap-10 px-5 py-20 sm:px-8 sm:py-24 lg:grid-cols-12 lg:px-12 lg:py-32">
+          <div className="lg:col-span-8">
+            <p className="grailed-plus-accent mb-6 text-xs font-semibold tracking-[0.2em] uppercase">
+              Ready when you are
+            </p>
+            <h2 className="max-w-5xl text-[clamp(3rem,7.5vw,7.5rem)] leading-[0.88] font-black tracking-[-0.055em]">
+              Make every listing tell you more.
+            </h2>
+          </div>
+          <div className="lg:col-span-4 lg:justify-self-end">
+            <InstallLink
+              className="w-full min-[430px]:w-auto"
+              isRedirecting={isRedirecting}
+              onClick={handleInstallClick}
             />
-          </div>
-        </div>
-        <div className="my-20 flex h-125 w-full flex-row">
-          <div className="max-h-full w-2/3">
-            <GrailedPlusPreview comparisonId="dm" />
-          </div>
-          <div className="mx-5 mb-4 h-full w-1/3 text-right">
-            <h2 className="text-3xl font-bold sm:text-5xl">DARK MODE</h2>
-            <p className="text-xl md:text-3xl">
-              Fully native dark mode across every page of the site — match your
-              device theme automatically or lock it permanently. Fine-tune it
-              further with a custom primary color to make it yours.
-              No eye strain, no jarring white flashes, just a clean browsing
-              experience built for long sessions.
+            <p className="grailed-plus-muted mt-4 max-w-sm text-sm leading-6">
+              Official Chrome Web Store install. No automatic redirect.
             </p>
           </div>
         </div>
-      </div>
-      <footer className="flex justify-center mt-20">
-        <a href="/" className="text-overlay-ink/45 hover:no-underline">dextery.dev</a>
+      </section>
+
+      <footer className="mx-auto flex max-w-[96rem] flex-col gap-3 px-5 py-8 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-12">
+        <p className="grailed-plus-muted">Grailed Plus for Chrome</p>
+        <Link
+          href={PROJECT_ROUTES.home}
+          className="w-fit font-medium underline decoration-[var(--gp-rule)] underline-offset-4 transition-colors hover:text-[var(--gp-accent)]"
+        >
+          dextery.dev
+        </Link>
       </footer>
     </main>
-    
   );
 }

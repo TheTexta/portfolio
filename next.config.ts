@@ -33,6 +33,7 @@ const nextConfig: NextConfig = {
   images: {
     deviceSizes: CANVAS_IMAGE_DEVICE_SIZES,
     imageSizes: CANVAS_IMAGE_SIZES,
+    formats: ["image/avif", "image/webp"],
     qualities: [72, 75],
     remotePatterns: [
       ...supabasePatterns,
