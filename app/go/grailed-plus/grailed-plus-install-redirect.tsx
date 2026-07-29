@@ -324,7 +324,7 @@ export default function GrailedPlusInstallRedirect({
         <header className="grailed-plus-rule mx-auto grid min-h-14 w-full max-w-[96rem] grid-cols-[1fr_auto] items-center border-b px-5 text-[0.6875rem] font-semibold tracking-[0.16em] uppercase sm:grid-cols-3 sm:px-8 lg:px-12">
           <p>Grailed Plus</p>
           <p className="grailed-plus-muted hidden text-center sm:block">
-            Browser utility / Chrome / {extensionVersion}
+            Browser utility / Chrome / v{extensionVersion}
           </p>
           <nav
             aria-label="Grailed Plus page navigation"
