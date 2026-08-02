@@ -2,7 +2,15 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { OverlayControlButton } from "@/app/components/ui/overlay-control-button";
+import { ControlButton } from "@/app/components/ui/control";
+import {
+  EDITORIAL_INPUT_CLASS,
+  EDITORIAL_LABEL_CLASS,
+  EditorialPanel,
+  Eyebrow,
+  SiteHeader,
+} from "@/app/components/ui/editorial";
+import ThemeToggle from "@/app/components/ui/theme-toggle";
 
 export default function PhotoGraphAdminLoginPage() {
   const router = useRouter();
@@ -49,37 +57,49 @@ export default function PhotoGraphAdminLoginPage() {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-lg items-center justify-center px-4 py-10">
-      <div className="w-full rounded-lg border border-black/20 bg-white p-6 shadow-sm dark:border-white/20 dark:bg-black/20">
-        <h1 className="text-2xl font-semibold">Photo Graph Admin</h1>
-        <p className="mt-2 text-sm opacity-70">
-          Enter the admin password to access batch upload tools.
-        </p>
+    <main className="editorial-page min-h-dvh">
+      <SiteHeader meta="Photo Graph / Admin">
+        <ThemeToggle />
+      </SiteHeader>
+      <div className="mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-xl items-center px-5 py-12 sm:px-8">
+        <EditorialPanel className="bg-canvas w-full p-5 sm:p-8">
+          <Eyebrow className="editorial-muted">Restricted tool</Eyebrow>
+          <h1 className="mt-4 text-4xl leading-none font-bold tracking-[-0.04em]">
+            Photo Graph Admin
+          </h1>
+          <p className="editorial-muted mt-3 text-sm leading-6">
+            Enter the admin password to access batch upload tools.
+          </p>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-3">
-          <label className="block text-sm font-medium" htmlFor="admin-password">
-            Password
-          </label>
-          <input
-            id="admin-password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="w-full rounded-md border border-black/20 bg-transparent px-3 py-2 outline-none focus:border-black/50 dark:border-white/20 dark:focus:border-white/60"
-            autoComplete="current-password"
-          />
+          <form onSubmit={handleSubmit} className="mt-7 space-y-3">
+            <label className={EDITORIAL_LABEL_CLASS} htmlFor="admin-password">
+              Password
+            </label>
+            <input
+              id="admin-password"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className={EDITORIAL_INPUT_CLASS}
+              autoComplete="current-password"
+            />
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && (
+              <p className="border-danger text-danger border p-3 text-sm">
+                {error}
+              </p>
+            )}
 
-          <OverlayControlButton
-            type="submit"
-            disabled={submitting}
-            layout="action"
-            className="font-medium"
-          >
-            {submitting ? "Signing in..." : "Sign In"}
-          </OverlayControlButton>
-        </form>
+            <ControlButton
+              type="submit"
+              disabled={submitting}
+              layout="action"
+              size="lg"
+            >
+              {submitting ? "Signing in..." : "Sign In"}
+            </ControlButton>
+          </form>
+        </EditorialPanel>
       </div>
     </main>
   );

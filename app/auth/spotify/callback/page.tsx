@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
+import { Eyebrow, SiteHeader } from "@/app/components/ui/editorial";
+import ThemeToggle from "@/app/components/ui/theme-toggle";
 import { getSpotifySDK } from "@/lib/GetSpotifySDK";
 
 const DEFAULT_MESSAGE = "Finishing Spotify sign-in...";
@@ -20,7 +23,7 @@ export default function SpotifyCallbackPage() {
 
       const redirectWithNotice = (notice: string) => {
         localStorage.setItem("spotify_auth_notice", notice);
-        router.replace("/components/projects/spotify-nodify");
+        router.replace(PROJECT_ROUTES.spotifyNodifyExperience);
       };
 
       if (error) {
@@ -82,8 +85,24 @@ export default function SpotifyCallbackPage() {
   }, [router]);
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-6 text-center">
-      <p>{message}</p>
-    </div>
+    <main className="editorial-page min-h-dvh">
+      <SiteHeader meta="Spotify Nodify / Authorization">
+        <ThemeToggle />
+      </SiteHeader>
+      <section
+        className="mx-auto flex min-h-[calc(100dvh-3rem)] max-w-[96rem] items-center px-5 py-12 sm:px-8 lg:px-12"
+        aria-live="polite"
+      >
+        <div className="editorial-rule w-full max-w-3xl border-y py-8 sm:py-12">
+          <Eyebrow className="editorial-muted">Authentication status</Eyebrow>
+          <h1 className="mt-4 text-[clamp(2.5rem,7vw,6.5rem)] leading-[0.9] font-bold tracking-[-0.05em]">
+            Connecting Spotify.
+          </h1>
+          <p className="editorial-muted mt-6 max-w-xl text-base leading-7">
+            {message}
+          </p>
+        </div>
+      </section>
+    </main>
   );
 }

@@ -16,10 +16,12 @@ import {
   GRAPH_CONTROL_SLIDERS,
 } from "@/app/components/projects/photo-graph/config";
 import {
-  OVERLAY_CONTROL_DANGER_CLASS,
-  OverlayControlButton,
-  OverlayControlLabel,
-} from "@/app/components/ui/overlay-control-button";
+  CONTROL_DANGER_CLASS,
+  ControlButton,
+  ControlLabel,
+} from "@/app/components/ui/control";
+import { SiteHeader } from "@/app/components/ui/editorial";
+import ThemeToggle from "@/app/components/ui/theme-toggle";
 import {
   DEFAULT_LAB_EDGE_GENERATION_PARAMS,
   DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG,
@@ -196,7 +198,9 @@ function countAdminGraphEdges(nodes: AdminGraphNode[]) {
   let count = 0;
 
   for (const node of nodes) {
-    for (const [targetId, correlation] of Object.entries(node.correlations ?? {})) {
+    for (const [targetId, correlation] of Object.entries(
+      node.correlations ?? {},
+    )) {
       if (
         !Number.isFinite(correlation) ||
         correlation <= 0 ||
@@ -830,7 +834,12 @@ export default function PhotoGraphUploadClient() {
         setDeletingNodeId(null);
       }
     },
-    [appendVerboseLog, fetchGraphNodes, persistenceUnavailable, setStatusWithLog],
+    [
+      appendVerboseLog,
+      fetchGraphNodes,
+      persistenceUnavailable,
+      setStatusWithLog,
+    ],
   );
 
   const handleUpload = async () => {
@@ -999,190 +1008,254 @@ export default function PhotoGraphUploadClient() {
     deletingNodeId !== null;
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-10">
-      <div className="mb-6 flex flex-col gap-4 border-b border-black/10 pb-6 sm:flex-row sm:items-end sm:justify-between dark:border-white/10">
-        <div className="max-w-3xl">
-          <p className="text-[11px] font-medium tracking-[0.28em] uppercase opacity-55">
-            Server-Side LAB Edge Studio
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-            Photo Graph Upload Admin
-          </h1>
-          <p className="mt-2 text-sm leading-6 opacity-70">
-            Uploads still extract image features in the browser, but edge
-            generation, live preview, and saved defaults now run on the server.
-            The public project graph continues to read the persisted edge
-            snapshot.
-          </p>
+    <main className="editorial-page min-h-dvh">
+      <SiteHeader meta="Photo Graph / Admin tools">
+        <ThemeToggle />
+        <ControlButton
+          onClick={handleLogout}
+          layout="action"
+          size="sm"
+          className="min-h-9"
+        >
+          Log Out
+        </ControlButton>
+      </SiteHeader>
+      <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-8">
+        <div className="border-rule mb-6 flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-[11px] font-medium tracking-[0.28em] uppercase opacity-55">
+              Server-Side LAB Edge Studio
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+              Photo Graph Upload Admin
+            </h1>
+            <p className="mt-2 text-sm leading-6 opacity-70">
+              Uploads still extract image features in the browser, but edge
+              generation, live preview, and saved defaults now run on the
+              server. The public project graph continues to read the persisted
+              edge snapshot.
+            </p>
+          </div>
         </div>
 
-        <OverlayControlButton onClick={handleLogout} layout="action">
-          Log Out
-        </OverlayControlButton>
-      </div>
-
-      <section className="overflow-hidden rounded-[1.5rem] border border-black/10 bg-[linear-gradient(180deg,rgba(238,237,232,0.8),rgba(255,255,255,0.96))] p-4 shadow-[0_24px_80px_-48px_rgba(27,31,35,0.45)] sm:p-5 dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(26,26,24,0.9),rgba(13,13,12,0.98))]">
-        <div className="grid gap-5 xl:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)]">
-          <div className="flex flex-col gap-4">
-            <div className="rounded-[1.25rem] border border-black/10 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5">
-              <div className="flex items-center justify-between gap-3 text-[11px] tracking-[0.22em] uppercase opacity-60">
-                <span>LAB Edge Defaults</span>
-                <span>{graphSource}</span>
-              </div>
-              <p className="mt-3 text-sm leading-6 opacity-75">
-                Preview uses pure LAB distance only. Adjust the falloff and the
-                minimum accepted similarity, then save if you want the public
-                graph snapshot to adopt the result.
-              </p>
-              {persistenceUnavailable && (
-                <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs leading-5 text-amber-700 dark:text-amber-300">
-                  Supabase photo graph persistence is currently unavailable.
-                  Preview still works, but saving defaults, uploading, and
-                  deleting are disabled until the database connection is
-                  restored.
+        <section className="border-rule bg-surface overflow-hidden border p-4 sm:p-5">
+          <div className="grid gap-5 xl:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)]">
+            <div className="flex flex-col gap-4">
+              <div className="border-rule bg-canvas border p-4">
+                <div className="flex items-center justify-between gap-3 text-[11px] tracking-[0.22em] uppercase opacity-60">
+                  <span>LAB Edge Defaults</span>
+                  <span>{graphSource}</span>
+                </div>
+                <p className="mt-3 text-sm leading-6 opacity-75">
+                  Preview uses pure LAB distance only. Adjust the falloff and
+                  the minimum accepted similarity, then save if you want the
+                  public graph snapshot to adopt the result.
                 </p>
-              )}
-
-              <div className="mt-5 space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-end justify-between gap-3">
-                    <label
-                      htmlFor="photo-graph-sigma-e"
-                      className="text-sm font-medium"
-                    >
-                      Sigma E
-                    </label>
-                    <output
-                      htmlFor="photo-graph-sigma-e"
-                      className="text-sm opacity-70"
-                    >
-                      {formatSigmaE(previewParams.sigmaE)}
-                    </output>
-                  </div>
-                  <input
-                    id="photo-graph-sigma-e"
-                    type="range"
-                    min={LAB_EDGE_PARAM_LIMITS.sigmaE.min}
-                    max={LAB_EDGE_PARAM_LIMITS.sigmaE.max}
-                    step={0.5}
-                    value={previewParams.sigmaE}
-                    onChange={(event) =>
-                      handleEdgeParamChange("sigmaE", Number(event.target.value))
-                    }
-                    className="range-sm h-2 w-full rounded-full border-none bg-black/10 accent-black dark:bg-white/20 dark:accent-white"
-                  />
-                  <p className="text-xs leading-5 opacity-60">
-                    Higher values widen the LAB similarity falloff and create
-                    denser edge neighborhoods.
+                {persistenceUnavailable && (
+                  <p className="border-warning bg-canvas text-warning mt-3 border px-3 py-2 text-xs leading-5">
+                    Supabase photo graph persistence is currently unavailable.
+                    Preview still works, but saving defaults, uploading, and
+                    deleting are disabled until the database connection is
+                    restored.
                   </p>
-                </div>
+                )}
 
-                <div className="space-y-2">
-                  <div className="flex items-end justify-between gap-3">
-                    <label
-                      htmlFor="photo-graph-min-correlation"
-                      className="text-sm font-medium"
-                    >
-                      Minimum correlation
-                    </label>
-                    <output
-                      htmlFor="photo-graph-min-correlation"
-                      className="text-sm opacity-70"
-                    >
-                      {formatMinCorrelation(previewParams.minCorrelation)}
-                    </output>
-                  </div>
-                  <input
-                    id="photo-graph-min-correlation"
-                    type="range"
-                    min={LAB_EDGE_PARAM_LIMITS.minCorrelation.min}
-                    max={LAB_EDGE_PARAM_LIMITS.minCorrelation.max}
-                    step={0.01}
-                    value={previewParams.minCorrelation}
-                    onChange={(event) =>
-                      handleEdgeParamChange(
-                        "minCorrelation",
-                        Number(event.target.value),
-                      )
-                    }
-                    className="range-sm h-2 w-full rounded-full border-none bg-black/10 accent-black dark:bg-white/20 dark:accent-white"
-                  />
-                  <p className="text-xs leading-5 opacity-60">
-                    Higher thresholds prune weak matches sooner and preserve a
-                    tighter persisted graph.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 flex flex-wrap gap-2">
-                <OverlayControlButton
-                  onClick={() => void handleSaveEdgeDefaults()}
-                  disabled={
-                    adminBusy ||
-                    previewMatchesSavedDefaults ||
-                    persistenceUnavailable
-                  }
-                  layout="action"
-                  size="sm"
-                >
-                  {isSavingEdgeDefaults ? "Saving..." : "Save as Default"}
-                </OverlayControlButton>
-                <OverlayControlButton
-                  onClick={handleResetPreview}
-                  disabled={adminBusy || previewMatchesSavedDefaults}
-                  layout="action"
-                  size="sm"
-                >
-                  Reset to Saved Defaults
-                </OverlayControlButton>
-                <OverlayControlButton
-                  onClick={() =>
-                    void fetchGraphNodes({
-                      syncPreviewParams: false,
-                    })
-                  }
-                  disabled={adminBusy}
-                  layout="action"
-                  size="sm"
-                >
-                  {loadingGraphNodes ? "Refreshing..." : "Refresh Graph"}
-                </OverlayControlButton>
-              </div>
-            </div>
-
-            <div className="rounded-[1.25rem] border border-black/10 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5">
-              <div className="flex items-center justify-between gap-3 text-[11px] tracking-[0.22em] uppercase opacity-60">
-                <span>Graph Defaults</span>
-                <span>Runtime + Collision</span>
-              </div>
-              <p className="mt-3 text-sm leading-6 opacity-75">
-                These values seed the public graph controls at load time.
-                Visitors can still change the visible controls locally after the
-                graph loads. Collision tuning stays admin-only.
-              </p>
-
-              <div className="mt-5 space-y-4">
-                <div className="space-y-4">
-                  <div className="text-[11px] font-medium tracking-[0.18em] uppercase opacity-55">
-                    Public Runtime Controls
-                  </div>
-
-                  <label className="flex min-h-8 items-center justify-between gap-3 text-sm font-medium">
-                    <span>Show connecting lines</span>
+                <div className="mt-5 space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-end justify-between gap-3">
+                      <label
+                        htmlFor="photo-graph-sigma-e"
+                        className="text-sm font-medium"
+                      >
+                        Sigma E
+                      </label>
+                      <output
+                        htmlFor="photo-graph-sigma-e"
+                        className="text-sm opacity-70"
+                      >
+                        {formatSigmaE(previewParams.sigmaE)}
+                      </output>
+                    </div>
                     <input
-                      type="checkbox"
-                      checked={!previewGraphControls.hideConnections}
+                      id="photo-graph-sigma-e"
+                      type="range"
+                      min={LAB_EDGE_PARAM_LIMITS.sigmaE.min}
+                      max={LAB_EDGE_PARAM_LIMITS.sigmaE.max}
+                      step={0.5}
+                      value={previewParams.sigmaE}
                       onChange={(event) =>
-                        handleGraphControlChange(
-                          "hideConnections",
-                          !event.target.checked,
+                        handleEdgeParamChange(
+                          "sigmaE",
+                          Number(event.target.value),
                         )
                       }
-                      className="m-0 h-4 w-4 shrink-0 accent-black dark:accent-white"
+                      className="range-sm bg-surface accent-ink h-2 w-full border-none"
                     />
-                  </label>
+                    <p className="text-xs leading-5 opacity-60">
+                      Higher values widen the LAB similarity falloff and create
+                      denser edge neighborhoods.
+                    </p>
+                  </div>
 
-                  {GRAPH_CONTROL_SLIDERS.map(
+                  <div className="space-y-2">
+                    <div className="flex items-end justify-between gap-3">
+                      <label
+                        htmlFor="photo-graph-min-correlation"
+                        className="text-sm font-medium"
+                      >
+                        Minimum correlation
+                      </label>
+                      <output
+                        htmlFor="photo-graph-min-correlation"
+                        className="text-sm opacity-70"
+                      >
+                        {formatMinCorrelation(previewParams.minCorrelation)}
+                      </output>
+                    </div>
+                    <input
+                      id="photo-graph-min-correlation"
+                      type="range"
+                      min={LAB_EDGE_PARAM_LIMITS.minCorrelation.min}
+                      max={LAB_EDGE_PARAM_LIMITS.minCorrelation.max}
+                      step={0.01}
+                      value={previewParams.minCorrelation}
+                      onChange={(event) =>
+                        handleEdgeParamChange(
+                          "minCorrelation",
+                          Number(event.target.value),
+                        )
+                      }
+                      className="range-sm bg-surface accent-ink h-2 w-full border-none"
+                    />
+                    <p className="text-xs leading-5 opacity-60">
+                      Higher thresholds prune weak matches sooner and preserve a
+                      tighter persisted graph.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <ControlButton
+                    onClick={() => void handleSaveEdgeDefaults()}
+                    disabled={
+                      adminBusy ||
+                      previewMatchesSavedDefaults ||
+                      persistenceUnavailable
+                    }
+                    layout="action"
+                    size="sm"
+                  >
+                    {isSavingEdgeDefaults ? "Saving..." : "Save as Default"}
+                  </ControlButton>
+                  <ControlButton
+                    onClick={handleResetPreview}
+                    disabled={adminBusy || previewMatchesSavedDefaults}
+                    layout="action"
+                    size="sm"
+                  >
+                    Reset to Saved Defaults
+                  </ControlButton>
+                  <ControlButton
+                    onClick={() =>
+                      void fetchGraphNodes({
+                        syncPreviewParams: false,
+                      })
+                    }
+                    disabled={adminBusy}
+                    layout="action"
+                    size="sm"
+                  >
+                    {loadingGraphNodes ? "Refreshing..." : "Refresh Graph"}
+                  </ControlButton>
+                </div>
+              </div>
+
+              <div className="border-rule bg-canvas border p-4">
+                <div className="flex items-center justify-between gap-3 text-[11px] tracking-[0.22em] uppercase opacity-60">
+                  <span>Graph Defaults</span>
+                  <span>Runtime + Collision</span>
+                </div>
+                <p className="mt-3 text-sm leading-6 opacity-75">
+                  These values seed the public graph controls at load time.
+                  Visitors can still change the visible controls locally after
+                  the graph loads. Collision tuning stays admin-only.
+                </p>
+
+                <div className="mt-5 space-y-4">
+                  <div className="space-y-4">
+                    <div className="text-[11px] font-medium tracking-[0.18em] uppercase opacity-55">
+                      Public Runtime Controls
+                    </div>
+
+                    <label className="flex min-h-8 items-center justify-between gap-3 text-sm font-medium">
+                      <span>Show connecting lines</span>
+                      <input
+                        type="checkbox"
+                        checked={!previewGraphControls.hideConnections}
+                        onChange={(event) =>
+                          handleGraphControlChange(
+                            "hideConnections",
+                            !event.target.checked,
+                          )
+                        }
+                        className="accent-ink m-0 h-4 w-4 shrink-0"
+                      />
+                    </label>
+
+                    {GRAPH_CONTROL_SLIDERS.map(
+                      ({ key, label, min, max, scale = 1, formatValue }) => {
+                        const inputId = `photo-graph-default-${key}`;
+                        const valueText = formatValue(
+                          previewGraphControls[key],
+                        );
+
+                        return (
+                          <div key={key} className="space-y-2">
+                            <div className="flex items-end justify-between gap-3">
+                              <label
+                                htmlFor={inputId}
+                                className="text-sm font-medium"
+                              >
+                                {label}
+                              </label>
+                              <output
+                                htmlFor={inputId}
+                                className="text-sm opacity-70"
+                              >
+                                {valueText}
+                              </output>
+                            </div>
+                            <input
+                              id={inputId}
+                              type="range"
+                              min={min}
+                              max={max}
+                              value={previewGraphControls[key] / scale}
+                              onChange={(event) =>
+                                handleGraphControlChange(
+                                  key,
+                                  Number(event.target.value) * scale,
+                                )
+                              }
+                              className="range-sm bg-surface accent-ink h-2 w-full border-none"
+                            />
+                          </div>
+                        );
+                      },
+                    )}
+                  </div>
+
+                  <div className="border-rule border-t pt-4">
+                    <div className="text-[11px] font-medium tracking-[0.18em] uppercase opacity-55">
+                      Admin Collision Tuning
+                    </div>
+                    <p className="mt-2 text-xs leading-5 opacity-60">
+                      These values affect the layout solver directly and apply
+                      to the public graph when you save them as defaults.
+                    </p>
+                  </div>
+
+                  {GRAPH_COLLISION_SLIDERS.map(
                     ({ key, label, min, max, scale = 1, formatValue }) => {
                       const inputId = `photo-graph-default-${key}`;
                       const valueText = formatValue(previewGraphControls[key]);
@@ -1215,7 +1288,7 @@ export default function PhotoGraphUploadClient() {
                                 Number(event.target.value) * scale,
                               )
                             }
-                            className="range-sm h-2 w-full rounded-full border-none bg-black/10 accent-black dark:bg-white/20 dark:accent-white"
+                            className="range-sm bg-surface accent-ink h-2 w-full border-none"
                           />
                         </div>
                       );
@@ -1223,403 +1296,358 @@ export default function PhotoGraphUploadClient() {
                   )}
                 </div>
 
-                <div className="border-t border-black/10 pt-4 dark:border-white/10">
-                  <div className="text-[11px] font-medium tracking-[0.18em] uppercase opacity-55">
-                    Admin Collision Tuning
-                  </div>
-                  <p className="mt-2 text-xs leading-5 opacity-60">
-                    These values affect the layout solver directly and apply to
-                    the public graph when you save them as defaults.
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <ControlButton
+                    onClick={() => void handleSaveGraphDefaults()}
+                    disabled={
+                      adminBusy ||
+                      graphControlsMatchSavedDefaults ||
+                      persistenceUnavailable
+                    }
+                    layout="action"
+                    size="sm"
+                  >
+                    {isSavingGraphDefaults ? "Saving..." : "Save as Default"}
+                  </ControlButton>
+                  <ControlButton
+                    onClick={handleResetGraphControls}
+                    disabled={adminBusy || graphControlsMatchSavedDefaults}
+                    layout="action"
+                    size="sm"
+                  >
+                    Reset to Saved Defaults
+                  </ControlButton>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                <div className="border-rule bg-canvas border p-3">
+                  <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
+                    Stored Graph
+                  </p>
+                  <p className="mt-2 text-2xl font-semibold">
+                    {persistedEdgeCount}
+                  </p>
+                  <p className="mt-1 text-xs opacity-65">
+                    persisted edge(s) across {graphNodes.length} node(s)
                   </p>
                 </div>
 
-                {GRAPH_COLLISION_SLIDERS.map(
-                  ({ key, label, min, max, scale = 1, formatValue }) => {
-                    const inputId = `photo-graph-default-${key}`;
-                    const valueText = formatValue(previewGraphControls[key]);
+                <div className="border-rule bg-canvas border p-3">
+                  <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
+                    Saved LAB Defaults
+                  </p>
+                  <p className="mt-2 text-sm font-medium">
+                    sigmaE {formatSigmaE(savedEdgeGeneration.params.sigmaE)}
+                  </p>
+                  <p className="mt-1 text-xs opacity-65">
+                    min correlation{" "}
+                    {formatMinCorrelation(
+                      savedEdgeGeneration.params.minCorrelation,
+                    )}
+                  </p>
+                </div>
 
-                    return (
-                      <div key={key} className="space-y-2">
-                        <div className="flex items-end justify-between gap-3">
-                          <label
-                            htmlFor={inputId}
-                            className="text-sm font-medium"
-                          >
-                            {label}
-                          </label>
-                          <output
-                            htmlFor={inputId}
-                            className="text-sm opacity-70"
-                          >
-                            {valueText}
-                          </output>
-                        </div>
-                        <input
-                          id={inputId}
-                          type="range"
-                          min={min}
-                          max={max}
-                          value={previewGraphControls[key] / scale}
-                          onChange={(event) =>
-                            handleGraphControlChange(
-                              key,
-                              Number(event.target.value) * scale,
-                            )
-                          }
-                          className="range-sm h-2 w-full rounded-full border-none bg-black/10 accent-black dark:bg-white/20 dark:accent-white"
-                        />
-                      </div>
-                    );
-                  },
-                )}
-              </div>
+                <div className="border-rule bg-canvas border p-3">
+                  <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
+                    Saved Graph Defaults
+                  </p>
+                  <p className="mt-2 text-sm font-medium">
+                    {savedGraphControls.hideConnections
+                      ? "Lines hidden"
+                      : "Lines shown"}
+                  </p>
+                  <p className="mt-1 text-xs opacity-65">
+                    repel {savedGraphControls.chargeMult.toFixed(1)}x, min{" "}
+                    {savedGraphControls.distMinMult.toFixed(1)}x, max{" "}
+                    {savedGraphControls.distMaxMult.toFixed(1)}x
+                  </p>
+                  <p className="mt-1 text-xs opacity-65">
+                    collision {savedGraphControls.collideStrength.toFixed(1)}x,
+                    box {savedGraphControls.collideBoxScale.toFixed(2)}x, pad{" "}
+                    {savedGraphControls.collidePad.toFixed(0)} px, passes{" "}
+                    {savedGraphControls.collideIterations.toFixed(0)}
+                  </p>
+                </div>
 
-              <div className="mt-5 flex flex-wrap gap-2">
-                <OverlayControlButton
-                  onClick={() => void handleSaveGraphDefaults()}
-                  disabled={
-                    adminBusy ||
-                    graphControlsMatchSavedDefaults ||
-                    persistenceUnavailable
-                  }
-                  layout="action"
-                  size="sm"
-                >
-                  {isSavingGraphDefaults ? "Saving..." : "Save as Default"}
-                </OverlayControlButton>
-                <OverlayControlButton
-                  onClick={handleResetGraphControls}
-                  disabled={adminBusy || graphControlsMatchSavedDefaults}
-                  layout="action"
-                  size="sm"
-                >
-                  Reset to Saved Defaults
-                </OverlayControlButton>
+                <div className="border-rule bg-canvas border p-3">
+                  <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
+                    Preview Status
+                  </p>
+                  <p className="mt-2 text-sm font-medium">
+                    {previewStatusLabel}
+                  </p>
+                  <p className="mt-1 text-xs opacity-65">
+                    LAB preview refresh is debounced by{" "}
+                    {PREVIEW_UPDATE_DEBOUNCE_MS} ms. Graph and collision
+                    controls apply live.
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-              <div className="rounded-[1rem] border border-black/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
-                <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
-                  Stored Graph
-                </p>
-                <p className="mt-2 text-2xl font-semibold">
-                  {persistedEdgeCount}
-                </p>
-                <p className="mt-1 text-xs opacity-65">
-                  persisted edge(s) across {graphNodes.length} node(s)
-                </p>
+            <div className="border-rule bg-surface overflow-hidden border">
+              <div className="border-rule flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3 text-xs">
+                <div>
+                  <p className="font-medium">Server Preview Graph</p>
+                  <p className="mt-1 opacity-65">
+                    Generated from LAB parameters without touching the persisted
+                    public snapshot until you save.
+                  </p>
+                </div>
+                <div className="border-rule border px-3 py-1 text-[11px] tracking-[0.18em] uppercase opacity-70">
+                  {previewIsUpdating
+                    ? "Updating"
+                    : previewMatchesSavedDefaults &&
+                        graphControlsMatchSavedDefaults
+                      ? "Saved Default View"
+                      : "Preview Only"}
+                </div>
               </div>
 
-              <div className="rounded-[1rem] border border-black/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
-                <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
-                  Saved LAB Defaults
-                </p>
-                <p className="mt-2 text-sm font-medium">
-                  sigmaE {formatSigmaE(savedEdgeGeneration.params.sigmaE)}
-                </p>
-                <p className="mt-1 text-xs opacity-65">
-                  min correlation{" "}
-                  {formatMinCorrelation(
-                    savedEdgeGeneration.params.minCorrelation,
-                  )}
-                </p>
-              </div>
-
-              <div className="rounded-[1rem] border border-black/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
-                <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
-                  Saved Graph Defaults
-                </p>
-                <p className="mt-2 text-sm font-medium">
-                  {savedGraphControls.hideConnections
-                    ? "Lines hidden"
-                    : "Lines shown"}
-                </p>
-                <p className="mt-1 text-xs opacity-65">
-                  repel {savedGraphControls.chargeMult.toFixed(1)}x, min{" "}
-                  {savedGraphControls.distMinMult.toFixed(1)}x, max{" "}
-                  {savedGraphControls.distMaxMult.toFixed(1)}x
-                </p>
-                <p className="mt-1 text-xs opacity-65">
-                  collision {savedGraphControls.collideStrength.toFixed(1)}x,
-                  box {savedGraphControls.collideBoxScale.toFixed(2)}x, pad{" "}
-                  {savedGraphControls.collidePad.toFixed(0)} px, passes{" "}
-                  {savedGraphControls.collideIterations.toFixed(0)}
-                </p>
-              </div>
-
-              <div className="rounded-[1rem] border border-black/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
-                <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
-                  Preview Status
-                </p>
-                <p className="mt-2 text-sm font-medium">{previewStatusLabel}</p>
-                <p className="mt-1 text-xs opacity-65">
-                  LAB preview refresh is debounced by{" "}
-                  {PREVIEW_UPDATE_DEBOUNCE_MS} ms. Graph and collision controls
-                  apply live.
-                </p>
+              <div className="h-[min(42rem,70vh)] min-h-[22rem]">
+                <PhotoGraphCanvas
+                  controls={previewGraphControls}
+                  graphUrl={previewGraphUrl}
+                  fitToCanvas
+                  showControls={false}
+                  showNavigation={false}
+                />
               </div>
             </div>
           </div>
+        </section>
 
-          <div className="overflow-hidden rounded-[1.5rem] border border-black/10 bg-black/5 dark:border-white/10 dark:bg-white/5">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-black/10 px-4 py-3 text-xs dark:border-white/10">
-              <div>
-                <p className="font-medium">Server Preview Graph</p>
-                <p className="mt-1 opacity-65">
-                  Generated from LAB parameters without touching the persisted
-                  public snapshot until you save.
-                </p>
-              </div>
-              <div className="rounded-full border border-black/10 px-3 py-1 text-[11px] tracking-[0.18em] uppercase opacity-70 dark:border-white/10">
-                {previewIsUpdating
-                  ? "Updating"
-                  : previewMatchesSavedDefaults && graphControlsMatchSavedDefaults
-                    ? "Saved Default View"
-                    : "Preview Only"}
-              </div>
-            </div>
-
-            <div className="h-[min(42rem,70vh)] min-h-[22rem]">
-              <PhotoGraphCanvas
-                controls={previewGraphControls}
-                graphUrl={previewGraphUrl}
-                fitToCanvas
-                showControls={false}
-                showNavigation={false}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mt-6 rounded-md border border-black/20 p-4 dark:border-white/20">
-        <div
-          onDrop={handleDrop}
-          onDragOver={(event) => event.preventDefault()}
-          className="rounded-lg border border-dashed border-black/30 p-6 text-center dark:border-white/30"
-        >
-          <p className="text-sm">Drag and drop images here</p>
-          <p className="my-2 text-xs opacity-70">or</p>
-          <OverlayControlLabel layout="action">
-            Select Files
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              multiple
-              onChange={handleInputChange}
-              className="hidden"
-            />
-          </OverlayControlLabel>
-        </div>
-
-        <div className="mt-4 flex items-center justify-between text-sm">
-          <p>{files.length} file(s) selected</p>
-          <p>{bytesToMb(totalBytes)}</p>
-        </div>
-
-        {files.length > 0 && (
-          <ul className="mt-3 max-h-56 overflow-y-auto rounded-md border border-black/20 p-3 text-sm dark:border-white/20">
-            {files.map((file) => (
-              <li
-                key={`${file.name}-${file.size}-${file.lastModified}`}
-                className="py-1"
-              >
-                {file.name} ({bytesToMb(file.size)})
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <div className="mt-5 flex flex-wrap items-center gap-3">
-          <OverlayControlButton
-            onClick={handleUpload}
-            disabled={uploadDisabled}
-            layout="action"
-            size="lg"
-            className="font-medium"
+        <section className="border-rule mt-6 border p-4">
+          <div
+            onDrop={handleDrop}
+            onDragOver={(event) => event.preventDefault()}
+            className="border-rule border border-dashed p-6 text-center"
           >
-            {isProcessing ? "Processing..." : "Upload + Regenerate Defaults"}
-          </OverlayControlButton>
+            <p className="text-sm">Drag and drop images here</p>
+            <p className="my-2 text-xs opacity-70">or</p>
+            <ControlLabel layout="action">
+              Select Files
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                multiple
+                onChange={handleInputChange}
+                className="hidden"
+              />
+            </ControlLabel>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between text-sm">
+            <p>{files.length} file(s) selected</p>
+            <p>{bytesToMb(totalBytes)}</p>
+          </div>
 
           {files.length > 0 && (
-            <OverlayControlButton
-              onClick={() => setFiles([])}
-              disabled={isProcessing}
-              layout="action"
-            >
-              Clear
-            </OverlayControlButton>
-          )}
-
-          <OverlayControlButton
-            onClick={() => setVerbosePanelOpen((current) => !current)}
-            layout="action"
-          >
-            {verbosePanelOpen ? "Hide Verbose Panel" : "Show Verbose Panel"}
-          </OverlayControlButton>
-
-          <OverlayControlButton onClick={clearVerboseLogs} layout="action">
-            Clear Logs
-          </OverlayControlButton>
-        </div>
-
-        {statusMessage && (
-          <p className="mt-4 text-sm text-blue-700 dark:text-blue-300">
-            {statusMessage}
-          </p>
-        )}
-        {errorMessage && (
-          <p className="mt-2 text-sm text-red-600 dark:text-red-300">
-            {errorMessage}
-          </p>
-        )}
-
-        {createdIds.length > 0 && (
-          <p className="mt-2 text-xs opacity-70">
-            Created node IDs: {createdIds.join(", ")}
-          </p>
-        )}
-      </section>
-
-      <section className="mt-6 rounded-md border border-black/20 p-4 dark:border-white/20">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold">Manage Photos</h2>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="opacity-70">
-              {graphNodes.length} total node(s)
-            </span>
-            <OverlayControlButton
-              onClick={() =>
-                void fetchGraphNodes({
-                  syncPreviewParams: false,
-                })
-              }
-              disabled={adminBusy}
-              layout="action"
-              size="sm"
-            >
-              {loadingGraphNodes ? "Refreshing..." : "Refresh"}
-            </OverlayControlButton>
-          </div>
-        </div>
-
-        <div className="mt-3">
-          <input
-            type="text"
-            value={manageQuery}
-            onChange={(event) => setManageQuery(event.target.value)}
-            placeholder="Filter by node ID or storage path..."
-            className="w-full rounded-md border border-black/20 bg-transparent px-3 py-2 text-sm outline-none focus:border-black/50 dark:border-white/20 dark:focus:border-white/50"
-          />
-        </div>
-
-        <div className="mt-3 max-h-64 overflow-y-auto rounded-md border border-black/10 p-2 text-xs dark:border-white/10">
-          {filteredGraphNodes.length === 0 ? (
-            <p className="px-2 py-2 opacity-70">No nodes match your filter.</p>
-          ) : (
-            <ul className="space-y-1">
-              {filteredGraphNodes.map((node) => {
-                const isDeleting = deletingNodeId === node.id;
-                return (
-                  <li
-                    key={node.id}
-                    className="flex flex-col gap-2 rounded-md border border-black/10 p-2 dark:border-white/10"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex min-w-0 items-start gap-2">
-                        {node.previewUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element -- This preview intentionally uses the Supabase render URL directly to bypass Vercel image transforms.
-                          <img
-                            src={node.previewUrl}
-                            alt={`Node ${node.id}`}
-                            width={44}
-                            height={44}
-                            className="h-11 w-11 rounded object-cover"
-                          />
-                        ) : (
-                          <div className="h-11 w-11 rounded border border-black/20 dark:border-white/20" />
-                        )}
-
-                        <div className="min-w-0 font-mono text-[11px]">
-                          <div>
-                            <span className="font-semibold">ID {node.id}</span>{" "}
-                            <span className="opacity-70">
-                              ({Object.keys(node.correlations ?? {}).length}{" "}
-                              edges)
-                            </span>
-                          </div>
-                          {node.storagePath && (
-                            <p className="mt-1 font-mono text-[10px] break-all opacity-70">
-                              {node.storagePath}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <OverlayControlButton
-                        onClick={() => void handleDeleteNode(node)}
-                        disabled={
-                          persistenceUnavailable ||
-                          isProcessing ||
-                          isSavingEdgeDefaults ||
-                          loadingGraphNodes ||
-                          (deletingNodeId !== null && !isDeleting)
-                        }
-                        layout="action"
-                        size="sm"
-                        toneClass={OVERLAY_CONTROL_DANGER_CLASS}
-                      >
-                        {isDeleting ? "Deleting..." : "Delete"}
-                      </OverlayControlButton>
-                    </div>
-                  </li>
-                );
-              })}
+            <ul className="border-rule mt-3 max-h-56 overflow-y-auto border p-3 text-sm">
+              {files.map((file) => (
+                <li
+                  key={`${file.name}-${file.size}-${file.lastModified}`}
+                  className="py-1"
+                >
+                  {file.name} ({bytesToMb(file.size)})
+                </li>
+              ))}
             </ul>
           )}
-        </div>
-      </section>
 
-      <section className="mt-6 rounded-md border border-black/20 p-4 dark:border-white/20">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold">Verbose Activity</h2>
-          <p className="text-xs opacity-70">{verboseLogs.length} log entries</p>
-        </div>
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <ControlButton
+              onClick={handleUpload}
+              disabled={uploadDisabled}
+              layout="action"
+              size="lg"
+              className="font-medium"
+            >
+              {isProcessing ? "Processing..." : "Upload + Regenerate Defaults"}
+            </ControlButton>
 
-        {verbosePanelOpen ? (
-          <div className="mt-3 max-h-64 overflow-y-auto rounded-md border border-black/10 bg-black/5 p-3 text-xs dark:border-white/10 dark:bg-white/5">
-            {verboseLogs.length === 0 ? (
-              <p className="opacity-70">No activity yet.</p>
+            {files.length > 0 && (
+              <ControlButton
+                onClick={() => setFiles([])}
+                disabled={isProcessing}
+                layout="action"
+              >
+                Clear
+              </ControlButton>
+            )}
+
+            <ControlButton
+              onClick={() => setVerbosePanelOpen((current) => !current)}
+              layout="action"
+            >
+              {verbosePanelOpen ? "Hide Verbose Panel" : "Show Verbose Panel"}
+            </ControlButton>
+
+            <ControlButton onClick={clearVerboseLogs} layout="action">
+              Clear Logs
+            </ControlButton>
+          </div>
+
+          {statusMessage && (
+            <p className="text-ink mt-4 text-sm">{statusMessage}</p>
+          )}
+          {errorMessage && (
+            <p className="text-danger mt-2 text-sm">{errorMessage}</p>
+          )}
+
+          {createdIds.length > 0 && (
+            <p className="mt-2 text-xs opacity-70">
+              Created node IDs: {createdIds.join(", ")}
+            </p>
+          )}
+        </section>
+
+        <section className="border-rule mt-6 border p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold">Manage Photos</h2>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="opacity-70">
+                {graphNodes.length} total node(s)
+              </span>
+              <ControlButton
+                onClick={() =>
+                  void fetchGraphNodes({
+                    syncPreviewParams: false,
+                  })
+                }
+                disabled={adminBusy}
+                layout="action"
+                size="sm"
+              >
+                {loadingGraphNodes ? "Refreshing..." : "Refresh"}
+              </ControlButton>
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <input
+              type="text"
+              value={manageQuery}
+              onChange={(event) => setManageQuery(event.target.value)}
+              placeholder="Filter by node ID or storage path..."
+              className="border-rule w-full border bg-transparent px-3 py-2 text-sm outline-none focus-visible:outline-2 focus-visible:outline-[rgb(var(--color-focus))]"
+            />
+          </div>
+
+          <div className="border-rule mt-3 max-h-64 overflow-y-auto border p-2 text-xs">
+            {filteredGraphNodes.length === 0 ? (
+              <p className="px-2 py-2 opacity-70">
+                No nodes match your filter.
+              </p>
             ) : (
               <ul className="space-y-1">
-                {verboseLogs.map((entry) => (
-                  <li key={entry.id} className="font-mono leading-relaxed">
-                    <span className="opacity-70">
-                      [{formatLogTimestamp(entry.createdAt)}]
-                    </span>{" "}
-                    <span
-                      className={
-                        entry.level === "error"
-                          ? "text-red-600 dark:text-red-300"
-                          : entry.level === "warn"
-                            ? "text-amber-600 dark:text-amber-300"
-                            : entry.level === "success"
-                              ? "text-green-600 dark:text-green-300"
-                              : "text-blue-600 dark:text-blue-300"
-                      }
+                {filteredGraphNodes.map((node) => {
+                  const isDeleting = deletingNodeId === node.id;
+                  return (
+                    <li
+                      key={node.id}
+                      className="border-rule flex flex-col gap-2 border p-2"
                     >
-                      {entry.level.toUpperCase()}
-                    </span>{" "}
-                    {entry.message}
-                  </li>
-                ))}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-start gap-2">
+                          {node.previewUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element -- This preview intentionally uses the Supabase render URL directly to bypass Vercel image transforms.
+                            <img
+                              src={node.previewUrl}
+                              alt={`Node ${node.id}`}
+                              width={44}
+                              height={44}
+                              className="h-11 w-11 object-cover"
+                            />
+                          ) : (
+                            <div className="border-rule h-11 w-11 border" />
+                          )}
+
+                          <div className="min-w-0 font-mono text-[11px]">
+                            <div>
+                              <span className="font-semibold">
+                                ID {node.id}
+                              </span>{" "}
+                              <span className="opacity-70">
+                                ({Object.keys(node.correlations ?? {}).length}{" "}
+                                edges)
+                              </span>
+                            </div>
+                            {node.storagePath && (
+                              <p className="mt-1 font-mono text-[10px] break-all opacity-70">
+                                {node.storagePath}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <ControlButton
+                          onClick={() => void handleDeleteNode(node)}
+                          disabled={
+                            persistenceUnavailable ||
+                            isProcessing ||
+                            isSavingEdgeDefaults ||
+                            loadingGraphNodes ||
+                            (deletingNodeId !== null && !isDeleting)
+                          }
+                          layout="action"
+                          size="sm"
+                          toneClass={CONTROL_DANGER_CLASS}
+                        >
+                          {isDeleting ? "Deleting..." : "Delete"}
+                        </ControlButton>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
-        ) : (
-          <p className="mt-2 text-xs opacity-70">Panel hidden.</p>
-        )}
-      </section>
+        </section>
+
+        <section className="border-rule mt-6 border p-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold">Verbose Activity</h2>
+            <p className="text-xs opacity-70">
+              {verboseLogs.length} log entries
+            </p>
+          </div>
+
+          {verbosePanelOpen ? (
+            <div className="border-rule bg-surface mt-3 max-h-64 overflow-y-auto border p-3 text-xs">
+              {verboseLogs.length === 0 ? (
+                <p className="opacity-70">No activity yet.</p>
+              ) : (
+                <ul className="space-y-1">
+                  {verboseLogs.map((entry) => (
+                    <li key={entry.id} className="font-mono leading-relaxed">
+                      <span className="opacity-70">
+                        [{formatLogTimestamp(entry.createdAt)}]
+                      </span>{" "}
+                      <span
+                        className={
+                          entry.level === "error"
+                            ? "text-danger"
+                            : entry.level === "warn"
+                              ? "text-warning"
+                              : entry.level === "success"
+                                ? "text-success"
+                                : "text-ink"
+                        }
+                      >
+                        {entry.level.toUpperCase()}
+                      </span>{" "}
+                      {entry.message}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <p className="mt-2 text-xs opacity-70">Panel hidden.</p>
+          )}
+        </section>
+      </div>
     </main>
   );
 }

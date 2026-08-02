@@ -3,13 +3,14 @@
 import { Fragment } from "react";
 import { Menu, X } from "lucide-react";
 
-import { OverlayControlButton } from "@/app/components/ui/overlay-control-button";
+import { ControlButton } from "@/app/components/ui/control";
+import ThemeToggle from "@/app/components/ui/theme-toggle";
 
 import {
   GRAPH_CONTROL_SLIDERS,
-  overlayPanelClass,
-  overlayTextClass,
-  photoGraphOverlayClass,
+  photoGraphControlsPositionClass,
+  photoGraphControlTextClass,
+  photoGraphPanelClass,
   sliderClass,
 } from "./config";
 import type { GraphControls } from "./types";
@@ -17,6 +18,7 @@ import type { GraphControls } from "./types";
 type PhotoGraphControlsProps = {
   menuOpen: boolean;
   controls: GraphControls;
+  showTheme?: boolean;
   onMenuOpen: () => void;
   onMenuClose: () => void;
   onControlChange: (key: keyof GraphControls, value: boolean | number) => void;
@@ -25,6 +27,7 @@ type PhotoGraphControlsProps = {
 export default function PhotoGraphControls({
   menuOpen,
   controls,
+  showTheme = false,
   onMenuOpen,
   onMenuClose,
   onControlChange,
@@ -32,29 +35,30 @@ export default function PhotoGraphControls({
   return (
     <>
       {!menuOpen && (
-        <OverlayControlButton
+        <ControlButton
           onClick={onMenuOpen}
           className="absolute top-[1vmin] left-[1vmin] z-6"
           aria-label="Open graph controls"
         >
           <Menu className="h-4 w-4" />
-        </OverlayControlButton>
+        </ControlButton>
       )}
 
       {menuOpen && (
         <div
-          className={`rounded-md border select-none ${overlayPanelClass} ${photoGraphOverlayClass}`}
+          className={`border select-none ${photoGraphControlsPositionClass} ${photoGraphPanelClass}`}
         >
-          <div className="flex w-full items-start justify-between gap-3">
-            <OverlayControlButton
+          <div className="border-rule flex w-full items-start justify-between border-b">
+            <ControlButton
               onClick={onMenuClose}
-              className="shrink-0"
+              className="h-8 w-8 border-y-0 border-l-0"
               aria-label="Close graph controls"
             >
-              <X className="h-4 w-4" />
-            </OverlayControlButton>
+              <X />
+            </ControlButton>
+
             <label
-              className={`flex min-h-8 flex-1 items-center justify-end gap-2 text-right ${overlayTextClass}`}
+              className={`m-auto flex h-full flex-1 items-center justify-end gap-2 pr-3 text-right ${photoGraphControlTextClass}`}
             >
               <span>Show connecting lines</span>
               <input
@@ -68,43 +72,54 @@ export default function PhotoGraphControls({
             </label>
           </div>
 
-          {GRAPH_CONTROL_SLIDERS.map(
-            ({ key, label, min, max, scale = 1, formatValue }) => {
-              const inputId = `photo-graph-control-${key}`;
-              const valueId = `${inputId}-value`;
-              const valueText = formatValue(controls[key]);
-
-              return (
-                <Fragment key={key}>
-                  <div className="flex items-center justify-between gap-3">
-                    <label htmlFor={inputId} className={overlayTextClass}>
-                      {label}
-                    </label>
-                    <output
-                      id={valueId}
-                      htmlFor={inputId}
-                      className={`${overlayTextClass} text-right`}
-                    >
-                      {valueText}
-                    </output>
-                  </div>
-                  <input
-                    id={inputId}
-                    type="range"
-                    min={min}
-                    max={max}
-                    value={controls[key] / scale}
-                    onChange={(event) =>
-                      onControlChange(key, Number(event.target.value) * scale)
-                    }
-                    aria-describedby={valueId}
-                    aria-valuetext={valueText}
-                    className={`${sliderClass} w-full`}
-                  />
-                </Fragment>
-              );
-            },
+          {showTheme && (
+            <div className="border-rule border-b px-3">
+              <ThemeToggle className="w-full justify-between" />
+            </div>
           )}
+
+          <div className="flex flex-col gap-3 p-3">
+            {GRAPH_CONTROL_SLIDERS.map(
+              ({ key, label, min, max, scale = 1, formatValue }) => {
+                const inputId = `photo-graph-control-${key}`;
+                const valueId = `${inputId}-value`;
+                const valueText = formatValue(controls[key]);
+
+                return (
+                  <Fragment key={key}>
+                    <div className="flex items-center justify-between gap-3">
+                      <label
+                        htmlFor={inputId}
+                        className={photoGraphControlTextClass}
+                      >
+                        {label}
+                      </label>
+                      <output
+                        id={valueId}
+                        htmlFor={inputId}
+                        className={`${photoGraphControlTextClass} text-right`}
+                      >
+                        {valueText}
+                      </output>
+                    </div>
+                    <input
+                      id={inputId}
+                      type="range"
+                      min={min}
+                      max={max}
+                      value={controls[key] / scale}
+                      onChange={(event) =>
+                        onControlChange(key, Number(event.target.value) * scale)
+                      }
+                      aria-describedby={valueId}
+                      aria-valuetext={valueText}
+                      className={`${sliderClass} w-full`}
+                    />
+                  </Fragment>
+                );
+              },
+            )}{" "}
+          </div>
         </div>
       )}
     </>

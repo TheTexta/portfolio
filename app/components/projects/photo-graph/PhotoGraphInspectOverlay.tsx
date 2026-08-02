@@ -3,22 +3,15 @@
 import { useEffect, useState } from "react";
 import { Download, X } from "lucide-react";
 
-import {
-  OverlayControlAnchor,
-  OverlayControlButton,
-} from "@/app/components/ui/overlay-control-button";
+import { ControlAnchor, ControlButton } from "@/app/components/ui/control";
 
 import {
-  overlayTextClass,
+  photoGraphControlTextClass,
   photoGraphModalClass,
   PHOTO_GRAPH_INSPECT_TRANSITION_MS,
 } from "./config";
 import type { InspectMetadata, InspectTarget } from "./types";
-import {
-  buildInspectFilename,
-  convertSizeToMb,
-  isAbortError,
-} from "./utils";
+import { buildInspectFilename, convertSizeToMb, isAbortError } from "./utils";
 
 type PhotoGraphInspectOverlayProps = {
   target: InspectTarget | null;
@@ -140,27 +133,60 @@ export default function PhotoGraphInspectOverlay({
   return (
     <div
       onClick={() => setInspectOverlayOpen(false)}
-      className={`absolute inset-0 z-10 m-auto flex max-h-9/12 max-w-9/12 items-center justify-center transition-[opacity,backdrop-filter] duration-200 ${photoGraphModalClass} ${
-        inspectOverlayOpen
-          ? "opacity-100 backdrop-blur-sm"
-          : "backdrop-blur-0 opacity-0"
+      className={`border-rule absolute inset-0 z-10 m-auto flex max-h-9/12 max-w-9/12 items-center justify-center border transition-opacity duration-200 ${photoGraphModalClass} ${
+        inspectOverlayOpen ? "opacity-100" : "opacity-0"
       }`}
     >
       <div
-        className={`relative flex h-full w-full flex-col items-center justify-center transition-[opacity,transform,filter] duration-200 ease-out ${
+        className={`relative flex h-full w-full flex-col items-center justify-center transition-[opacity,transform] duration-200 ease-out ${
           inspectOverlayOpen
-            ? "blur-0 scale-100 opacity-100"
-            : "scale-[1.06] opacity-0 blur-[2px]"
+            ? "scale-100 opacity-100"
+            : "scale-[1.03] opacity-0"
         }`}
         onClick={(event) => event.stopPropagation()}
       >
-        <OverlayControlButton
-          onClick={() => setInspectOverlayOpen(false)}
-          className="absolute top-0 right-0 mx-2 my-2"
-          aria-label="Close image inspection"
-        >
-          <X className="h-4 w-4" />
-        </OverlayControlButton>
+        <div className="border-rule flex h-8 w-full items-stretch justify-between border-b">
+          <ControlButton
+            className="h-8 w-8 shrink-0 border-y-0 border-l-0"
+            aria-label="Close inspect overlay"
+            onClick={() => setInspectOverlayOpen(false)}
+          >
+            <X />
+          </ControlButton>
+
+          <div
+            className={`flex min-w-0 flex-1 items-center justify-end gap-3 px-3 text-right ${photoGraphControlTextClass}`}
+          >
+            <p>
+              <span className="hidden sm:inline">Resolution: </span>
+              {inspectMetadata?.resolution
+                ? `${inspectMetadata.resolution.width} x ${inspectMetadata.resolution.height}`
+                : "Loading..."}
+            </p>
+            <p>
+              <span className="hidden sm:inline">Original Size: </span>
+              {inspectMetadata?.sizeMb != null
+                ? `${inspectMetadata.sizeMb.toFixed(2)} MB`
+                : "Loading..."}
+            </p>
+          </div>
+
+          <ControlAnchor
+            href={inspectMetadata?.downloadUrl ?? undefined}
+            download={inspectMetadata?.filename}
+            layout="action"
+            size="sm"
+            className={`h-8 min-h-8 shrink-0 gap-1 border-y-0 border-r-0 whitespace-nowrap ${
+              inspectMetadata?.downloadUrl
+                ? ""
+                : "pointer-events-none opacity-50"
+            }`}
+            aria-disabled={!inspectMetadata?.downloadUrl}
+          >
+            Download<span className="hidden sm:inline"> Original</span>
+            <Download className="h-4 w-4" />
+          </ControlAnchor>
+        </div>
 
         {/* eslint-disable-next-line @next/next/no-img-element -- This inspect overlay needs the raw image element for natural-size reads and unrestricted sizing. */}
         <img
@@ -184,41 +210,6 @@ export default function PhotoGraphInspectOverlay({
             );
           }}
         />
-
-        <div
-          className={`absolute bottom-0 flex h-1/8 w-full items-center justify-between gap-4 px-4 text-[9px] transition-opacity duration-200 sm:text-xs ${overlayTextClass} ${
-            inspectOverlayOpen ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <div className="flex items-center gap-4">
-            <p>
-              <span className="hidden sm:inline">Resolution: </span>
-              {inspectMetadata?.resolution
-                ? `${inspectMetadata.resolution.width} x ${inspectMetadata.resolution.height}`
-                : "Loading..."}
-            </p>
-            <p>
-              <span className="hidden sm:inline">Original Size: </span>
-              {inspectMetadata?.sizeMb != null
-                ? `${inspectMetadata.sizeMb.toFixed(2)} MB`
-                : "Loading..."}
-            </p>
-          </div>
-
-          <OverlayControlAnchor
-            href={inspectMetadata?.downloadUrl ?? undefined}
-            download={inspectMetadata?.filename}
-            layout="action"
-            size="sm"
-            className={`gap-1 ${
-              inspectMetadata?.downloadUrl ? "" : "pointer-events-none opacity-50"
-            }`}
-            aria-disabled={!inspectMetadata?.downloadUrl}
-          >
-            Download Original
-            <Download className="h-4 w-4" />
-          </OverlayControlAnchor>
-        </div>
       </div>
     </div>
   );

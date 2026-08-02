@@ -14,7 +14,7 @@ import {
 
 import { useTheme } from "@/app/components/theme/theme-provider";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
-import OverlayNavBar from "@/app/components/ui/overlay-nav-bar";
+import ExperienceNav from "@/app/components/ui/experience-nav";
 import {
   getPhotoGraphLinkValue,
   sortPhotoGraphNodesForRender,
@@ -133,9 +133,9 @@ export default function PhotoGraphCanvas({
   showControls = true,
   showNavigation = true,
 }: PhotoGraphCanvasProps) {
-  const { darkMode: siteDarkMode, toggleTheme } = useTheme();
+  const { darkMode: siteDarkMode } = useTheme();
   const activeDarkMode = forcedDarkMode ?? siteDarkMode;
-  const isFullPageRoute = usePathname() === PROJECT_ROUTES.photoGraph;
+  const isFullPageRoute = usePathname() === PROJECT_ROUTES.photoGraphExperience;
 
   const fgRef = useRef<PhotoGraphInstance | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -144,23 +144,22 @@ export default function PhotoGraphCanvas({
 
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [menuOpen, setMenuOpen] = useState(false);
-  const [uncontrolledControls, setUncontrolledControls] = useState<GraphControls>({
-    ...defaultControls,
-  });
+  const [uncontrolledControls, setUncontrolledControls] =
+    useState<GraphControls>({
+      ...defaultControls,
+    });
   const [hasLocalControlOverride, setHasLocalControlOverride] = useState(false);
   const [inspectTarget, setInspectTarget] = useState<InspectTarget | null>(
     null,
   );
 
-  const {
-    defaultGraphControls: fetchedDefaultGraphControls,
-    graphData,
-  } = usePhotoGraphData(graphUrl);
+  const { defaultGraphControls: fetchedDefaultGraphControls, graphData } =
+    usePhotoGraphData(graphUrl);
   const activeControls =
     controlledControls ??
     (hasLocalControlOverride
       ? uncontrolledControls
-      : fetchedDefaultGraphControls ?? uncontrolledControls);
+      : (fetchedDefaultGraphControls ?? uncontrolledControls));
   const { reinitializeCollisionForce } = usePhotoGraphForces({
     fgRef,
     nodes: graphData.nodes,
@@ -229,13 +228,16 @@ export default function PhotoGraphCanvas({
     };
   }, []);
 
-  const linkColor = useCallback((link: PhotoGraphLink) => {
-    const alpha = getPhotoGraphLinkValue(link);
+  const linkColor = useCallback(
+    (link: PhotoGraphLink) => {
+      const alpha = getPhotoGraphLinkValue(link);
 
-    return activeDarkMode
-      ? `rgba(255, 255, 255, ${0.72 * alpha})`
-      : `rgba(0, 0, 0, ${alpha})`;
-  }, [activeDarkMode]);
+      return activeDarkMode
+        ? `rgba(255, 255, 255, ${0.72 * alpha})`
+        : `rgba(0, 0, 0, ${alpha})`;
+    },
+    [activeDarkMode],
+  );
 
   const setControlValue = useCallback(
     (key: keyof GraphControls, value: boolean | number) => {
@@ -281,12 +283,7 @@ export default function PhotoGraphCanvas({
       dimensions.width,
       dimensions.height,
     );
-  }, [
-    dimensions.height,
-    dimensions.width,
-    fitToCanvas,
-    graphData.nodes,
-  ]);
+  }, [dimensions.height, dimensions.width, fitToCanvas, graphData.nodes]);
 
   return (
     <div
@@ -303,6 +300,7 @@ export default function PhotoGraphCanvas({
           <PhotoGraphControls
             menuOpen={menuOpen}
             controls={activeControls}
+            showTheme={isFullPageRoute && forcedDarkMode === undefined}
             onMenuOpen={() => setMenuOpen(true)}
             onMenuClose={() => setMenuOpen(false)}
             onControlChange={setControlValue}
@@ -310,15 +308,13 @@ export default function PhotoGraphCanvas({
         )}
 
         {showNavigation && (
-          <OverlayNavBar
-            darkMode={isFullPageRoute ? activeDarkMode : undefined}
-            onToggleDarkMode={
-              isFullPageRoute && forcedDarkMode === undefined
-                ? toggleTheme
-                : undefined
+          <ExperienceNav
+            caseStudyHref={
+              isFullPageRoute ? PROJECT_ROUTES.photoGraph : undefined
             }
-            expandHref={isFullPageRoute ? undefined : PROJECT_ROUTES.photoGraph}
-            exitHref={isFullPageRoute ? PROJECT_ROUTES.home : undefined}
+            experienceHref={
+              isFullPageRoute ? undefined : PROJECT_ROUTES.photoGraphExperience
+            }
             ariaLabel="Photo graph controls"
           />
         )}
@@ -329,9 +325,7 @@ export default function PhotoGraphCanvas({
         >
           {dimensions.width > 0 && dimensions.height > 0 && (
             <ForceGraph2D
-              ref={
-                fgRef as MutableRefObject<PhotoGraphInstance | undefined>
-              }
+              ref={fgRef as MutableRefObject<PhotoGraphInstance | undefined>}
               graphData={graphData}
               width={dimensions.width}
               height={dimensions.height}

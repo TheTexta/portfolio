@@ -66,3 +66,10 @@ Place these files in `public/projects/grailed-plus/`:
 2. Capture a 8-15s listing-page demo showing pricing panel + currency + dark mode.
 3. Add one concrete outcome metric if available (time saved, decision speed, conversion usage, etc.).
 4. Add eventual screenshot updates once logo refresh is complete.
+
+## Theme Ownership Contract
+
+- The control panel inside the live iframe owns its own theme state.
+- Host site light/dark mode must not restyle iframe controls.
+- The parent page can connect/play the iframe and receive resize/version events, but should not push host theme toggles into iframe UI chrome.
+- Control actions (for example currency and demo dark mode) remain iframe-local and continue to drive iframe content behavior.

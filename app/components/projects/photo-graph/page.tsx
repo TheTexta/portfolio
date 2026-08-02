@@ -1,10 +1,6 @@
-import ProjectPageShell from "@/app/components/projects/project-page-shell";
-import PhotoGraphCanvas from "@/app/components/projects/photo-graph/PhotoGraphCanvas";
+import { permanentRedirect } from "next/navigation";
+import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 
 export default function Page() {
-  return (
-    <ProjectPageShell>
-      <PhotoGraphCanvas />
-    </ProjectPageShell>
-  );
+  permanentRedirect(PROJECT_ROUTES.photoGraph);
 }

@@ -10,5 +10,12 @@ export function isRecoverablePhotoGraphDatabaseError(
     return true;
   }
 
+  if (
+    error.message.includes("Invalid authentication credentials") ||
+    error.message.includes("fetch failed")
+  ) {
+    return true;
+  }
+
   return tableNames.some((tableName) => error.message.includes(tableName));
 }

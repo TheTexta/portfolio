@@ -61,7 +61,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Page() {
+type GrailedPlusPageProps = {
+  searchParams: Promise<{
+    view?: string | string[];
+  }>;
+};
+
+export default async function Page({ searchParams }: GrailedPlusPageProps) {
+  const { view } = await searchParams;
+  const heroOnly = view === "hero";
+
   return (
     <>
       <link rel="preconnect" href={grailedPlusDemoOrigin} />
@@ -83,7 +92,10 @@ export default function Page() {
           </Script>
         </>
       ) : null}
-      <GrailedPlusInstallRedirect googleAdsSendTo={googleAdsSendTo} />
+      <GrailedPlusInstallRedirect
+        googleAdsSendTo={googleAdsSendTo}
+        heroOnly={heroOnly}
+      />
     </>
   );
 }

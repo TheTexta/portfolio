@@ -1,10 +1,6 @@
-import ProjectPageShell from "@/app/components/projects/project-page-shell";
-import GrailedPlusPreview from "./grailed-plus-preview";
+import { permanentRedirect } from "next/navigation";
+import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 
 export default function Page() {
-  return (
-    <ProjectPageShell>
-      <GrailedPlusPreview />
-    </ProjectPageShell>
-  );
+  permanentRedirect(PROJECT_ROUTES.grailedPlusInstall);
 }

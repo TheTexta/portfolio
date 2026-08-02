@@ -7,6 +7,9 @@ const DISALLOWED_PATHS = [
   "/admin/",
   "/auth/spotify/callback",
   "/go/",
+  "/projects/grailed-plus/experience",
+  "/projects/photo-graph/experience",
+  "/projects/spotify-nodify/experience",
   "/components/projects/nepobabiesruntheunderground/preview",
 ];
 
