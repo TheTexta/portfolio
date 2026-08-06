@@ -138,16 +138,13 @@ export default function PhotoGraphInspectOverlay({
       }`}
     >
       <div
-        className={`relative flex h-full w-full flex-col items-center justify-center transition-[opacity,transform] duration-200 ease-out ${
-          inspectOverlayOpen
-            ? "scale-100 opacity-100"
-            : "scale-[1.03] opacity-0"
-        }`}
+        className={`relative flex h-full w-full flex-col items-center justify-center transition-opacity duration-200 ease-out`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="border-rule flex h-8 w-full items-stretch justify-between border-b">
           <ControlButton
-            className="h-8 w-8 shrink-0 border-y-0 border-l-0"
+            className="shrink-0 border-t-0 border-l-0"
+            size="sm"
             aria-label="Close inspect overlay"
             onClick={() => setInspectOverlayOpen(false)}
           >
@@ -171,29 +168,15 @@ export default function PhotoGraphInspectOverlay({
             </p>
           </div>
 
-          <ControlAnchor
-            href={inspectMetadata?.downloadUrl ?? undefined}
-            download={inspectMetadata?.filename}
-            layout="action"
-            size="sm"
-            className={`h-8 min-h-8 shrink-0 gap-1 border-y-0 border-r-0 whitespace-nowrap ${
-              inspectMetadata?.downloadUrl
-                ? ""
-                : "pointer-events-none opacity-50"
-            }`}
-            aria-disabled={!inspectMetadata?.downloadUrl}
-          >
-            Download<span className="hidden sm:inline"> Original</span>
-            <Download className="h-4 w-4" />
-          </ControlAnchor>
+          
         </div>
 
         {/* eslint-disable-next-line @next/next/no-img-element -- This inspect overlay needs the raw image element for natural-size reads and unrestricted sizing. */}
         <img
           src={displayUrl ?? target.previewUrl}
           alt=""
-          className={`my-auto max-h-9/12 max-w-5/6 place-self-center align-middle transition-transform duration-200 ease-out ${
-            inspectOverlayOpen ? "scale-100" : "scale-[1.1]"
+          className={`my-auto max-h-9/12 max-w-5/6 place-self-center align-middle transition-opacity duration-200 ease-out ${
+            inspectOverlayOpen ? "opacity-100" : "opacity-0"
           }`}
           onLoad={(event) => {
             const { naturalWidth, naturalHeight } = event.currentTarget;
@@ -210,6 +193,24 @@ export default function PhotoGraphInspectOverlay({
             );
           }}
         />
+        <div className="flex justify-end w-full border-rule border-t">
+          <ControlAnchor
+            href={inspectMetadata?.downloadUrl ?? undefined}
+            download={inspectMetadata?.filename}
+            layout="action"
+            size="sm"
+            className={`h-8 min-h-8 shrink-0 gap-1 border-y-0 border-r-0 ${
+              inspectMetadata?.downloadUrl
+                ? ""
+                : "pointer-events-none opacity-50"
+            }`}
+            aria-disabled={!inspectMetadata?.downloadUrl}
+          >
+            Download Original
+            <Download className="h-4 w-4" />
+          </ControlAnchor>
+        </div>
+        
       </div>
     </div>
   );

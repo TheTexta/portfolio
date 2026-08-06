@@ -10,7 +10,7 @@ import {
 import { cn } from "@/lib/cn";
 
 const controlBase = cva(
-  "border-rule bg-canvas text-ink hover:bg-surface inline-flex cursor-pointer appearance-none items-center justify-center border transition-[background-color,border-color,color,transform] duration-150 ease-[var(--ease-out-quint)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-focus))] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45",
+  "border-rule bg-canvas text-ink hover:bg-surface inline-flex cursor-pointer appearance-none items-center justify-center border transition-[background-color,border-color,color,transform] duration-150 ease-[var(--ease-out-quint)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-focus))] disabled:pointer-events-none disabled:opacity-45",
   {
     variants: {
       layout: {

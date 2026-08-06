@@ -60,7 +60,7 @@ export default function ProjectCaseStudyShell({
           </p>
         </div>
 
-        <dl className="editorial-rule grid content-end border-y lg:col-span-4">
+        <dl className="editorial-rule grid content-end border-y my-auto lg:col-span-4">
           {[
             ["Role", project.role],
             ["Date", project.date],
@@ -83,9 +83,6 @@ export default function ProjectCaseStudyShell({
       <section className="mx-auto max-w-[96rem] px-5 sm:px-8 lg:px-12">
         <div className="editorial-rule mb-3 flex items-end justify-between gap-5 border-b pb-3">
           <Eyebrow>Live project view</Eyebrow>
-          <p className="editorial-muted text-right text-xs">
-            First-party experience / current source
-          </p>
         </div>
         <MediaFrame className="h-[min(70svh,48rem)] min-h-[30rem]">
           <ProjectLivePreview project={project} />
