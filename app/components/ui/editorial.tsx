@@ -205,8 +205,5 @@ export function SiteHeader({
 export const EDITORIAL_INPUT_CLASS =
   "editorial-rule min-h-11 w-full border bg-canvas px-3 py-2 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-focus))]";
 
-export const EDITORIAL_RANGE_CLASS =
-  "range-sm h-2 w-full border-none bg-surface accent-ink";
-
 export const EDITORIAL_LABEL_CLASS =
   "text-xs font-semibold tracking-[0.12em] uppercase";

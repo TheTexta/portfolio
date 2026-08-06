@@ -27,7 +27,6 @@ export type ProjectDefinition = {
   eyebrow: string;
   summary: string;
   technologies: readonly string[];
-  capabilities: readonly string[];
   caseStudyHref?: string;
   experienceHref?: string;
   liveHref?: string;
@@ -50,12 +49,6 @@ export const projectCatalog: readonly ProjectDefinition[] = [
     summary:
       "Cross-market comparison, price context, local currency, seller metadata, and dark mode inside Grailed.",
     technologies: ["Chrome MV3", "JavaScript"],
-    capabilities: [
-      "Embedding-based marketplace matching",
-      "Price history and drop metrics",
-      "Site-wide currency conversion",
-      "Native-feeling dark mode",
-    ],
     experienceHref: PROJECT_ROUTES.grailedPlusInstall,
     liveHref: PROJECT_ROUTES.grailedPlusInstall,
     posterSrc: "/projects/posters/grailed-plus.webp",
@@ -86,12 +79,6 @@ export const projectCatalog: readonly ProjectDefinition[] = [
     summary:
       "A force-directed gallery that maps photographs through color-similarity relationships.",
     technologies: ["Next.js", "D3", "Supabase"],
-    capabilities: [
-      "Force-directed spatial navigation",
-      "Color-similarity correlation graph",
-      "Responsive image loading",
-      "Admin-tunable graph generation",
-    ],
     caseStudyHref: PROJECT_ROUTES.photoGraph,
     experienceHref: PROJECT_ROUTES.photoGraphExperience,
     posterSrc: "/projects/posters/photo-graph.webp",
@@ -112,12 +99,6 @@ export const projectCatalog: readonly ProjectDefinition[] = [
     summary:
       "An experimental interface combining custom typography, collage imagery, motion, and WebGL texture.",
     technologies: ["HTML", "CSS", "JavaScript", "WebGL"],
-    capabilities: [
-      "Custom typographic composition",
-      "Layered collage imagery",
-      "Purposeful motion",
-      "WebGL texture experiments",
-    ],
     liveHref: PROJECT_ROUTES.nepobabiesLive,
     posterSrc: "/projects/posters/nepobabies.webp",
     posterAlt: "Experimental nepobabiesruntheunderground website composition",

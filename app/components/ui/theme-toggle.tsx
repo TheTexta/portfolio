@@ -9,7 +9,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
   return (
     <label
       className={cn(
-        "inline-flex min-h-8 cursor-pointer items-center gap-2.5 text-[0.6875rem] font-bold tracking-[0.05em] uppercase text-ink",
+        "inline-flex min-h-8 cursor-pointer items-center uppercase text-ink gap-2",
         className,
       )}
     >

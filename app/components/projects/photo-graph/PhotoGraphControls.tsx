@@ -38,7 +38,9 @@ export default function PhotoGraphControls({
       <div
         className={`border select-none ${photoGraphControlsPositionClass} ${photoGraphPanelClass}`}
       >
-        <div className="flex w-full items-start justify-between">
+        <div
+          className={`flex w-full items-start justify-between ${menuOpen ? "border-rule border-b" : ""}`}
+        >
           <div className="flex items-start">
             {menuOpen && (
               <ControlButton
@@ -77,7 +79,7 @@ export default function PhotoGraphControls({
         </div>
 
         {menuOpen && showTheme && (
-          <div className="border-rule border-y px-3">
+          <div className="border-rule border-b px-3">
             <ThemeToggle className="w-full justify-between" />
           </div>
         )}

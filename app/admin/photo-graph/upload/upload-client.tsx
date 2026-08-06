@@ -16,7 +16,6 @@ import {
   GRAPH_CONTROL_SLIDERS,
 } from "@/app/components/projects/photo-graph/config";
 import {
-  CONTROL_DANGER_CLASS,
   ControlButton,
   ControlLabel,
 } from "@/app/components/ui/control";
@@ -1592,7 +1591,7 @@ export default function PhotoGraphUploadClient() {
                           }
                           layout="action"
                           size="sm"
-                          toneClass={CONTROL_DANGER_CLASS}
+                          tone="danger"
                         >
                           {isDeleting ? "Deleting..." : "Delete"}
                         </ControlButton>

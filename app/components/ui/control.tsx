@@ -26,6 +26,9 @@ const controlBase = cva(
         square: "",
         round: "rounded-full",
       },
+      tone: {
+        danger: "border-danger bg-danger text-canvas hover:bg-danger/85",
+      },
     },
     compoundVariants: [
       { layout: "icon", size: "sm", class: "h-8 w-8" },
@@ -58,14 +61,10 @@ const controlBase = cva(
 type ControlLayout = "icon" | "action";
 type ControlShape = "square" | "round";
 type ControlSize = "sm" | "md" | "lg";
-
-export const CONTROL_ICON_CLASS = "";
-export const CONTROL_ACTION_CLASS = "";
-export const CONTROL_DANGER_CLASS =
-  "border-danger bg-danger text-canvas hover:bg-danger/85";
+type ControlTone = "danger";
 
 type SharedProps = {
-  toneClass?: string;
+  tone?: ControlTone;
   layout?: ControlLayout;
   size?: ControlSize;
   shape?: ControlShape;
@@ -85,17 +84,17 @@ function getControlClass({
   layout = "icon",
   size = "md",
   shape = "square",
-  toneClass,
+  tone,
   className,
 }: SharedProps) {
-  return cn(controlBase({ layout, size, shape }), toneClass, className);
+  return cn(controlBase({ layout, size, shape, tone }), className);
 }
 
 export function ControlButton({
   layout = "icon",
   size = "sm",
   shape = "square",
-  toneClass,
+  tone,
   className,
   children,
   type = "button",
@@ -108,7 +107,7 @@ export function ControlButton({
         layout,
         size,
         shape,
-        toneClass,
+        tone,
         className,
         children,
       })}
@@ -124,7 +123,7 @@ export function ControlLink({
   layout = "icon",
   size = "md",
   shape = "square",
-  toneClass,
+  tone,
   className,
   children,
   ...props
@@ -136,7 +135,7 @@ export function ControlLink({
         layout,
         size,
         shape,
-        toneClass,
+        tone,
         className,
         children,
       })}
@@ -151,7 +150,7 @@ export function ControlAnchor({
   layout = "action",
   size = "md",
   shape = "square",
-  toneClass,
+  tone,
   className,
   children,
   ...props
@@ -162,7 +161,7 @@ export function ControlAnchor({
         layout,
         size,
         shape,
-        toneClass,
+        tone,
         className,
         children,
       })}
@@ -177,7 +176,7 @@ export function ControlLabel({
   layout = "action",
   size = "md",
   shape = "square",
-  toneClass,
+  tone,
   className,
   children,
   ...props
@@ -191,7 +190,7 @@ export function ControlLabel({
           layout,
           size,
           shape,
-          toneClass,
+          tone,
           className,
           children,
         }),

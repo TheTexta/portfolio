@@ -18,12 +18,6 @@ const project: ProjectDefinition = {
   summary:
     "A Spotify API experiment for inspecting profile context and recent listening taste.",
   technologies: ["Next.js", "Spotify API", "OAuth PKCE"],
-  capabilities: [
-    "Spotify OAuth PKCE authentication",
-    "Profile and subscription context",
-    "Past-month top-track view",
-    "Live connected and disconnected states",
-  ],
   caseStudyHref: PROJECT_ROUTES.spotifyNodify,
   experienceHref: PROJECT_ROUTES.spotifyNodifyExperience,
   posterSrc: "/projects/posters/spotify-nodify.webp",
