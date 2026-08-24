@@ -12,6 +12,8 @@ export type ProjectPreviewKind =
   | "html"
   | "spotify";
 
+export type ProjectTitleTreatment = "grailed" | "photo-graph" | "nepo";
+
 export type GrailedPlusFeature = "price-trend" | "custom-currency" | "dm" | null;
 
 export type ProjectLink = {
@@ -24,6 +26,7 @@ export type ProjectDefinition = {
   id: ProjectId;
   number: string;
   title: string;
+  titleTreatment: ProjectTitleTreatment;
   eyebrow: string;
   summary: string;
   technologies: readonly string[];
@@ -45,6 +48,7 @@ export const projectCatalog: readonly ProjectDefinition[] = [
     id: "grailed-plus",
     number: "01",
     title: "Grailed Plus",
+    titleTreatment: "grailed",
     eyebrow: "Browser extension / Product layer",
     summary:
       "Cross-market comparison, price context, local currency, seller metadata, and dark mode inside Grailed.",
@@ -75,6 +79,7 @@ export const projectCatalog: readonly ProjectDefinition[] = [
     id: "photo-graph",
     number: "02",
     title: "Photo Node-Gallery",
+    titleTreatment: "photo-graph",
     eyebrow: "Photography / Data visualization",
     summary:
       "A force-directed gallery that maps photographs through color-similarity relationships.",
@@ -95,6 +100,7 @@ export const projectCatalog: readonly ProjectDefinition[] = [
     id: "nepobabiesruntheunderground",
     number: "03",
     title: "nepobabiesruntheunderground",
+    titleTreatment: "nepo",
     eyebrow: "Experimental web / Multimedia",
     summary:
       "An experimental interface combining custom typography, collage imagery, motion, and WebGL texture.",

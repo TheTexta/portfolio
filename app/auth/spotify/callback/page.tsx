@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
-import { Eyebrow, SiteHeader } from "@/app/components/ui/editorial";
+import {
+  EditorialContainer,
+  Eyebrow,
+  SiteHeader,
+} from "@/app/components/ui/editorial";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
 import { getSpotifySDK } from "@/lib/GetSpotifySDK";
 
@@ -89,8 +93,9 @@ export default function SpotifyCallbackPage() {
       <SiteHeader meta="Spotify Nodify / Authorization">
         <ThemeToggle />
       </SiteHeader>
-      <section
-        className="mx-auto flex min-h-[calc(100dvh-3rem)] max-w-[96rem] items-center px-5 py-12 sm:px-8 lg:px-12"
+      <EditorialContainer
+        as="section"
+        className="flex min-h-[calc(100dvh-3rem)] items-center py-12"
         aria-live="polite"
       >
         <div className="editorial-rule w-full max-w-3xl border-y py-8 sm:py-12">
@@ -102,7 +107,7 @@ export default function SpotifyCallbackPage() {
             {message}
           </p>
         </div>
-      </section>
+      </EditorialContainer>
     </main>
   );
 }

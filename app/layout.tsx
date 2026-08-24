@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Instrument_Serif, Newsreader } from "next/font/google";
 import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
@@ -43,6 +44,21 @@ const redHatDisplay = localFont({
   display: "swap",
 });
 
+const newsreader = Newsreader({
+  subsets: ["latin"],
+  weight: "500",
+  variable: "--font-newsreader",
+  display: "swap",
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: "italic",
+  variable: "--font-instrument-serif",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_ORIGIN),
   title: "Dexter Young",
@@ -59,7 +75,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${redHatText.variable} ${redHatDisplay.variable}`}
+      className={`${redHatText.variable} ${redHatDisplay.variable} ${newsreader.variable} ${instrumentSerif.variable}`}
     >
       <body>
         <Script id="theme-preference" strategy="beforeInteractive">

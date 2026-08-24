@@ -4,6 +4,7 @@ import { type ProjectDefinition } from "@/app/components/projects/project-catalo
 import ProjectLivePreview from "@/app/components/projects/project-live-preview";
 import {
   ActionLink,
+  EditorialContainer,
   Eyebrow,
   MediaFrame,
   SiteHeader,
@@ -37,9 +38,10 @@ export default function ProjectCaseStudyShell({
         <ThemeToggle />
       </SiteHeader>
 
-      <section
+      <EditorialContainer
+        as="section"
         id="overview"
-        className="mx-auto grid max-w-384 gap-10 px-5 pt-7 sm:px-8 sm:pt-10 lg:grid-cols-12 lg:px-12 lg:pt-12"
+        className="grid max-w-384 gap-10 pt-7 sm:pt-10 lg:grid-cols-12 lg:pt-12"
       >
         <div className="lg:col-span-8">
           <Eyebrow className="mb-5">{project.eyebrow}</Eyebrow>
@@ -62,19 +64,21 @@ export default function ProjectCaseStudyShell({
           </div>
 
           <div className="flex flex-col py-4">
-            <div className="text-sm font-semibold uppercase justify-end flex">Stack</div>
+            <div className="flex justify-end text-sm font-semibold uppercase">
+              Stack
+            </div>
             <div className="editorial-muted flex justify-end text-sm">
               {project.technologies.join(" · ")}
             </div>
           </div>
         </div>
-      </section>
+      </EditorialContainer>
 
-      <section className="mx-auto max-w-[96rem] px-5 sm:px-8 lg:px-12 py-8">
+      <EditorialContainer className="py-8">
         <MediaFrame className="h-[min(70svh,48rem)] min-h-[30rem]">
           <ProjectLivePreview project={project} />
         </MediaFrame>
-      </section>
+      </EditorialContainer>
     </main>
   );
 }

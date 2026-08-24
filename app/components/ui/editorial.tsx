@@ -127,6 +127,43 @@ export function MediaFrame({
   );
 }
 
+export const EDITORIAL_GUTTER_CLASS = "w-full px-5 sm:px-8 lg:px-12";
+
+export const EDITORIAL_CONTAINER_CLASS =
+  "mx-auto max-w-[96rem]";
+
+type EditorialContainerElement = "div" | "footer" | "header" | "section";
+
+type EditorialContainerProps = HTMLAttributes<HTMLDivElement> & {
+  as?: EditorialContainerElement;
+};
+
+export function EditorialGutter({
+  className,
+  ...props
+}: HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div className={cn(EDITORIAL_GUTTER_CLASS, className)} {...props} />
+  );
+}
+
+export function EditorialContainer({
+  className,
+  as: Component = "div",
+  ...props
+}: EditorialContainerProps) {
+  return (
+    <Component
+      className={cn(
+        EDITORIAL_GUTTER_CLASS,
+        EDITORIAL_CONTAINER_CLASS,
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 export function EditorialSection({
   className,
   ...props
@@ -154,6 +191,50 @@ export function EditorialPanel({
   );
 }
 
+export const EDITORIAL_HEADER_CONTROL_CLASS =
+  "flex min-h-7 items-center outline-none transition-opacity hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[rgb(var(--color-focus))] active:opacity-80";
+
+type EditorialHeaderBarProps = {
+  leading: ReactNode;
+  meta?: ReactNode;
+  children?: ReactNode;
+  className?: string;
+  sticky?: boolean;
+  ariaLabel?: string;
+};
+
+export function EditorialHeaderBar({
+  leading,
+  meta,
+  children,
+  className,
+  sticky = false,
+  ariaLabel = "Navigation",
+}: EditorialHeaderBarProps) {
+  return (
+    <header
+      className={cn(
+        "editorial-rule bg-canvas z-40 border-b",
+        sticky && "sticky top-0",
+        className,
+      )}
+    >
+      <nav
+        aria-label={ariaLabel}
+        className="mx-0 grid min-h-8 w-full grid-cols-[1fr_auto] items-center gap-4 text-[0.6875rem] font-semibold tracking-[0.16em] uppercase sm:grid-cols-3 sm:px-8 lg:px-4"
+      >
+        {leading}
+        <div className="editorial-muted hidden text-center sm:block">
+          {meta}
+        </div>
+        <div className="flex min-h-7 items-center justify-end gap-3 sm:gap-5">
+          {children}
+        </div>
+      </nav>
+    </header>
+  );
+}
+
 type SiteHeaderProps = {
   brand?: ReactNode;
   brandHref?: string;
@@ -174,31 +255,22 @@ export function SiteHeader({
   ariaLabel = "Site navigation",
 }: SiteHeaderProps) {
   return (
-    <header
-      className={cn(
-        "editorial-rule bg-canvas z-40 border-b",
-        sticky && "sticky top-0",
-        className,
-      )}
-    >
-      <nav
-        aria-label={ariaLabel}
-        className="mx-0 grid min-h-8 w-full grid-cols-[1fr_auto] items-center gap-4 lg:px-4 text-[0.6875rem] font-semibold tracking-[0.16em] uppercase sm:grid-cols-3 sm:px-8"
-      >
+    <EditorialHeaderBar
+      sticky={sticky}
+      className={className}
+      ariaLabel={ariaLabel}
+      leading={
         <Link
           href={brandHref}
-          className="flex min-h-7 w-fit items-center transition-opacity hover:opacity-55"
+          className={cn(EDITORIAL_HEADER_CONTROL_CLASS, "w-fit")}
         >
           {brand}
         </Link>
-        <div className="editorial-muted hidden text-center sm:block">
-          {meta}
-        </div>
-        <div className="flex min-h-7 items-center justify-end gap-3 sm:gap-5">
-          {children}
-        </div>
-      </nav>
-    </header>
+      }
+      meta={meta}
+    >
+      {children}
+    </EditorialHeaderBar>
   );
 }
 

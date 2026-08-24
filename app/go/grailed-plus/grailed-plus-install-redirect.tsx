@@ -13,7 +13,7 @@ import { ArrowDown, ArrowUpRight, LoaderCircle } from "lucide-react";
 import GrailedPlusLiveDemo from "@/app/components/projects/grailed-plus/grailed-plus-live-demo";
 import { useTheme } from "@/app/components/theme/theme-provider";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
-import { SiteHeader } from "@/app/components/ui/editorial";
+import { EditorialContainer, SiteHeader } from "@/app/components/ui/editorial";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
 import { cn } from "@/lib/cn";
 
@@ -363,7 +363,7 @@ export default function GrailedPlusInstallRedirect({
         </SiteHeader>
       ) : null}
       <section className="product-landing-hero editorial-rule relative isolate border-b">
-        <div className="mx-auto grid min-h-[calc(100svh-3rem)] w-full items-start gap-12 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-12 lg:gap-10 lg:px-12 lg:py-8">
+        <EditorialContainer className="grid min-h-[calc(100svh-3rem)] items-start gap-12 py-16 sm:py-20 lg:grid-cols-12 lg:gap-10 lg:py-8">
           <div className="relative z-10 lg:col-span-5 lg:py-8">
             <p
               data-hero-item
@@ -470,13 +470,16 @@ export default function GrailedPlusInstallRedirect({
               </div>
             </div>
           </div>
-        </div>
+        </EditorialContainer>
       </section>
 
       {!heroOnly ? (
         <>
           <section id="features" className="scroll-mt-0">
-        <header className="mx-auto grid max-w-[96rem] gap-8 px-5 py-20 sm:px-8 sm:py-24 lg:grid-cols-12 lg:px-12 lg:py-32">
+        <EditorialContainer
+          as="header"
+          className="grid gap-8 py-20 sm:py-24 lg:grid-cols-12 lg:py-32"
+        >
           <p className="text-ink text-xs font-semibold tracking-[0.2em] uppercase lg:col-span-3">
             Feature index
           </p>
@@ -491,9 +494,9 @@ export default function GrailedPlusInstallRedirect({
             Grailed Plus works where the decision happens—inside listings,
             search results, and messages—not in another tab.
           </p>
-        </header>
+        </EditorialContainer>
 
-        <div className="mx-auto max-w-[96rem] px-5 sm:px-8 lg:px-12">
+        <EditorialContainer>
           {FEATURES.map((feature, index) => {
             const textOnLeft = index % 2 === 0;
 
@@ -547,11 +550,11 @@ export default function GrailedPlusInstallRedirect({
               </article>
             );
           })}
-        </div>
+        </EditorialContainer>
           </section>
 
           <section className="editorial-rule border-y">
-        <div className="mx-auto grid max-w-[96rem] items-end gap-10 px-5 py-20 sm:px-8 sm:py-24 lg:grid-cols-12 lg:px-12 lg:py-32">
+        <EditorialContainer className="grid items-end gap-10 py-20 sm:py-24 lg:grid-cols-12 lg:py-32">
           <div className="lg:col-span-8">
             <p className="text-ink mb-6 text-xs font-semibold tracking-[0.2em] uppercase">
               Ready when you are
@@ -571,10 +574,13 @@ export default function GrailedPlusInstallRedirect({
               payments required. Grailed Plus is completely free to use.
             </p>
           </div>
-        </div>
+        </EditorialContainer>
           </section>
 
-          <footer className="mx-auto flex min-h-8 max-w-[96rem] flex-col gap-3 px-5 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-4">
+          <EditorialContainer
+            as="footer"
+            className="flex min-h-8 flex-col gap-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between"
+          >
             <p className="editorial-muted">Grailed Plus for Chrome</p>
             <Link
               href={PROJECT_ROUTES.home}
@@ -582,7 +588,7 @@ export default function GrailedPlusInstallRedirect({
             >
               dextery.dev
             </Link>
-          </footer>
+          </EditorialContainer>
         </>
       ) : null}
     </main>

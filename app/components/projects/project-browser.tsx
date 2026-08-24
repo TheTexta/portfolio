@@ -24,8 +24,11 @@ import ProjectLivePreview from "@/app/components/projects/project-live-preview";
 import { cn } from "@/lib/cn";
 
 import {
-  ActionButton,
   ActionLink,
+  EditorialContainer,
+  EditorialGutter,
+  EditorialHeaderBar,
+  EDITORIAL_HEADER_CONTROL_CLASS,
   Eyebrow,
 } from "@/app/components/ui/editorial";
 import { useProjectRailMotion } from "@/app/components/projects/use-project-rail-motion";
@@ -33,6 +36,10 @@ import { useProjectRailMotion } from "@/app/components/projects/use-project-rail
 const PROJECT_HASH_PREFIX = "#project-";
 const RAIL_ONE = projectCatalog;
 const VALID_PROJECT_IDS = new Set(projectCatalog.map((project) => project.id));
+const FOCUS_HEADER_CONTROL_CLASS = cn(
+  EDITORIAL_HEADER_CONTROL_CLASS,
+  "cursor-pointer appearance-none gap-2 bg-transparent",
+);
 
 type DocumentWithViewTransition = Document & {
   startViewTransition?: (callback: () => void) => {
@@ -139,7 +146,14 @@ function ProjectRail({
                       <p className="text-[0.625rem] font-semibold tracking-[0.16em] uppercase">
                         {project.number}
                       </p>
-                      <h3 className="truncate text-sm font-semibold">
+                      <h3
+                        className={cn(
+                          "project-title project-title--rail min-w-0 flex-1 truncate",
+                          project.titleTreatment === "nepo" &&
+                            "!overflow-visible !text-clip",
+                        )}
+                        data-title-treatment={project.titleTreatment}
+                      >
                         {project.title}
                       </h3>
                     </div>
@@ -203,50 +217,49 @@ function FocusCarousel({ projectId, onChange, onClose }: FocusCarouselProps) {
       tabIndex={-1}
       onKeyDown={handleKeyDown}
     >
-      <div className="editorial-rule mx-auto flex min-h-12 max-w-384 items-center justify-between gap-3 border-y px-5 sm:px-8 lg:px-12">
-        <Eyebrow className="editorial-muted">
-          <span className="sm:hidden">
-            {(currentIndex + 1).toString().padStart(2, "0")} /{" "}
-            {projectCatalog.length.toString().padStart(2, "0")}
-          </span>
-          <span className="hidden sm:inline">
-            Focus · {(currentIndex + 1).toString().padStart(2, "0")} /{" "}
-            {projectCatalog.length.toString().padStart(2, "0")}
-          </span>
-        </Eyebrow>
-        <div className="flex items-center gap-1">
-          <ActionButton
-            variant="quiet"
-            size="sm"
-            className="min-h-11 min-w-11 px-2 md:px-3"
-            onClick={selectPrevious}
-            aria-label={`Show ${previous.title}`}
-          >
-            <ArrowLeft aria-hidden className="h-4 w-4" />
-            <span>Prev</span>
-          </ActionButton>
-          <ActionButton
-            variant="quiet"
-            size="sm"
-            className="min-h-11 min-w-11 px-2 md:px-3"
-            onClick={selectNext}
-            aria-label={`Show ${next.title}`}
-          >
-            <span>Next</span>
-            <ArrowRight aria-hidden className="h-4 w-4" />
-          </ActionButton>
-          <ActionButton
-            variant="quiet"
-            size="sm"
-            className="min-h-11 min-w-11 px-2 md:px-3"
-            onClick={onClose}
-            aria-label="Close project focus"
-          >
-            <span>Close</span>
-            <X aria-hidden className="h-4 w-4" />
-          </ActionButton>
-        </div>
-      </div>
+      <EditorialHeaderBar
+        ariaLabel={`${current.title} focus controls`}
+        leading={
+          <Eyebrow className="editorial-muted">
+            <span className="sm:hidden">
+              {(currentIndex + 1).toString().padStart(2, "0")} /{" "}
+              {projectCatalog.length.toString().padStart(2, "0")}
+            </span>
+            <span className="hidden sm:inline">
+              {(currentIndex + 1).toString().padStart(2, "0")} /{" "}
+              {projectCatalog.length.toString().padStart(2, "0")}
+            </span>
+          </Eyebrow>
+        }
+      >
+        <button
+          type="button"
+          className={FOCUS_HEADER_CONTROL_CLASS}
+          onClick={selectPrevious}
+          aria-label={`Show ${previous.title}`}
+        >
+          <ArrowLeft aria-hidden className="h-4 w-4" />
+          <span>Prev</span>
+        </button>
+        <button
+          type="button"
+          className={FOCUS_HEADER_CONTROL_CLASS}
+          onClick={selectNext}
+          aria-label={`Show ${next.title}`}
+        >
+          <span>Next</span>
+          <ArrowRight aria-hidden className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          className={FOCUS_HEADER_CONTROL_CLASS}
+          onClick={onClose}
+          aria-label="Close project focus"
+        >
+          <span>Close</span>
+          <X aria-hidden className="h-4 w-4" />
+        </button>
+      </EditorialHeaderBar>
 
       <div className="project-focus-stage">
         <FocusPreview
@@ -258,7 +271,7 @@ function FocusCarousel({ projectId, onChange, onClose }: FocusCarouselProps) {
         <FocusPreview project={next} position="next" onSelect={selectNext} />
       </div>
 
-      <div className="editorial-rule grid gap-4 border-y px-5 py-4 sm:px-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:px-12">
+      <EditorialGutter className="editorial-rule grid gap-4 border-y py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <Eyebrow>
@@ -268,7 +281,10 @@ function FocusCarousel({ projectId, onChange, onClose }: FocusCarouselProps) {
               {current.technologies.join(" · ")}
             </span>
           </div>
-          <h2 className="mt-2 text-[clamp(1.75rem,3vw,3rem)] leading-[0.94] font-semibold tracking-[-0.035em] wrap-anywhere">
+          <h2
+            className="project-title mt-2 text-[clamp(1.75rem,3vw,3rem)] wrap-anywhere"
+            data-title-treatment={current.titleTreatment}
+          >
             {current.title}
           </h2>
           <p className="editorial-muted mt-2 max-w-2xl text-sm leading-6">
@@ -291,7 +307,7 @@ function FocusCarousel({ projectId, onChange, onClose }: FocusCarouselProps) {
             </ActionLink>
           ) : null}
         </div>
-      </div>
+      </EditorialGutter>
     </section>
   );
 }
@@ -569,14 +585,14 @@ export default function ProjectBrowser() {
       }}
     >
       {!focusedProjectId ? (
-        <div className="mx-auto max-w-384 px-5 pb-3 sm:px-8 lg:px-12">
+        <EditorialContainer className="max-w-384 pb-3">
           <Eyebrow className="editorial-muted">
-            Interactive work / 01—03
+            Interactive works / 01—03
           </Eyebrow>
           <h2 className="mt-1.5 text-[clamp(1.75rem,3.5vw,3.25rem)] leading-none font-semibold tracking-[-0.035em]">
             Projects
           </h2>
-        </div>
+        </EditorialContainer>
       ) : null}
 
       {focusedProjectId ? (

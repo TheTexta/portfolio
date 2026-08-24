@@ -14,6 +14,7 @@ const project: ProjectDefinition = {
   id: "spotify-nodify",
   number: "04",
   title: "Spotify Nodify",
+  titleTreatment: "grailed",
   eyebrow: "API experiment / Listening data",
   summary:
     "A Spotify API experiment for inspecting profile context and recent listening taste.",

@@ -3,7 +3,7 @@
 import { ArrowUpRight } from "lucide-react";
 
 import ProjectBrowser from "@/app/components/projects/project-browser";
-import { SiteHeader } from "@/app/components/ui/editorial";
+import { EditorialContainer, SiteHeader } from "@/app/components/ui/editorial";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
 
 export default function HomePageContent() {
@@ -25,26 +25,28 @@ export default function HomePageContent() {
         <ThemeToggle />
       </SiteHeader>
 
-      <section className="mx-auto grid max-w-[96rem] px-5 py-10 sm:px-8 sm:py-12 lg:grid-cols-12 lg:px-12 lg:py-14">
-        <div className="lg:col-span-9">
-          <p className="mb-3 flex items-center gap-3 text-[0.6875rem] font-semibold tracking-[0.18em] uppercase">
-            <span aria-hidden className="h-px w-8 bg-current" />
-            Software + multimedia
-          </p>
-          <h1 className="-ml-[0.035em] text-[clamp(3.25rem,7vw,6.5rem)] leading-[0.84] font-semibold tracking-[-0.05em]">
-            Dexter Young.
-          </h1>
-          <p className="editorial-muted mt-4 max-w-3xl text-[clamp(1rem,1.6vw,1.25rem)] leading-7">
-            browser extensions, interactive image systems, and multimedia webworks
-          </p>
-        </div>
+      <section>
+        <EditorialContainer className="grid py-10 sm:py-12 lg:grid-cols-12 lg:py-14">
+          <div className="lg:col-span-9">
+            <p className="mb-3 flex items-center gap-3 text-[0.6875rem] font-semibold tracking-[0.18em] uppercase">
+              <span aria-hidden className="h-px w-8 bg-current" />
+              Software + multimedia
+            </p>
+            <h1 className="-ml-[0.035em] text-[clamp(3.25rem,7vw,6.5rem)] leading-[0.84] font-semibold tracking-[-0.05em]">
+              Dexter Young.
+            </h1>
+            <p className="editorial-muted mt-4 max-w-3xl text-[clamp(1rem,1.6vw,1.25rem)] leading-7">
+              browser extensions, interactive image systems, and multimedia webworks
+            </p>
+          </div>
+        </EditorialContainer>
       </section>
 
       <ProjectBrowser />
 
       <footer id="contact" className="editorial-rule mt-8 border-t sm:mt-12">
-        <div className="mx-auto grid max-w-[96rem] gap-6 px-5 py-8 sm:px-8 sm:py-10 lg:grid-cols-12 lg:px-12 lg:py-12">
-          <div className="lg:col-span-7">
+        <EditorialContainer className="grid gap-6 py-8 sm:py-10 lg:grid-cols-12 lg:py-12">
+          <div className="lg:col-span-8">
             <p className="text-[0.6875rem] font-semibold tracking-[0.18em] uppercase">
               Contact
             </p>
@@ -52,7 +54,7 @@ export default function HomePageContent() {
               Get in touch.
             </h2>
           </div>
-          <ul className="editorial-rule divide-y divide-[rgb(var(--color-rule))] border-y lg:col-span-5">
+          <ul className="editorial-rule divide-y divide-[rgb(var(--color-rule))] border-y lg:col-span-4">
             {[
               ["GitHub", "https://github.com/TheTexta", "@TheTexta"],
               ["LinkedIn", "https://www.linkedin.com/in/dexter-y", "dexter-y"],
@@ -77,7 +79,7 @@ export default function HomePageContent() {
               </li>
             ))}
           </ul>
-        </div>
+        </EditorialContainer>
       </footer>
     </main>
   );
