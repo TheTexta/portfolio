@@ -58,7 +58,7 @@ export default function PhotoGraphAdminLoginPage() {
 
   return (
     <main className="editorial-page min-h-dvh">
-      <SiteHeader meta="Photo Graph / Admin">
+      <SiteHeader>
         <ThemeToggle />
       </SiteHeader>
       <div className="mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-xl items-center px-5 py-12 sm:px-8">

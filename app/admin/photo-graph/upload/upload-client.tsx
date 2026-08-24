@@ -1008,7 +1008,7 @@ export default function PhotoGraphUploadClient() {
 
   return (
     <main className="editorial-page min-h-dvh">
-      <SiteHeader meta="Photo Graph / Admin tools">
+      <SiteHeader>
         <ThemeToggle />
         <ControlButton
           onClick={handleLogout}

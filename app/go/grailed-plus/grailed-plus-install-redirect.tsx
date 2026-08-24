@@ -49,7 +49,6 @@ const GOOGLE_ADS_REDIRECT_FALLBACK_MS = 1200;
 const CTA_LABEL = "Add to Chrome";
 const CTA_MOBILE_LABEL = "View in Chrome Web Store";
 const CTA_OPENING_LABEL = "Opening Chrome Web Store...";
-const DEFAULT_EXTENSION_VERSION = "1.0.0";
 const TRACKED_QUERY_KEYS = [
   "gclid",
   "gbraid",
@@ -211,15 +210,8 @@ export default function GrailedPlusInstallRedirect({
 }: GrailedPlusInstallRedirectProps) {
   const { darkMode } = useTheme();
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [extensionVersion, setExtensionVersion] = useState(
-    DEFAULT_EXTENSION_VERSION,
-  );
   const demoCurrency = "USD" as const;
   const demoDarkMode = darkMode;
-
-  const handleVersionChange = useCallback((version: string | null) => {
-    setExtensionVersion(version ?? DEFAULT_EXTENSION_VERSION);
-  }, []);
   const redirectStartedRef = useRef(false);
   const redirectCompletedRef = useRef(false);
   const timeoutIdsRef = useRef<Set<number>>(new Set());
@@ -337,7 +329,6 @@ export default function GrailedPlusInstallRedirect({
         <SiteHeader
           brand="Grailed Plus"
           brandHref={PROJECT_ROUTES.grailedPlusInstall}
-          meta={`Chrome / v${extensionVersion}`}
           ariaLabel="Grailed Plus page navigation"
           sticky={true}
         >
@@ -464,7 +455,6 @@ export default function GrailedPlusInstallRedirect({
                   darkModeEnabled={demoDarkMode}
                   parentDarkMode={darkMode}
                   feature="overview"
-                  onVersionChange={handleVersionChange}
                   title="Live overview of the current Grailed Plus extension interface"
                 />
               </div>

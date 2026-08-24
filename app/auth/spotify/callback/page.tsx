@@ -90,7 +90,7 @@ export default function SpotifyCallbackPage() {
 
   return (
     <main className="editorial-page min-h-dvh">
-      <SiteHeader meta="Spotify Nodify / Authorization">
+      <SiteHeader>
         <ThemeToggle />
       </SiteHeader>
       <EditorialContainer

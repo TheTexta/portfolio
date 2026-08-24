@@ -18,10 +18,7 @@ export default function ProjectCaseStudyShell({
 }) {
   return (
     <main className="editorial-page min-h-dvh overflow-x-clip">
-      <SiteHeader
-        meta={`${project.number} / ${project.title}`}
-        ariaLabel={`${project.title} navigation`}
-      >
+      <SiteHeader ariaLabel={`${project.title} navigation`}>
         <a
           href="#overview"
           className="hidden min-h-7 items-center transition-opacity hover:opacity-55 sm:flex"

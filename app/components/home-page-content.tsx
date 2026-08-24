@@ -1,15 +1,25 @@
 "use client";
 
 import { ArrowUpRight } from "lucide-react";
+import { useState } from "react";
 
 import ProjectBrowser from "@/app/components/projects/project-browser";
+import { type ProjectId } from "@/app/components/projects/project-catalog";
 import { EditorialContainer, SiteHeader } from "@/app/components/ui/editorial";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
 
 export default function HomePageContent() {
+  const [focusedProjectId, setFocusedProjectId] = useState<ProjectId | null>(
+    null,
+  );
+
   return (
     <main className="editorial-page min-h-dvh overflow-x-clip">
-      <SiteHeader meta="Web tools / Visual systems">
+      <SiteHeader
+        directory={
+          focusedProjectId ? `/preview/${focusedProjectId}/` : undefined
+        }
+      >
         <a
           href="#projects"
           className="flex min-h-7 items-center transition-opacity hover:opacity-55"
@@ -42,7 +52,7 @@ export default function HomePageContent() {
         </EditorialContainer>
       </section>
 
-      <ProjectBrowser />
+      <ProjectBrowser onFocusChange={setFocusedProjectId} />
 
       <footer id="contact" className="editorial-rule mt-8 border-t sm:mt-12">
         <EditorialContainer className="grid gap-6 py-8 sm:py-10 lg:grid-cols-12 lg:py-12">

@@ -143,9 +143,7 @@ function ProjectRail({
                     }}
                   >
                     <div className="editorial-rule flex min-h-12 items-center gap-3 border-t px-3">
-                      <p className="text-[0.625rem] font-semibold tracking-[0.16em] uppercase">
-                        {project.number}
-                      </p>
+                      
                       <h3
                         className={cn(
                           "project-title project-title--rail min-w-0 flex-1 truncate",
@@ -154,8 +152,12 @@ function ProjectRail({
                         )}
                         data-title-treatment={project.titleTreatment}
                       >
+                      
                         {project.title}
                       </h3>
+                      <p className="text-[0.625rem] font-semibold tracking-[0.16em] uppercase">
+                        {project.number}
+                      </p>
                     </div>
                     <div className="editorial-rule border-t px-3 pt-2 pb-3">
                       <p className="editorial-muted truncate text-[0.625rem] font-semibold tracking-[0.12em] uppercase">
@@ -388,7 +390,11 @@ function readProjectHash(): ProjectId | null {
   return VALID_PROJECT_IDS.has(projectId) ? projectId : null;
 }
 
-export default function ProjectBrowser() {
+type ProjectBrowserProps = {
+  onFocusChange?: (projectId: ProjectId | null) => void;
+};
+
+export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
   const [focusedProjectId, setFocusedProjectId] = useState<ProjectId | null>(
     null,
   );
@@ -486,6 +492,10 @@ export default function ProjectBrowser() {
 
     return () => window.cancelAnimationFrame(frame);
   }, [focusedProjectId]);
+
+  useEffect(() => {
+    onFocusChange?.(focusedProjectId);
+  }, [focusedProjectId, onFocusChange]);
 
   useEffect(() => {
     if (!touchInfoKey) {

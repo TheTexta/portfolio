@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import { cn } from "@/lib/cn";
+import HeaderDirectory from "@/app/components/ui/header-directory";
 
 const actionStyles = cva(
   "border-rule inline-flex min-h-11 cursor-pointer appearance-none items-center justify-center gap-2 border px-4 py-2 text-center text-xs font-semibold tracking-[0.12em] uppercase no-underline transition-[background-color,color,border-color,opacity,transform] duration-150 ease-[var(--ease-out-quint)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-focus))] active:translate-y-px disabled:pointer-events-none disabled:opacity-45",
@@ -196,7 +197,7 @@ export const EDITORIAL_HEADER_CONTROL_CLASS =
 
 type EditorialHeaderBarProps = {
   leading: ReactNode;
-  meta?: ReactNode;
+  directory?: ReactNode;
   children?: ReactNode;
   className?: string;
   sticky?: boolean;
@@ -205,7 +206,7 @@ type EditorialHeaderBarProps = {
 
 export function EditorialHeaderBar({
   leading,
-  meta,
+  directory,
   children,
   className,
   sticky = false,
@@ -224,8 +225,8 @@ export function EditorialHeaderBar({
         className="mx-0 grid min-h-8 w-full grid-cols-[1fr_auto] items-center gap-4 text-[0.6875rem] font-semibold tracking-[0.16em] uppercase sm:grid-cols-3 sm:px-8 lg:px-4"
       >
         {leading}
-        <div className="editorial-muted hidden text-center sm:block">
-          {meta}
+        <div className="text-ink hidden min-h-7 items-center justify-center text-center text-[0.6875rem] font-semibold tracking-[0.16em] normal-case sm:flex">
+          {directory}
         </div>
         <div className="flex min-h-7 items-center justify-end gap-3 sm:gap-5">
           {children}
@@ -238,7 +239,7 @@ export function EditorialHeaderBar({
 type SiteHeaderProps = {
   brand?: ReactNode;
   brandHref?: string;
-  meta?: ReactNode;
+  directory?: ReactNode;
   children?: ReactNode;
   className?: string;
   sticky?: boolean;
@@ -248,7 +249,7 @@ type SiteHeaderProps = {
 export function SiteHeader({
   brand = "Dexter Young",
   brandHref = "/",
-  meta,
+  directory,
   children,
   className,
   sticky = true,
@@ -267,7 +268,7 @@ export function SiteHeader({
           {brand}
         </Link>
       }
-      meta={meta}
+      directory={directory ?? <HeaderDirectory />}
     >
       {children}
     </EditorialHeaderBar>
