@@ -222,7 +222,7 @@ export function EditorialHeaderBar({
     >
       <nav
         aria-label={ariaLabel}
-        className="mx-0 grid min-h-8 w-full grid-cols-[1fr_auto] items-center gap-4 text-[0.6875rem] font-semibold tracking-[0.16em] uppercase sm:grid-cols-3 sm:px-8 lg:px-4"
+        className="mx-0 grid min-h-8 w-full grid-cols-[1fr_auto] items-center gap-4 px-5 text-[0.6875rem] font-semibold tracking-[0.16em] uppercase sm:grid-cols-3 sm:px-8 lg:px-4"
       >
         {leading}
         <div className="text-ink hidden min-h-7 items-center justify-center text-center text-[0.6875rem] font-semibold tracking-[0.16em] normal-case sm:flex">
