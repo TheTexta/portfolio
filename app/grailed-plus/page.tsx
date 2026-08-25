@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Script from "next/script";
 
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
+import GrailedPlusInstallPage from "@/app/components/projects/grailed-plus/grailed-plus-install-page";
 import { SITE_ORIGIN } from "@/lib/site-config";
-import GrailedPlusInstallRedirect from "./grailed-plus-install-redirect";
 
 const DEFAULT_GOOGLE_ADS_ID = "AW-18008800880";
 const DEFAULT_GOOGLE_ADS_GRAILED_PLUS_INSTALL_LABEL = "96j6CPOdxIwcEPD8oYtD";
@@ -53,11 +53,7 @@ export const metadata: Metadata = {
   description:
     "Explore live Grailed Plus demos for price insights, market comparison, custom currency conversion, seller context, and dark mode.",
   alternates: {
-    canonical: `${SITE_ORIGIN}${PROJECT_ROUTES.grailedPlusInstall}`,
-  },
-  robots: {
-    index: false,
-    follow: false,
+    canonical: `${SITE_ORIGIN}${PROJECT_ROUTES.grailedPlus}`,
   },
 };
 
@@ -92,7 +88,7 @@ export default async function Page({ searchParams }: GrailedPlusPageProps) {
           </Script>
         </>
       ) : null}
-      <GrailedPlusInstallRedirect
+      <GrailedPlusInstallPage
         googleAdsSendTo={googleAdsSendTo}
         heroOnly={heroOnly}
       />

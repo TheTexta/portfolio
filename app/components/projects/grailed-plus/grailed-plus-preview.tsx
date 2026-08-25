@@ -10,7 +10,7 @@ type GrailedPlusPreviewProps = {
 };
 
 const GRAILED_PLUS_HERO_PREVIEW_ROUTE =
-  `${PROJECT_ROUTES.grailedPlusInstall}?view=hero`;
+  `${PROJECT_ROUTES.grailedPlus}?view=hero`;
 const DESKTOP_PREVIEW_WIDTH = 1280;
 
 export default function GrailedPlusPreview({

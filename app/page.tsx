@@ -1,5 +1,7 @@
-import HomePageContent from "@/app/components/home-page-content";
+import { permanentRedirect } from "next/navigation";
+
+import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 
 export default function Page() {
-  return <HomePageContent />;
+  permanentRedirect(PROJECT_ROUTES.home);
 }

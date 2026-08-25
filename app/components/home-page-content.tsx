@@ -3,9 +3,33 @@
 import { useState } from "react";
 
 import ProjectBrowser from "@/app/components/projects/project-browser";
-import { type ProjectId } from "@/app/components/projects/project-catalog";
+import {
+  getProject,
+  type ProjectId,
+} from "@/app/components/projects/project-catalog";
+import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import { EditorialContainer, SiteHeader } from "@/app/components/ui/editorial";
+import HeaderDirectory, {
+  type HeaderDirectorySegment,
+} from "@/app/components/ui/header-directory";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
+
+function getFocusedDirectorySegments(
+  projectId: ProjectId,
+): HeaderDirectorySegment[] {
+  const project = getProject(projectId);
+  const projectHref =
+    project.caseStudyHref ??
+    project.experienceHref ??
+    project.liveHref ??
+    PROJECT_ROUTES.portfolioProjects;
+
+  return [
+    { label: "portfolio", href: PROJECT_ROUTES.home },
+    { label: "projects", href: PROJECT_ROUTES.portfolioProjects },
+    { label: project.id, href: projectHref },
+  ];
+}
 
 export default function HomePageContent() {
   const [focusedProjectId, setFocusedProjectId] = useState<ProjectId | null>(
@@ -16,15 +40,13 @@ export default function HomePageContent() {
     <main className="editorial-page min-h-dvh overflow-x-clip">
       <SiteHeader
         directory={
-          focusedProjectId ? `/preview/${focusedProjectId}/` : undefined
+          focusedProjectId ? (
+            <HeaderDirectory
+              segments={getFocusedDirectorySegments(focusedProjectId)}
+            />
+          ) : undefined
         }
       >
-        <a
-          href="#projects"
-          className="flex min-h-7 items-center transition-opacity hover:opacity-55"
-        >
-          Index
-        </a>
         <a
           href="#contact"
           className="hidden min-h-7 items-center transition-opacity hover:opacity-55 sm:flex"
@@ -53,7 +75,10 @@ export default function HomePageContent() {
 
       <ProjectBrowser onFocusChange={setFocusedProjectId} />
 
-      <footer id="contact" className="editorial-rule mt-8 border-t sm:mt-12">
+      <footer
+        id="contact"
+        className="editorial-rule mt-8 scroll-mt-12 border-t sm:mt-12"
+      >
         <EditorialContainer className="grid gap-6 py-8 sm:py-10 lg:grid-cols-12 lg:py-12">
           <div className="lg:col-span-8">
             <p className="text-[0.6875rem] font-semibold tracking-[0.18em] uppercase">

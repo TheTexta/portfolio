@@ -1,14 +1,14 @@
 export const PROJECT_ROUTES = {
-  home: "/",
+  home: "/portfolio",
+  portfolioProjects: "/portfolio#projects",
   photoGraph: "/projects/photo-graph",
   photoGraphExperience: "/projects/photo-graph/experience",
   photoGraphAdminLogin: "/admin/photo-graph/login",
   photoGraphAdminUpload: "/admin/photo-graph/upload",
   spotifyNodify: "/projects/spotify-nodify",
   spotifyNodifyExperience: "/projects/spotify-nodify/experience",
-  grailedPlus: "/projects/grailed-plus",
-  grailedPlusExperience: "/projects/grailed-plus/experience",
-  grailedPlusInstall: "/go/grailed-plus",
+  grailedPlus: "/grailed-plus",
+  grailedPlusExperience: "/grailed-plus/experience",
   grailedPlusChromeWebStore:
     "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd",
   nepobabies: "/projects/nepobabiesruntheunderground",

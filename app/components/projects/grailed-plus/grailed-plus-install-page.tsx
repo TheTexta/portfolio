@@ -17,7 +17,7 @@ import { EditorialContainer, SiteHeader } from "@/app/components/ui/editorial";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
 import { cn } from "@/lib/cn";
 
-type GrailedPlusInstallRedirectProps = {
+type GrailedPlusInstallPageProps = {
   googleAdsSendTo?: string;
   heroOnly?: boolean;
 };
@@ -204,10 +204,10 @@ function queueTrackingRequest(payload: TrackingPayload) {
   });
 }
 
-export default function GrailedPlusInstallRedirect({
+export default function GrailedPlusInstallPage({
   googleAdsSendTo,
   heroOnly = false,
-}: GrailedPlusInstallRedirectProps) {
+}: GrailedPlusInstallPageProps) {
   const { darkMode } = useTheme();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const demoCurrency = "USD" as const;
@@ -327,8 +327,8 @@ export default function GrailedPlusInstallRedirect({
       </p>
       {!heroOnly ? (
         <SiteHeader
-          brand="Grailed Plus"
-          brandHref={PROJECT_ROUTES.grailedPlusInstall}
+          brand="dextery.dev"
+          brandHref={PROJECT_ROUTES.home}
           ariaLabel="Grailed Plus page navigation"
           sticky={true}
         >

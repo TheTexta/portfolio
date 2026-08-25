@@ -1,6 +1,8 @@
 import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 
 import { type ProjectDefinition } from "@/app/components/projects/project-catalog";
+import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import ProjectLivePreview from "@/app/components/projects/project-live-preview";
 import {
   ActionLink,
@@ -25,13 +27,12 @@ export default function ProjectCaseStudyShell({
         >
           Overview
         </a>
-        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-        <a
-          href="/#projects"
+        <Link
+          href={PROJECT_ROUTES.portfolioProjects}
           className="flex min-h-7 items-center transition-opacity hover:opacity-55"
         >
           Index
-        </a>
+        </Link>
         <ThemeToggle />
       </SiteHeader>
 

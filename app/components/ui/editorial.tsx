@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import { cn } from "@/lib/cn";
+import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import HeaderDirectory from "@/app/components/ui/header-directory";
 
 const actionStyles = cva(
@@ -248,7 +249,7 @@ type SiteHeaderProps = {
 
 export function SiteHeader({
   brand = "Dexter Young",
-  brandHref = "/",
+  brandHref = PROJECT_ROUTES.home,
   directory,
   children,
   className,

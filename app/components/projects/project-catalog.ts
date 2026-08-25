@@ -53,8 +53,8 @@ export const projectCatalog: readonly ProjectDefinition[] = [
     summary:
       "Cross-market comparison, price context, local currency, seller metadata, and dark mode inside Grailed.",
     technologies: ["Chrome MV3", "JavaScript"],
-    experienceHref: PROJECT_ROUTES.grailedPlusInstall,
-    liveHref: PROJECT_ROUTES.grailedPlusInstall,
+    experienceHref: PROJECT_ROUTES.grailedPlus,
+    liveHref: PROJECT_ROUTES.grailedPlus,
     posterSrc: "/projects/posters/grailed-plus.webp",
     posterAlt:
       "Grailed listing with Grailed Plus pricing insights and market comparison",
@@ -66,7 +66,7 @@ export const projectCatalog: readonly ProjectDefinition[] = [
     links: [
       {
         label: "Product page",
-        href: PROJECT_ROUTES.grailedPlusInstall,
+        href: PROJECT_ROUTES.grailedPlus,
       },
       {
         label: "Chrome Web Store",

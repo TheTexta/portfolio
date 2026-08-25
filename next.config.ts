@@ -30,6 +30,25 @@ function supabaseImageRemotePattern() {
 const supabasePatterns = supabaseImageRemotePattern();
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/go/grailed-plus",
+        destination: "/grailed-plus",
+        permanent: true,
+      },
+      {
+        source: "/projects/grailed-plus",
+        destination: "/grailed-plus",
+        permanent: true,
+      },
+      {
+        source: "/projects/grailed-plus/experience",
+        destination: "/grailed-plus/experience",
+        permanent: true,
+      },
+    ];
+  },
   images: {
     deviceSizes: CANVAS_IMAGE_DEVICE_SIZES,
     imageSizes: CANVAS_IMAGE_SIZES,

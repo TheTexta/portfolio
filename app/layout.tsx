@@ -7,6 +7,7 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "@/app/components/theme/theme-provider";
+import SmoothScrollProvider from "@/app/components/ui/smooth-scroll-provider";
 import { SITE_ORIGIN } from "@/lib/site-config";
 import { getThemeInitScript } from "@/lib/theme";
 
@@ -85,7 +86,7 @@ export default function RootLayout({
           {`document.documentElement.classList.toggle("windows", navigator.platform.startsWith("Win") || navigator.userAgent.includes("Windows"));`}
         </Script>
         <ThemeProvider>
-          {children}
+          <SmoothScrollProvider>{children}</SmoothScrollProvider>
           <Analytics />
           <SpeedInsights />
         </ThemeProvider>

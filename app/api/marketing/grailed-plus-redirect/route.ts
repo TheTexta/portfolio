@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     ...properties,
     autoRedirectEnabled: body?.autoRedirectEnabled === true,
     destination: PROJECT_ROUTES.grailedPlusChromeWebStore,
-    sourcePath: PROJECT_ROUTES.grailedPlusInstall,
+    sourcePath: PROJECT_ROUTES.grailedPlus,
   });
 
   return new Response(null, { status: 204 });
