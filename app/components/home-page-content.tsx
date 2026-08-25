@@ -1,6 +1,5 @@
 "use client";
 
-import { ArrowUpRight } from "lucide-react";
 import { useState } from "react";
 
 import ProjectBrowser from "@/app/components/projects/project-browser";
@@ -58,10 +57,10 @@ export default function HomePageContent() {
         <EditorialContainer className="grid gap-6 py-8 sm:py-10 lg:grid-cols-12 lg:py-12">
           <div className="lg:col-span-8">
             <p className="text-[0.6875rem] font-semibold tracking-[0.18em] uppercase">
-              Contact
+              Get in touch
             </p>
             <h2 className="mt-3 text-[clamp(2rem,4vw,4.25rem)] leading-[0.9] font-semibold tracking-[-0.045em]">
-              Get in touch.
+              Personal Information
             </h2>
           </div>
           <ul className="editorial-rule divide-y divide-[rgb(var(--color-rule))] border-y lg:col-span-4">
@@ -73,7 +72,7 @@ export default function HomePageContent() {
               <li key={label}>
                 <a
                   href={href}
-                  className="group flex min-h-12 items-center justify-between gap-4 py-2 text-sm transition-opacity hover:opacity-55"
+                  className="flex min-h-12 items-center justify-between py-2 text-sm transition-opacity hover:opacity-55"
                 >
                   <span className="font-semibold tracking-[0.12em] uppercase">
                     {label}
@@ -81,13 +80,23 @@ export default function HomePageContent() {
                   <span className="editorial-muted ml-auto truncate">
                     {value}
                   </span>
-                  <ArrowUpRight
-                    aria-hidden
-                    className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                  />
                 </a>
               </li>
             ))}
+            <li>
+              <a
+                href="/Dexter%20Young%20Resume.pdf"
+                download="Dexter Young Resume.pdf"
+                className="flex min-h-12 items-center justify-between py-2 text-sm transition-opacity hover:opacity-55"
+              >
+                <span className="font-semibold tracking-[0.12em] uppercase">
+                  Resume
+                </span>
+                <span className="editorial-muted ml-auto truncate">
+                  Download PDF
+                </span>
+              </a>
+            </li>
           </ul>
         </EditorialContainer>
       </footer>
