@@ -14,6 +14,7 @@ import {
 
 import { useTheme } from "@/app/components/theme/theme-provider";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
+import { ControlButton } from "@/app/components/ui/control";
 import ExperienceNav from "@/app/components/ui/experience-nav";
 import {
   getPhotoGraphLinkValue,
@@ -44,7 +45,7 @@ import { usePhotoGraphImages } from "./usePhotoGraphImages";
 
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
   ssr: false,
-  loading: () => <div className="h-full w-full bg-white dark:bg-black" />,
+  loading: () => <div className="bg-canvas h-full w-full" />,
 }) as unknown as (props: Record<string, unknown>) => ReactElement;
 
 function fitGraphToWeightedCenter(
@@ -108,8 +109,12 @@ function fitGraphToWeightedCenter(
     ),
   );
 
-  graph.centerAt(centerX, centerY, GRAPH_CONFIG.fitToCanvasDurationMs);
-  graph.zoom(zoom, GRAPH_CONFIG.fitToCanvasDurationMs);
+  const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ? 0
+    : GRAPH_CONFIG.fitToCanvasDurationMs;
+
+  graph.centerAt(centerX, centerY, duration);
+  graph.zoom(zoom, duration);
 }
 
 function buildInspectPreviewUrl(node: PhotoGraphNode) {
@@ -153,8 +158,12 @@ export default function PhotoGraphCanvas({
     null,
   );
 
-  const { defaultGraphControls: fetchedDefaultGraphControls, graphData } =
-    usePhotoGraphData(graphUrl);
+  const {
+    defaultGraphControls: fetchedDefaultGraphControls,
+    graphData,
+    loadStatus,
+    retry,
+  } = usePhotoGraphData(graphUrl);
   const activeControls =
     controlledControls ??
     (hasLocalControlOverride
@@ -290,10 +299,9 @@ export default function PhotoGraphCanvas({
       className={`static h-full w-full transition-colors ${photoGraphShellClass}`}
     >
       <div
-        className={`h-full w-full transition-[opacity,filter] duration-200 ${
-          inspectTarget
-            ? "pointer-events-none opacity-35 blur-[1px]"
-            : "opacity-100"
+        aria-hidden={inspectTarget ? true : undefined}
+        className={`h-full w-full transition-opacity duration-200 motion-reduce:transition-none ${
+          inspectTarget ? "pointer-events-none opacity-35" : "opacity-100"
         }`}
       >
         {showControls && (
@@ -321,7 +329,7 @@ export default function PhotoGraphCanvas({
 
         <div
           ref={containerRef}
-          className="relative h-full w-full bg-white [image-rendering:pixelated] dark:bg-black [&_canvas]:[image-rendering:pixelated]"
+          className="bg-canvas relative h-full w-full [image-rendering:pixelated] [&_canvas]:[image-rendering:pixelated]"
         >
           {dimensions.width > 0 && dimensions.height > 0 && (
             <ForceGraph2D
@@ -350,6 +358,26 @@ export default function PhotoGraphCanvas({
               onZoom={handleZoom}
               onZoomEnd={handleZoomEnd}
             />
+          )}
+          {loadStatus !== "ready" && (
+            <div
+              className="bg-canvas/90 absolute inset-0 z-[4] flex items-center justify-center px-6 text-center"
+              role={loadStatus === "error" ? "alert" : "status"}
+              aria-live="polite"
+            >
+              <div className="flex max-w-sm flex-col items-center gap-3">
+                <p className="text-xs font-semibold tracking-[0.08em] uppercase">
+                  {loadStatus === "loading" && "Loading photographs"}
+                  {loadStatus === "empty" && "No photographs available"}
+                  {loadStatus === "error" && "Photo graph unavailable"}
+                </p>
+                {loadStatus === "error" && (
+                  <ControlButton layout="action" size="sm" onClick={retry}>
+                    Try again
+                  </ControlButton>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </div>

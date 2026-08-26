@@ -1,9 +1,10 @@
 import { imagePathForLegacyId } from "@/lib/photo-graph/config";
 import { isRecoverablePhotoGraphDatabaseError } from "@/lib/photo-graph/database-errors";
 import {
-  DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG,
-  normalizePhotoGraphEdgeGenerationConfig,
-} from "@/lib/photo-graph/edge-generation";
+  DEFAULT_SPARSE_EDGE_GENERATION_CONFIG,
+  normalizeSparseEdgeGenerationConfig,
+  type RankedPhotoGraphNeighbor,
+} from "@/lib/photo-graph/sparse-edge-generation";
 import {
   DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS,
   normalizePhotoGraphRuntimeControls,
@@ -11,6 +12,7 @@ import {
 import type {
   GraphNode,
   PhotoGraphEdgeRow,
+  PhotoGraphNeighborRow,
   PhotoGraphNodeRow,
   PhotoGraphEdgeGenerationConfig,
   PhotoGraphRuntimeControls,
@@ -103,6 +105,7 @@ function toNodeRow(node: GraphNode): PhotoGraphNodeInsert {
     feature_lab_b: feature?.lab[2] ?? null,
     feature_hue: feature?.hue ?? null,
     feature_long_side: feature?.longSide ?? null,
+    feature_color_v1: feature?.colorV1 ?? null,
     image_width: dimensions?.width ?? null,
     image_height: dimensions?.height ?? null,
     image_aspect_ratio: dimensions?.aspectRatio ?? null,
@@ -154,6 +157,7 @@ function mapNodeRow(row: PhotoGraphNodeRow): GraphNode {
         ] as [number, number, number],
         hue: row.feature_hue as number,
         longSide: row.feature_long_side as number,
+        colorV1: row.feature_color_v1 ?? undefined,
       }
     : undefined;
   const dimensions = hasDimensions
@@ -381,11 +385,94 @@ export async function upsertPhotoGraphNodes(nodes: GraphNode[]) {
   await upsertNodeRows(nodes.map(toNodeRow));
 }
 
+export async function reservePhotoGraphNodeIds(requestedCount: number) {
+  if (!Number.isInteger(requestedCount) || requestedCount < 1 || requestedCount > 100) {
+    throw new Error("Photo graph ID reservation count must be between 1 and 100.");
+  }
+  const supabase = getServiceRoleSupabase();
+  const { data, error } = await supabase.rpc("reserve_photo_graph_node_ids", {
+    requested_count: requestedCount,
+  });
+  assertNoSupabaseError(error, "Failed to reserve photo graph node IDs");
+  if (!Array.isArray(data) || data.length !== requestedCount) {
+    throw new Error("Photo graph ID reservation returned an invalid result.");
+  }
+  return data.map((id) => String(id));
+}
+
+export async function loadPhotoGraphNeighbors(
+  model: PhotoGraphEdgeGenerationConfig["model"],
+  featureVersion = 1,
+) {
+  const supabase = getServiceRoleSupabase();
+  const rows = await selectAllRows<PhotoGraphNeighborRow>(async (from, to) =>
+    await supabase
+      .from("photo_graph_neighbors")
+      .select("*")
+      .eq("model", model)
+      .eq("feature_version", featureVersion)
+      .order("source_node_id", { ascending: true })
+      .order("rank", { ascending: true })
+      .range(from, to),
+  );
+
+  return rows.map(
+    (row): RankedPhotoGraphNeighbor => ({
+      sourceId: String(row.source_node_id),
+      targetId: String(row.target_node_id),
+      model: row.model,
+      feature_version: row.feature_version,
+      distance: row.distance,
+      correlation: row.correlation,
+      rank: row.rank,
+    }),
+  );
+}
+
+export async function replacePhotoGraphNeighborSnapshot(
+  sourceIds: string[],
+  neighbors: RankedPhotoGraphNeighbor[],
+  config: PhotoGraphEdgeGenerationConfig,
+) {
+  if (sourceIds.length === 0) {
+    return 0;
+  }
+  const sourceIdSet = new Set(sourceIds);
+  const rows = neighbors
+    .filter((neighbor) => sourceIdSet.has(neighbor.sourceId))
+    .map((neighbor) => ({
+      source_node_id: Number(neighbor.sourceId),
+      target_node_id: Number(neighbor.targetId),
+      model: neighbor.model,
+      feature_version: neighbor.feature_version,
+      distance: neighbor.distance,
+      correlation: neighbor.correlation,
+      rank: neighbor.rank,
+    }));
+  const supabase = getServiceRoleSupabase();
+  const { data, error } = await supabase.rpc(
+    "replace_photo_graph_neighbor_snapshot",
+    {
+      source_ids: sourceIds.map(Number),
+      neighbor_rows: rows,
+      generation_config: config,
+    },
+  );
+  assertNoSupabaseError(
+    error,
+    "Failed to replace photo graph neighbor snapshot",
+  );
+  if (typeof data !== "number" || !Number.isFinite(data)) {
+    throw new Error("Photo graph neighbor snapshot returned an invalid edge count.");
+  }
+  return data;
+}
+
 export async function loadPhotoGraphEdgeGenerationConfig() {
   return loadPhotoGraphSettingValue(
     DEFAULT_EDGE_GENERATION_SETTING_KEY,
-    normalizePhotoGraphEdgeGenerationConfig,
-    DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG,
+    normalizeSparseEdgeGenerationConfig,
+    DEFAULT_SPARSE_EDGE_GENERATION_CONFIG,
   );
 }
 

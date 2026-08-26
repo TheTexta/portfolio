@@ -21,23 +21,24 @@ import {
 } from "@/app/components/ui/control";
 import { SiteHeader } from "@/app/components/ui/editorial";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
-import {
-  DEFAULT_LAB_EDGE_GENERATION_PARAMS,
-  DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG,
-  LAB_EDGE_PARAM_LIMITS,
-} from "@/lib/photo-graph/edge-generation";
+import { extractPhotoGraphColorFeatureV1 } from "@/lib/photo-graph/color-features";
 import {
   DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS,
   PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS,
 } from "@/lib/photo-graph/graph-controls";
 import { PHOTO_GRAPH_CACHE_CONTROL_SECONDS } from "@/lib/photo-graph/config";
 import { featureFromRgb, rgbToHex } from "@/lib/photo-graph/feature-extraction";
+import {
+  DEFAULT_SPARSE_EDGE_GENERATION_CONFIG,
+  SPARSE_EDGE_GENERATION_LIMITS,
+} from "@/lib/photo-graph/sparse-edge-generation";
+import { PHOTO_GRAPH_SIMILARITY_MODELS } from "@/lib/photo-graph/similarity-models";
 import type {
   GraphFeature,
   GraphImageDimensions,
-  LabEdgeGenerationParams,
   PhotoGraphEdgeGenerationConfig,
   PhotoGraphRuntimeControls,
+  PhotoGraphSimilarityModelId,
 } from "@/lib/photo-graph/types";
 import { getBrowserSupabaseClient } from "@/lib/supabase/browser";
 
@@ -102,11 +103,7 @@ type DeletePhotoResponse = {
   error?: string;
 };
 
-type ComputedFeaturePayload = {
-  rgb: [number, number, number];
-  lab: [number, number, number];
-  hue: number;
-  longSide: number;
+type ComputedFeaturePayload = GraphFeature & {
   dimensions: GraphImageDimensions;
   colour: string;
 };
@@ -144,12 +141,8 @@ function formatLogTimestamp(timestamp: number) {
   });
 }
 
-function formatSigmaE(value: number) {
-  return value.toFixed(1);
-}
-
-function formatMinCorrelation(value: number) {
-  return `${(value * 100).toFixed(1)}%`;
+function formatModelDistance(value: number) {
+  return value >= 2 ? value.toFixed(1) : value.toFixed(3);
 }
 
 function compareNodeIds(leftId: string, rightId: string) {
@@ -163,13 +156,14 @@ function compareNodeIds(leftId: string, rightId: string) {
   return leftId.localeCompare(rightId);
 }
 
-function areLabParamsEqual(
-  left: LabEdgeGenerationParams,
-  right: LabEdgeGenerationParams,
+function areEdgeConfigsEqual(
+  left: PhotoGraphEdgeGenerationConfig,
+  right: PhotoGraphEdgeGenerationConfig,
 ) {
   return (
-    Math.abs(left.sigmaE - right.sigmaE) < 1e-9 &&
-    Math.abs(left.minCorrelation - right.minCorrelation) < 1e-9
+    left.model === right.model &&
+    left.neighborsPerNode === right.neighborsPerNode &&
+    Math.abs(left.maxDistance - right.maxDistance) < 1e-9
   );
 }
 
@@ -279,7 +273,8 @@ async function computeFeaturePayload(
 
   context.drawImage(image, 0, 0, targetWidth, targetHeight);
 
-  const { data } = context.getImageData(0, 0, targetWidth, targetHeight);
+  const imageData = context.getImageData(0, 0, targetWidth, targetHeight);
+  const { data } = imageData;
 
   let redSum = 0;
   let greenSum = 0;
@@ -307,12 +302,14 @@ async function computeFeaturePayload(
   ];
 
   const feature = featureFromRgb(rgb, longSide);
+  feature.colorV1 = extractPhotoGraphColorFeatureV1(imageData);
 
   return {
     rgb: feature.rgb,
     lab: feature.lab,
     hue: feature.hue,
     longSide: feature.longSide,
+    colorV1: feature.colorV1,
     dimensions: {
       width: normalizedWidth,
       height: normalizedHeight,
@@ -323,12 +320,13 @@ async function computeFeaturePayload(
 }
 
 function buildPreviewGraphUrl(
-  params: LabEdgeGenerationParams,
+  config: PhotoGraphEdgeGenerationConfig,
   revision: number,
 ) {
   const searchParams = new URLSearchParams({
-    sigmaE: params.sigmaE.toString(),
-    minCorrelation: params.minCorrelation.toString(),
+    model: config.model,
+    neighborsPerNode: config.neighborsPerNode.toString(),
+    maxDistance: config.maxDistance.toString(),
     revision: revision.toString(),
   });
 
@@ -357,15 +355,18 @@ export default function PhotoGraphUploadClient() {
   const [verboseLogs, setVerboseLogs] = useState<VerboseLogEntry[]>([]);
   const [savedEdgeGeneration, setSavedEdgeGeneration] =
     useState<PhotoGraphEdgeGenerationConfig>(
-      DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG,
+      DEFAULT_SPARSE_EDGE_GENERATION_CONFIG,
     );
   const [savedGraphControls, setSavedGraphControls] =
     useState<PhotoGraphRuntimeControls>(DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS);
-  const [previewParams, setPreviewParams] = useState<LabEdgeGenerationParams>(
-    DEFAULT_LAB_EDGE_GENERATION_PARAMS,
-  );
-  const [debouncedPreviewParams, setDebouncedPreviewParams] =
-    useState<LabEdgeGenerationParams>(DEFAULT_LAB_EDGE_GENERATION_PARAMS);
+  const [previewConfig, setPreviewConfig] =
+    useState<PhotoGraphEdgeGenerationConfig>(
+      DEFAULT_SPARSE_EDGE_GENERATION_CONFIG,
+    );
+  const [debouncedPreviewConfig, setDebouncedPreviewConfig] =
+    useState<PhotoGraphEdgeGenerationConfig>(
+      DEFAULT_SPARSE_EDGE_GENERATION_CONFIG,
+    );
   const [previewGraphControls, setPreviewGraphControls] =
     useState<PhotoGraphRuntimeControls>(DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS);
   const [previewRevision, setPreviewRevision] = useState(0);
@@ -397,8 +398,8 @@ export default function PhotoGraphUploadClient() {
   );
 
   const previewMatchesSavedDefaults = useMemo(
-    () => areLabParamsEqual(previewParams, savedEdgeGeneration.params),
-    [previewParams, savedEdgeGeneration.params],
+    () => areEdgeConfigsEqual(previewConfig, savedEdgeGeneration),
+    [previewConfig, savedEdgeGeneration],
   );
   const graphControlsMatchSavedDefaults = useMemo(
     () => areGraphControlsEqual(previewGraphControls, savedGraphControls),
@@ -406,26 +407,26 @@ export default function PhotoGraphUploadClient() {
   );
 
   const previewIsUpdating = useMemo(
-    () => !areLabParamsEqual(previewParams, debouncedPreviewParams),
-    [debouncedPreviewParams, previewParams],
+    () => !areEdgeConfigsEqual(previewConfig, debouncedPreviewConfig),
+    [debouncedPreviewConfig, previewConfig],
   );
 
   const previewGraphUrl = useMemo(
-    () => buildPreviewGraphUrl(debouncedPreviewParams, previewRevision),
-    [debouncedPreviewParams, previewRevision],
+    () => buildPreviewGraphUrl(debouncedPreviewConfig, previewRevision),
+    [debouncedPreviewConfig, previewRevision],
   );
   const persistenceUnavailable = !writesEnabled;
   const previewStatusLabel = useMemo(() => {
     if (previewIsUpdating) {
-      return "Updating LAB preview...";
+      return "Updating model preview...";
     }
 
     if (!previewMatchesSavedDefaults && !graphControlsMatchSavedDefaults) {
-      return "Unsaved LAB + graph defaults";
+      return "Unsaved model + graph defaults";
     }
 
     if (!previewMatchesSavedDefaults) {
-      return "Unsaved LAB defaults";
+      return "Unsaved model defaults";
     }
 
     if (!graphControlsMatchSavedDefaults) {
@@ -470,13 +471,13 @@ export default function PhotoGraphUploadClient() {
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
-      setDebouncedPreviewParams(previewParams);
+      setDebouncedPreviewConfig(previewConfig);
     }, PREVIEW_UPDATE_DEBOUNCE_MS);
 
     return () => {
       window.clearTimeout(timeout);
     };
-  }, [previewParams]);
+  }, [previewConfig]);
 
   const fetchGraphNodes = useCallback(
     async ({
@@ -509,8 +510,8 @@ export default function PhotoGraphUploadClient() {
         setSavedGraphControls(body.defaultGraphControls);
 
         if (syncPreviewParams) {
-          setPreviewParams(body.defaultEdgeGeneration.params);
-          setDebouncedPreviewParams(body.defaultEdgeGeneration.params);
+          setPreviewConfig(body.defaultEdgeGeneration);
+          setDebouncedPreviewConfig(body.defaultEdgeGeneration);
         }
         if (syncGraphControls) {
           setPreviewGraphControls(body.defaultGraphControls);
@@ -586,34 +587,39 @@ export default function PhotoGraphUploadClient() {
     addFiles(event.dataTransfer.files);
   };
 
-  const handleEdgeParamChange = useCallback(
-    (key: keyof LabEdgeGenerationParams, value: number) => {
-      setPreviewParams((current) => {
-        const nextValue =
-          key === "sigmaE"
-            ? clamp(
-                value,
-                LAB_EDGE_PARAM_LIMITS.sigmaE.min,
-                LAB_EDGE_PARAM_LIMITS.sigmaE.max,
-              )
-            : clamp(
-                value,
-                LAB_EDGE_PARAM_LIMITS.minCorrelation.min,
-                LAB_EDGE_PARAM_LIMITS.minCorrelation.max,
-              );
+  const handleModelChange = useCallback((model: PhotoGraphSimilarityModelId) => {
+    const definition = PHOTO_GRAPH_SIMILARITY_MODELS.find(
+      (entry) => entry.id === model,
+    );
+    setPreviewConfig((current) => ({
+      ...current,
+      model,
+      maxDistance: definition?.defaultMaxDistance ?? current.maxDistance,
+    }));
+  }, []);
 
-        if (current[key] === nextValue) {
-          return current;
-        }
+  const handleNeighborsChange = useCallback((value: number) => {
+    setPreviewConfig((current) => ({
+      ...current,
+      neighborsPerNode: Math.round(clamp(value, 1, 12)),
+    }));
+  }, []);
 
-        return {
-          ...current,
-          [key]: nextValue,
-        };
-      });
-    },
-    [],
-  );
+  const handleMaxDistanceChange = useCallback((value: number) => {
+    setPreviewConfig((current) => {
+      const definition = PHOTO_GRAPH_SIMILARITY_MODELS.find(
+        (entry) => entry.id === current.model,
+      );
+      return {
+        ...current,
+        maxDistance: clamp(
+          value,
+          SPARSE_EDGE_GENERATION_LIMITS.maxDistance.min,
+          definition?.maxDistanceLimit ?? 1,
+        ),
+      };
+    });
+  }, []);
 
   const handleGraphControlChange = useCallback(
     (key: keyof PhotoGraphRuntimeControls, value: boolean | number) => {
@@ -648,10 +654,10 @@ export default function PhotoGraphUploadClient() {
   );
 
   const handleResetPreview = useCallback(() => {
-    setPreviewParams(savedEdgeGeneration.params);
-    setDebouncedPreviewParams(savedEdgeGeneration.params);
-    setStatusWithLog("Preview reset to the saved LAB defaults.", "info");
-  }, [savedEdgeGeneration.params, setStatusWithLog]);
+    setPreviewConfig(savedEdgeGeneration);
+    setDebouncedPreviewConfig(savedEdgeGeneration);
+    setStatusWithLog("Preview reset to the saved model defaults.", "info");
+  }, [savedEdgeGeneration, setStatusWithLog]);
 
   const handleResetGraphControls = useCallback(() => {
     setPreviewGraphControls(savedGraphControls);
@@ -669,7 +675,7 @@ export default function PhotoGraphUploadClient() {
 
     setIsSavingEdgeDefaults(true);
     setErrorMessage(null);
-    setStatusWithLog("Saving LAB edge defaults on the server...");
+    setStatusWithLog("Saving similarity model defaults on the server...");
 
     try {
       const response = await fetch("/api/admin/photo-graph/edge-defaults", {
@@ -677,12 +683,7 @@ export default function PhotoGraphUploadClient() {
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({
-          config: {
-            mode: "lab",
-            params: previewParams,
-          },
-        }),
+        body: JSON.stringify({ config: previewConfig }),
       });
 
       const body = await parseJsonOrThrow<SaveEdgeDefaultsResponse>(response);
@@ -691,24 +692,24 @@ export default function PhotoGraphUploadClient() {
       }
 
       setSavedEdgeGeneration(body.config);
-      setPreviewParams(body.config.params);
-      setDebouncedPreviewParams(body.config.params);
+      setPreviewConfig(body.config);
+      setDebouncedPreviewConfig(body.config);
       await fetchGraphNodes({
         silent: true,
         syncPreviewParams: false,
       });
 
       setStatusWithLog(
-        `Saved LAB defaults (${body.edgeCount} persisted edges, sigmaE ${formatSigmaE(body.config.params.sigmaE)}, min correlation ${formatMinCorrelation(body.config.params.minCorrelation)}).`,
+        `Saved ${body.config.model} defaults (${body.edgeCount} persisted edges, ${body.config.neighborsPerNode} neighbors, max distance ${formatModelDistance(body.config.maxDistance)}).`,
         "success",
       );
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : "Saving LAB defaults failed unexpectedly.";
+          : "Saving model defaults failed unexpectedly.";
       setErrorMessage(message);
-      appendVerboseLog(`Saving LAB defaults failed: ${message}`, "error");
+      appendVerboseLog(`Saving model defaults failed: ${message}`, "error");
     } finally {
       setIsSavingEdgeDefaults(false);
     }
@@ -718,7 +719,7 @@ export default function PhotoGraphUploadClient() {
     isSavingEdgeDefaults,
     persistenceUnavailable,
     previewMatchesSavedDefaults,
-    previewParams,
+    previewConfig,
     setStatusWithLog,
   ]);
 
@@ -924,6 +925,7 @@ export default function PhotoGraphUploadClient() {
             lab: featurePayload.lab,
             hue: featurePayload.hue,
             longSide: featurePayload.longSide,
+            colorV1: featurePayload.colorV1,
           },
           dimensions: featurePayload.dimensions,
         });
@@ -934,7 +936,7 @@ export default function PhotoGraphUploadClient() {
         );
       }
 
-      setStatusWithLog("Registering uploaded files and regenerating edges...");
+      setStatusWithLog("Registering uploaded files and updating sparse neighborhoods...");
 
       const registerResponse = await fetch("/api/admin/photo-graph/upload", {
         method: "POST",
@@ -961,7 +963,7 @@ export default function PhotoGraphUploadClient() {
         "success",
       );
       appendVerboseLog(
-        `Server regenerated ${registerBody.edgeCount} persisted edge(s) using sigmaE ${formatSigmaE(registerBody.edgeGenerationConfig.params.sigmaE)} and min correlation ${formatMinCorrelation(registerBody.edgeGenerationConfig.params.minCorrelation)}.`,
+        `Server generated ${registerBody.edgeCount} persisted edge(s) using ${registerBody.edgeGenerationConfig.model}, ${registerBody.edgeGenerationConfig.neighborsPerNode} neighbors, and max distance ${formatModelDistance(registerBody.edgeGenerationConfig.maxDistance)}.`,
         "success",
       );
 
@@ -970,7 +972,7 @@ export default function PhotoGraphUploadClient() {
       });
 
       setStatusWithLog(
-        `Done. Added ${registerBody.createdIds.length} image(s) and regenerated ${registerBody.edgeCount} default edges on the server.`,
+        `Done. Added ${registerBody.createdIds.length} image(s) and updated the ${registerBody.edgeCount}-edge public snapshot.`,
         "success",
       );
     } catch (error) {
@@ -1023,7 +1025,7 @@ export default function PhotoGraphUploadClient() {
         <div className="border-rule mb-6 flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-3xl">
             <p className="text-[11px] font-medium tracking-[0.28em] uppercase opacity-55">
-              Server-Side LAB Edge Studio
+              Colour Similarity Studio
             </p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight">
               Photo Graph Upload Admin
@@ -1042,13 +1044,12 @@ export default function PhotoGraphUploadClient() {
             <div className="flex flex-col gap-4">
               <div className="border-rule bg-canvas border p-4">
                 <div className="flex items-center justify-between gap-3 text-[11px] tracking-[0.22em] uppercase opacity-60">
-                  <span>LAB Edge Defaults</span>
+                  <span>Similarity Model</span>
                   <span>{graphSource}</span>
                 </div>
                 <p className="mt-3 text-sm leading-6 opacity-75">
-                  Preview uses pure LAB distance only. Adjust the falloff and
-                  the minimum accepted similarity, then save if you want the
-                  public graph snapshot to adopt the result.
+                  Compare versioned color models using direct graph semantics,
+                  then save the selected model and sparse neighborhood policy.
                 </p>
                 {persistenceUnavailable && (
                   <p className="border-warning bg-canvas text-warning mt-3 border px-3 py-2 text-xs leading-5">
@@ -1061,74 +1062,91 @@ export default function PhotoGraphUploadClient() {
 
                 <div className="mt-5 space-y-4">
                   <div className="space-y-2">
-                    <div className="flex items-end justify-between gap-3">
-                      <label
-                        htmlFor="photo-graph-sigma-e"
-                        className="text-sm font-medium"
-                      >
-                        Sigma E
-                      </label>
-                      <output
-                        htmlFor="photo-graph-sigma-e"
-                        className="text-sm opacity-70"
-                      >
-                        {formatSigmaE(previewParams.sigmaE)}
-                      </output>
-                    </div>
-                    <input
-                      id="photo-graph-sigma-e"
-                      type="range"
-                      min={LAB_EDGE_PARAM_LIMITS.sigmaE.min}
-                      max={LAB_EDGE_PARAM_LIMITS.sigmaE.max}
-                      step={0.5}
-                      value={previewParams.sigmaE}
+                    <label htmlFor="photo-graph-model" className="text-sm font-medium">
+                      Color model
+                    </label>
+                    <select
+                      id="photo-graph-model"
+                      value={previewConfig.model}
                       onChange={(event) =>
-                        handleEdgeParamChange(
-                          "sigmaE",
-                          Number(event.target.value),
+                        handleModelChange(
+                          event.target.value as PhotoGraphSimilarityModelId,
                         )
                       }
-                      className="range-sm bg-surface accent-ink h-2 w-full border-none"
-                    />
+                      className="border-rule bg-surface min-h-11 w-full border px-3 text-sm"
+                    >
+                      {PHOTO_GRAPH_SIMILARITY_MODELS.map((model) => (
+                        <option key={model.id} value={model.id}>
+                          {model.label}
+                        </option>
+                      ))}
+                    </select>
                     <p className="text-xs leading-5 opacity-60">
-                      Higher values widen the LAB similarity falloff and create
-                      denser edge neighborhoods.
+                      Mean models are baselines; distribution and palette models
+                      use the versioned Oklab feature.
                     </p>
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex items-end justify-between gap-3">
                       <label
-                        htmlFor="photo-graph-min-correlation"
+                        htmlFor="photo-graph-neighbors"
                         className="text-sm font-medium"
                       >
-                        Minimum correlation
+                        Neighbors per photo
                       </label>
                       <output
-                        htmlFor="photo-graph-min-correlation"
+                        htmlFor="photo-graph-neighbors"
                         className="text-sm opacity-70"
                       >
-                        {formatMinCorrelation(previewParams.minCorrelation)}
+                        {previewConfig.neighborsPerNode}
                       </output>
                     </div>
                     <input
-                      id="photo-graph-min-correlation"
+                      id="photo-graph-neighbors"
                       type="range"
-                      min={LAB_EDGE_PARAM_LIMITS.minCorrelation.min}
-                      max={LAB_EDGE_PARAM_LIMITS.minCorrelation.max}
-                      step={0.01}
-                      value={previewParams.minCorrelation}
+                      min={1}
+                      max={12}
+                      step={1}
+                      value={Math.min(12, previewConfig.neighborsPerNode)}
                       onChange={(event) =>
-                        handleEdgeParamChange(
-                          "minCorrelation",
-                          Number(event.target.value),
-                        )
+                        handleNeighborsChange(Number(event.target.value))
                       }
                       className="range-sm bg-surface accent-ink h-2 w-full border-none"
                     />
                     <p className="text-xs leading-5 opacity-60">
-                      Higher thresholds prune weak matches sooner and preserve a
-                      tighter persisted graph.
+                      Caps each directed neighborhood before links are merged.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-end justify-between gap-3">
+                      <label htmlFor="photo-graph-max-distance" className="text-sm font-medium">
+                        Maximum color distance
+                      </label>
+                      <output htmlFor="photo-graph-max-distance" className="text-sm opacity-70">
+                        {formatModelDistance(previewConfig.maxDistance)}
+                      </output>
+                    </div>
+                    <input
+                      id="photo-graph-max-distance"
+                      type="range"
+                      min={SPARSE_EDGE_GENERATION_LIMITS.maxDistance.min}
+                      max={
+                        PHOTO_GRAPH_SIMILARITY_MODELS.find(
+                          (model) => model.id === previewConfig.model,
+                        )?.maxDistanceLimit ?? 1
+                      }
+                      step={previewConfig.maxDistance >= 2 ? 0.5 : 0.005}
+                      value={previewConfig.maxDistance}
+                      onChange={(event) =>
+                        handleMaxDistanceChange(Number(event.target.value))
+                      }
+                      className="range-sm bg-surface accent-ink h-2 w-full border-none"
+                    />
+                    <p className="text-xs leading-5 opacity-60">
+                      Rejects visually distant candidates even when fewer than
+                      the requested neighbors remain.
                     </p>
                   </div>
                 </div>
@@ -1334,16 +1352,14 @@ export default function PhotoGraphUploadClient() {
 
                 <div className="border-rule bg-canvas border p-3">
                   <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
-                    Saved LAB Defaults
+                    Saved Model Defaults
                   </p>
                   <p className="mt-2 text-sm font-medium">
-                    sigmaE {formatSigmaE(savedEdgeGeneration.params.sigmaE)}
+                    {savedEdgeGeneration.model}
                   </p>
                   <p className="mt-1 text-xs opacity-65">
-                    min correlation{" "}
-                    {formatMinCorrelation(
-                      savedEdgeGeneration.params.minCorrelation,
-                    )}
+                    {savedEdgeGeneration.neighborsPerNode} neighbors, max{" "}
+                    {formatModelDistance(savedEdgeGeneration.maxDistance)}
                   </p>
                 </div>
 
@@ -1377,7 +1393,7 @@ export default function PhotoGraphUploadClient() {
                     {previewStatusLabel}
                   </p>
                   <p className="mt-1 text-xs opacity-65">
-                    LAB preview refresh is debounced by{" "}
+                    Model preview refresh is debounced by{" "}
                     {PREVIEW_UPDATE_DEBOUNCE_MS} ms. Graph and collision
                     controls apply live.
                   </p>
@@ -1390,8 +1406,8 @@ export default function PhotoGraphUploadClient() {
                 <div>
                   <p className="font-medium">Server Preview Graph</p>
                   <p className="mt-1 opacity-65">
-                    Generated from LAB parameters without touching the persisted
-                    public snapshot until you save.
+                    Generated from the selected model without touching the
+                    persisted public snapshot until you save.
                   </p>
                 </div>
                 <div className="border-rule border px-3 py-1 text-[11px] tracking-[0.18em] uppercase opacity-70">
@@ -1463,7 +1479,7 @@ export default function PhotoGraphUploadClient() {
               size="lg"
               className="font-medium"
             >
-              {isProcessing ? "Processing..." : "Upload + Regenerate Defaults"}
+              {isProcessing ? "Processing..." : "Upload + Update Graph"}
             </ControlButton>
 
             {files.length > 0 && (

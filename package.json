@@ -15,7 +15,13 @@
     "photo-graph:rename-storage": "tsx scripts/photo-graph/rename-photo-graph-storage.ts",
     "photo-graph:backfill-dimensions": "tsx scripts/photo-graph/backfill-supabase-dimensions.ts",
     "photo-graph:fix-cache-control": "tsx scripts/photo-graph/fix-cache-control.ts",
-    "photo-graph:validate-edge-generation": "tsx scripts/photo-graph/validate-edge-generation.ts"
+    "photo-graph:analyze": "tsx scripts/photo-graph/analyze-graph.ts",
+    "photo-graph:validate-edge-generation": "tsx scripts/photo-graph/validate-edge-generation.ts",
+    "photo-graph:validate-color-models": "tsx scripts/photo-graph/validate-color-models.ts",
+    "photo-graph:extract-colors": "tsx scripts/photo-graph/extract-color-features.ts",
+    "photo-graph:backfill-colors": "tsx scripts/photo-graph/extract-color-features.ts --persist",
+    "photo-graph:benchmark-colors": "tsx scripts/photo-graph/benchmark-color-models.ts",
+    "photo-graph:activate-ciede2000": "tsx scripts/photo-graph/activate-ciede2000.ts"
   },
   "dependencies": {
     "@spotify/web-api-ts-sdk": "^1.2.0",
@@ -34,6 +40,7 @@
     "react-dom": "19.2.3",
     "react-force-graph-2d": "^1.29.1",
     "recharts": "^3.8.0",
+    "sharp": "^0.35.4",
     "supabase": "^2.84.4",
     "tailwind-merge": "^3.4.0",
     "tailwind-scrollbar-hide": "^4.0.0"

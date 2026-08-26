@@ -2,7 +2,6 @@ import type {
   GraphFeature,
   GraphNode,
   LabEdgeGenerationParams,
-  PhotoGraphEdgeGenerationConfig,
 } from "@/lib/photo-graph/types";
 import { clamp01 } from "@/lib/photo-graph/feature-extraction";
 import { ensureProcessingFeatures } from "@/lib/photo-graph/processing-features";
@@ -11,12 +10,6 @@ export const DEFAULT_LAB_EDGE_GENERATION_PARAMS: LabEdgeGenerationParams = {
   sigmaE: 15,
   minCorrelation: 0.3,
 };
-
-export const DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG: PhotoGraphEdgeGenerationConfig =
-  {
-    mode: "lab",
-    params: DEFAULT_LAB_EDGE_GENERATION_PARAMS,
-  };
 
 export const LAB_EDGE_PARAM_LIMITS = {
   sigmaE: {
@@ -121,19 +114,6 @@ export function normalizeLabEdgeGenerationParams(
           LAB_EDGE_PARAM_LIMITS.minCorrelation.max,
         )
       : DEFAULT_LAB_EDGE_GENERATION_PARAMS.minCorrelation,
-  };
-}
-
-export function normalizePhotoGraphEdgeGenerationConfig(
-  value: unknown,
-): PhotoGraphEdgeGenerationConfig {
-  if (!isRecord(value) || value.mode !== "lab") {
-    return DEFAULT_PHOTO_GRAPH_EDGE_GENERATION_CONFIG;
-  }
-
-  return {
-    mode: "lab",
-    params: normalizeLabEdgeGenerationParams(value.params),
   };
 }
 

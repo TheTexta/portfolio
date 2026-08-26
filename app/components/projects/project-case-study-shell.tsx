@@ -1,5 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { type ProjectDefinition } from "@/app/components/projects/project-catalog";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
@@ -14,9 +15,13 @@ import {
 import ThemeToggle from "@/app/components/ui/theme-toggle";
 
 export default function ProjectCaseStudyShell({
+  children,
   project,
+  sectionNavigation,
 }: {
+  children?: ReactNode;
   project: ProjectDefinition;
+  sectionNavigation?: { href: string; label: string };
 }) {
   return (
     <main className="editorial-page min-h-dvh overflow-x-clip">
@@ -27,6 +32,14 @@ export default function ProjectCaseStudyShell({
         >
           Overview
         </a>
+        {sectionNavigation ? (
+          <a
+            href={sectionNavigation.href}
+            className="hidden min-h-7 items-center transition-opacity hover:opacity-55 sm:flex"
+          >
+            {sectionNavigation.label}
+          </a>
+        ) : null}
         <Link
           href={PROJECT_ROUTES.portfolioProjects}
           className="flex min-h-7 items-center transition-opacity hover:opacity-55"
@@ -77,6 +90,8 @@ export default function ProjectCaseStudyShell({
           <ProjectLivePreview project={project} />
         </MediaFrame>
       </EditorialContainer>
+
+      {children}
     </main>
   );
 }

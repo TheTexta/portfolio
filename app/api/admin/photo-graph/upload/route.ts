@@ -4,7 +4,6 @@ import { buildCanonicalPhotoGraphStoragePath } from "@/lib/photo-graph/config";
 import { scaleFromLongSide } from "@/lib/photo-graph/correlation";
 import {
   countGraphEdges,
-  regenerateLabGraphCorrelations,
 } from "@/lib/photo-graph/edge-generation";
 import {
   cloneGraphNodes,
@@ -15,11 +14,20 @@ import {
 } from "@/lib/photo-graph/graph-store";
 import {
   loadPhotoGraphEdgeGenerationConfig,
-  replacePhotoGraphEdges,
+  loadPhotoGraphNeighbors,
+  replacePhotoGraphNeighborSnapshot,
+  reservePhotoGraphNodeIds,
   savePhotoGraphEdgeGenerationConfig,
   upsertPhotoGraphNodes,
 } from "@/lib/photo-graph/database";
 import { featureFromRgb, rgbToHex } from "@/lib/photo-graph/feature-extraction";
+import { parsePhotoGraphColorFeatureV1 } from "@/lib/photo-graph/color-features";
+import {
+  generateSparsePhotoGraph,
+  updateSparsePhotoGraphForAddedNodes,
+  type RankedPhotoGraphNeighbor,
+} from "@/lib/photo-graph/sparse-edge-generation";
+import { PHOTO_GRAPH_SIMILARITY_MODELS } from "@/lib/photo-graph/similarity-models";
 import {
   ADMIN_SESSION_COOKIE_NAME,
   isValidAdminSessionToken,
@@ -95,6 +103,10 @@ function parseFeaturePayload(
   if (!Number.isFinite(longSide)) {
     return null;
   }
+  const colorV1 = parsePhotoGraphColorFeatureV1(raw.colorV1);
+  if (!colorV1) {
+    return null;
+  }
 
   const rgbTuple = [
     clamp(rgb[0], 0, 255),
@@ -102,7 +114,10 @@ function parseFeaturePayload(
     clamp(rgb[2], 0, 255),
   ] as [number, number, number];
 
-  return featureFromRgb(rgbTuple, Math.max(1, Math.round(longSide)));
+  return {
+    ...featureFromRgb(rgbTuple, Math.max(1, Math.round(longSide))),
+    colorV1,
+  };
 }
 
 function parseDimensionsPayload(
@@ -197,6 +212,37 @@ function nextNodeId(nodes: GraphNode[]) {
   return maxExistingId + 1;
 }
 
+function neighborSignature(neighbors: RankedPhotoGraphNeighbor[]) {
+  return [...neighbors]
+    .sort((left, right) => left.rank - right.rank)
+    .map(
+      (neighbor) =>
+        `${neighbor.rank}:${neighbor.targetId}:${neighbor.distance.toPrecision(15)}:${neighbor.correlation.toPrecision(15)}`,
+    )
+    .join("|");
+}
+
+function changedNeighborSourceIds(
+  previous: RankedPhotoGraphNeighbor[],
+  next: RankedPhotoGraphNeighbor[],
+  addedIds: string[],
+) {
+  const addedIdSet = new Set(addedIds);
+  const previousBySource = Map.groupBy(previous, (neighbor) => neighbor.sourceId);
+  const nextBySource = Map.groupBy(next, (neighbor) => neighbor.sourceId);
+  const sourceIds = new Set([
+    ...previousBySource.keys(),
+    ...nextBySource.keys(),
+    ...addedIds,
+  ]);
+  return [...sourceIds].filter(
+    (sourceId) =>
+      addedIdSet.has(sourceId) ||
+      neighborSignature(previousBySource.get(sourceId) ?? []) !==
+        neighborSignature(nextBySource.get(sourceId) ?? []),
+  );
+}
+
 export async function POST(request: NextRequest) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -233,20 +279,41 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const nodes = cloneGraphNodes(loaded.nodes);
+  const edgeGenerationConfig = await loadPhotoGraphEdgeGenerationConfig();
+  const model = PHOTO_GRAPH_SIMILARITY_MODELS.find(
+    (entry) => entry.id === edgeGenerationConfig.model,
+  );
+  const missingColorFeatures = model?.requiresColorV1
+    ? loaded.nodes.filter((node) => !node.feature?.colorV1).map((node) => node.id)
+    : [];
+  if (missingColorFeatures.length > 0) {
+    return NextResponse.json(
+      {
+        error: `The active ${edgeGenerationConfig.model} model requires versioned color features. Apply the schema migration and backfill before uploading (${missingColorFeatures.length} existing node(s) missing).`,
+      },
+      { status: 409 },
+    );
+  }
+
+  const existingNodes = cloneGraphNodes(loaded.nodes);
+  const nodes = [...existingNodes];
 
   const existingMaxLongSide = ensureProcessingFeatures(nodes);
   ensureGraphStoragePaths(nodes);
 
   const createdIds: string[] = [];
   const createdNodes: GraphNode[] = [];
-  let idCounter = nextNodeId(nodes);
+  const databaseReservedIds =
+    loaded.source === "database"
+      ? await reservePhotoGraphNodeIds(uploads.length)
+      : null;
+  let staticIdCounter = nextNodeId(nodes);
   const bucket = getPhotoGraphStorageBucket();
   const supabase = getServiceRoleSupabase();
 
-  for (const upload of uploads) {
-    const id = String(idCounter);
-    idCounter += 1;
+  for (const [uploadIndex, upload] of uploads.entries()) {
+    const id = databaseReservedIds?.[uploadIndex] ?? String(staticIdCounter);
+    staticIdCounter += 1;
     createdIds.push(id);
     const canonicalStoragePath = buildCanonicalPhotoGraphStoragePath(
       id,
@@ -301,27 +368,57 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const edgeGenerationConfig = await loadPhotoGraphEdgeGenerationConfig();
-  const generatedNodes = regenerateLabGraphCorrelations(
-    cloneGraphNodes(nodes),
-    edgeGenerationConfig.params,
-  );
+  let generatedNodes: GraphNode[];
+  let edgeCount: number;
 
   if (loaded.source === "static") {
+    const generated = generateSparsePhotoGraph(
+      cloneGraphNodes(nodes),
+      edgeGenerationConfig,
+    );
+    generatedNodes = generated.nodes;
     await writeRuntimeGraph(generatedNodes);
+    await savePhotoGraphEdgeGenerationConfig(edgeGenerationConfig);
+    edgeCount = countGraphEdges(generatedNodes);
   } else {
     await upsertPhotoGraphNodes(nodes);
-    await replacePhotoGraphEdges(generatedNodes);
+    const existingNeighbors = await loadPhotoGraphNeighbors(
+      edgeGenerationConfig.model,
+    );
+    const hasDirectedSnapshot =
+      existingNeighbors.length > 0 || existingNodes.length <= 1;
+    const generated = hasDirectedSnapshot
+      ? updateSparsePhotoGraphForAddedNodes(
+          existingNodes,
+          createdNodes,
+          existingNeighbors,
+          edgeGenerationConfig,
+        )
+      : generateSparsePhotoGraph(
+          cloneGraphNodes(nodes),
+          edgeGenerationConfig,
+        );
+    generatedNodes = generated.nodes;
+    const sourceIds = hasDirectedSnapshot
+      ? changedNeighborSourceIds(
+          existingNeighbors,
+          generated.neighbors,
+          createdIds,
+        )
+      : generatedNodes.map((node) => node.id);
+    edgeCount = await replacePhotoGraphNeighborSnapshot(
+      sourceIds,
+      generated.neighbors,
+      edgeGenerationConfig,
+    );
   }
-
-  await savePhotoGraphEdgeGenerationConfig(edgeGenerationConfig);
 
   return NextResponse.json({
     ok: true,
     createdIds,
     source: loaded.source,
     nodeCount: nodes.length,
-    edgeCount: countGraphEdges(generatedNodes),
+    edgeCount,
     edgeGenerationConfig,
   });
 }

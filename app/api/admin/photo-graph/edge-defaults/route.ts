@@ -2,33 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 
 import {
   loadPhotoGraphEdgeGenerationConfig,
-  replacePhotoGraphEdges,
+  replacePhotoGraphNeighborSnapshot,
   savePhotoGraphEdgeGenerationConfig,
 } from "@/lib/photo-graph/database";
 import {
   countGraphEdges,
-  parseLabEdgeGenerationParams,
-  regenerateLabGraphCorrelations,
 } from "@/lib/photo-graph/edge-generation";
+import {
+  generateSparsePhotoGraph,
+  parseSparseEdgeGenerationConfig,
+} from "@/lib/photo-graph/sparse-edge-generation";
 import {
   cloneGraphNodes,
   loadGraphWithFallback,
   writeRuntimeGraph,
 } from "@/lib/photo-graph/graph-store";
 import type { PhotoGraphEdgeGenerationConfig } from "@/lib/photo-graph/types";
+import { PHOTO_GRAPH_SIMILARITY_MODELS } from "@/lib/photo-graph/similarity-models";
 import {
   ADMIN_SESSION_COOKIE_NAME,
   isValidAdminSessionToken,
 } from "@/lib/server/admin-session";
 
 type SaveEdgeDefaultsPayload = {
-  config?: {
-    mode?: string;
-    params?: {
-      sigmaE?: unknown;
-      minCorrelation?: unknown;
-    };
-  };
+  config?: unknown;
 };
 
 export const runtime = "nodejs";
@@ -46,20 +43,7 @@ function parseEdgeGenerationConfig(
     return null;
   }
 
-  const record = value as NonNullable<SaveEdgeDefaultsPayload["config"]>;
-  if (record.mode !== "lab") {
-    return null;
-  }
-
-  const params = parseLabEdgeGenerationParams(record.params);
-  if (!params) {
-    return null;
-  }
-
-  return {
-    mode: "lab",
-    params,
-  };
+  return parseSparseEdgeGenerationConfig(value);
 }
 
 export async function GET(request: NextRequest) {
@@ -100,29 +84,49 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Photo graph persistence is unavailable. Restore Supabase connectivity before saving LAB defaults.",
+          "Photo graph persistence is unavailable. Restore Supabase connectivity before saving model defaults.",
       },
       { status: 503 },
     );
   }
 
-  const nodes = regenerateLabGraphCorrelations(
-    cloneGraphNodes(loaded.nodes),
-    config.params,
+  const model = PHOTO_GRAPH_SIMILARITY_MODELS.find(
+    (entry) => entry.id === config.model,
   );
+  const missingColorFeatures = model?.requiresColorV1
+    ? loaded.nodes.filter((node) => !node.feature?.colorV1).map((node) => node.id)
+    : [];
+  if (missingColorFeatures.length > 0) {
+    return NextResponse.json(
+      {
+        error: `Model ${config.model} requires versioned color features. Apply the schema migration and backfill before activation (${missingColorFeatures.length} node(s) missing).`,
+      },
+      { status: 409 },
+    );
+  }
+
+  const { nodes, neighbors } = generateSparsePhotoGraph(
+    cloneGraphNodes(loaded.nodes),
+    config,
+  );
+  let edgeCount: number;
 
   if (loaded.source === "static") {
     await writeRuntimeGraph(nodes);
+    await savePhotoGraphEdgeGenerationConfig(config);
+    edgeCount = countGraphEdges(nodes);
   } else {
-    await replacePhotoGraphEdges(nodes);
+    edgeCount = await replacePhotoGraphNeighborSnapshot(
+      nodes.map((node) => node.id),
+      neighbors,
+      config,
+    );
   }
-
-  await savePhotoGraphEdgeGenerationConfig(config);
 
   return NextResponse.json({
     ok: true,
     source: loaded.source,
     config,
-    edgeCount: countGraphEdges(nodes),
+    edgeCount,
   });
 }

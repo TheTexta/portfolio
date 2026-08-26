@@ -1,8 +1,38 @@
+export type OklabColor = [number, number, number];
+
+export type PhotoGraphPaletteEntry = {
+  color: OklabColor;
+  weight: number;
+};
+
+export type PhotoGraphColorFeatureV1 = {
+  version: 1;
+  sampleCount: number;
+  meanOklab: OklabColor;
+  histogram: number[];
+  palette: PhotoGraphPaletteEntry[];
+};
+
 export type GraphFeature = {
   rgb: [number, number, number];
   lab: [number, number, number];
   hue: number;
   longSide: number;
+  colorV1?: PhotoGraphColorFeatureV1;
+};
+
+export type PhotoGraphSimilarityModelId =
+  | "mean-lab-cie76"
+  | "mean-lab-ciede2000"
+  | "mean-oklab"
+  | "oklab-histogram"
+  | "oklab-palette-emd";
+
+export type PhotoGraphSparseEdgeGenerationConfig = {
+  version: 2;
+  model: PhotoGraphSimilarityModelId;
+  neighborsPerNode: number;
+  maxDistance: number;
 };
 
 export type LabEdgeGenerationParams = {
@@ -10,9 +40,17 @@ export type LabEdgeGenerationParams = {
   minCorrelation: number;
 };
 
-export type PhotoGraphEdgeGenerationConfig = {
-  mode: "lab";
-  params: LabEdgeGenerationParams;
+export type PhotoGraphEdgeGenerationConfig = PhotoGraphSparseEdgeGenerationConfig;
+
+export type PhotoGraphNeighborRow = {
+  source_node_id: number;
+  target_node_id: number;
+  model: PhotoGraphSimilarityModelId;
+  feature_version: number;
+  distance: number;
+  correlation: number;
+  rank: number;
+  updated_at: string;
 };
 
 export type PhotoGraphRuntimeControls = {
@@ -95,6 +133,7 @@ export type PhotoGraphNodeRow = {
   feature_lab_b: number | null;
   feature_hue: number | null;
   feature_long_side: number | null;
+  feature_color_v1: PhotoGraphColorFeatureV1 | null;
   image_width: number | null;
   image_height: number | null;
   image_aspect_ratio: number | null;

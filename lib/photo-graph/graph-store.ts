@@ -4,6 +4,7 @@ import path from "node:path";
 import {
   hexToRgb,
 } from "@/lib/photo-graph/feature-extraction";
+import { parsePhotoGraphColorFeatureV1 } from "@/lib/photo-graph/color-features";
 import {
   imagePathForLegacyId,
   photoGraphImageBasePath,
@@ -109,6 +110,7 @@ function normalizeFeature(value: unknown) {
     lab: [labTuple[0], labTuple[1], labTuple[2]] as [number, number, number],
     hue,
     longSide: Math.max(1, Math.round(longSide)),
+    colorV1: parsePhotoGraphColorFeatureV1(value.colorV1) ?? undefined,
   };
 }
 
@@ -284,6 +286,17 @@ export function cloneGraphNodes(nodes: GraphNode[]): GraphNode[] {
         lab: [...node.feature.lab] as [number, number, number],
         hue: node.feature.hue,
         longSide: node.feature.longSide,
+        colorV1: node.feature.colorV1
+          ? {
+              ...node.feature.colorV1,
+              meanOklab: [...node.feature.colorV1.meanOklab],
+              histogram: [...node.feature.colorV1.histogram],
+              palette: node.feature.colorV1.palette.map((entry) => ({
+                color: [...entry.color],
+                weight: entry.weight,
+              })),
+            }
+          : undefined,
       };
     }
 

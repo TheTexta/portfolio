@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { normalizePhotoGraphRuntimeControls } from "@/lib/photo-graph/graph-controls";
 import type {
@@ -16,13 +16,17 @@ type PhotoGraphDataResult = {
   defaultGraphControls?: PhotoGraphRuntimeControls;
   graphData: PhotoGraphData;
   loadedGraphUrl?: string;
+  loadStatus: PhotoGraphLoadStatus;
 };
+
+type PhotoGraphLoadStatus = "loading" | "ready" | "empty" | "error";
 
 const EMPTY_GRAPH_DATA_RESULT: PhotoGraphDataResult = {
   graphData: {
     nodes: [],
     links: [],
   },
+  loadStatus: "loading",
 };
 
 const DEFAULT_GRAPH_URL = "/api/photo-graph/graph";
@@ -31,6 +35,16 @@ export function usePhotoGraphData(graphUrl = DEFAULT_GRAPH_URL) {
   const [graphResult, setGraphResult] = useState<PhotoGraphDataResult>(
     EMPTY_GRAPH_DATA_RESULT,
   );
+  const [loadAttempt, setLoadAttempt] = useState(0);
+
+  const retry = useCallback(() => {
+    setGraphResult((current) => ({
+      ...current,
+      loadedGraphUrl: graphUrl,
+      loadStatus: "loading",
+    }));
+    setLoadAttempt((current) => current + 1);
+  }, [graphUrl]);
 
   useEffect(() => {
     let disposed = false;
@@ -58,12 +72,18 @@ export function usePhotoGraphData(graphUrl = DEFAULT_GRAPH_URL) {
             : undefined,
         graphData: toPhotoGraphData(payload),
         loadedGraphUrl: graphUrl,
+        loadStatus: payload.nodes.length > 0 ? "ready" : "empty",
       });
     };
 
     void loadGraph().catch((error: unknown) => {
-      if (!isAbortError(error)) {
+      if (!disposed && !isAbortError(error)) {
         console.error(error);
+        setGraphResult({
+          ...EMPTY_GRAPH_DATA_RESULT,
+          loadedGraphUrl: graphUrl,
+          loadStatus: "error",
+        });
       }
     });
 
@@ -71,7 +91,7 @@ export function usePhotoGraphData(graphUrl = DEFAULT_GRAPH_URL) {
       disposed = true;
       abortController.abort();
     };
-  }, [graphUrl]);
+  }, [graphUrl, loadAttempt]);
 
   return {
     defaultGraphControls:
@@ -79,5 +99,10 @@ export function usePhotoGraphData(graphUrl = DEFAULT_GRAPH_URL) {
         ? graphResult.defaultGraphControls
         : undefined,
     graphData: graphResult.graphData,
+    loadStatus:
+      graphResult.loadedGraphUrl === graphUrl
+        ? graphResult.loadStatus
+        : "loading",
+    retry,
   };
 }

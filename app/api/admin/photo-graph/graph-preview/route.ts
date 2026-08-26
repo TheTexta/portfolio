@@ -3,14 +3,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { loadPhotoGraphEdgeGenerationConfig } from "@/lib/photo-graph/database";
 import {
   countGraphEdges,
-  parseLabEdgeGenerationParamsFromSearchParams,
-  regenerateLabGraphCorrelations,
 } from "@/lib/photo-graph/edge-generation";
 import { buildPhotoGraphPayload } from "@/lib/photo-graph/force-graph";
 import {
   cloneGraphNodes,
   loadGraphWithFallback,
 } from "@/lib/photo-graph/graph-store";
+import {
+  generateSparsePhotoGraph,
+  parseSparseEdgeGenerationConfigFromSearchParams,
+} from "@/lib/photo-graph/sparse-edge-generation";
 import {
   ADMIN_SESSION_COOKIE_NAME,
   isValidAdminSessionToken,
@@ -37,16 +39,17 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const requestedParams = parseLabEdgeGenerationParamsFromSearchParams(
+  const requestedConfig = parseSparseEdgeGenerationConfigFromSearchParams(
     request.nextUrl.searchParams,
   );
   if (
-    request.nextUrl.searchParams.has("sigmaE") ||
-    request.nextUrl.searchParams.has("minCorrelation")
+    request.nextUrl.searchParams.has("model") ||
+    request.nextUrl.searchParams.has("neighborsPerNode") ||
+    request.nextUrl.searchParams.has("maxDistance")
   ) {
-    if (!requestedParams) {
+    if (!requestedConfig) {
       return NextResponse.json(
-        { error: "Invalid LAB edge generation parameters." },
+        { error: "Invalid sparse edge generation parameters." },
         { status: 400 },
       );
     }
@@ -75,12 +78,11 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const generatedNodes = cloneGraphNodes(nodes);
-  const config = {
-    mode: "lab" as const,
-    params: requestedParams ?? savedConfig.params,
-  };
-  regenerateLabGraphCorrelations(generatedNodes, config.params);
+  const config = requestedConfig ?? savedConfig;
+  const { nodes: generatedNodes } = generateSparsePhotoGraph(
+    cloneGraphNodes(nodes),
+    config,
+  );
 
   return NextResponse.json(
     {

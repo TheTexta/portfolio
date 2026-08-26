@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
-import { Menu, Minimize, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 import { ControlButton } from "@/app/components/ui/control";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
@@ -14,7 +14,6 @@ import {
   sliderClass,
 } from "./config";
 import type { GraphControls } from "./types";
-import { ActionButton, ActionLink } from "../../ui/editorial";
 
 type PhotoGraphControlsProps = {
   menuOpen: boolean;
@@ -45,7 +44,7 @@ export default function PhotoGraphControls({
             {menuOpen && (
               <ControlButton
                 onClick={onMenuClose}
-                className="h-8 w-8 border-y-0 border-l-0"
+                className="h-11 w-11 border-y-0 border-l-0 sm:h-8 sm:w-8"
                 aria-label="Close graph controls"
               >
                 <X />
@@ -55,7 +54,7 @@ export default function PhotoGraphControls({
             {!menuOpen && (
               <ControlButton
                 onClick={onMenuOpen}
-                className="h-8 w-8 border-y-0 border-l-0"
+                className="h-11 w-11 border-y-0 border-l-0 sm:h-8 sm:w-8"
                 aria-label="Open graph controls"
               >
                 <Menu />

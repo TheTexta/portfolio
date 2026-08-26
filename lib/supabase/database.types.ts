@@ -1,5 +1,6 @@
 import type {
   PhotoGraphEdgeRow,
+  PhotoGraphNeighborRow,
   PhotoGraphNodeRow,
   PhotoGraphSettingRow,
 } from "@/lib/photo-graph/types";
@@ -24,6 +25,11 @@ export type SupabaseDatabase = {
         Omit<PhotoGraphEdgeRow, "created_at">,
         Partial<Omit<PhotoGraphEdgeRow, "created_at">>
       >;
+      photo_graph_neighbors: TableDefinition<
+        PhotoGraphNeighborRow,
+        PhotoGraphNeighborRow,
+        Partial<PhotoGraphNeighborRow>
+      >;
       photo_graph_settings: TableDefinition<
         PhotoGraphSettingRow,
         PhotoGraphSettingRow,
@@ -31,7 +37,20 @@ export type SupabaseDatabase = {
       >;
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      reserve_photo_graph_node_ids: {
+        Args: { requested_count: number };
+        Returns: number[];
+      };
+      replace_photo_graph_neighbor_snapshot: {
+        Args: {
+          source_ids: number[];
+          neighbor_rows: unknown;
+          generation_config: unknown;
+        };
+        Returns: number;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

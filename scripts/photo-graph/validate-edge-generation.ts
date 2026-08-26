@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import {
   computeLabCorrelation,
   countGraphEdges,
-  normalizePhotoGraphEdgeGenerationConfig,
   regenerateLabGraphCorrelations,
 } from "../../lib/photo-graph/edge-generation";
+import { normalizeSparseEdgeGenerationConfig } from "../../lib/photo-graph/sparse-edge-generation";
 import type { GraphNode, PhotoGraphEdgeGenerationConfig } from "../../lib/photo-graph/types";
 
 function createFixtureNodes(): GraphNode[] {
@@ -112,13 +112,12 @@ function run() {
   );
 
   const config: PhotoGraphEdgeGenerationConfig = {
-    mode: "lab",
-    params: {
-      sigmaE: 22.5,
-      minCorrelation: 0.42,
-    },
+    version: 2,
+    model: "mean-lab-cie76",
+    neighborsPerNode: 4,
+    maxDistance: 22.5,
   };
-  const roundTripped = normalizePhotoGraphEdgeGenerationConfig(
+  const roundTripped = normalizeSparseEdgeGenerationConfig(
     JSON.parse(JSON.stringify(config)),
   );
   assert.deepEqual(
