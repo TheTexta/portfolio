@@ -19,11 +19,20 @@ export const GRAPH_CONFIG = {
   initialImageMaxWidth: 192,
   initialVisibleImageCount: 36,
   initialImageFallbackCount: 12,
+  settleTicks: 600,
+  warmupTicks: 300,
+  settleAlpha: 0.001,
+  connectionIntroDragDistancePx: 8,
   fitToCanvasDurationMs: 250,
-  fitToCanvasMinTicks: 12,
   fitToCanvasPaddingRatio: 0.08,
   viewportBufferRatio: 0.15,
 } as const;
+
+export const PHOTO_GRAPH_ALPHA_DECAY =
+  1 - Math.pow(GRAPH_CONFIG.settleAlpha, 1 / GRAPH_CONFIG.settleTicks);
+
+export const PHOTO_GRAPH_VISIBLE_SETTLE_TICKS =
+  GRAPH_CONFIG.settleTicks - GRAPH_CONFIG.warmupTicks;
 
 export const photoGraphControlsPositionClass =
   "absolute left-[1vmin] top-[1vmin] z-[5] flex w-[min(18rem,calc(100vw-2vmin))] flex-col";

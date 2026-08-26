@@ -27,6 +27,8 @@ import PhotoGraphInspectOverlay from "./PhotoGraphInspectOverlay";
 import {
   DEFAULT_GRAPH_CONTROLS,
   GRAPH_CONFIG,
+  PHOTO_GRAPH_ALPHA_DECAY,
+  PHOTO_GRAPH_VISIBLE_SETTLE_TICKS,
   PHOTO_GRAPH_INSPECT_PREVIEW_QUALITY,
   PHOTO_GRAPH_INSPECT_PREVIEW_WIDTH,
   photoGraphShellClass,
@@ -34,6 +36,7 @@ import {
 import type {
   GraphControls,
   InspectTarget,
+  PhotoGraphData,
   PhotoGraphCanvasProps,
   PhotoGraphInstance,
   PhotoGraphLink,
@@ -42,17 +45,29 @@ import type {
 import { usePhotoGraphData } from "./usePhotoGraphData";
 import { usePhotoGraphForces } from "./usePhotoGraphForces";
 import { usePhotoGraphImages } from "./usePhotoGraphImages";
+import { usePhotoGraphIntro } from "./usePhotoGraphIntro";
 
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
   ssr: false,
   loading: () => <div className="bg-canvas h-full w-full" />,
 }) as unknown as (props: Record<string, unknown>) => ReactElement;
 
+const EMPTY_PHOTO_GRAPH_DATA: PhotoGraphData = { nodes: [], links: [] };
+
+type ConnectionIntroAnchor = {
+  node: PhotoGraphNode;
+  previousFx: number | undefined;
+  previousFy: number | undefined;
+  pinnedFx: number;
+  pinnedFy: number;
+};
+
 function fitGraphToWeightedCenter(
   graph: PhotoGraphInstance,
   nodes: PhotoGraphNode[],
   width: number,
   height: number,
+  durationOverride?: number,
 ) {
   const padding = Math.round(
     Math.min(width, height) * GRAPH_CONFIG.fitToCanvasPaddingRatio,
@@ -109,9 +124,11 @@ function fitGraphToWeightedCenter(
     ),
   );
 
-  const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ? 0
-    : GRAPH_CONFIG.fitToCanvasDurationMs;
+  const duration =
+    durationOverride ??
+    (window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? 0
+      : GRAPH_CONFIG.fitToCanvasDurationMs);
 
   graph.centerAt(centerX, centerY, duration);
   graph.zoom(zoom, duration);
@@ -144,10 +161,21 @@ export default function PhotoGraphCanvas({
 
   const fgRef = useRef<PhotoGraphInstance | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const graphMountedRef = useRef(false);
+  const preparedGraphDataRef = useRef<PhotoGraphData>(EMPTY_PHOTO_GRAPH_DATA);
+  const reducedMotionRef = useRef(false);
+  const connectionIntroStartedRef = useRef(false);
+  const connectionIntroRunningRef = useRef(false);
+  const connectionIntroAnchorRef = useRef<ConnectionIntroAnchor | null>(null);
+  const visibleSettleTickCountRef = useRef(0);
+  const connectionRevealProgressRef = useRef(0);
   const fitToCanvasAppliedRef = useRef(false);
-  const fitToCanvasTickCountRef = useRef(0);
 
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [graphMounted, setGraphMounted] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState<boolean | null>(null);
+  const [preparedGraphData, setPreparedGraphData] =
+    useState<PhotoGraphData>(EMPTY_PHOTO_GRAPH_DATA);
   const [menuOpen, setMenuOpen] = useState(false);
   const [uncontrolledControls, setUncontrolledControls] =
     useState<GraphControls>({
@@ -157,7 +185,6 @@ export default function PhotoGraphCanvas({
   const [inspectTarget, setInspectTarget] = useState<InspectTarget | null>(
     null,
   );
-
   const {
     defaultGraphControls: fetchedDefaultGraphControls,
     graphData,
@@ -169,11 +196,96 @@ export default function PhotoGraphCanvas({
     (hasLocalControlOverride
       ? uncontrolledControls
       : (fetchedDefaultGraphControls ?? uncontrolledControls));
-  const { reinitializeCollisionForce } = usePhotoGraphForces({
-    fgRef,
-    nodes: graphData.nodes,
-    controls: activeControls,
-  });
+  const { configureRuntimeForces, reinitializeCollisionForce } =
+    usePhotoGraphForces({
+      fgRef,
+      nodes: graphData.nodes,
+      controls: activeControls,
+    });
+
+  const releaseConnectionIntroAnchor = useCallback(() => {
+    const anchor = connectionIntroAnchorRef.current;
+    if (!anchor) {
+      return;
+    }
+
+    if (
+      anchor.node.fx === anchor.pinnedFx &&
+      anchor.node.fy === anchor.pinnedFy
+    ) {
+      anchor.node.fx = anchor.previousFx;
+      anchor.node.fy = anchor.previousFy;
+    }
+    connectionIntroAnchorRef.current = null;
+  }, []);
+
+  const handleGraphReady = useCallback(
+    () => {
+      const graph = fgRef.current;
+      if (!graph || graphMountedRef.current) {
+        return;
+      }
+
+      graphMountedRef.current = true;
+      setGraphMounted(true);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) {
+        reducedMotionRef.current = prefersReducedMotion;
+        setReducedMotion(prefersReducedMotion);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const graph = fgRef.current;
+    if (!graphMounted || !graph) {
+      return;
+    }
+
+    configureRuntimeForces(graph);
+    reinitializeCollisionForce(graphData.nodes);
+
+    if (preparedGraphDataRef.current !== graphData) {
+      releaseConnectionIntroAnchor();
+      preparedGraphDataRef.current = graphData;
+      connectionIntroStartedRef.current = false;
+      visibleSettleTickCountRef.current = 0;
+      connectionRevealProgressRef.current = reducedMotionRef.current ? 1 : 0;
+      let cancelled = false;
+      queueMicrotask(() => {
+        if (!cancelled) {
+          setPreparedGraphData(graphData);
+        }
+      });
+
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (graphData.nodes.length) {
+      graph.d3ReheatSimulation();
+    }
+  }, [
+    configureRuntimeForces,
+    graphData,
+    graphMounted,
+    releaseConnectionIntroAnchor,
+    reinitializeCollisionForce,
+  ]);
 
   const handleNodeMutation = useCallback(
     (resortNodes = false) => {
@@ -181,10 +293,10 @@ export default function PhotoGraphCanvas({
         return;
       }
 
-      sortPhotoGraphNodesForRender(graphData.nodes);
-      reinitializeCollisionForce(graphData.nodes);
+      sortPhotoGraphNodesForRender(preparedGraphData.nodes);
+      reinitializeCollisionForce(preparedGraphData.nodes);
     },
-    [graphData.nodes, reinitializeCollisionForce],
+    [preparedGraphData.nodes, reinitializeCollisionForce],
   );
 
   const {
@@ -199,14 +311,13 @@ export default function PhotoGraphCanvas({
     dimensions,
     fgRef,
     hideConnections: activeControls.hideConnections,
-    nodes: graphData.nodes,
+    nodes: preparedGraphData.nodes,
     onNodeMutation: handleNodeMutation,
   });
 
   useEffect(() => {
     fitToCanvasAppliedRef.current = false;
-    fitToCanvasTickCountRef.current = 0;
-  }, [dimensions.height, dimensions.width, graphData.nodes, fitToCanvas]);
+  }, [dimensions.height, dimensions.width, preparedGraphData.nodes, fitToCanvas]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -214,20 +325,27 @@ export default function PhotoGraphCanvas({
       return;
     }
 
+    const updateDimensions = (width: number, height: number) => {
+      const nextWidth = Math.max(1, Math.round(width));
+      const nextHeight = Math.max(1, Math.round(height));
+
+      setDimensions((current) =>
+        current.width === nextWidth && current.height === nextHeight
+          ? current
+          : { width: nextWidth, height: nextHeight },
+      );
+    };
+
+    const initialBounds = container.getBoundingClientRect();
+    updateDimensions(initialBounds.width, initialBounds.height);
+
     const resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (!entry) {
         return;
       }
 
-      const width = Math.max(1, Math.round(entry.contentRect.width));
-      const height = Math.max(1, Math.round(entry.contentRect.height));
-
-      setDimensions((current) =>
-        current.width === width && current.height === height
-          ? current
-          : { width, height },
-      );
+      updateDimensions(entry.contentRect.width, entry.contentRect.height);
     });
 
     resizeObserver.observe(container);
@@ -247,6 +365,10 @@ export default function PhotoGraphCanvas({
     },
     [activeDarkMode],
   );
+  const { linkCanvasObject } = usePhotoGraphIntro({
+    revealProgressRef: connectionRevealProgressRef,
+    linkColor,
+  });
 
   const setControlValue = useCallback(
     (key: keyof GraphControls, value: boolean | number) => {
@@ -269,30 +391,110 @@ export default function PhotoGraphCanvas({
   );
 
   const handleEngineTick = useCallback(() => {
+    if (
+      reducedMotionRef.current ||
+      !connectionIntroRunningRef.current ||
+      visibleSettleTickCountRef.current >= PHOTO_GRAPH_VISIBLE_SETTLE_TICKS
+    ) {
+      return;
+    }
+
+    visibleSettleTickCountRef.current += 1;
+    connectionRevealProgressRef.current =
+      visibleSettleTickCountRef.current / PHOTO_GRAPH_VISIBLE_SETTLE_TICKS;
+
+    if (
+      visibleSettleTickCountRef.current === PHOTO_GRAPH_VISIBLE_SETTLE_TICKS
+    ) {
+      releaseConnectionIntroAnchor();
+      connectionIntroRunningRef.current = false;
+    }
+  }, [releaseConnectionIntroAnchor]);
+
+  const handleRenderFramePre = useCallback(() => {
+    handleGraphReady();
+
     if (!fitToCanvas || fitToCanvasAppliedRef.current || !fgRef.current) {
+      // The intro can still run in embedded canvases that keep their own camera.
+    } else {
+      const positionedNodes = preparedGraphData.nodes.filter(
+        (node) => Number.isFinite(node.x) && Number.isFinite(node.y),
+      );
+      if (positionedNodes.length) {
+        fitToCanvasAppliedRef.current = true;
+        fitGraphToWeightedCenter(
+          fgRef.current,
+          positionedNodes,
+          dimensions.width,
+          dimensions.height,
+          0,
+        );
+      }
+    }
+
+    const graph = fgRef.current;
+    if (
+      !graph ||
+      reducedMotionRef.current ||
+      connectionIntroStartedRef.current ||
+      preparedGraphData.links.length === 0
+    ) {
       return;
     }
 
-    fitToCanvasTickCountRef.current += 1;
-    if (fitToCanvasTickCountRef.current < GRAPH_CONFIG.fitToCanvasMinTicks) {
-      return;
-    }
+    const anchorNode = preparedGraphData.nodes.reduce<PhotoGraphNode | null>(
+      (closest, node) => {
+        if (!Number.isFinite(node.x) || !Number.isFinite(node.y)) {
+          return closest;
+        }
+        if (!closest) {
+          return node;
+        }
 
-    const positionedNodes = graphData.nodes.filter(
-      (node) => Number.isFinite(node.x) && Number.isFinite(node.y),
+        const nodePoint = graph.graph2ScreenCoords(node.x ?? 0, node.y ?? 0);
+        const closestPoint = graph.graph2ScreenCoords(
+          closest.x ?? 0,
+          closest.y ?? 0,
+        );
+        const centerX = dimensions.width / 2;
+        const centerY = dimensions.height / 2;
+        return Math.hypot(nodePoint.x - centerX, nodePoint.y - centerY) <
+          Math.hypot(closestPoint.x - centerX, closestPoint.y - centerY)
+          ? node
+          : closest;
+      },
+      null,
     );
-    if (!positionedNodes.length) {
+    if (!anchorNode) {
       return;
     }
 
-    fitToCanvasAppliedRef.current = true;
-    fitGraphToWeightedCenter(
-      fgRef.current,
-      positionedNodes,
-      dimensions.width,
-      dimensions.height,
-    );
-  }, [dimensions.height, dimensions.width, fitToCanvas, graphData.nodes]);
+    const zoom = Math.max(graph.zoom(), Number.EPSILON);
+    const pinnedFx =
+      (anchorNode.x ?? 0) + GRAPH_CONFIG.connectionIntroDragDistancePx / zoom;
+    const pinnedFy = anchorNode.y ?? 0;
+    connectionIntroAnchorRef.current = {
+      node: anchorNode,
+      previousFx: anchorNode.fx,
+      previousFy: anchorNode.fy,
+      pinnedFx,
+      pinnedFy,
+    };
+    anchorNode.x = pinnedFx;
+    anchorNode.y = pinnedFy;
+    anchorNode.fx = pinnedFx;
+    anchorNode.fy = pinnedFy;
+    connectionIntroStartedRef.current = true;
+    connectionIntroRunningRef.current = true;
+    graph.d3ReheatSimulation();
+  }, [
+    dimensions.height,
+    dimensions.width,
+    fitToCanvas,
+    handleGraphReady,
+    preparedGraphData.links.length,
+    preparedGraphData.nodes,
+  ]);
 
   return (
     <div
@@ -331,20 +533,36 @@ export default function PhotoGraphCanvas({
           ref={containerRef}
           className="bg-canvas relative h-full w-full [image-rendering:pixelated] [&_canvas]:[image-rendering:pixelated]"
         >
-          {dimensions.width > 0 && dimensions.height > 0 && (
+          {dimensions.width > 0 &&
+            dimensions.height > 0 &&
+            reducedMotion !== null && (
             <ForceGraph2D
               ref={fgRef as MutableRefObject<PhotoGraphInstance | undefined>}
-              graphData={graphData}
+              graphData={preparedGraphData}
               width={dimensions.width}
               height={dimensions.height}
               minZoom={GRAPH_CONFIG.zoomExtent[0]}
               maxZoom={GRAPH_CONFIG.zoomExtent[1]}
+              d3AlphaMin={0}
+              d3AlphaDecay={PHOTO_GRAPH_ALPHA_DECAY}
+              warmupTicks={
+                reducedMotion
+                  ? GRAPH_CONFIG.settleTicks
+                  : GRAPH_CONFIG.warmupTicks
+              }
+              cooldownTicks={
+                reducedMotion ? 0 : PHOTO_GRAPH_VISIBLE_SETTLE_TICKS
+              }
+              cooldownTime={Infinity}
               // Photo nodes repaint asynchronously as images load in.
               autoPauseRedraw={false}
+              onRenderFramePre={handleRenderFramePre}
               nodeCanvasObjectMode={() => "replace"}
               nodeCanvasObject={nodeCanvasObject}
               nodePointerAreaPaint={nodePointerAreaPaint}
               linkColor={linkColor}
+              linkCanvasObjectMode={() => "replace"}
+              linkCanvasObject={linkCanvasObject}
               linkVisibility={linkVisibility}
               showPointerCursor={showPointerCursor}
               onNodeClick={(node: PhotoGraphNode) =>

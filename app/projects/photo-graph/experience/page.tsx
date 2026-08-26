@@ -15,7 +15,7 @@ export default function Page() {
     <ProjectPageShell
       navigation={<ExperienceNav caseStudyHref={PROJECT_ROUTES.photoGraph} />}
     >
-      <PhotoGraphCanvas showNavigation={false} />
+      <PhotoGraphCanvas fitToCanvas showNavigation={false} />
     </ProjectPageShell>
   );
 }

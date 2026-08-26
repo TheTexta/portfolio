@@ -3,7 +3,6 @@
 import {
   type RefObject,
   useCallback,
-  useEffect,
 } from "react";
 import * as d3 from "d3";
 
@@ -126,8 +125,8 @@ export function usePhotoGraphForces({
     [fgRef, nodes],
   );
 
-  const configureRuntimeForces = useCallback(() => {
-    const graph = fgRef.current;
+  const configureRuntimeForces = useCallback((instance?: PhotoGraphInstance) => {
+    const graph = instance ?? fgRef.current;
     if (!graph) {
       return;
     }
@@ -176,17 +175,8 @@ export function usePhotoGraphForces({
     fgRef,
   ]);
 
-  useEffect(() => {
-    if (!nodes.length) {
-      return;
-    }
-
-    configureRuntimeForces();
-    reinitializeCollisionForce(nodes);
-    fgRef.current?.d3ReheatSimulation();
-  }, [configureRuntimeForces, fgRef, nodes, reinitializeCollisionForce]);
-
   return {
+    configureRuntimeForces,
     reinitializeCollisionForce,
   };
 }
