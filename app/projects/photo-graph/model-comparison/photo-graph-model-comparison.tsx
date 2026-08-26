@@ -102,19 +102,21 @@ export default function PhotoGraphModelComparison({
             id="colour-model-study-heading"
             className="font-display max-w-xl text-4xl leading-[0.95] font-medium tracking-normal sm:text-5xl"
           >
-            Choosing how colour similarity should feel.
+            Browsing photographs by colour.
           </h2>
         </div>
         <div className="grid gap-5 text-sm leading-6 lg:col-span-6 lg:grid-cols-2">
           <p>
-            The first graph compared mean LAB colours with CIE76. It was cheap
-            to compute, but the result was visually dense while still leaving
-            photographs disconnected.
+            Photo archives are usually organised by time, place, or subject.
+            This experiment asks whether colour can offer another route through
+            the work: moving from one photograph to another through light,
+            tone, and palette.
           </p>
           <p>
-            I compared five models against seven manually reviewed query sets.
-            Mean LAB with CIEDE2000 gave the strongest precision without
-            requiring a feature backfill, so it became the production model.
+            An initial CIE76 graph was visually dense yet still split natural
+            neighbours apart. I tested five models against seven reviewed query
+            sets; Mean LAB with CIEDE2000 gave the strongest result using the
+            existing image features, so it drives the live graph.
           </p>
         </div>
       </div>
@@ -136,11 +138,11 @@ export default function PhotoGraphModelComparison({
         </div>
         <div className="border-t border-[rgb(var(--color-rule))] py-4 sm:border-t-0 sm:border-l sm:pl-4">
           <dt className="text-[0.625rem] tracking-[0.16em] uppercase opacity-55">
-            Production result
+            Reviewed top four
           </dt>
           <dd className="mt-1 text-sm font-semibold">
             {selectedModel
-              ? `${formatPercent(selectedModel.metrics.precisionAtK)} P@4 / ${selectedModel.metrics.edgeCount} edges / ${selectedModel.metrics.isolates} isolates`
+              ? `${formatPercent(selectedModel.metrics.precisionAtK)} relevant / ${selectedModel.metrics.edgeCount} edges / ${selectedModel.metrics.isolates} isolates`
               : `${report.neighborsPerNode} neighbours per photograph`}
           </dd>
         </div>
@@ -156,7 +158,7 @@ export default function PhotoGraphModelComparison({
             </h3>
             <p className="text-xs opacity-55">Human-reviewed affinity set</p>
           </div>
-          <div className="grid grid-cols-2 gap-px bg-[rgb(var(--color-rule))] sm:grid-cols-4 xl:grid-cols-7">
+          <div className="border-rule bg-canvas grid grid-cols-2 border-t border-l sm:grid-cols-4 xl:grid-cols-[repeat(auto-fit,minmax(15.5rem,1fr))]">
             {queries.map((query, index) => {
               const active = query.id === activeQuery?.id;
               return (
@@ -165,7 +167,7 @@ export default function PhotoGraphModelComparison({
                   type="button"
                   aria-pressed={active}
                   onClick={() => setActiveQueryId(query.id)}
-                  className={`group bg-canvas grid min-h-20 grid-cols-[4.5rem_1fr] items-stretch text-left transition-colors outline-none focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-[rgb(var(--color-focus))] ${
+                  className={`group border-rule bg-canvas grid min-h-20 cursor-pointer grid-cols-[4.5rem_1fr] items-stretch border-r border-b text-left transition-colors outline-none focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-[rgb(var(--color-focus))] ${
                     active ? "bg-ink text-canvas" : "hover:bg-surface"
                   }`}
                 >
@@ -202,8 +204,10 @@ export default function PhotoGraphModelComparison({
               </h3>
             </div>
             <p className="max-w-xl text-xs leading-5 opacity-60">
-              “Relevant” marks a neighbor included in the reviewed positive set.
-              Unmarked results are unjudged, not automatically wrong.
+              “Relevant” marks a reviewed match. P@4 is the share of the first
+              four results judged relevant; pair agreement measures how closely
+              a model follows the reviewed ranking. Unmarked results are
+              unjudged, not automatically wrong.
             </p>
           </div>
 
@@ -228,7 +232,7 @@ export default function PhotoGraphModelComparison({
                     </div>
                     {isHighestPrecision && (
                       <span className="border-ink border px-1.5 py-1 text-[0.5625rem] leading-none font-semibold tracking-[0.12em] uppercase">
-                        Best P@4
+                        Best reviewed P@4
                       </span>
                     )}
                   </header>
@@ -280,7 +284,7 @@ export default function PhotoGraphModelComparison({
                   <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-[rgb(var(--color-rule))] pt-3 text-xs">
                     <div>
                       <dt className="text-[0.5625rem] tracking-[0.14em] uppercase opacity-50">
-                        Judged P@4
+                        Relevant in top four
                       </dt>
                       <dd className="mt-0.5 text-lg font-semibold">
                         {formatPercent(model.metrics.precisionAtK)}
@@ -288,7 +292,7 @@ export default function PhotoGraphModelComparison({
                     </div>
                     <div>
                       <dt className="text-[0.5625rem] tracking-[0.14em] uppercase opacity-50">
-                        Pair agreement
+                        Ranking agreement
                       </dt>
                       <dd className="mt-0.5 text-lg font-semibold">
                         {formatPercent(model.metrics.pairwiseAgreement)}
@@ -305,7 +309,7 @@ export default function PhotoGraphModelComparison({
                     </div>
                     <div>
                       <dt className="text-[0.5625rem] tracking-[0.14em] uppercase opacity-50">
-                        Exact graph time
+                        Build time
                       </dt>
                       <dd className="mt-0.5 tabular-nums">
                         {formatDuration(model.metrics.graphDurationMs)}
@@ -318,12 +322,79 @@ export default function PhotoGraphModelComparison({
           </div>
       </section>
 
-      <footer className="editorial-rule grid gap-4 border-t pt-5 text-xs leading-5 opacity-65 md:grid-cols-2">
+      <section
+        className="editorial-rule grid gap-4 border-t pt-5 text-xs leading-5 opacity-65 md:grid-cols-2"
+        aria-label="Benchmark notes"
+      >
         <p>{report.judgmentScope}</p>
         <p className="md:text-right">
           Exact all-pairs benchmark / {report.models[0]?.metrics.pairCount.toLocaleString("en-GB")} pairs / generated {formatBenchmarkDate(report.generatedAt)}
         </p>
-      </footer>
+      </section>
+
+      <section
+        className="editorial-rule mt-12 border-t py-8 sm:mt-16 sm:py-12"
+        aria-labelledby="project-readout-heading"
+      >
+        <div className="grid gap-8 lg:grid-cols-12 lg:gap-6">
+          <p className="text-[0.6875rem] font-semibold tracking-[0.2em] uppercase opacity-55 lg:col-span-2">
+            Project readout
+          </p>
+          <div className="lg:col-span-4">
+            <h2
+              id="project-readout-heading"
+              className="font-display max-w-xl text-4xl leading-[0.95] font-medium tracking-normal sm:text-5xl"
+            >
+              A different way through the archive.
+            </h2>
+          </div>
+          <div className="max-w-2xl text-sm leading-6 lg:col-span-6">
+            <p>
+              The graph does not try to identify what a photograph depicts.
+              Instead, it turns {report.nodeCount} photographs into a field of
+              visual neighbours, then tests that field against {queries.length}
+              {" "}deliberately different reference images before anyone is
+              asked to browse it.
+            </p>
+          </div>
+        </div>
+
+        <ol className="border-rule mt-8 grid border-t border-l sm:mt-12 sm:grid-cols-3">
+          <li className="border-rule min-h-40 border-r border-b p-4">
+            <p className="text-[0.625rem] tracking-[0.16em] uppercase opacity-55">
+              01 / Index
+            </p>
+            <h3 className="mt-5 text-base font-semibold">Photograph set</h3>
+            <p className="mt-2 max-w-xs text-sm leading-6 opacity-65">
+              The archive remains image-first. A feature pass records colour
+              signals for every photograph, while the original image stays at
+              the centre of the experience.
+            </p>
+          </li>
+          <li className="border-rule min-h-40 border-r border-b p-4">
+            <p className="text-[0.625rem] tracking-[0.16em] uppercase opacity-55">
+              02 / Review
+            </p>
+            <h3 className="mt-5 text-base font-semibold">Similarity test</h3>
+            <p className="mt-2 max-w-xs text-sm leading-6 opacity-65">
+              Seven query images define the kind of visual relationship worth
+              preserving. Five colour models are checked against those judgments
+              instead of assuming numerical closeness matches the eye.
+            </p>
+          </li>
+          <li className="border-rule min-h-40 border-r border-b p-4">
+            <p className="text-[0.625rem] tracking-[0.16em] uppercase opacity-55">
+              03 / Browse
+            </p>
+            <h3 className="mt-5 text-base font-semibold">Living graph</h3>
+            <p className="mt-2 max-w-xs text-sm leading-6 opacity-65">
+              The selected model becomes a force-directed gallery. It makes
+              colour clusters and surprising near-neighbours available to browse
+              as a field, rather than a fixed list of results.
+            </p>
+          </li>
+        </ol>
+      </section>
     </EditorialContainer>
   );
 }

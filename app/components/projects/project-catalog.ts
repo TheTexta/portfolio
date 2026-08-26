@@ -82,7 +82,7 @@ export const projectCatalog: readonly ProjectDefinition[] = [
     titleTreatment: "photo-graph",
     eyebrow: "Photography / Data visualization",
     summary:
-      "A force-directed gallery that maps photographs through color-similarity relationships.",
+      "A force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review.",
     technologies: ["Next.js", "D3", "Supabase"],
     caseStudyHref: PROJECT_ROUTES.photoGraph,
     experienceHref: PROJECT_ROUTES.photoGraphExperience,
