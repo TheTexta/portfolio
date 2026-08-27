@@ -165,6 +165,59 @@ async function checkTable(tableName: string, selectColumn: string) {
   } satisfies CheckResult;
 }
 
+async function checkNeighborSnapshotRpc() {
+  const baseUrl = readRequiredEnv("NEXT_PUBLIC_SUPABASE_URL");
+  const response = await fetch(
+    `${baseUrl}/rest/v1/rpc/replace_photo_graph_neighbor_snapshot`,
+    {
+      method: "POST",
+      headers: {
+        ...getAuthHeaders(),
+        "content-type": "application/json",
+      },
+      // The invalid bigint is rejected before the database function runs, so
+      // this verifies PostgREST's schema cache without changing graph data.
+      body: JSON.stringify({
+        source_ids: ["not-a-number"],
+        neighbor_rows: [],
+        generation_config: {},
+      }),
+      cache: "no-store",
+    },
+  );
+
+  const body = (await response.json().catch(() => null)) as {
+    code?: string;
+    message?: string;
+  } | null;
+
+  if (body?.code === "PGRST202") {
+    return {
+      name: "Neighbor snapshot RPC",
+      level: "fail",
+      detail:
+        "replace_photo_graph_neighbor_snapshot is missing from the PostgREST schema cache. Apply supabase/photo-graph-schema.sql and reload the schema.",
+    } satisfies CheckResult;
+  }
+
+  if (response.status === 400) {
+    return {
+      name: "Neighbor snapshot RPC",
+      level: "pass",
+      detail:
+        "replace_photo_graph_neighbor_snapshot is available through PostgREST.",
+    } satisfies CheckResult;
+  }
+
+  return {
+    name: "Neighbor snapshot RPC",
+    level: "fail",
+    detail:
+      body?.message ??
+      `Request failed (${response.status} ${response.statusText}).`,
+  } satisfies CheckResult;
+}
+
 async function readSampleStoragePath() {
   const baseUrl = readRequiredEnv("NEXT_PUBLIC_SUPABASE_URL");
   const response = await fetch(
@@ -328,7 +381,9 @@ async function run() {
     checkBucket(),
     checkTable("photo_graph_nodes", "id"),
     checkTable("photo_graph_edges", "left_node_id"),
+    checkTable("photo_graph_neighbors", "source_node_id"),
     checkTable("photo_graph_settings", "key"),
+    checkNeighborSnapshotRpc(),
     checkImageRender(),
     checkDatabaseSocket(),
   ]);
@@ -340,7 +395,8 @@ async function run() {
   }
 
   if (results.some((result) => result.level === "fail")) {
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 
   console.log("Photo Graph Supabase setup is ready.");

@@ -194,7 +194,7 @@ export function EditorialPanel({
 }
 
 export const EDITORIAL_HEADER_CONTROL_CLASS =
-  "flex min-h-7 items-center outline-none transition-opacity hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[rgb(var(--color-focus))] active:opacity-80";
+  "flex min-h-7 items-center outline-none transition-opacity hover:underline hover:opacity-55 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[rgb(var(--color-focus))] active:opacity-80";
 
 type EditorialHeaderBarProps = {
   leading: ReactNode;

@@ -46,6 +46,18 @@ function parseEdgeGenerationConfig(
   return parseSparseEdgeGenerationConfig(value);
 }
 
+function isMissingNeighborPersistence(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return (
+    error.message.includes("replace_photo_graph_neighbor_snapshot") &&
+    (error.message.includes("schema cache") ||
+      error.message.includes("photo_graph_neighbors"))
+  );
+}
+
 export async function GET(request: NextRequest) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -116,11 +128,25 @@ export async function POST(request: NextRequest) {
     await savePhotoGraphEdgeGenerationConfig(config);
     edgeCount = countGraphEdges(nodes);
   } else {
-    edgeCount = await replacePhotoGraphNeighborSnapshot(
-      nodes.map((node) => node.id),
-      neighbors,
-      config,
-    );
+    try {
+      edgeCount = await replacePhotoGraphNeighborSnapshot(
+        nodes.map((node) => node.id),
+        neighbors,
+        config,
+      );
+    } catch (error) {
+      if (isMissingNeighborPersistence(error)) {
+        return NextResponse.json(
+          {
+            error:
+              "Photo graph neighbor persistence is not installed. Apply supabase/photo-graph-schema.sql from a host that can reach the Supabase database, then retry.",
+          },
+          { status: 503 },
+        );
+      }
+
+      throw error;
+    }
   }
 
   return NextResponse.json({

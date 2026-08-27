@@ -19,7 +19,10 @@ import {
   ControlButton,
   ControlLabel,
 } from "@/app/components/ui/control";
-import { SiteHeader } from "@/app/components/ui/editorial";
+import {
+  EDITORIAL_HEADER_CONTROL_CLASS,
+  SiteHeader,
+} from "@/app/components/ui/editorial";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
 import { extractPhotoGraphColorFeatureV1 } from "@/lib/photo-graph/color-features";
 import {
@@ -1012,14 +1015,13 @@ export default function PhotoGraphUploadClient() {
     <main className="editorial-page min-h-dvh">
       <SiteHeader>
         <ThemeToggle />
-        <ControlButton
+        <button
+          type="button"
           onClick={handleLogout}
-          layout="action"
-          size="sm"
-          className="min-h-9"
+          className={EDITORIAL_HEADER_CONTROL_CLASS}
         >
           Log Out
-        </ControlButton>
+        </button>
       </SiteHeader>
       <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-8">
         <div className="border-rule mb-6 flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-end sm:justify-between">

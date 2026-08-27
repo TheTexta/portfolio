@@ -153,7 +153,8 @@ begin
   )
   where row.source_node_id = any(source_ids);
 
-  delete from public.photo_graph_edges;
+  delete from public.photo_graph_edges
+  where left_node_id >= 0;
 
   insert into public.photo_graph_edges (
     left_node_id,

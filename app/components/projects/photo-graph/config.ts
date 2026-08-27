@@ -55,9 +55,10 @@ export const GRAPH_CONTROL_SLIDERS: readonly GraphSliderConfig[] = [
   {
     key: "chargeMult",
     label: "Repel strength",
-    min: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.chargeMult.min,
-    max: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.chargeMult.max,
-    formatValue: (value) => `${value.toFixed(0)}x`,
+    min: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.chargeMult.min / 0.1,
+    max: PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS.chargeMult.max / 0.1,
+    scale: 0.1,
+    formatValue: (value) => `${value.toFixed(1)}x`,
   },
   {
     key: "distMinMult",
