@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { RotateCw } from "lucide-react";
 
 import { cn } from "@/lib/cn";
 
@@ -116,6 +117,7 @@ export default function GrailedPlusLiveDemo({
   const [frameHeight, setFrameHeight] = useState(frameBounds.min);
   const [hasEnteredViewport, setHasEnteredViewport] = useState(eager);
   const [isReady, setIsReady] = useState(false);
+  const [hasTimedOut, setHasTimedOut] = useState(false);
   const demoUrl = useMemo(() => getDemoUrl(feature), [feature]);
   const demoOrigin = useMemo(() => new URL(demoUrl).origin, [demoUrl]);
   const shouldLoad = eager || hasEnteredViewport;
@@ -232,6 +234,7 @@ export default function GrailedPlusLiveDemo({
     clearReadyTimeout();
     readyTimeoutRef.current = window.setTimeout(() => {
       setIsReady(false);
+      setHasTimedOut(true);
     }, READY_TIMEOUT_MS);
 
     return clearReadyTimeout;
@@ -251,6 +254,7 @@ export default function GrailedPlusLiveDemo({
 
       if (event.data.type === "ready") {
         clearReadyTimeout();
+        setHasTimedOut(false);
         setIsReady(true);
         setFrameHeight(clampFrameHeight(event.data.height, frameBounds));
         onVersionChange?.(
@@ -329,6 +333,12 @@ export default function GrailedPlusLiveDemo({
     [clearReadyTimeout],
   );
 
+  const retryDemo = useCallback(() => {
+    setHasTimedOut(false);
+    setIsReady(false);
+    setAttempt((currentAttempt) => currentAttempt + 1);
+  }, []);
+
   return (
     <div
       ref={containerRef}
@@ -341,9 +351,24 @@ export default function GrailedPlusLiveDemo({
           style={{ minHeight: frameBounds.min }}
           role="status"
         >
-          {shouldLoad
-            ? "Connecting to the current extension build"
-            : "Live demo loads as it approaches"}
+          {hasTimedOut ? (
+            <span className="flex flex-col items-center gap-3">
+              <span>Live demo is temporarily unavailable</span>
+              <button
+                type="button"
+                onClick={retryDemo}
+                className="inline-flex h-8 w-8 items-center justify-center border transition-opacity hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+                aria-label="Retry loading live demo"
+                title="Retry loading live demo"
+              >
+                <RotateCw aria-hidden className="h-4 w-4" strokeWidth={1.75} />
+              </button>
+            </span>
+          ) : shouldLoad ? (
+            "Connecting to the current extension build"
+          ) : (
+            "Live demo loads as it approaches"
+          )}
         </div>
       ) : null}
 
