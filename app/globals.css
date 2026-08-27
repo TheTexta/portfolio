@@ -112,6 +112,18 @@ html.dark {
     font-size: 1.3125rem;
   }
 
+  .project-title[data-title-treatment="bur1alrites"] {
+    font-family: var(--font-red-hat-display), ui-serif, Georgia, serif;
+    font-weight: 900;
+    letter-spacing: -0.085em;
+    line-height: 0.78;
+    text-transform: uppercase;
+  }
+
+  .project-title--rail[data-title-treatment="bur1alrites"] {
+    font-size: 1.15rem;
+  }
+
   .project-title[data-title-treatment="grailed"] {
     font-family: var(--font-red-hat-display), ui-serif, Georgia, serif;
     font-weight: 900;
@@ -220,6 +232,22 @@ html.dark {
   from {
     opacity: 0;
     transform: translateX(1.5rem);
+  }
+}
+
+@keyframes editorial-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.editorial-marquee-track {
+  animation: editorial-marquee 32s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editorial-marquee-track {
+    animation-play-state: paused;
   }
 }
 

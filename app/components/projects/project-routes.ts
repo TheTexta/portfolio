@@ -15,4 +15,5 @@ export const PROJECT_ROUTES = {
   nepobabiesLive: "https://thetexta.github.io/nepobabiesruntheunderground/",
   nepobabiesPreview: "https://thetexta.github.io/nepobabiesruntheunderground/",
   nepobabiesGithub: "https://github.com/TheTexta/nepobabiesruntheunderground",
+  bur1alritesLive: "https://bur1alrites.vercel.app/",
 } as const;

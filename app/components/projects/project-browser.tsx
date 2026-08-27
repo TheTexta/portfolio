@@ -597,7 +597,7 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
       {!focusedProjectId ? (
         <EditorialContainer className="max-w-384 pb-3">
           <Eyebrow className="editorial-muted">
-            Interactive works / 01—03
+            Interactive works / 01—{projectCatalog.length.toString().padStart(2, "0")}
           </Eyebrow>
           <h2 className="mt-1.5 text-[clamp(1.75rem,3.5vw,3.25rem)] leading-none font-semibold tracking-[-0.035em]">
             Projects

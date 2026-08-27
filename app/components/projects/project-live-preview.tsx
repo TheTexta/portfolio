@@ -22,7 +22,6 @@ const HtmlProjectPreview = dynamic(
   () => import("@/app/components/projects/html-project-preview"),
   { ssr: false },
 );
-
 type ProjectLivePreviewProps = {
   project: ProjectDefinition;
   className?: string;
@@ -38,6 +37,14 @@ type ProjectPreviewRenderer = (
 ) => ReactNode;
 
 const PROJECT_PREVIEW_RENDERERS: Record<ProjectId, ProjectPreviewRenderer> = {
+  bur1alrites: () => (
+    <HtmlProjectPreview
+      title="bur1alrites"
+      previewSrc={PROJECT_ROUTES.bur1alritesLive}
+      projectHref={PROJECT_ROUTES.bur1alritesLive}
+      showNavigation={false}
+    />
+  ),
   "grailed-plus": () => <GrailedPlusPreview />,
   "photo-graph": ({ compact }) => (
     <PhotoGraphCanvas

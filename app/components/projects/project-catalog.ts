@@ -1,6 +1,7 @@
 import { PROJECT_ROUTES } from "./project-routes";
 
 export type ProjectId =
+  | "bur1alrites"
   | "grailed-plus"
   | "photo-graph"
   | "nepobabiesruntheunderground"
@@ -12,7 +13,11 @@ export type ProjectPreviewKind =
   | "html"
   | "spotify";
 
-export type ProjectTitleTreatment = "grailed" | "photo-graph" | "nepo";
+export type ProjectTitleTreatment =
+  | "bur1alrites"
+  | "grailed"
+  | "photo-graph"
+  | "nepo";
 
 export type GrailedPlusFeature = "price-trend" | "custom-currency" | "dm" | null;
 
@@ -122,6 +127,32 @@ export const projectCatalog: readonly ProjectDefinition[] = [
       {
         label: "GitHub",
         href: PROJECT_ROUTES.nepobabiesGithub,
+        external: true,
+      },
+    ],
+  },
+  {
+    id: "bur1alrites",
+    number: "04",
+    title: "bur1alrites",
+    titleTreatment: "bur1alrites",
+    eyebrow: "Portfolio / Moving-image archive",
+    summary:
+      "A black-and-white moving-image archive where clips begin as inverted studies and reveal their colour on hover.",
+    technologies: ["Next.js", "TypeScript", "Tailwind CSS"],
+    liveHref: PROJECT_ROUTES.bur1alritesLive,
+    posterSrc: "/projects/posters/bur1alrites.png",
+    posterAlt:
+      "BUR1ALRITES title over a grainy black moving-image scene",
+    posterAspectRatio: 1.5,
+    previewKind: "html",
+    role: "Design and development",
+    date: "2026",
+    outcome: "An archive for moving-image work",
+    links: [
+      {
+        label: "Open live site",
+        href: PROJECT_ROUTES.bur1alritesLive,
         external: true,
       },
     ],
