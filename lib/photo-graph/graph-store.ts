@@ -33,6 +33,39 @@ type GraphLoadResult = NormalizedGraphResult & {
   databaseAvailable: boolean;
 };
 
+// The source objects for these legacy nodes are no longer present in Storage.
+// Keep them out of every runtime representation until their originals are restored.
+const REMOVED_PHOTO_GRAPH_NODE_IDS = new Set([
+  "2",
+  "6",
+  "17",
+  "22",
+  "23",
+  "25",
+  "26",
+  "42",
+  "44",
+  "52",
+  "53",
+  "54",
+]);
+
+function removeUnavailablePhotoGraphNodes(nodes: GraphNode[]) {
+  const availableNodes = nodes.filter(
+    (node) => !REMOVED_PHOTO_GRAPH_NODE_IDS.has(node.id),
+  );
+  const availableIds = new Set(availableNodes.map((node) => node.id));
+
+  return availableNodes.map((node) => ({
+    ...node,
+    correlations: Object.fromEntries(
+      Object.entries(node.correlations).filter(([targetId]) =>
+        availableIds.has(targetId),
+      ),
+    ),
+  }));
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -245,14 +278,14 @@ export async function loadGraphWithFallback(): Promise<GraphLoadResult> {
   if (databaseNodes && databaseNodes.length > 0) {
     return {
       source: "database" as GraphLoadSource,
-      nodes: databaseNodes,
+      nodes: removeUnavailablePhotoGraphNodes(databaseNodes),
       databaseAvailable,
     };
   }
 
   return {
     source: "static" as GraphLoadSource,
-    nodes: await readStaticGraph(),
+    nodes: removeUnavailablePhotoGraphNodes(await readStaticGraph()),
     databaseAvailable,
   };
 }

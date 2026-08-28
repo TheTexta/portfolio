@@ -20,6 +20,10 @@ const LOCK_TTL_MS = 30_000;
 const LOCK_WAIT_MS = 10_000;
 const LOCK_RETRY_MS = 250;
 const STALE_WINDOW_SECONDS = 60 * 60 * 12;
+const FALLBACK_TRANSFORM_CACHE_MAX_AGE_SECONDS = parsePositiveInteger(
+  process.env.SUPABASE_IMAGE_CACHE_FALLBACK_MAX_AGE_SECONDS,
+  60 * 60 * 24 * 7,
+);
 const UPSTREAM_TIMEOUT_MS = 30_000;
 const CACHE_STATUS_HEADER = "X-Image-Cache-Status";
 const CACHED_HEADER_NAMES = [
@@ -77,6 +81,16 @@ function parseAcceptBucket(acceptHeader) {
   return "default";
 }
 
+function parsePositiveInteger(value, fallback) {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 function buildCacheKey(requestUrl, acceptHeader) {
   const bucket = parseAcceptBucket(acceptHeader);
   const hash = createHash("sha256")
@@ -102,6 +116,26 @@ function parseCacheControlMaxAge(headerValue) {
 
   const seconds = Number.parseInt(match[1], 10);
   return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
+}
+
+function resolveImageCacheHeaders(headers) {
+  const cacheControl = headers["cache-control"];
+  const cacheControlValue = Array.isArray(cacheControl)
+    ? cacheControl.join(", ")
+    : cacheControl;
+  const maxAge = parseCacheControlMaxAge(cacheControlValue);
+
+  if (maxAge) {
+    return { headers, maxAge };
+  }
+
+  return {
+    headers: {
+      ...headers,
+      "cache-control": `public, max-age=${FALLBACK_TRANSFORM_CACHE_MAX_AGE_SECONDS}`,
+    },
+    maxAge: FALLBACK_TRANSFORM_CACHE_MAX_AGE_SECONDS,
+  };
 }
 
 function pickHeaders(headers) {
@@ -506,12 +540,7 @@ function buildCachedResponse(entry, cacheStatus) {
 }
 
 function createCacheEntry(upstreamResponse) {
-  const cacheControl = upstreamResponse.headers["cache-control"];
-  const maxAge = parseCacheControlMaxAge(
-    Array.isArray(cacheControl) ? cacheControl.join(", ") : cacheControl,
-  );
-
-  if (!CACHEABLE_STATUS_CODES.has(upstreamResponse.statusCode) || !maxAge) {
+  if (!CACHEABLE_STATUS_CODES.has(upstreamResponse.statusCode)) {
     return null;
   }
 
@@ -524,12 +553,16 @@ function createCacheEntry(upstreamResponse) {
     return null;
   }
 
+  // Public transform URLs are content-addressed by their full request URL. Older
+  // Storage deployments can still reply with `no-cache` despite static object
+  // metadata, so supply a bounded cache policy for those image-only responses.
+  const { headers, maxAge } = resolveImageCacheHeaders(upstreamResponse.headers);
   const now = Date.now();
 
   return {
     body: upstreamResponse.body,
     meta: {
-      headers: pickHeaders(upstreamResponse.headers),
+      headers: pickHeaders(headers),
       statusCode: upstreamResponse.statusCode,
       statusMessage: upstreamResponse.statusMessage,
       storedAt: now,

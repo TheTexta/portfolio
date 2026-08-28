@@ -57,6 +57,13 @@ Verification:
 3. Run `npm run photo-graph:doctor`. The doctor now fails unless the render endpoint returns WebP, a one-week-plus cache TTL, and a warm-cache signal through `X-Image-Cache-Status`.
 4. Repeat the same render request with and without `image/webp` support in `Accept` and confirm the cache keeps those variants isolated.
 
+The cache preserves an origin-provided `max-age`. If an older Storage deployment
+returns `no-cache` for a public transformed image, the sidecar instead serves and
+caches that image for seven days by default. Set
+`SUPABASE_IMAGE_CACHE_FALLBACK_MAX_AGE_SECONDS` to override that fallback; it
+only applies to successful image responses on the transformed public route, not
+raw object or video requests.
+
 Troubleshooting:
 
 - If the doctor reports a missing `X-Image-Cache-Status`, Traefik is still sending render requests to Supabase directly instead of the cache sidecar.
