@@ -1,0 +1,77 @@
+worker_processes auto;
+
+events {
+  worker_connections 1024;
+}
+
+http {
+  include /etc/nginx/mime.types;
+  default_type application/octet-stream;
+
+  log_format cache '$remote_addr $request $status $body_bytes_sent '
+                   'cache=$upstream_cache_status upstream=$upstream_addr';
+
+  access_log /dev/stdout cache;
+  error_log /dev/stderr warn;
+
+  sendfile on;
+  keepalive_timeout 65;
+
+  map $http_accept $image_accept_bucket {
+    default default;
+    ~*image/avif avif;
+    ~*image/webp webp;
+  }
+
+  proxy_cache_path /var/cache/nginx/images
+    levels=1:2
+    keys_zone=supabase_images:50m
+    max_size=10g
+    inactive=7d
+    use_temp_path=off;
+
+  server {
+    listen 8080;
+    server_name _;
+
+    location = /healthz {
+      access_log off;
+      default_type text/plain;
+      return 200 'ok\n';
+    }
+
+    location ^~ /storage/v1/render/image/public/ {
+      proxy_pass ${SUPABASE_KONG_UPSTREAM};
+      proxy_http_version 1.1;
+      proxy_set_header Connection "";
+      proxy_set_header Host $http_host;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Host $http_host;
+      proxy_set_header X-Forwarded-Proto $scheme;
+
+      proxy_cache supabase_images;
+      proxy_cache_key '$scheme|$host|$request_uri|$image_accept_bucket';
+      proxy_cache_methods GET HEAD;
+      proxy_cache_valid 200 7d;
+      proxy_cache_lock on;
+      proxy_cache_lock_timeout 30s;
+      proxy_cache_lock_age 30s;
+      proxy_cache_revalidate on;
+      proxy_cache_background_update on;
+      proxy_cache_use_stale error timeout invalid_header updating
+                            http_500 http_502 http_503 http_504;
+      proxy_ignore_headers Cache-Control Expires Set-Cookie Vary;
+      proxy_hide_header Cache-Control;
+      proxy_hide_header Set-Cookie;
+      proxy_hide_header Vary;
+
+      add_header Cache-Control 'public, max-age=604800' always;
+      add_header Vary Accept always;
+      add_header X-Image-Cache-Status $upstream_cache_status always;
+    }
+
+    location / {
+      return 404;
+    }
+  }
+}

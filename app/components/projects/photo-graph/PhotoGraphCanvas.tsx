@@ -305,6 +305,7 @@ export default function PhotoGraphCanvas({
     linkVisibility,
     nodeCanvasObject,
     nodePointerAreaPaint,
+    queueVisibleImages,
     showPointerCursor,
   } = usePhotoGraphImages({
     activeDarkMode,
@@ -573,6 +574,7 @@ export default function PhotoGraphCanvas({
                 })
               }
               onEngineTick={handleEngineTick}
+              onEngineStop={queueVisibleImages}
               onZoom={handleZoom}
               onZoomEnd={handleZoomEnd}
             />

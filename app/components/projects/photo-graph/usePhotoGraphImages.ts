@@ -402,6 +402,7 @@ export function usePhotoGraphImages({
     linkVisibility,
     nodeCanvasObject,
     nodePointerAreaPaint,
+    queueVisibleImages,
     showPointerCursor,
   };
 }

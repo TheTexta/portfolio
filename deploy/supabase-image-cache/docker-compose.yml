@@ -1,39 +1,39 @@
 services:
   supabase-image-cache:
-    image: "node:22-alpine"
+    image: "nginx:1.28-alpine"
     container_name: supabase-image-cache
-    command:
-      - node
-      - /app/server.mjs
     restart: unless-stopped
+    environment:
+      NGINX_ENVSUBST_FILTER: "^SUPABASE_KONG_UPSTREAM$$"
+      NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx
+      SUPABASE_KONG_UPSTREAM: ${SUPABASE_KONG_UPSTREAM:-http://kong:8000}
     healthcheck:
       test:
         - CMD-SHELL
-        - "wget -q -O - http://127.0.0.1:${PORT:-8080}/healthz >/dev/null 2>&1 || exit 1"
+        - "wget -q -O - http://127.0.0.1:8080/healthz >/dev/null 2>&1 || exit 1"
       interval: 5s
       timeout: 5s
       retries: 10
       start_period: 5s
-    env_file:
-      - .env
     volumes:
-      - "./server.mjs:/app/server.mjs:ro"
+      - "./nginx.conf.template:/etc/nginx/templates/nginx.conf.template:ro"
+      - "supabase-image-cache-data:/var/cache/nginx"
     labels:
       - traefik.enable=true
       - traefik.docker.network=${TRAEFIK_DOCKER_NETWORK:-coolify}
       - traefik.http.routers.http-supabase-image-cache.entryPoints=http
       - traefik.http.routers.http-supabase-image-cache.middlewares=redirect-to-https
       - "traefik.http.routers.http-supabase-image-cache.rule=Host(`${SUPABASE_PUBLIC_HOST}`) && PathPrefix(`/storage/v1/render/image/public/`)"
-      - traefik.http.routers.http-supabase-image-cache.priority=1000
+      - traefik.http.routers.http-supabase-image-cache.priority=2000
       - traefik.http.routers.http-supabase-image-cache.service=supabase-image-cache
       - traefik.http.routers.https-supabase-image-cache.entryPoints=https
       - traefik.http.routers.https-supabase-image-cache.middlewares=gzip
       - "traefik.http.routers.https-supabase-image-cache.rule=Host(`${SUPABASE_PUBLIC_HOST}`) && PathPrefix(`/storage/v1/render/image/public/`)"
-      - traefik.http.routers.https-supabase-image-cache.priority=1000
+      - traefik.http.routers.https-supabase-image-cache.priority=2000
       - traefik.http.routers.https-supabase-image-cache.service=supabase-image-cache
       - traefik.http.routers.https-supabase-image-cache.tls=true
       - traefik.http.routers.https-supabase-image-cache.tls.certresolver=letsencrypt
-      - traefik.http.services.supabase-image-cache.loadbalancer.server.port=${PORT:-8080}
+      - traefik.http.services.supabase-image-cache.loadbalancer.server.port=8080
     networks:
       - coolify
       - supabase
@@ -45,3 +45,7 @@ networks:
   supabase:
     external: true
     name: ${SUPABASE_INTERNAL_NETWORK}
+
+volumes:
+  supabase-image-cache-data:
+    name: supabase-image-cache-data
