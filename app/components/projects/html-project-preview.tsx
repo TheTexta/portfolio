@@ -11,7 +11,7 @@ type HtmlProjectPreviewProps = {
 
 const htmlPreviewShell = cva("relative h-full w-full overflow-hidden");
 const htmlPreviewFrame = cva(
-  "absolute inset-0 h-full w-full border-0 bg-neutral-950",
+  "absolute top-0 left-0 h-full w-[calc(100%+1.25rem)] border-0 bg-neutral-950",
 );
 const htmlPreviewShellTone = "bg-neutral-950 text-neutral-100";
 

@@ -301,6 +301,9 @@ function FocusCarousel({ projectId, onChange, onClose }: FocusCarouselProps) {
               <ArrowUpRight aria-hidden className="h-4 w-4" />
             </ActionLink>
           ) : null}
+          {current.sourceHref ? (
+            <ActionLink href={current.sourceHref}>View source</ActionLink>
+          ) : null}
           {current.experienceHref || current.liveHref ? (
             <ActionLink
               href={current.experienceHref ?? current.liveHref ?? "/"}

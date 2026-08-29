@@ -16,4 +16,6 @@ export const PROJECT_ROUTES = {
   nepobabiesPreview: "https://thetexta.github.io/nepobabiesruntheunderground/",
   nepobabiesGithub: "https://github.com/TheTexta/nepobabiesruntheunderground",
   bur1alritesLive: "https://bur1alrites.vercel.app/",
+  elliotMairetLive: "https://elliotmairet.vercel.app/",
+  elliotMairetGithub: "https://github.com/TheTexta/elliotmairet",
 } as const;

@@ -5,7 +5,8 @@ export type ProjectId =
   | "grailed-plus"
   | "photo-graph"
   | "nepobabiesruntheunderground"
-  | "spotify-nodify";
+  | "spotify-nodify"
+  | "elliotmairet";
 
 export type ProjectPreviewKind =
   | "grailed-plus"
@@ -17,7 +18,8 @@ export type ProjectTitleTreatment =
   | "bur1alrites"
   | "grailed"
   | "photo-graph"
-  | "nepo";
+  | "nepo"
+  | "elliot-mairet";
 
 export type GrailedPlusFeature = "price-trend" | "custom-currency" | "dm" | null;
 
@@ -38,6 +40,7 @@ export type ProjectDefinition = {
   caseStudyHref?: string;
   experienceHref?: string;
   liveHref?: string;
+  sourceHref?: string;
   posterSrc: string;
   posterAlt: string;
   posterAspectRatio: number;
@@ -153,6 +156,33 @@ export const projectCatalog: readonly ProjectDefinition[] = [
       {
         label: "Open live site",
         href: PROJECT_ROUTES.bur1alritesLive,
+        external: true,
+      },
+    ],
+  },
+  {
+    id: "elliotmairet",
+    number: "05",
+    title: "Elliot Mairet",
+    titleTreatment: "elliot-mairet",
+    eyebrow: "Photography / Image archive",
+    summary:
+      "A photographic archive that pairs an expansive image index with colour palettes and related-image discovery.",
+    technologies: ["Next.js", "React", "Supabase"],
+    liveHref: PROJECT_ROUTES.elliotMairetLive,
+    sourceHref: PROJECT_ROUTES.elliotMairetGithub,
+    posterSrc: "/projects/posters/elliot-mairet.jpg",
+    posterAlt:
+      "Black-and-white Elliot Mairet photograph of people gathered beneath fabric",
+    posterAspectRatio: 1.5,
+    previewKind: "html",
+    role: "Design and development",
+    date: "2026",
+    outcome: "A browsable online archive for Elliot Mairet's photographs",
+    links: [
+      {
+        label: "GitHub",
+        href: PROJECT_ROUTES.elliotMairetGithub,
         external: true,
       },
     ],

@@ -61,6 +61,14 @@ const PROJECT_PREVIEW_RENDERERS: Record<ProjectId, ProjectPreviewRenderer> = {
       showNavigation={false}
     />
   ),
+  elliotmairet: () => (
+    <HtmlProjectPreview
+      title="Elliot Mairet"
+      previewSrc={PROJECT_ROUTES.elliotMairetLive}
+      projectHref={PROJECT_ROUTES.elliotMairetLive}
+      showNavigation={false}
+    />
+  ),
   "spotify-nodify": () => null,
 };
 

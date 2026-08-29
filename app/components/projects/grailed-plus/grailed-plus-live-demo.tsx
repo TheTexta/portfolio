@@ -382,12 +382,17 @@ export default function GrailedPlusLiveDemo({
           referrerPolicy="strict-origin"
           sandbox="allow-scripts allow-same-origin"
           onLoad={requestReady}
-          scrolling="no"
+          scrolling="auto"
           className={cn(
             "relative z-10 block w-full h-full border-0 bg-transparent transition-opacity duration-300",
             isReady ? "opacity-100" : "opacity-0",
           )}
-          style={{ height: frameHeight, colorScheme: "light", overflow: "hidden" }}
+          style={{
+            height: frameHeight,
+            width: "calc(100% + 1.25rem)",
+            colorScheme: "light",
+            overflow: "hidden",
+          }}
         />
       ) : (
         <div style={{ height: frameBounds.min }} aria-hidden />
