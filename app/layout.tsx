@@ -4,7 +4,6 @@ import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
 import { init } from '@plausible-analytics/tracker'
-
 init({
   domain: 'dextery.dev'
 })
