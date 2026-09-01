@@ -3,6 +3,12 @@ import { Instrument_Serif, Newsreader } from "next/font/google";
 import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
+import { init } from '@plausible-analytics/tracker'
+
+init({
+  domain: 'dextery.dev'
+})
+
 
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
