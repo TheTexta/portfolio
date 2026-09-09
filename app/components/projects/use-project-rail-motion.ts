@@ -33,10 +33,6 @@ function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
-function modulo(value: number, divisor: number) {
-  return ((value % divisor) + divisor) % divisor;
-}
-
 function getBaseSpeed(travelWidth: number) {
   const targetSpeed = travelWidth / TARGET_LOOP_SECONDS;
   const minimumSpeed = travelWidth / MAX_LOOP_SECONDS;
@@ -77,8 +73,11 @@ export function useProjectRailMotion({
     const finePointerQuery = window.matchMedia(FINE_POINTER_QUERY);
     const reducedMotionQuery = window.matchMedia(REDUCED_MOTION_QUERY);
     const travelWidths = configs.map(() => 0);
+    const railOffsets = configs.map(() => 0);
+    const initialChildren = configs.map(({ groupRef }) =>
+      groupRef.current ? Array.from(groupRef.current.children) : [],
+    );
     let referenceTravelWidth = 0;
-    let distance = 0;
     let baseSpeed = 0;
     let currentSpeed = 0;
     let targetSpeed = 0;
@@ -96,19 +95,36 @@ export function useProjectRailMotion({
       }
     });
 
+    const recycleLeadingCards = (index: number) => {
+      const group = configs[index]?.groupRef.current;
+      if (!group) {
+        return;
+      }
+
+      const gap = Number.parseFloat(getComputedStyle(group).columnGap) || 0;
+      let firstCard = group.firstElementChild as HTMLElement | null;
+
+      while (firstCard) {
+        const cardSpan = firstCard.getBoundingClientRect().width + gap;
+        if (cardSpan <= 0 || railOffsets[index] < cardSpan) {
+          break;
+        }
+
+        railOffsets[index] -= cardSpan;
+        group.append(firstCard);
+        firstCard = group.firstElementChild as HTMLElement | null;
+      }
+    };
+
     const applyTransforms = () => {
-      configs.forEach(({ direction, offsetRatio, trackRef }, index) => {
+      configs.forEach(({ trackRef }, index) => {
         const track = trackRef.current;
-        const travelWidth = travelWidths[index];
-        if (!track || travelWidth <= 0) {
+        if (!track || travelWidths[index] <= 0) {
           return;
         }
 
-        const cycleWidth = travelWidth * 2;
-        const phase = modulo(distance + travelWidth * offsetRatio, cycleWidth);
-        const position = phase <= travelWidth ? phase : cycleWidth - phase;
-        const x = direction === "forward" ? -position : position - travelWidth;
-        track.style.transform = `translate3d(${x.toFixed(3)}px, 0, 0)`;
+        recycleLeadingCards(index);
+        track.style.transform = `translate3d(${-railOffsets[index].toFixed(3)}px, 0, 0)`;
       });
     };
 
@@ -130,22 +146,19 @@ export function useProjectRailMotion({
     };
 
     const measure = () => {
-      const previousReferenceWidth = referenceTravelWidth;
-
-      configs.forEach(({ groupRef }, index) => {
+      configs.forEach(({ groupRef, offsetRatio }, index) => {
         const measured = groupRef.current?.getBoundingClientRect().width ?? 0;
-        travelWidths[index] = Math.max(0, measured - container.clientWidth);
+        const previousWidth = travelWidths[index];
+        travelWidths[index] = Math.max(0, measured);
+
+        if (previousWidth > 0 && measured > 0 && previousWidth !== measured) {
+          railOffsets[index] *= measured / previousWidth;
+        } else if (previousWidth === 0 && measured > 0) {
+          railOffsets[index] = measured * offsetRatio;
+        }
       });
 
       referenceTravelWidth = travelWidths.find((width) => width > 0) ?? 0;
-      if (
-        previousReferenceWidth > 0 &&
-        referenceTravelWidth > 0 &&
-        previousReferenceWidth !== referenceTravelWidth
-      ) {
-        distance *= referenceTravelWidth / previousReferenceWidth;
-      }
-
       baseSpeed =
         referenceTravelWidth > 0 ? getBaseSpeed(referenceTravelWidth) : 0;
       if (currentSpeed === 0 && !focusInside) {
@@ -187,7 +200,9 @@ export function useProjectRailMotion({
         }
       }
 
-      distance += currentSpeed * deltaSeconds;
+      railOffsets.forEach((offset, index) => {
+        railOffsets[index] = offset + currentSpeed * deltaSeconds;
+      });
       applyTransforms();
       frameId = window.requestAnimationFrame(tick);
     };
@@ -306,6 +321,13 @@ export function useProjectRailMotion({
       reducedMotionQuery.removeEventListener("change", handleMediaChange);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       clearTransforms();
+      configs.forEach(({ groupRef }, index) => {
+        const group = groupRef.current;
+        if (!group) {
+          return;
+        }
+        initialChildren[index].forEach((child) => group.append(child));
+      });
     };
   }, [containerRef, enabled, rails]);
 }
