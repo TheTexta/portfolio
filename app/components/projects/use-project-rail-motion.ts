@@ -9,7 +9,6 @@ type RailMotionConfig = {
   groupRef: RefObject<HTMLDivElement | null>;
   offsetRatio: number;
   trackRef: RefObject<HTMLDivElement | null>;
-  copyCount?: number;
 };
 
 type ProjectRailMotionOptions = {
@@ -38,10 +37,10 @@ function modulo(value: number, divisor: number) {
   return ((value % divisor) + divisor) % divisor;
 }
 
-function getBaseSpeed(loopWidth: number) {
-  const targetSpeed = loopWidth / TARGET_LOOP_SECONDS;
-  const minimumSpeed = loopWidth / MAX_LOOP_SECONDS;
-  const maximumSpeed = loopWidth / MIN_LOOP_SECONDS;
+function getBaseSpeed(travelWidth: number) {
+  const targetSpeed = travelWidth / TARGET_LOOP_SECONDS;
+  const minimumSpeed = travelWidth / MAX_LOOP_SECONDS;
+  const maximumSpeed = travelWidth / MIN_LOOP_SECONDS;
 
   return clamp(targetSpeed, minimumSpeed, maximumSpeed);
 }
@@ -77,8 +76,8 @@ export function useProjectRailMotion({
 
     const finePointerQuery = window.matchMedia(FINE_POINTER_QUERY);
     const reducedMotionQuery = window.matchMedia(REDUCED_MOTION_QUERY);
-    const loopWidths = configs.map(() => 0);
-    let referenceLoopWidth = 0;
+    const travelWidths = configs.map(() => 0);
+    let referenceTravelWidth = 0;
     let distance = 0;
     let baseSpeed = 0;
     let currentSpeed = 0;
@@ -100,13 +99,15 @@ export function useProjectRailMotion({
     const applyTransforms = () => {
       configs.forEach(({ direction, offsetRatio, trackRef }, index) => {
         const track = trackRef.current;
-        const loopWidth = loopWidths[index];
-        if (!track || loopWidth <= 0) {
+        const travelWidth = travelWidths[index];
+        if (!track || travelWidth <= 0) {
           return;
         }
 
-        const phase = modulo(distance + loopWidth * offsetRatio, loopWidth);
-        const x = direction === "forward" ? -phase : -loopWidth + phase;
+        const cycleWidth = travelWidth * 2;
+        const phase = modulo(distance + travelWidth * offsetRatio, cycleWidth);
+        const position = phase <= travelWidth ? phase : cycleWidth - phase;
+        const x = direction === "forward" ? -position : position - travelWidth;
         track.style.transform = `translate3d(${x.toFixed(3)}px, 0, 0)`;
       });
     };
@@ -129,23 +130,24 @@ export function useProjectRailMotion({
     };
 
     const measure = () => {
-      const previousReferenceWidth = referenceLoopWidth;
+      const previousReferenceWidth = referenceTravelWidth;
 
-      configs.forEach(({ groupRef, copyCount }, index) => {
+      configs.forEach(({ groupRef }, index) => {
         const measured = groupRef.current?.getBoundingClientRect().width ?? 0;
-        loopWidths[index] = measured / (copyCount ?? 1);
+        travelWidths[index] = Math.max(0, measured - container.clientWidth);
       });
 
-      referenceLoopWidth = loopWidths.find((width) => width > 0) ?? 0;
+      referenceTravelWidth = travelWidths.find((width) => width > 0) ?? 0;
       if (
         previousReferenceWidth > 0 &&
-        referenceLoopWidth > 0 &&
-        previousReferenceWidth !== referenceLoopWidth
+        referenceTravelWidth > 0 &&
+        previousReferenceWidth !== referenceTravelWidth
       ) {
-        distance *= referenceLoopWidth / previousReferenceWidth;
+        distance *= referenceTravelWidth / previousReferenceWidth;
       }
 
-      baseSpeed = referenceLoopWidth > 0 ? getBaseSpeed(referenceLoopWidth) : 0;
+      baseSpeed =
+        referenceTravelWidth > 0 ? getBaseSpeed(referenceTravelWidth) : 0;
       if (currentSpeed === 0 && !focusInside) {
         currentSpeed = pointerInside ? getSlowSpeed(baseSpeed) : baseSpeed;
       }
@@ -191,7 +193,7 @@ export function useProjectRailMotion({
     };
 
     const start = () => {
-      if (!shouldAnimate() || frameId != null || referenceLoopWidth <= 0) {
+      if (!shouldAnimate() || frameId != null || referenceTravelWidth <= 0) {
         if (!shouldAnimate()) {
           clearTransforms();
         }
@@ -266,6 +268,7 @@ export function useProjectRailMotion({
     };
 
     const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(container);
     configs.forEach(({ groupRef }) => {
       if (groupRef.current) {
         resizeObserver.observe(groupRef.current);

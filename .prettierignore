@@ -1,0 +1,7 @@
+.agents/
+.next/
+out/
+build/
+.tmp/
+test-results/
+public/projects/photo-graph/

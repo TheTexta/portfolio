@@ -28,6 +28,7 @@ import {
   DEFAULT_GRAPH_CONTROLS,
   GRAPH_CONFIG,
   PHOTO_GRAPH_ALPHA_DECAY,
+  PHOTO_GRAPH_CONNECTION_REVEAL_TICKS,
   PHOTO_GRAPH_VISIBLE_SETTLE_TICKS,
   PHOTO_GRAPH_INSPECT_PREVIEW_QUALITY,
   PHOTO_GRAPH_INSPECT_PREVIEW_WIDTH,
@@ -62,6 +63,10 @@ type ConnectionIntroAnchor = {
   pinnedFy: number;
 };
 
+function easeOutQuart(progress: number) {
+  return 1 - Math.pow(1 - progress, 4);
+}
+
 function fitGraphToWeightedCenter(
   graph: PhotoGraphInstance,
   nodes: PhotoGraphNode[],
@@ -69,10 +74,13 @@ function fitGraphToWeightedCenter(
   height: number,
   durationOverride?: number,
 ) {
+  // Keep the desktop camera scale on narrow screens. Mobile should reveal a
+  // pannable slice of the gallery instead of shrinking every photo to fit.
+  const fitWidth = Math.max(width, GRAPH_CONFIG.fitToCanvasMinWidth);
   const padding = Math.round(
-    Math.min(width, height) * GRAPH_CONFIG.fitToCanvasPaddingRatio,
+    Math.min(fitWidth, height) * GRAPH_CONFIG.fitToCanvasPaddingRatio,
   );
-  const availableHalfWidth = Math.max(1, (width - padding * 2) / 2);
+  const availableHalfWidth = Math.max(1, (fitWidth - padding * 2) / 2);
   const availableHalfHeight = Math.max(1, (height - padding * 2) / 2);
 
   let totalWeight = 0;
@@ -174,8 +182,9 @@ export default function PhotoGraphCanvas({
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [graphMounted, setGraphMounted] = useState(false);
   const [reducedMotion, setReducedMotion] = useState<boolean | null>(null);
-  const [preparedGraphData, setPreparedGraphData] =
-    useState<PhotoGraphData>(EMPTY_PHOTO_GRAPH_DATA);
+  const [preparedGraphData, setPreparedGraphData] = useState<PhotoGraphData>(
+    EMPTY_PHOTO_GRAPH_DATA,
+  );
   const [menuOpen, setMenuOpen] = useState(false);
   const [uncontrolledControls, setUncontrolledControls] =
     useState<GraphControls>({
@@ -219,18 +228,15 @@ export default function PhotoGraphCanvas({
     connectionIntroAnchorRef.current = null;
   }, []);
 
-  const handleGraphReady = useCallback(
-    () => {
-      const graph = fgRef.current;
-      if (!graph || graphMountedRef.current) {
-        return;
-      }
+  const handleGraphReady = useCallback(() => {
+    const graph = fgRef.current;
+    if (!graph || graphMountedRef.current) {
+      return;
+    }
 
-      graphMountedRef.current = true;
-      setGraphMounted(true);
-    },
-    [],
-  );
+    graphMountedRef.current = true;
+    setGraphMounted(true);
+  }, []);
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia(
@@ -318,7 +324,12 @@ export default function PhotoGraphCanvas({
 
   useEffect(() => {
     fitToCanvasAppliedRef.current = false;
-  }, [dimensions.height, dimensions.width, preparedGraphData.nodes, fitToCanvas]);
+  }, [
+    dimensions.height,
+    dimensions.width,
+    preparedGraphData.nodes,
+    fitToCanvas,
+  ]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -391,21 +402,30 @@ export default function PhotoGraphCanvas({
     [activeControls, controlledControls, onControlsChange],
   );
 
+  const inspectNode = useCallback((node: PhotoGraphNode) => {
+    setInspectTarget({
+      id: node.id,
+      originalUrl: node.sourceUrl,
+      previewUrl: buildInspectPreviewUrl(node),
+    });
+  }, []);
+
   const handleEngineTick = useCallback(() => {
     if (
       reducedMotionRef.current ||
       !connectionIntroRunningRef.current ||
-      visibleSettleTickCountRef.current >= PHOTO_GRAPH_VISIBLE_SETTLE_TICKS
+      visibleSettleTickCountRef.current >= PHOTO_GRAPH_CONNECTION_REVEAL_TICKS
     ) {
       return;
     }
 
     visibleSettleTickCountRef.current += 1;
-    connectionRevealProgressRef.current =
-      visibleSettleTickCountRef.current / PHOTO_GRAPH_VISIBLE_SETTLE_TICKS;
+    connectionRevealProgressRef.current = easeOutQuart(
+      visibleSettleTickCountRef.current / PHOTO_GRAPH_CONNECTION_REVEAL_TICKS,
+    );
 
     if (
-      visibleSettleTickCountRef.current === PHOTO_GRAPH_VISIBLE_SETTLE_TICKS
+      visibleSettleTickCountRef.current === PHOTO_GRAPH_CONNECTION_REVEAL_TICKS
     ) {
       releaseConnectionIntroAnchor();
       connectionIntroRunningRef.current = false;
@@ -537,51 +557,45 @@ export default function PhotoGraphCanvas({
           {dimensions.width > 0 &&
             dimensions.height > 0 &&
             reducedMotion !== null && (
-            <ForceGraph2D
-              ref={fgRef as MutableRefObject<PhotoGraphInstance | undefined>}
-              graphData={preparedGraphData}
-              width={dimensions.width}
-              height={dimensions.height}
-              minZoom={GRAPH_CONFIG.zoomExtent[0]}
-              maxZoom={GRAPH_CONFIG.zoomExtent[1]}
-              d3AlphaMin={0}
-              d3AlphaDecay={PHOTO_GRAPH_ALPHA_DECAY}
-              warmupTicks={
-                reducedMotion
-                  ? GRAPH_CONFIG.settleTicks
-                  : GRAPH_CONFIG.warmupTicks
-              }
-              cooldownTicks={
-                reducedMotion ? 0 : PHOTO_GRAPH_VISIBLE_SETTLE_TICKS
-              }
-              cooldownTime={Infinity}
-              // Photo nodes repaint asynchronously as images load in.
-              autoPauseRedraw={false}
-              onRenderFramePre={handleRenderFramePre}
-              nodeCanvasObjectMode={() => "replace"}
-              nodeCanvasObject={nodeCanvasObject}
-              nodePointerAreaPaint={nodePointerAreaPaint}
-              linkColor={linkColor}
-              linkCanvasObjectMode={() => "replace"}
-              linkCanvasObject={linkCanvasObject}
-              linkVisibility={linkVisibility}
-              showPointerCursor={showPointerCursor}
-              onNodeClick={(node: PhotoGraphNode) =>
-                setInspectTarget({
-                  id: node.id,
-                  originalUrl: node.sourceUrl,
-                  previewUrl: buildInspectPreviewUrl(node),
-                })
-              }
-              onEngineTick={handleEngineTick}
-              onEngineStop={queueVisibleImages}
-              onZoom={handleZoom}
-              onZoomEnd={handleZoomEnd}
-            />
-          )}
+              <ForceGraph2D
+                ref={fgRef as MutableRefObject<PhotoGraphInstance | undefined>}
+                graphData={preparedGraphData}
+                width={dimensions.width}
+                height={dimensions.height}
+                minZoom={GRAPH_CONFIG.zoomExtent[0]}
+                maxZoom={GRAPH_CONFIG.zoomExtent[1]}
+                d3AlphaMin={0}
+                d3AlphaDecay={PHOTO_GRAPH_ALPHA_DECAY}
+                warmupTicks={
+                  reducedMotion
+                    ? GRAPH_CONFIG.settleTicks
+                    : GRAPH_CONFIG.warmupTicks
+                }
+                cooldownTicks={
+                  reducedMotion ? 0 : PHOTO_GRAPH_VISIBLE_SETTLE_TICKS
+                }
+                cooldownTime={Infinity}
+                // Photo nodes repaint asynchronously as images load in.
+                autoPauseRedraw={false}
+                onRenderFramePre={handleRenderFramePre}
+                nodeCanvasObjectMode={() => "replace"}
+                nodeCanvasObject={nodeCanvasObject}
+                nodePointerAreaPaint={nodePointerAreaPaint}
+                linkColor={linkColor}
+                linkCanvasObjectMode={() => "replace"}
+                linkCanvasObject={linkCanvasObject}
+                linkVisibility={linkVisibility}
+                showPointerCursor={showPointerCursor}
+                onNodeClick={inspectNode}
+                onEngineTick={handleEngineTick}
+                onEngineStop={queueVisibleImages}
+                onZoom={handleZoom}
+                onZoomEnd={handleZoomEnd}
+              />
+            )}
           {loadStatus !== "ready" && (
             <div
-              className="bg-canvas/90 absolute inset-0 z-[4] flex items-center justify-center px-6 text-center"
+              className="bg-canvas/90 absolute inset-0 z-4 flex items-center justify-center px-6 text-center"
               role={loadStatus === "error" ? "alert" : "status"}
               aria-live="polite"
             >

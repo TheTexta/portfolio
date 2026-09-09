@@ -89,9 +89,11 @@ export default function SpotifyNodify({
             <p className="max-w-2xl text-sm opacity-80">{session.notice}</p>
           ) : null}
 
-          {session.status === "checking" ? (
+          {session.status === "checking" || session.status === "connecting" ? (
             <div className={cn(spotifySurface(), "text-sm")}>
-              Checking Spotify session...
+              {session.status === "connecting"
+                ? "Connecting to Spotify..."
+                : "Checking Spotify session..."}
             </div>
           ) : null}
 
@@ -127,7 +129,10 @@ export default function SpotifyNodify({
                   </div>
 
                   <div className="flex flex-wrap justify-center gap-3 lg:justify-start">
-                    <ControlButton onClick={connect} layout="action">
+                    <ControlButton
+                      onClick={connect}
+                      layout="action"
+                    >
                       Reconnect Spotify
                     </ControlButton>
                     <ControlButton onClick={disconnect} layout="action">
@@ -188,7 +193,10 @@ export default function SpotifyNodify({
                 tracks from the last month directly inside the project preview.
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
-                <ControlButton onClick={connect} layout="action">
+                <ControlButton
+                  onClick={connect}
+                  layout="action"
+                >
                   Connect Spotify
                 </ControlButton>
               </div>

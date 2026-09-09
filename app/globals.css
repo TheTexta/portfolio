@@ -26,7 +26,7 @@
 }
 
 html.dark {
-  --color-canvas: 0 0 0 ;
+  --color-canvas: 0 0 0;
   --color-surface: 38 38 38;
   --color-ink: 245 245 245;
   --color-muted: 171 171 171;
@@ -309,6 +309,19 @@ html.dark {
     width: calc(clamp(16rem, 26vw, 24rem) * var(--aspect));
   }
 
+  @media (max-width: 640px) {
+    .project-mini-view {
+      height: 16rem;
+      width: min(calc(16rem * var(--aspect)), calc(100vw - 1rem));
+    }
+  }
+
+  @media (max-width: 767px), (orientation: landscape) and (max-width: 1023px) {
+    .project-case-study-preview {
+      min-height: 16rem;
+    }
+  }
+
   .project-mini-view-media {
     transform: none;
     transform-origin: center center;
@@ -386,7 +399,9 @@ html.dark {
     opacity: 0.72;
   }
 
-  ::view-transition-group(*) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
     animation-duration: var(--motion-layout);
     animation-timing-function: var(--ease-out-quint);
   }
@@ -425,10 +440,6 @@ html.dark {
       will-change: auto;
     }
 
-    .project-rail-group[aria-hidden="true"] {
-      display: none;
-    }
-
     .project-mini-view {
       scroll-snap-align: start;
     }
@@ -458,13 +469,15 @@ html.dark {
       will-change: auto;
     }
 
-    .project-rail-group[aria-hidden="true"] {
-      display: none;
-    }
-
     .project-mini-view-info,
     .project-focus-preview {
       transition-duration: 0.01ms !important;
+    }
+
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation-duration: 0.01ms !important;
     }
   }
 }

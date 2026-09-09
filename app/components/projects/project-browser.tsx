@@ -42,9 +42,14 @@ const FOCUS_HEADER_CONTROL_CLASS = cn(
 );
 
 type DocumentWithViewTransition = Document & {
-  startViewTransition?: (callback: () => void) => {
-    finished: Promise<void>;
-  };
+  startViewTransition?: (callback: () => void) => ViewTransition;
+};
+
+type ViewTransition = {
+  finished: Promise<void>;
+  ready: Promise<void>;
+  skipTransition: () => void;
+  updateCallbackDone: Promise<void>;
 };
 
 type RailProps = {
@@ -80,18 +85,15 @@ function ProjectRail({
     >
       <div ref={trackRef} className="project-rail-track">
         <div ref={groupRef} className="project-rail-group">
-          {Array.from({ length: projects.length * 2 }, (_, index) => {
-            const project = projects[index % projects.length];
+          {projects.map((project, index) => {
             const cardKey = `${direction}-${project.id}-${index}`;
             const infoVisible = touchInfoKey === cardKey;
-            const isDuplicate = index >= projects.length;
 
             return (
               <article
                 key={cardKey}
                 data-project-id={project.id}
                 data-card-key={cardKey}
-                aria-hidden={isDuplicate}
                 className="project-mini-view editorial-rule bg-surface relative shrink-0"
                 style={
                   {
@@ -117,7 +119,7 @@ function ProjectRail({
                       src={project.posterSrc}
                       alt={project.posterAlt}
                       fill
-                      sizes="(max-width: 640px) 78vw, (max-width: 1024px) 48vw, 34vw"
+                      sizes="(max-width: 640px) 100vw, calc(clamp(16rem, 26vw, 24rem) * 2)"
                       className="object-cover"
                     />
                   </button>
@@ -143,16 +145,14 @@ function ProjectRail({
                     }}
                   >
                     <div className="editorial-rule flex min-h-12 items-center gap-3 border-t px-3">
-                      
                       <h3
                         className={cn(
                           "project-title project-title--rail min-w-0 flex-1 truncate",
                           project.titleTreatment === "nepo" &&
-                            "!overflow-visible !text-clip",
+                            "overflow-visible! text-clip!",
                         )}
                         data-title-treatment={project.titleTreatment}
                       >
-                      
                         {project.title}
                       </h3>
                       <p className="text-[0.625rem] font-semibold tracking-[0.16em] uppercase">
@@ -182,11 +182,17 @@ function ProjectRail({
 
 type FocusCarouselProps = {
   projectId: ProjectId;
+  transitionProjectId: ProjectId | null;
   onChange: (projectId: ProjectId) => void;
-  onClose: () => void;
+  onClose: (restoreFocus: boolean) => void;
 };
 
-function FocusCarousel({ projectId, onChange, onClose }: FocusCarouselProps) {
+function FocusCarousel({
+  projectId,
+  transitionProjectId,
+  onChange,
+  onClose,
+}: FocusCarouselProps) {
   const { previous, next } = getAdjacentProjects(projectId);
   const current = getProject(projectId);
   const currentIndex = projectCatalog.findIndex(
@@ -208,7 +214,7 @@ function FocusCarousel({ projectId, onChange, onClose }: FocusCarouselProps) {
       selectNext();
     } else if (event.key === "Escape") {
       event.preventDefault();
-      onClose();
+      onClose(true);
     }
   };
 
@@ -255,7 +261,7 @@ function FocusCarousel({ projectId, onChange, onClose }: FocusCarouselProps) {
         <button
           type="button"
           className={FOCUS_HEADER_CONTROL_CLASS}
-          onClick={onClose}
+          onClick={(event) => onClose(event.detail === 0)}
           aria-label="Close project focus"
         >
           <span>Close</span>
@@ -267,10 +273,20 @@ function FocusCarousel({ projectId, onChange, onClose }: FocusCarouselProps) {
         <FocusPreview
           project={previous}
           position="previous"
+          transitionProjectId={transitionProjectId}
           onSelect={selectPrevious}
         />
-        <FocusPreview project={current} position="current" />
-        <FocusPreview project={next} position="next" onSelect={selectNext} />
+        <FocusPreview
+          project={current}
+          position="current"
+          transitionProjectId={transitionProjectId}
+        />
+        <FocusPreview
+          project={next}
+          position="next"
+          transitionProjectId={transitionProjectId}
+          onSelect={selectNext}
+        />
       </div>
 
       <EditorialGutter className="editorial-rule grid gap-4 border-y py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
@@ -320,16 +336,19 @@ function FocusCarousel({ projectId, onChange, onClose }: FocusCarouselProps) {
 function FocusPreview({
   project,
   position,
+  transitionProjectId,
   onSelect,
 }: {
   project: ProjectDefinition;
   position: "previous" | "current" | "next";
+  transitionProjectId: ProjectId | null;
   onSelect?: () => void;
 }) {
   const current = position === "current";
 
   return (
     <div
+      data-project-preview-id={project.id}
       className={cn(
         "project-focus-preview editorial-frame bg-surface min-w-0 overflow-hidden",
         current
@@ -350,9 +369,10 @@ function FocusPreview({
               : position === "next"
                 ? "66.666% -50%"
                 : undefined,
-          viewTransitionName: current
-            ? `project-poster-${project.id}`
-            : undefined,
+          viewTransitionName:
+            transitionProjectId === project.id
+              ? `project-poster-${project.id}`
+              : undefined,
         } as React.CSSProperties
       }
     >
@@ -402,14 +422,17 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
     null,
   );
   const [touchInfoKey, setTouchInfoKey] = useState<string | null>(null);
+  const activeViewTransitionRef = useRef<ViewTransition | null>(null);
+  const focusedProjectRef = useRef<ProjectId | null>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
   const railAreaRef = useRef<HTMLDivElement>(null);
   const firstRailTrackRef = useRef<HTMLDivElement>(null);
   const firstRailGroupRef = useRef<HTMLDivElement>(null);
   const railScrollYRef = useRef(0);
-  const focusHistoryDepthRef = useRef(0);
   const lastFocusedProjectRef = useRef<ProjectId | null>(null);
+  const lastFocusedCardKeyRef = useRef<string | null>(null);
   const restoreRailRef = useRef(false);
+  const restoreRailFocusRef = useRef(false);
   const railMotion = useMemo(
     () =>
       [
@@ -418,7 +441,6 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
           groupRef: firstRailGroupRef,
           offsetRatio: 0.08,
           trackRef: firstRailTrackRef,
-          copyCount: 2,
         },
       ] as const,
     [],
@@ -441,19 +463,37 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
       return;
     }
 
-    documentWithTransition.startViewTransition(() => {
+    activeViewTransitionRef.current?.skipTransition();
+
+    const transition = documentWithTransition.startViewTransition(() => {
       flushSync(callback);
     });
+    activeViewTransitionRef.current = transition;
+
+    // `ready` rejects with AbortError when a newer interaction supersedes this
+    // transition. That is expected carousel behavior, not an application error.
+    void transition.ready.catch(() => undefined);
+    void transition.updateCallbackDone.catch(() => undefined);
+    void transition.finished
+      .catch(() => undefined)
+      .finally(() => {
+        if (activeViewTransitionRef.current === transition) {
+          activeViewTransitionRef.current = null;
+        }
+      });
   }, []);
 
   useEffect(() => {
     const syncFromHash = () => {
       const projectId = readProjectHash();
-      const historyDepth = Number(window.history.state?.projectFocusDepth ?? 0);
-      focusHistoryDepthRef.current = Number.isFinite(historyDepth)
-        ? historyDepth
-        : 0;
-      updateWithTransition(() => setFocusedProjectId(projectId));
+      if (focusedProjectRef.current === projectId) {
+        return;
+      }
+
+      updateWithTransition(() => {
+        focusedProjectRef.current = projectId;
+        setFocusedProjectId(projectId);
+      });
     };
 
     syncFromHash();
@@ -483,11 +523,17 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
       restoreRailRef.current = false;
       window.scrollTo({ top: railScrollYRef.current });
 
+      if (!restoreRailFocusRef.current) {
+        return;
+      }
+
+      restoreRailFocusRef.current = false;
       const projectId = lastFocusedProjectRef.current;
-      if (projectId) {
+      const cardKey = lastFocusedCardKeyRef.current;
+      if (projectId && cardKey) {
         galleryRef.current
           ?.querySelector<HTMLElement>(
-            `[data-project-id="${projectId}"] > button`,
+            `[data-card-key="${cardKey}"] > .project-mini-view-media > button`,
           )
           ?.focus({ preventScroll: true });
       }
@@ -523,17 +569,20 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
   const setProjectHash = useCallback(
     (projectId: ProjectId, mode: "push" | "replace" = "push") => {
       const nextUrl = `${getLocationUrl()}${PROJECT_HASH_PREFIX}${projectId}`;
-      const nextDepth =
-        mode === "push"
-          ? focusHistoryDepthRef.current + 1
-          : focusHistoryDepthRef.current;
-      focusHistoryDepthRef.current = nextDepth;
       window.history[mode === "push" ? "pushState" : "replaceState"](
-        { projectId, projectFocusDepth: nextDepth },
+        { projectId, projectFocus: true },
         "",
         nextUrl,
       );
-      updateWithTransition(() => setFocusedProjectId(projectId));
+      updateWithTransition(() => {
+        galleryRef.current
+          ?.querySelectorAll<HTMLElement>("[data-project-preview-id]")
+          .forEach((preview) => {
+            preview.style.viewTransitionName = "";
+          });
+        focusedProjectRef.current = projectId;
+        setFocusedProjectId(projectId);
+      });
     },
     [getLocationUrl, updateWithTransition],
   );
@@ -542,6 +591,7 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
     (projectId: ProjectId, cardKey: string) => {
       railScrollYRef.current = window.scrollY;
       lastFocusedProjectRef.current = projectId;
+      lastFocusedCardKeyRef.current = cardKey;
       setTouchInfoKey(null);
       const sourceCard = galleryRef.current?.querySelector<HTMLElement>(
         `[data-card-key="${cardKey}"]`,
@@ -554,19 +604,36 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
     [setProjectHash],
   );
 
-  const closeFocus = useCallback(() => {
-    const nextUrl = getLocationUrl();
-    restoreRailRef.current = true;
+  const closeFocus = useCallback(
+    (restoreFocus: boolean) => {
+      const nextUrl = getLocationUrl();
+      restoreRailRef.current = true;
+      restoreRailFocusRef.current = restoreFocus;
 
-    if (focusHistoryDepthRef.current > 0) {
-      window.history.go(-focusHistoryDepthRef.current);
-      return;
-    }
+      window.history.replaceState({}, "", nextUrl);
+      updateWithTransition(() => {
+        focusedProjectRef.current = null;
+        setFocusedProjectId(null);
+      });
+    },
+    [getLocationUrl, updateWithTransition],
+  );
 
-    window.history.replaceState({}, "", nextUrl);
-    focusHistoryDepthRef.current = 0;
-    updateWithTransition(() => setFocusedProjectId(null));
-  }, [getLocationUrl, updateWithTransition]);
+  const changeFocusedProject = useCallback(
+    (projectId: ProjectId) => {
+      galleryRef.current
+        ?.querySelectorAll<HTMLElement>("[data-project-preview-id]")
+        .forEach((preview) => {
+          preview.style.viewTransitionName =
+            preview.dataset.projectPreviewId === projectId
+              ? `project-poster-${projectId}`
+              : "none";
+        });
+
+      setProjectHash(projectId, "replace");
+    },
+    [setProjectHash],
+  );
 
   const rails = useMemo(
     () => (
@@ -600,7 +667,8 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
       {!focusedProjectId ? (
         <EditorialContainer className="max-w-384 pb-3">
           <Eyebrow className="editorial-muted">
-            Interactive works / 01—{projectCatalog.length.toString().padStart(2, "0")}
+            Interactive works / 01—
+            {projectCatalog.length.toString().padStart(2, "0")}
           </Eyebrow>
           <h2 className="mt-1.5 text-[clamp(1.75rem,3.5vw,3.25rem)] leading-none font-semibold tracking-[-0.035em]">
             Projects
@@ -611,7 +679,8 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
       {focusedProjectId ? (
         <FocusCarousel
           projectId={focusedProjectId}
-          onChange={setProjectHash}
+          transitionProjectId={focusedProjectId}
+          onChange={changeFocusedProject}
           onClose={closeFocus}
         />
       ) : (

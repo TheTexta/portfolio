@@ -35,16 +35,16 @@ export default function PhotoGraphControls({
   return (
     <>
       <div
-        className={`border select-none ${photoGraphControlsPositionClass} ${photoGraphPanelClass}`}
+        className={`ring-1 ring-inset ring-[rgb(var(--color-rule))] select-none ${photoGraphControlsPositionClass} ${photoGraphPanelClass}`}
       >
         <div
-          className={`flex w-full items-start justify-between ${menuOpen ? "border-rule border-b" : ""}`}
+          className={`flex h-8 w-full items-start justify-between ${menuOpen ? "border-rule border-b" : ""}`}
         >
           <div className="flex items-start">
             {menuOpen && (
               <ControlButton
                 onClick={onMenuClose}
-                className="h-11 w-11 border-y-0 border-l-0 sm:h-8 sm:w-8"
+                className="size-8"
                 aria-label="Close graph controls"
               >
                 <X />
@@ -54,7 +54,7 @@ export default function PhotoGraphControls({
             {!menuOpen && (
               <ControlButton
                 onClick={onMenuOpen}
-                className="h-11 w-11 border-y-0 border-l-0 sm:h-8 sm:w-8"
+                className="size-8"
                 aria-label="Open graph controls"
               >
                 <Menu />

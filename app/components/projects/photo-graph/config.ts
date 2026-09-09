@@ -25,6 +25,7 @@ export const GRAPH_CONFIG = {
   connectionIntroDragDistancePx: 8,
   fitToCanvasDurationMs: 250,
   fitToCanvasPaddingRatio: 0.08,
+  fitToCanvasMinWidth: 1024,
   viewportBufferRatio: 0.15,
 } as const;
 
@@ -33,9 +34,12 @@ export const PHOTO_GRAPH_ALPHA_DECAY =
 
 export const PHOTO_GRAPH_VISIBLE_SETTLE_TICKS =
   GRAPH_CONFIG.settleTicks - GRAPH_CONFIG.warmupTicks;
+export const PHOTO_GRAPH_CONNECTION_REVEAL_TICKS = Math.ceil(
+  PHOTO_GRAPH_VISIBLE_SETTLE_TICKS / 2,
+);
 
 export const photoGraphControlsPositionClass =
-  "absolute left-[1vmin] top-[1vmin] z-[5] flex w-[min(18rem,calc(100vw-2vmin))] flex-col";
+  "absolute left-2 top-2 z-[5] flex w-[min(18rem,calc(100vw-2vmin))] flex-col";
 export const photoGraphControlTextClass =
   "m-0 p-0 text-[0.6875rem] font-medium tracking-[0.04em]";
 export const photoGraphShellClass = "bg-canvas text-ink";

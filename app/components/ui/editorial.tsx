@@ -217,19 +217,19 @@ export function EditorialHeaderBar({
     <header
       className={cn(
         "editorial-rule bg-canvas z-40 border-b",
-        sticky && "sticky top-0",
+        sticky && "sm:sticky sm:top-0",
         className,
       )}
     >
       <nav
         aria-label={ariaLabel}
-        className="mx-0 grid min-h-8 w-full grid-cols-[1fr_auto] items-center gap-4 px-5 text-[0.6875rem] font-semibold tracking-[0.16em] uppercase sm:grid-cols-3 sm:px-8 lg:px-4"
+        className="mx-0 grid min-h-8 w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 text-[0.6875rem] font-semibold tracking-[0.16em] uppercase sm:grid-cols-3 sm:gap-4 sm:px-8 lg:px-4"
       >
         {leading}
         <div className="text-ink hidden min-h-7 items-center justify-center text-center text-[0.6875rem] font-semibold tracking-[0.16em] normal-case sm:flex">
           {directory}
         </div>
-        <div className="flex min-h-7 items-center justify-end gap-3 sm:gap-5">
+        <div className="flex min-h-7 min-w-0 items-center justify-end gap-2 sm:gap-5">
           {children}
         </div>
       </nav>
@@ -264,7 +264,10 @@ export function SiteHeader({
       leading={
         <Link
           href={brandHref}
-          className={cn(EDITORIAL_HEADER_CONTROL_CLASS, "w-fit")}
+          className={cn(
+            EDITORIAL_HEADER_CONTROL_CLASS,
+            "min-w-0 w-fit truncate",
+          )}
         >
           {brand}
         </Link>

@@ -93,10 +93,7 @@ export default async function Page() {
     })) ?? [];
 
   return (
-    <ProjectCaseStudyShell
-      project={project}
-      sectionNavigation={{ href: "#colour-model-study", label: "Study" }}
-    >
+    <ProjectCaseStudyShell project={project}>
       <PhotoGraphModelComparison
         report={report}
         queries={queries}

@@ -4,7 +4,7 @@ import { type Track, type UserProfile } from "@spotify/web-api-ts-sdk";
 import { useEffect, useState } from "react";
 import { getSpotifySDK } from "@/lib/GetSpotifySDK";
 
-type SessionStatus = "checking" | "connected" | "disconnected";
+type SessionStatus = "checking" | "connecting" | "connected" | "disconnected";
 
 export type SpotifySessionState = {
   status: SessionStatus;
@@ -75,7 +75,7 @@ export function useSpotifySession() {
               : [],
         });
       } catch {
-        sdk.logOut();
+        safelyLogOut(sdk);
 
         if (!isMounted) {
           return;
@@ -98,13 +98,32 @@ export function useSpotifySession() {
   }, []);
 
   async function connect() {
+    if (session.status === "connecting") {
+      return;
+    }
+
     const sdk = getSpotifySDK();
-    await sdk.authenticate();
+    setSession((currentSession) => ({
+      ...currentSession,
+      status: "connecting",
+      notice: null,
+    }));
+
+    try {
+      await sdk.authenticate();
+    } catch (error) {
+      safelyLogOut(sdk);
+      setSession((currentSession) => ({
+        ...currentSession,
+        status: "disconnected",
+        notice: getSpotifyErrorNotice(error),
+      }));
+    }
   }
 
   function disconnect() {
     const sdk = getSpotifySDK();
-    sdk.logOut();
+    safelyLogOut(sdk);
 
     setSession({
       status: "disconnected",
@@ -122,13 +141,21 @@ export function useSpotifySession() {
 }
 
 function consumeSpotifyAuthNotice() {
-  const savedNotice = localStorage.getItem("spotify_auth_notice");
+  let savedNotice: string | null;
+
+  try {
+    savedNotice = localStorage.getItem("spotify_auth_notice");
+
+    if (savedNotice) {
+      localStorage.removeItem("spotify_auth_notice");
+    }
+  } catch {
+    return "Spotify session storage is unavailable. Enable site storage to connect Spotify.";
+  }
 
   if (!savedNotice) {
     return null;
   }
-
-  localStorage.removeItem("spotify_auth_notice");
 
   if (savedNotice.startsWith("error:")) {
     return `Spotify auth error: ${savedNotice.replace("error:", "")}`;
@@ -143,4 +170,22 @@ function consumeSpotifyAuthNotice() {
 
 function mergeNotices(primary: string | null, secondary: string) {
   return primary ? `${primary} ${secondary}` : secondary;
+}
+
+function safelyLogOut(sdk: ReturnType<typeof getSpotifySDK>) {
+  try {
+    sdk.logOut();
+  } catch {}
+}
+
+function getSpotifyErrorNotice(error: unknown) {
+  if (error instanceof DOMException && error.name === "SecurityError") {
+    return "Spotify needs browser storage access to connect.";
+  }
+
+  if (error instanceof Error && error.message) {
+    return `Spotify connection failed: ${error.message}`;
+  }
+
+  return "Spotify connection failed. Try again.";
 }

@@ -334,7 +334,7 @@ export default function GrailedPlusInstallPage({
         >
           <a
             href="#features"
-            className="flex min-h-7 items-center transition-opacity hover:opacity-55"
+            className="hidden min-h-7 items-center transition-opacity hover:opacity-55 min-[430px]:flex"
           >
             Index
           </a>

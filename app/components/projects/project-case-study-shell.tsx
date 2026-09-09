@@ -17,29 +17,13 @@ import ThemeToggle from "@/app/components/ui/theme-toggle";
 export default function ProjectCaseStudyShell({
   children,
   project,
-  sectionNavigation,
 }: {
   children?: ReactNode;
   project: ProjectDefinition;
-  sectionNavigation?: { href: string; label: string };
 }) {
   return (
     <main className="editorial-page min-h-dvh overflow-x-clip">
       <SiteHeader ariaLabel={`${project.title} navigation`}>
-        <a
-          href="#overview"
-          className="hidden min-h-7 items-center transition-opacity hover:opacity-55 sm:flex"
-        >
-          Overview
-        </a>
-        {sectionNavigation ? (
-          <a
-            href={sectionNavigation.href}
-            className="hidden min-h-7 items-center transition-opacity hover:opacity-55 sm:flex"
-          >
-            {sectionNavigation.label}
-          </a>
-        ) : null}
         <Link
           href={PROJECT_ROUTES.portfolioProjects}
           className="flex min-h-7 items-center transition-opacity hover:opacity-55"
@@ -86,7 +70,7 @@ export default function ProjectCaseStudyShell({
       </EditorialContainer>
 
       <EditorialContainer className="py-8">
-        <MediaFrame className="h-[min(70svh,48rem)] min-h-[30rem]">
+        <MediaFrame className="project-case-study-preview h-[min(70svh,48rem)] min-h-[16rem] md:min-h-[30rem]">
           <ProjectLivePreview project={project} />
         </MediaFrame>
       </EditorialContainer>
