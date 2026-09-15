@@ -39,9 +39,9 @@ export const PHOTO_GRAPH_CONNECTION_REVEAL_TICKS = Math.ceil(
 );
 
 export const photoGraphControlsPositionClass =
-  "absolute left-2 top-2 z-[5] flex w-[min(18rem,calc(100vw-2vmin))] flex-col";
+  "absolute top-2 left-2 z-[5] flex max-h-[calc(100%-1rem)] flex-col overflow-y-auto";
 export const photoGraphControlTextClass =
-  "m-0 p-0 text-[0.6875rem] font-medium tracking-[0.04em]";
+  "m-0 p-0 text-sm md:text-xs font-medium tracking-[0.04em]";
 export const photoGraphShellClass = "bg-canvas text-ink";
 export const photoGraphPanelClass = "border-rule bg-canvas text-ink";
 export const photoGraphModalClass = "bg-canvas text-ink";

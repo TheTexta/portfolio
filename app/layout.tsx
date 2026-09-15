@@ -4,8 +4,6 @@ import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
 
-
-
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "@/app/components/theme/theme-provider";
@@ -80,7 +78,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${redHatText.variable} ${redHatDisplay.variable} ${newsreader.variable} ${instrumentSerif.variable}`}
     >
-      <body>
+      <body className="bg-canvas font-sans text-ink">
         <Script id="theme-preference" strategy="beforeInteractive">
           {getThemeInitScript()}
         </Script>

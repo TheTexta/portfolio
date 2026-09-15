@@ -12,8 +12,8 @@ const eslintConfig = defineConfig([
     },
     settings: {
       tailwindcss: {
-        callees: ["cn", "cva", "clsx"],
         cssConfigPath: "./app/globals.css",
+        functions: ["cn", "cva", "clsx"],
       },
     },
     rules: {

@@ -21,6 +21,7 @@ import {
   type ProjectId,
 } from "@/app/components/projects/project-catalog";
 import ProjectLivePreview from "@/app/components/projects/project-live-preview";
+import ProjectTitle from "@/app/components/projects/project-title";
 import { cn } from "@/lib/cn";
 
 import {
@@ -32,13 +33,14 @@ import {
   Eyebrow,
 } from "@/app/components/ui/editorial";
 import { useProjectRailMotion } from "@/app/components/projects/use-project-rail-motion";
+import styles from "@/app/components/projects/project-browser.module.css";
 
 const PROJECT_HASH_PREFIX = "#project-";
 const RAIL_ONE = projectCatalog;
 const VALID_PROJECT_IDS = new Set(projectCatalog.map((project) => project.id));
 const FOCUS_HEADER_CONTROL_CLASS = cn(
   EDITORIAL_HEADER_CONTROL_CLASS,
-  "cursor-pointer appearance-none gap-2 bg-transparent",
+  "project-focus-header-control cursor-pointer appearance-none justify-center gap-2 bg-transparent max-md:min-h-11! max-md:min-w-11",
 );
 
 type DocumentWithViewTransition = Document & {
@@ -67,6 +69,121 @@ function isTouchPresentation() {
   return window.matchMedia("(hover: none), (pointer: coarse)").matches;
 }
 
+type ProjectCardProps = {
+  project: ProjectDefinition;
+  cardKey: string;
+  layout: "rail" | "stack";
+  infoVisible: boolean;
+  onTouchInfoChange: (cardKey: string | null) => void;
+  onFocusProject: (projectId: ProjectId, cardKey: string) => void;
+};
+
+function ProjectCard({
+  project,
+  cardKey,
+  layout,
+  infoVisible,
+  onTouchInfoChange,
+  onFocusProject,
+}: ProjectCardProps) {
+  return (
+    <article
+      data-project-id={project.id}
+      data-card-key={cardKey}
+      className={cn(
+        "project-mini-view group/card relative shrink-0 border-rule bg-surface focus-within:z-1 hover:z-1",
+        layout === "rail"
+          ? "h-[clamp(16rem,26vw,24rem)] w-[calc(clamp(16rem,26vw,24rem)*var(--aspect))]"
+          : "aspect-[var(--aspect)] h-auto w-full",
+      )}
+      style={
+        {
+          "--aspect": project.posterAspectRatio,
+        } as React.CSSProperties
+      }
+    >
+      <div className="project-mini-view-media relative size-full origin-center overflow-hidden border border-rule">
+        <button
+          type="button"
+          data-project-trigger
+          className="group absolute inset-0 z-10 size-full cursor-pointer text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
+          aria-label={`Show ${project.title} in focus view`}
+          onClick={() => {
+            if (isTouchPresentation() && !infoVisible) {
+              onTouchInfoChange(cardKey);
+              return;
+            }
+
+            onFocusProject(project.id, cardKey);
+          }}
+        >
+          <Image
+            src={project.posterSrc}
+            alt={project.posterAlt}
+            fill
+            sizes={
+              layout === "stack"
+                ? "calc(100vw - 1rem)"
+                : "calc(clamp(16rem, 26vw, 24rem) * 2)"
+            }
+            className="object-cover"
+          />
+        </button>
+
+        <div
+          role="button"
+          tabIndex={infoVisible ? 0 : -1}
+          className={cn(
+            "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 max-h-full translate-y-[calc(100%_-_3rem)] cursor-pointer overflow-hidden bg-canvas text-ink opacity-100 transition-transform duration-[var(--motion-state)] ease-[var(--ease-out-quint)] group-focus-within/card:pointer-events-auto group-focus-within/card:translate-y-0 group-hover/card:pointer-events-auto group-hover/card:translate-y-0 motion-reduce:duration-[0.01ms]",
+            infoVisible &&
+              "project-mini-view-info--visible pointer-events-auto translate-y-0",
+          )}
+          aria-label={`View ${project.title} details`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onFocusProject(project.id, cardKey);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              event.stopPropagation();
+              onFocusProject(project.id, cardKey);
+            }
+          }}
+        >
+          <div className="flex min-h-12 items-center gap-3 border-t border-rule px-3">
+            <ProjectTitle
+              as="h3"
+              className={cn(
+                "min-w-0 flex-1 truncate",
+                project.titleTreatment === "nepo" &&
+                  "overflow-visible! text-clip!",
+              )}
+              context="rail"
+              treatment={project.titleTreatment}
+            >
+              {project.title}
+            </ProjectTitle>
+            <p className="text-[0.625rem] font-semibold tracking-[0.16em] uppercase">
+              {project.number}
+            </p>
+          </div>
+          <div className="border-t border-rule px-3 pt-2 pb-3">
+            <p className="truncate text-[0.625rem] font-semibold tracking-[0.12em] text-muted uppercase">
+              {project.technologies.join(" · ")}
+            </p>
+            <div className="mt-2">
+              <p className="line-clamp-2 min-w-0 text-xs leading-5 text-muted">
+                {project.summary}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 function ProjectRail({
   projects,
   direction,
@@ -79,103 +196,65 @@ function ProjectRail({
 }: RailProps) {
   return (
     <div
-      className="project-rail"
+      className="project-rail relative scrollbar-hide w-full overflow-hidden bg-canvas motion-reduce:overflow-x-auto"
       data-direction={direction}
       aria-label={railLabel}
     >
-      <div ref={trackRef} className="project-rail-track">
-        <div ref={groupRef} className="project-rail-group">
+      <div
+        ref={trackRef}
+        className="project-rail-track flex w-max py-2 will-change-transform motion-reduce:transform-none! motion-reduce:will-change-auto"
+      >
+        <div ref={groupRef} className="project-rail-group flex gap-2 pr-2">
           {projects.map((project, index) => {
             const cardKey = `${direction}-${project.id}-${index}`;
-            const infoVisible = touchInfoKey === cardKey;
-
             return (
-              <article
+              <ProjectCard
                 key={cardKey}
-                data-project-id={project.id}
-                data-card-key={cardKey}
-                className="project-mini-view editorial-rule bg-surface relative shrink-0"
-                style={
-                  {
-                    "--aspect": project.posterAspectRatio,
-                  } as React.CSSProperties
-                }
-              >
-                <div className="project-mini-view-media relative h-full w-full overflow-hidden">
-                  <button
-                    type="button"
-                    className="group absolute inset-0 z-10 h-full w-full cursor-pointer text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[rgb(var(--color-focus))]"
-                    aria-label={`Show ${project.title} in focus view`}
-                    onClick={() => {
-                      if (isTouchPresentation() && !infoVisible) {
-                        onTouchInfoChange(cardKey);
-                        return;
-                      }
-
-                      onFocusProject(project.id, cardKey);
-                    }}
-                  >
-                    <Image
-                      src={project.posterSrc}
-                      alt={project.posterAlt}
-                      fill
-                      sizes="(max-width: 640px) 100vw, calc(clamp(16rem, 26vw, 24rem) * 2)"
-                      className="object-cover"
-                    />
-                  </button>
-
-                  <div
-                    role="button"
-                    tabIndex={infoVisible ? 0 : -1}
-                    className={cn(
-                      "project-mini-view-info bg-canvas text-ink absolute inset-x-0 bottom-0 z-20 cursor-pointer",
-                      infoVisible && "project-mini-view-info--visible",
-                    )}
-                    aria-label={`View ${project.title} details`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onFocusProject(project.id, cardKey);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onFocusProject(project.id, cardKey);
-                      }
-                    }}
-                  >
-                    <div className="editorial-rule flex min-h-12 items-center gap-3 border-t px-3">
-                      <h3
-                        className={cn(
-                          "project-title project-title--rail min-w-0 flex-1 truncate",
-                          project.titleTreatment === "nepo" &&
-                            "overflow-visible! text-clip!",
-                        )}
-                        data-title-treatment={project.titleTreatment}
-                      >
-                        {project.title}
-                      </h3>
-                      <p className="text-[0.625rem] font-semibold tracking-[0.16em] uppercase">
-                        {project.number}
-                      </p>
-                    </div>
-                    <div className="editorial-rule border-t px-3 pt-2 pb-3">
-                      <p className="editorial-muted truncate text-[0.625rem] font-semibold tracking-[0.12em] uppercase">
-                        {project.technologies.join(" · ")}
-                      </p>
-                      <div className="mt-2">
-                        <p className="editorial-muted line-clamp-2 min-w-0 text-xs leading-5">
-                          {project.summary}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </article>
+                project={project}
+                cardKey={cardKey}
+                layout="rail"
+                infoVisible={touchInfoKey === cardKey}
+                onTouchInfoChange={onTouchInfoChange}
+                onFocusProject={onFocusProject}
+              />
             );
           })}
         </div>
       </div>
+    </div>
+  );
+}
+
+function MobileProjectStack({
+  projects,
+  touchInfoKey,
+  onTouchInfoChange,
+  onFocusProject,
+}: {
+  projects: readonly ProjectDefinition[];
+  touchInfoKey: string | null;
+  onTouchInfoChange: (cardKey: string | null) => void;
+  onFocusProject: (projectId: ProjectId, cardKey: string) => void;
+}) {
+  return (
+    <div
+      className="grid gap-2 px-2 pb-2 md:hidden [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:grid!"
+      aria-label="Projects"
+    >
+      {projects.map((project, index) => {
+        const cardKey = `stack-${project.id}-${index}`;
+        return (
+          <ProjectCard
+            key={cardKey}
+            project={project}
+            cardKey={cardKey}
+            layout="stack"
+            infoVisible={touchInfoKey === cardKey}
+            onTouchInfoChange={onTouchInfoChange}
+            onFocusProject={onFocusProject}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -220,7 +299,7 @@ function FocusCarousel({
 
   return (
     <section
-      className="project-focus-view outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[rgb(var(--color-focus))]"
+      className="project-focus-view outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
       aria-label={`${current.title} focus view`}
       tabIndex={-1}
       onKeyDown={handleKeyDown}
@@ -228,7 +307,7 @@ function FocusCarousel({
       <EditorialHeaderBar
         ariaLabel={`${current.title} focus controls`}
         leading={
-          <Eyebrow className="editorial-muted">
+          <Eyebrow className="text-muted">
             <span className="sm:hidden">
               {(currentIndex + 1).toString().padStart(2, "0")} /{" "}
               {projectCatalog.length.toString().padStart(2, "0")}
@@ -246,8 +325,8 @@ function FocusCarousel({
           onClick={selectPrevious}
           aria-label={`Show ${previous.title}`}
         >
-          <ArrowLeft aria-hidden className="h-4 w-4" />
-          <span>Prev</span>
+          <ArrowLeft aria-hidden className="size-4" />
+          <span className="max-[359px]:sr-only">Prev</span>
         </button>
         <button
           type="button"
@@ -255,8 +334,8 @@ function FocusCarousel({
           onClick={selectNext}
           aria-label={`Show ${next.title}`}
         >
-          <span>Next</span>
-          <ArrowRight aria-hidden className="h-4 w-4" />
+          <span className="max-[359px]:sr-only">Next</span>
+          <ArrowRight aria-hidden className="size-4" />
         </button>
         <button
           type="button"
@@ -264,12 +343,12 @@ function FocusCarousel({
           onClick={(event) => onClose(event.detail === 0)}
           aria-label="Close project focus"
         >
-          <span>Close</span>
-          <X aria-hidden className="h-4 w-4" />
+          <span className="max-[359px]:sr-only">Close</span>
+          <X aria-hidden className="size-4" />
         </button>
       </EditorialHeaderBar>
 
-      <div className="project-focus-stage">
+      <div className="project-focus-stage relative mx-auto w-full overflow-hidden p-2 md:p-[clamp(0.5rem,1.25vw,1.25rem)]">
         <FocusPreview
           project={previous}
           position="previous"
@@ -289,40 +368,49 @@ function FocusCarousel({
         />
       </div>
 
-      <EditorialGutter className="editorial-rule grid gap-4 border-y py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+      <EditorialGutter className="grid gap-4 border-y border-rule py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <Eyebrow>
               {current.number} / {current.eyebrow}
             </Eyebrow>
-            <span className="editorial-muted text-xs">
+            <span className="text-xs text-muted">
               {current.technologies.join(" · ")}
             </span>
           </div>
-          <h2
-            className="project-title mt-2 text-[clamp(1.75rem,3vw,3rem)] wrap-anywhere"
-            data-title-treatment={current.titleTreatment}
+          <ProjectTitle
+            as="h2"
+            className="mt-2 wrap-anywhere"
+            context="focus"
+            treatment={current.titleTreatment}
           >
             {current.title}
-          </h2>
-          <p className="editorial-muted mt-2 max-w-2xl text-sm leading-6">
+          </ProjectTitle>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
             {current.summary}
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2 lg:justify-end">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
           {current.caseStudyHref ? (
-            <ActionLink href={current.caseStudyHref} variant="primary">
+            <ActionLink
+              href={current.caseStudyHref}
+              variant="primary"
+              className="w-full sm:w-auto"
+            >
               Open case study
-              <ArrowUpRight aria-hidden className="h-4 w-4" />
+              <ArrowUpRight aria-hidden className="size-4" />
             </ActionLink>
           ) : null}
           {current.sourceHref ? (
-            <ActionLink href={current.sourceHref}>View source</ActionLink>
+            <ActionLink href={current.sourceHref} className="w-full sm:w-auto">
+              View source
+            </ActionLink>
           ) : null}
           {current.experienceHref || current.liveHref ? (
             <ActionLink
               href={current.experienceHref ?? current.liveHref ?? "/"}
+              className="w-full sm:w-auto"
             >
               Launch experience
             </ActionLink>
@@ -350,14 +438,14 @@ function FocusPreview({
     <div
       data-project-preview-id={project.id}
       className={cn(
-        "project-focus-preview editorial-frame bg-surface min-w-0 overflow-hidden",
+        "project-focus-preview relative [aspect-ratio:var(--project-preview-aspect)] min-w-0 overflow-hidden border border-rule bg-surface transition-[transform,opacity] duration-[var(--motion-layout)] ease-[var(--ease-out-quint)] motion-reduce:duration-[0.01ms]",
         current
-          ? "project-focus-preview--current"
+          ? "project-focus-preview--current z-1 w-full md:mx-auto md:w-[min(70vw,68rem)] max-md:portrait:aspect-[3/4] max-md:portrait:h-auto max-md:portrait:min-h-0 [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:[aspect-ratio:auto] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:h-[min(70svh,24rem)] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-64"
           : cn(
-              "project-focus-preview--side",
+              "project-focus-preview--side absolute top-1/2 hidden w-[44vw] opacity-40 focus-within:opacity-70 hover:opacity-70 md:block",
               position === "previous"
-                ? "project-focus-preview--previous"
-                : "project-focus-preview--next",
+                ? "project-focus-preview--previous left-0"
+                : "project-focus-preview--next right-0",
             ),
       )}
       style={
@@ -392,7 +480,7 @@ function FocusPreview({
       {!current ? (
         <button
           type="button"
-          className="absolute inset-0 z-20 h-full w-full cursor-pointer bg-transparent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[rgb(var(--color-focus))]"
+          className="absolute inset-0 z-20 size-full cursor-pointer bg-transparent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
           onClick={onSelect}
           aria-label={`Center ${project.title}`}
         >
@@ -533,7 +621,7 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
       if (projectId && cardKey) {
         galleryRef.current
           ?.querySelector<HTMLElement>(
-            `[data-card-key="${cardKey}"] > .project-mini-view-media > button`,
+            `[data-card-key="${cardKey}"] [data-project-trigger]`,
           )
           ?.focus({ preventScroll: true });
       }
@@ -641,7 +729,7 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
         <ProjectRail
           projects={RAIL_ONE}
           direction="forward"
-          railLabel="Projects rail"
+          railLabel="Projects"
           groupRef={firstRailGroupRef}
           trackRef={firstRailTrackRef}
           touchInfoKey={touchInfoKey}
@@ -657,7 +745,7 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
     <div
       ref={galleryRef}
       id="projects"
-      className="scroll-mt-12"
+      className={cn("scroll-mt-12", styles.root)}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) {
           setTouchInfoKey(null);
@@ -666,7 +754,7 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
     >
       {!focusedProjectId ? (
         <EditorialContainer className="max-w-384 pb-3">
-          <Eyebrow className="editorial-muted">
+          <Eyebrow className="text-muted">
             Interactive works / 01—
             {projectCatalog.length.toString().padStart(2, "0")}
           </Eyebrow>
@@ -684,7 +772,17 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
           onClose={closeFocus}
         />
       ) : (
-        rails
+        <>
+          <MobileProjectStack
+            projects={projectCatalog}
+            touchInfoKey={touchInfoKey}
+            onTouchInfoChange={setTouchInfoKey}
+            onFocusProject={openFocus}
+          />
+          <div className="hidden md:block [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:hidden!">
+            {rails}
+          </div>
+        </>
       )}
     </div>
   );

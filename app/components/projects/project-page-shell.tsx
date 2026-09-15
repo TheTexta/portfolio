@@ -8,7 +8,7 @@ export default function ProjectPageShell({
   navigation?: ReactNode;
 }) {
   return (
-    <main className="editorial-page relative h-dvh w-full overflow-hidden">
+    <main className="relative h-dvh w-full overflow-hidden bg-canvas text-ink">
       {children}
       {navigation}
     </main>

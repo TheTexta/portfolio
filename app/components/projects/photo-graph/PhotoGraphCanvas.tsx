@@ -50,7 +50,7 @@ import { usePhotoGraphIntro } from "./usePhotoGraphIntro";
 
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
   ssr: false,
-  loading: () => <div className="bg-canvas h-full w-full" />,
+  loading: () => <div className="size-full bg-canvas" />,
 }) as unknown as (props: Record<string, unknown>) => ReactElement;
 
 const EMPTY_PHOTO_GRAPH_DATA: PhotoGraphData = { nodes: [], links: [] };
@@ -410,6 +410,10 @@ export default function PhotoGraphCanvas({
     });
   }, []);
 
+  const handleInspectCloseComplete = useCallback(() => {
+    setInspectTarget(null);
+  }, []);
+
   const handleEngineTick = useCallback(() => {
     if (
       reducedMotionRef.current ||
@@ -519,11 +523,11 @@ export default function PhotoGraphCanvas({
 
   return (
     <div
-      className={`static h-full w-full transition-colors ${photoGraphShellClass}`}
+      className={`static size-full transition-colors ${photoGraphShellClass}`}
     >
       <div
         aria-hidden={inspectTarget ? true : undefined}
-        className={`h-full w-full transition-opacity duration-200 motion-reduce:transition-none ${
+        className={`size-full transition-opacity duration-200 motion-reduce:transition-none ${
           inspectTarget ? "pointer-events-none opacity-35" : "opacity-100"
         }`}
       >
@@ -531,6 +535,7 @@ export default function PhotoGraphCanvas({
           <PhotoGraphControls
             menuOpen={menuOpen}
             controls={activeControls}
+            reserveNavigationSpace={showNavigation}
             showTheme={isFullPageRoute && forcedDarkMode === undefined}
             onMenuOpen={() => setMenuOpen(true)}
             onMenuClose={() => setMenuOpen(false)}
@@ -552,7 +557,10 @@ export default function PhotoGraphCanvas({
 
         <div
           ref={containerRef}
-          className="bg-canvas relative h-full w-full [image-rendering:pixelated] [&_canvas]:[image-rendering:pixelated]"
+          role="region"
+          aria-label="Interactive photograph graph"
+          tabIndex={-1}
+          className="relative size-full bg-canvas [image-rendering:pixelated] [&_canvas]:[image-rendering:pixelated]"
         >
           {dimensions.width > 0 &&
             dimensions.height > 0 &&
@@ -595,7 +603,7 @@ export default function PhotoGraphCanvas({
             )}
           {loadStatus !== "ready" && (
             <div
-              className="bg-canvas/90 absolute inset-0 z-4 flex items-center justify-center px-6 text-center"
+              className="absolute inset-0 z-4 flex items-center justify-center bg-canvas/90 px-6 text-center"
               role={loadStatus === "error" ? "alert" : "status"}
               aria-live="polite"
             >
@@ -618,7 +626,8 @@ export default function PhotoGraphCanvas({
 
       <PhotoGraphInspectOverlay
         target={inspectTarget}
-        onCloseComplete={() => setInspectTarget(null)}
+        returnFocusRef={containerRef}
+        onCloseComplete={handleInspectCloseComplete}
       />
     </div>
   );

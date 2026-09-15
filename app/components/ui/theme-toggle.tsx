@@ -9,7 +9,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
   return (
     <label
       className={cn(
-        "inline-flex min-h-8 cursor-pointer items-center gap-2 uppercase text-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-[rgb(var(--color-focus))]",
+        "inline-flex min-h-8 cursor-pointer items-center gap-2 text-ink uppercase has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-focus",
         className,
       )}
     >
@@ -18,23 +18,19 @@ export default function ThemeToggle({ className }: { className?: string }) {
         type="checkbox"
         checked={darkMode}
         onChange={toggleTheme}
-        className="absolute h-px w-px overflow-hidden opacity-0"
+        className="absolute size-px overflow-hidden opacity-0"
       />
       <span
         aria-hidden="true"
         className={cn(
           "inline-flex h-[18px] w-[34px] shrink-0 items-center border p-0.5 transition-[border-color,background-color] duration-150",
-          darkMode
-            ? "border-ink bg-ink"
-            : "border-rule bg-transparent",
+          darkMode ? "border-ink bg-ink" : "border-rule bg-transparent",
         )}
       >
         <span
           className={cn(
-            "block h-3 w-3 transition-transform duration-150",
-            darkMode
-              ? "translate-x-[14px] bg-canvas"
-              : "translate-x-0 bg-ink",
+            "block size-3 transition-transform duration-150",
+            darkMode ? "translate-x-[14px] bg-canvas" : "translate-x-0 bg-ink",
           )}
         />
       </span>

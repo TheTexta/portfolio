@@ -89,7 +89,7 @@ export default function SpotifyCallbackPage() {
   }, [router]);
 
   return (
-    <main className="editorial-page min-h-dvh">
+    <main className="min-h-dvh bg-canvas text-ink">
       <SiteHeader>
         <ThemeToggle />
       </SiteHeader>
@@ -98,12 +98,12 @@ export default function SpotifyCallbackPage() {
         className="flex min-h-[calc(100dvh-3rem)] items-center py-12"
         aria-live="polite"
       >
-        <div className="editorial-rule w-full max-w-3xl border-y py-8 sm:py-12">
-          <Eyebrow className="editorial-muted">Authentication status</Eyebrow>
+        <div className="w-full max-w-3xl border-y border-rule py-8 sm:py-12">
+          <Eyebrow className="text-muted">Authentication status</Eyebrow>
           <h1 className="mt-4 text-[clamp(2.5rem,7vw,6.5rem)] leading-[0.9] font-bold tracking-[-0.05em]">
             Connecting Spotify.
           </h1>
-          <p className="editorial-muted mt-6 max-w-xl text-base leading-7">
+          <p className="mt-6 max-w-xl text-base leading-7 text-muted">
             {message}
           </p>
         </div>

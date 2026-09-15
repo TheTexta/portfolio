@@ -18,6 +18,7 @@ import type { GraphControls } from "./types";
 type PhotoGraphControlsProps = {
   menuOpen: boolean;
   controls: GraphControls;
+  reserveNavigationSpace?: boolean;
   showTheme?: boolean;
   onMenuOpen: () => void;
   onMenuClose: () => void;
@@ -27,6 +28,7 @@ type PhotoGraphControlsProps = {
 export default function PhotoGraphControls({
   menuOpen,
   controls,
+  reserveNavigationSpace = false,
   showTheme = false,
   onMenuOpen,
   onMenuClose,
@@ -35,16 +37,17 @@ export default function PhotoGraphControls({
   return (
     <>
       <div
-        className={`ring-1 ring-inset ring-[rgb(var(--color-rule))] select-none ${photoGraphControlsPositionClass} ${photoGraphPanelClass}`}
+        className={`w-[min(18rem,calc(100%-1rem))] ring-1 ring-rule select-none ring-inset data-[reserve-navigation=true]:w-[min(18rem,calc(100%-4.25rem))] ${photoGraphControlsPositionClass} ${photoGraphPanelClass}`}
+        data-reserve-navigation={reserveNavigationSpace || undefined}
       >
         <div
-          className={`flex h-8 w-full items-start justify-between ${menuOpen ? "border-rule border-b" : ""}`}
+          className={`flex min-h-8 w-full shrink-0 items-start justify-between max-md:min-h-11! [@media(hover:none)]:min-h-11! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-11! [@media(pointer:coarse)]:min-h-11! ${menuOpen ? "border-b border-rule" : ""}`}
         >
           <div className="flex items-start">
             {menuOpen && (
               <ControlButton
                 onClick={onMenuClose}
-                className="size-8"
+                className="size-8 shrink-0 max-md:size-11 [@media(hover:none)]:size-11 [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:size-11 [@media(pointer:coarse)]:size-11"
                 aria-label="Close graph controls"
               >
                 <X />
@@ -54,7 +57,7 @@ export default function PhotoGraphControls({
             {!menuOpen && (
               <ControlButton
                 onClick={onMenuOpen}
-                className="size-8"
+                className="size-8 shrink-0 max-md:size-11 [@media(hover:none)]:size-11 [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:size-11 [@media(pointer:coarse)]:size-11"
                 aria-label="Open graph controls"
               >
                 <Menu />
@@ -63,7 +66,7 @@ export default function PhotoGraphControls({
           </div>
 
           <label
-            className={`m-auto flex h-full flex-1 items-center justify-end gap-2 pr-3 text-right ${photoGraphControlTextClass}`}
+            className={`m-auto flex h-full flex-1 items-center justify-end gap-2 self-stretch pr-3 text-right ${photoGraphControlTextClass}`}
           >
             <span>Show connecting lines</span>
             <input
@@ -72,13 +75,13 @@ export default function PhotoGraphControls({
               onChange={(event) =>
                 onControlChange("hideConnections", !event.target.checked)
               }
-              className="accent-ink m-0 h-4 w-4 shrink-0"
+              className="m-0 size-4 shrink-0 accent-ink"
             />
           </label>
         </div>
 
         {menuOpen && showTheme && (
-          <div className="border-rule border-b px-3">
+          <div className="border-b border-rule px-3">
             <ThemeToggle className="w-full justify-between" />
           </div>
         )}

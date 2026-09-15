@@ -15,10 +15,7 @@ import {
   GRAPH_COLLISION_SLIDERS,
   GRAPH_CONTROL_SLIDERS,
 } from "@/app/components/projects/photo-graph/config";
-import {
-  ControlButton,
-  ControlLabel,
-} from "@/app/components/ui/control";
+import { ControlButton, ControlLabel } from "@/app/components/ui/control";
 import {
   EDITORIAL_HEADER_CONTROL_CLASS,
   SiteHeader,
@@ -590,16 +587,19 @@ export default function PhotoGraphUploadClient() {
     addFiles(event.dataTransfer.files);
   };
 
-  const handleModelChange = useCallback((model: PhotoGraphSimilarityModelId) => {
-    const definition = PHOTO_GRAPH_SIMILARITY_MODELS.find(
-      (entry) => entry.id === model,
-    );
-    setPreviewConfig((current) => ({
-      ...current,
-      model,
-      maxDistance: definition?.defaultMaxDistance ?? current.maxDistance,
-    }));
-  }, []);
+  const handleModelChange = useCallback(
+    (model: PhotoGraphSimilarityModelId) => {
+      const definition = PHOTO_GRAPH_SIMILARITY_MODELS.find(
+        (entry) => entry.id === model,
+      );
+      setPreviewConfig((current) => ({
+        ...current,
+        model,
+        maxDistance: definition?.defaultMaxDistance ?? current.maxDistance,
+      }));
+    },
+    [],
+  );
 
   const handleNeighborsChange = useCallback((value: number) => {
     setPreviewConfig((current) => ({
@@ -939,7 +939,9 @@ export default function PhotoGraphUploadClient() {
         );
       }
 
-      setStatusWithLog("Registering uploaded files and updating sparse neighborhoods...");
+      setStatusWithLog(
+        "Registering uploaded files and updating sparse neighborhoods...",
+      );
 
       const registerResponse = await fetch("/api/admin/photo-graph/upload", {
         method: "POST",
@@ -1012,7 +1014,7 @@ export default function PhotoGraphUploadClient() {
     deletingNodeId !== null;
 
   return (
-    <main className="editorial-page min-h-dvh">
+    <main className="min-h-dvh bg-canvas text-ink">
       <SiteHeader>
         <ThemeToggle />
         <button
@@ -1024,7 +1026,7 @@ export default function PhotoGraphUploadClient() {
         </button>
       </SiteHeader>
       <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-8">
-        <div className="border-rule mb-6 flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-6 flex flex-col gap-4 border-b border-rule pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-3xl">
             <p className="text-[11px] font-medium tracking-[0.28em] uppercase opacity-55">
               Colour Similarity Studio
@@ -1041,10 +1043,10 @@ export default function PhotoGraphUploadClient() {
           </div>
         </div>
 
-        <section className="border-rule bg-surface overflow-hidden border p-4 sm:p-5">
+        <section className="overflow-hidden border border-rule bg-surface p-4 sm:p-5">
           <div className="grid gap-5 xl:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)]">
             <div className="flex flex-col gap-4">
-              <div className="border-rule bg-canvas border p-4">
+              <div className="border border-rule bg-canvas p-4">
                 <div className="flex items-center justify-between gap-3 text-[11px] tracking-[0.22em] uppercase opacity-60">
                   <span>Similarity Model</span>
                   <span>{graphSource}</span>
@@ -1054,7 +1056,7 @@ export default function PhotoGraphUploadClient() {
                   then save the selected model and sparse neighborhood policy.
                 </p>
                 {persistenceUnavailable && (
-                  <p className="border-warning bg-canvas text-warning mt-3 border px-3 py-2 text-xs leading-5">
+                  <p className="mt-3 border border-warning bg-canvas px-3 py-2 text-xs leading-5 text-warning">
                     Supabase photo graph persistence is currently unavailable.
                     Preview still works, but saving defaults, uploading, and
                     deleting are disabled until the database connection is
@@ -1064,7 +1066,10 @@ export default function PhotoGraphUploadClient() {
 
                 <div className="mt-5 space-y-4">
                   <div className="space-y-2">
-                    <label htmlFor="photo-graph-model" className="text-sm font-medium">
+                    <label
+                      htmlFor="photo-graph-model"
+                      className="text-sm font-medium"
+                    >
                       Color model
                     </label>
                     <select
@@ -1075,7 +1080,7 @@ export default function PhotoGraphUploadClient() {
                           event.target.value as PhotoGraphSimilarityModelId,
                         )
                       }
-                      className="border-rule bg-surface min-h-11 w-full border px-3 text-sm"
+                      className="min-h-11 w-full border border-rule bg-surface px-3 text-sm"
                     >
                       {PHOTO_GRAPH_SIMILARITY_MODELS.map((model) => (
                         <option key={model.id} value={model.id}>
@@ -1114,7 +1119,7 @@ export default function PhotoGraphUploadClient() {
                       onChange={(event) =>
                         handleNeighborsChange(Number(event.target.value))
                       }
-                      className="range-sm bg-surface accent-ink h-2 w-full border-none"
+                      className="range-sm h-2 w-full border-none bg-surface accent-ink"
                     />
                     <p className="text-xs leading-5 opacity-60">
                       Caps each directed neighborhood before links are merged.
@@ -1123,10 +1128,16 @@ export default function PhotoGraphUploadClient() {
 
                   <div className="space-y-2">
                     <div className="flex items-end justify-between gap-3">
-                      <label htmlFor="photo-graph-max-distance" className="text-sm font-medium">
+                      <label
+                        htmlFor="photo-graph-max-distance"
+                        className="text-sm font-medium"
+                      >
                         Maximum color distance
                       </label>
-                      <output htmlFor="photo-graph-max-distance" className="text-sm opacity-70">
+                      <output
+                        htmlFor="photo-graph-max-distance"
+                        className="text-sm opacity-70"
+                      >
                         {formatModelDistance(previewConfig.maxDistance)}
                       </output>
                     </div>
@@ -1144,7 +1155,7 @@ export default function PhotoGraphUploadClient() {
                       onChange={(event) =>
                         handleMaxDistanceChange(Number(event.target.value))
                       }
-                      className="range-sm bg-surface accent-ink h-2 w-full border-none"
+                      className="range-sm h-2 w-full border-none bg-surface accent-ink"
                     />
                     <p className="text-xs leading-5 opacity-60">
                       Rejects visually distant candidates even when fewer than
@@ -1189,7 +1200,7 @@ export default function PhotoGraphUploadClient() {
                 </div>
               </div>
 
-              <div className="border-rule bg-canvas border p-4">
+              <div className="border border-rule bg-canvas p-4">
                 <div className="flex items-center justify-between gap-3 text-[11px] tracking-[0.22em] uppercase opacity-60">
                   <span>Graph Defaults</span>
                   <span>Runtime + Collision</span>
@@ -1217,7 +1228,7 @@ export default function PhotoGraphUploadClient() {
                             !event.target.checked,
                           )
                         }
-                        className="accent-ink m-0 h-4 w-4 shrink-0"
+                        className="m-0 size-4 shrink-0 accent-ink"
                       />
                     </label>
 
@@ -1256,7 +1267,7 @@ export default function PhotoGraphUploadClient() {
                                   Number(event.target.value) * scale,
                                 )
                               }
-                              className="range-sm bg-surface accent-ink h-2 w-full border-none"
+                              className="range-sm h-2 w-full border-none bg-surface accent-ink"
                             />
                           </div>
                         );
@@ -1264,7 +1275,7 @@ export default function PhotoGraphUploadClient() {
                     )}
                   </div>
 
-                  <div className="border-rule border-t pt-4">
+                  <div className="border-t border-rule pt-4">
                     <div className="text-[11px] font-medium tracking-[0.18em] uppercase opacity-55">
                       Admin Collision Tuning
                     </div>
@@ -1307,7 +1318,7 @@ export default function PhotoGraphUploadClient() {
                                 Number(event.target.value) * scale,
                               )
                             }
-                            className="range-sm bg-surface accent-ink h-2 w-full border-none"
+                            className="range-sm h-2 w-full border-none bg-surface accent-ink"
                           />
                         </div>
                       );
@@ -1340,7 +1351,7 @@ export default function PhotoGraphUploadClient() {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                <div className="border-rule bg-canvas border p-3">
+                <div className="border border-rule bg-canvas p-3">
                   <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
                     Stored Graph
                   </p>
@@ -1352,7 +1363,7 @@ export default function PhotoGraphUploadClient() {
                   </p>
                 </div>
 
-                <div className="border-rule bg-canvas border p-3">
+                <div className="border border-rule bg-canvas p-3">
                   <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
                     Saved Model Defaults
                   </p>
@@ -1365,7 +1376,7 @@ export default function PhotoGraphUploadClient() {
                   </p>
                 </div>
 
-                <div className="border-rule bg-canvas border p-3">
+                <div className="border border-rule bg-canvas p-3">
                   <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
                     Saved Graph Defaults
                   </p>
@@ -1387,7 +1398,7 @@ export default function PhotoGraphUploadClient() {
                   </p>
                 </div>
 
-                <div className="border-rule bg-canvas border p-3">
+                <div className="border border-rule bg-canvas p-3">
                   <p className="text-[11px] tracking-[0.18em] uppercase opacity-55">
                     Preview Status
                   </p>
@@ -1403,8 +1414,8 @@ export default function PhotoGraphUploadClient() {
               </div>
             </div>
 
-            <div className="border-rule bg-surface overflow-hidden border">
-              <div className="border-rule flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3 text-xs">
+            <div className="overflow-hidden border border-rule bg-surface">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-rule px-4 py-3 text-xs">
                 <div>
                   <p className="font-medium">Server Preview Graph</p>
                   <p className="mt-1 opacity-65">
@@ -1412,7 +1423,7 @@ export default function PhotoGraphUploadClient() {
                     persisted public snapshot until you save.
                   </p>
                 </div>
-                <div className="border-rule border px-3 py-1 text-[11px] tracking-[0.18em] uppercase opacity-70">
+                <div className="border border-rule px-3 py-1 text-[11px] tracking-[0.18em] uppercase opacity-70">
                   {previewIsUpdating
                     ? "Updating"
                     : previewMatchesSavedDefaults &&
@@ -1435,11 +1446,11 @@ export default function PhotoGraphUploadClient() {
           </div>
         </section>
 
-        <section className="border-rule mt-6 border p-4">
+        <section className="mt-6 border border-rule p-4">
           <div
             onDrop={handleDrop}
             onDragOver={(event) => event.preventDefault()}
-            className="border-rule border border-dashed p-6 text-center"
+            className="border border-dashed border-rule p-6 text-center"
           >
             <p className="text-sm">Drag and drop images here</p>
             <p className="my-2 text-xs opacity-70">or</p>
@@ -1461,7 +1472,7 @@ export default function PhotoGraphUploadClient() {
           </div>
 
           {files.length > 0 && (
-            <ul className="border-rule mt-3 max-h-56 overflow-y-auto border p-3 text-sm">
+            <ul className="mt-3 max-h-56 overflow-y-auto border border-rule p-3 text-sm">
               {files.map((file) => (
                 <li
                   key={`${file.name}-${file.size}-${file.lastModified}`}
@@ -1507,10 +1518,10 @@ export default function PhotoGraphUploadClient() {
           </div>
 
           {statusMessage && (
-            <p className="text-ink mt-4 text-sm">{statusMessage}</p>
+            <p className="mt-4 text-sm text-ink">{statusMessage}</p>
           )}
           {errorMessage && (
-            <p className="text-danger mt-2 text-sm">{errorMessage}</p>
+            <p className="mt-2 text-sm text-danger">{errorMessage}</p>
           )}
 
           {createdIds.length > 0 && (
@@ -1520,7 +1531,7 @@ export default function PhotoGraphUploadClient() {
           )}
         </section>
 
-        <section className="border-rule mt-6 border p-4">
+        <section className="mt-6 border border-rule p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-sm font-semibold">Manage Photos</h2>
             <div className="flex items-center gap-2 text-xs">
@@ -1548,15 +1559,13 @@ export default function PhotoGraphUploadClient() {
               value={manageQuery}
               onChange={(event) => setManageQuery(event.target.value)}
               placeholder="Filter by node ID or storage path..."
-              className="border-rule w-full border bg-transparent px-3 py-2 text-sm outline-none focus-visible:outline-2 focus-visible:outline-[rgb(var(--color-focus))]"
+              className="w-full border border-rule bg-transparent px-3 py-2 text-sm outline-none focus-visible:outline-2 focus-visible:outline-focus"
             />
           </div>
 
-          <div className="border-rule mt-3 max-h-64 overflow-y-auto border p-2 text-xs">
+          <div className="mt-3 max-h-64 overflow-y-auto border border-rule p-2 text-xs">
             {filteredGraphNodes.length === 0 ? (
-              <p className="px-2 py-2 opacity-70">
-                No nodes match your filter.
-              </p>
+              <p className="p-2 opacity-70">No nodes match your filter.</p>
             ) : (
               <ul className="space-y-1">
                 {filteredGraphNodes.map((node) => {
@@ -1564,7 +1573,7 @@ export default function PhotoGraphUploadClient() {
                   return (
                     <li
                       key={node.id}
-                      className="border-rule flex flex-col gap-2 border p-2"
+                      className="flex flex-col gap-2 border border-rule p-2"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex min-w-0 items-start gap-2">
@@ -1575,10 +1584,10 @@ export default function PhotoGraphUploadClient() {
                               alt={`Node ${node.id}`}
                               width={44}
                               height={44}
-                              className="h-11 w-11 object-cover"
+                              className="size-11 object-cover"
                             />
                           ) : (
-                            <div className="border-rule h-11 w-11 border" />
+                            <div className="size-11 border border-rule" />
                           )}
 
                           <div className="min-w-0 font-mono text-[11px]">
@@ -1622,7 +1631,7 @@ export default function PhotoGraphUploadClient() {
           </div>
         </section>
 
-        <section className="border-rule mt-6 border p-4">
+        <section className="mt-6 border border-rule p-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-sm font-semibold">Verbose Activity</h2>
             <p className="text-xs opacity-70">
@@ -1631,7 +1640,7 @@ export default function PhotoGraphUploadClient() {
           </div>
 
           {verbosePanelOpen ? (
-            <div className="border-rule bg-surface mt-3 max-h-64 overflow-y-auto border p-3 text-xs">
+            <div className="mt-3 max-h-64 overflow-y-auto border border-rule bg-surface p-3 text-xs">
               {verboseLogs.length === 0 ? (
                 <p className="opacity-70">No activity yet.</p>
               ) : (

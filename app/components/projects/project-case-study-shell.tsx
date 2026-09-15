@@ -22,7 +22,7 @@ export default function ProjectCaseStudyShell({
   project: ProjectDefinition;
 }) {
   return (
-    <main className="editorial-page min-h-dvh overflow-x-clip">
+    <main className="min-h-dvh overflow-x-clip bg-canvas text-ink">
       <SiteHeader ariaLabel={`${project.title} navigation`}>
         <Link
           href={PROJECT_ROUTES.portfolioProjects}
@@ -43,7 +43,7 @@ export default function ProjectCaseStudyShell({
           <h1 className="-ml-[0.04em] max-w-6xl text-4xl leading-[0.8] font-black tracking-[-0.06em] [overflow-wrap:anywhere]">
             {project.title}
           </h1>
-          <p className="editorial-muted mt-7 max-w-3xl leading-8">
+          <p className="mt-7 max-w-3xl leading-8 text-muted">
             {project.summary}
           </p>
         </div>
@@ -53,7 +53,7 @@ export default function ProjectCaseStudyShell({
             {project.experienceHref ? (
               <ActionLink href={project.experienceHref} variant="primary">
                 Launch experience
-                <ArrowUpRight aria-hidden className="h-4 w-4" />
+                <ArrowUpRight aria-hidden className="size-4" />
               </ActionLink>
             ) : null}
           </div>
@@ -62,7 +62,7 @@ export default function ProjectCaseStudyShell({
             <div className="flex justify-end text-sm font-semibold uppercase">
               Stack
             </div>
-            <div className="editorial-muted flex justify-end text-sm">
+            <div className="flex justify-end text-sm text-muted">
               {project.technologies.join(" · ")}
             </div>
           </div>
@@ -70,7 +70,7 @@ export default function ProjectCaseStudyShell({
       </EditorialContainer>
 
       <EditorialContainer className="py-8">
-        <MediaFrame className="project-case-study-preview h-[min(70svh,48rem)] min-h-[16rem] md:min-h-[30rem]">
+        <MediaFrame className="h-[min(70svh,48rem)] min-h-[30rem] max-md:portrait:aspect-[3/4] max-md:portrait:h-auto max-md:portrait:min-h-0 [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:[aspect-ratio:auto] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:h-[min(70svh,24rem)] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-64">
           <ProjectLivePreview project={project} />
         </MediaFrame>
       </EditorialContainer>

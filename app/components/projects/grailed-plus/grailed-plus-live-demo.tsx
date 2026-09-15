@@ -6,11 +6,7 @@ import { RotateCw } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export type GrailedPlusDemoFeature =
-  | "overview"
-  | "pricing"
-  | "market-compare"
-  | "currency"
-  | "dark-mode";
+  "overview" | "pricing" | "market-compare" | "currency" | "dark-mode";
 
 export const GRAILED_PLUS_DEMO_CURRENCIES = [
   "USD",
@@ -347,7 +343,7 @@ export default function GrailedPlusLiveDemo({
     >
       {!isReady ? (
         <div
-          className="editorial-muted absolute inset-x-0 top-0 z-0 flex items-center justify-center px-6 text-center text-xs tracking-[0.12em] uppercase"
+          className="absolute inset-x-0 top-0 z-0 flex items-center justify-center px-6 text-center text-xs tracking-[0.12em] text-muted uppercase"
           style={{ minHeight: frameBounds.min }}
           role="status"
         >
@@ -357,11 +353,11 @@ export default function GrailedPlusLiveDemo({
               <button
                 type="button"
                 onClick={retryDemo}
-                className="inline-flex h-8 w-8 items-center justify-center border transition-opacity hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+                className="inline-flex size-8 items-center justify-center border transition-opacity hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
                 aria-label="Retry loading live demo"
                 title="Retry loading live demo"
               >
-                <RotateCw aria-hidden className="h-4 w-4" strokeWidth={1.75} />
+                <RotateCw aria-hidden className="size-4" strokeWidth={1.75} />
               </button>
             </span>
           ) : shouldLoad ? (
@@ -384,7 +380,7 @@ export default function GrailedPlusLiveDemo({
           onLoad={requestReady}
           scrolling="auto"
           className={cn(
-            "relative z-10 block w-full h-full border-0 bg-transparent transition-opacity duration-300",
+            "relative z-10 block size-full border-0 bg-transparent transition-opacity duration-300",
             isReady ? "opacity-100" : "opacity-0",
           )}
           style={{

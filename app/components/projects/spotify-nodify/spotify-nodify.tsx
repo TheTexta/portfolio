@@ -17,9 +17,9 @@ type SpotifyNodifyProps = {
 };
 
 const spotifyShell = cva(
-  "bg-canvas text-ink relative h-full w-full overflow-hidden transition-colors",
+  "relative size-full overflow-hidden bg-canvas text-ink transition-colors",
 );
-const spotifySurface = cva("editorial-rule bg-surface border", {
+const spotifySurface = cva("border border-rule bg-surface", {
   variants: {
     spacing: {
       base: "p-5 md:p-6",
@@ -36,10 +36,10 @@ const spotifySurface = cva("editorial-rule bg-surface border", {
   },
 });
 const spotifyTrackItem = cva(
-  "editorial-rule grid grid-cols-[auto,1fr] items-start gap-3 border-b px-3 py-3 last:border-b-0 md:px-4",
+  "grid grid-cols-[auto,1fr] items-start gap-3 border-b border-rule p-3 last:border-b-0 md:px-4",
 );
 const spotifyEmptyState = cva(
-  "editorial-rule text-muted mt-4 border border-dashed px-4 py-6 text-sm",
+  "mt-4 border border-dashed border-rule px-4 py-6 text-sm text-muted",
 );
 
 export default function SpotifyNodify({
@@ -107,10 +107,10 @@ export default function SpotifyNodify({
                       alt={`${getProfileName(session.profile)} avatar`}
                       width={112}
                       height={112}
-                      className="editorial-rule h-28 w-28 rounded-full border object-cover"
+                      className="size-28 rounded-full border border-rule object-cover"
                     />
                   ) : (
-                    <div className="editorial-rule text-muted flex h-28 w-28 items-center justify-center rounded-full border border-dashed text-3xl">
+                    <div className="flex size-28 items-center justify-center rounded-full border border-dashed border-rule text-3xl text-muted">
                       {getProfileInitials(session.profile)}
                     </div>
                   )}
@@ -129,10 +129,7 @@ export default function SpotifyNodify({
                   </div>
 
                   <div className="flex flex-wrap justify-center gap-3 lg:justify-start">
-                    <ControlButton
-                      onClick={connect}
-                      layout="action"
-                    >
+                    <ControlButton onClick={connect} layout="action">
                       Reconnect Spotify
                     </ControlButton>
                     <ControlButton onClick={disconnect} layout="action">
@@ -156,7 +153,7 @@ export default function SpotifyNodify({
                 </div>
 
                 {visibleTracks.length > 0 ? (
-                  <ol className="editorial-rule mt-4 border-y">
+                  <ol className="mt-4 border-y border-rule">
                     {visibleTracks.map((track, index) => (
                       <li key={track.id} className={spotifyTrackItem()}>
                         <span className="pt-0.5 text-xs font-semibold tracking-[0.2em] uppercase opacity-50">
@@ -193,10 +190,7 @@ export default function SpotifyNodify({
                 tracks from the last month directly inside the project preview.
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
-                <ControlButton
-                  onClick={connect}
-                  layout="action"
-                >
+                <ControlButton onClick={connect} layout="action">
                   Connect Spotify
                 </ControlButton>
               </div>

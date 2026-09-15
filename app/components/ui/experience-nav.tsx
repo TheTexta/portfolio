@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Maximize2, Minimize } from "lucide-react";
+import { Maximize2, Minimize } from "lucide-react";
 
 import { useTheme } from "@/app/components/theme/theme-provider";
 import { ActionButton, ActionLink } from "@/app/components/ui/editorial";
@@ -28,7 +28,7 @@ export default function ExperienceNav({
     <nav
       aria-label={ariaLabel}
       className={cn(
-        "absolute top-2 right-2 z-20 flex items-center gap-2",
+        "absolute top-2 right-2 z-20 flex items-center gap-2 max-md:[&>*]:min-h-11! max-md:[&>*]:min-w-11! [@media(hover:none)]:[&>*]:min-h-11! [@media(hover:none)]:[&>*]:min-w-11! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:[&>*]:min-h-11! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:[&>*]:min-w-11! [@media(pointer:coarse)]:[&>*]:min-h-11! [@media(pointer:coarse)]:[&>*]:min-w-11!",
         className,
       )}
     >
@@ -50,7 +50,7 @@ export default function ExperienceNav({
           variant="secondary"
           aria-label="Open full project experience"
         >
-          <Maximize2 aria-hidden className="h-4 w-4" />
+          <Maximize2 aria-hidden className="size-4" />
         </ActionLink>
       ) : null}
       {caseStudyHref ? (
@@ -60,7 +60,7 @@ export default function ExperienceNav({
 
           aria-label="Return to project case study"
         >
-          <Minimize aria-hidden className="h-4 w-4" />
+          <Minimize aria-hidden className="size-4" />
         </ControlLink>
       ) : null}
     </nav>

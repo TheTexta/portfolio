@@ -104,6 +104,9 @@ const HERO_FEATURE_LINKS = [
   { href: "#feature-dark-mode", label: "Dark mode" },
 ] as const;
 
+const heroItemClass =
+  "animate-[editorial-enter_700ms_cubic-bezier(0.16,1,0.3,1)_both]";
+
 declare global {
   interface Window {
     dataLayer?: unknown[];
@@ -124,7 +127,7 @@ function InstallLink({ className, isRedirecting, onClick }: InstallLinkProps) {
       aria-busy={isRedirecting}
       aria-disabled={isRedirecting}
       className={cn(
-        "editorial-primary group inline-flex min-h-12 items-center justify-center gap-3 px-6 py-3 text-center text-sm font-semibold tracking-[0.08em] uppercase transition-[transform,background-color,color,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-focus))] active:scale-[0.98] sm:px-8",
+        "group inline-flex min-h-12 items-center justify-center gap-3 bg-ink px-6 py-3 text-center text-sm font-semibold tracking-[0.08em] text-canvas uppercase transition-[transform,background-color,color,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] outline-none hover:bg-action-hover hover:text-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus active:scale-[0.98] sm:px-8",
         !isRedirecting && "hover:-translate-y-0.5",
         isRedirecting && "pointer-events-none opacity-65",
         className,
@@ -135,7 +138,7 @@ function InstallLink({ className, isRedirecting, onClick }: InstallLinkProps) {
         <>
           <LoaderCircle
             aria-hidden
-            className="h-4 w-4 animate-spin"
+            className="size-4 animate-spin"
             strokeWidth={1.75}
           />
           <span>{CTA_OPENING_LABEL}</span>
@@ -146,7 +149,7 @@ function InstallLink({ className, isRedirecting, onClick }: InstallLinkProps) {
           <span className="hidden sm:inline">{CTA_LABEL}</span>
           <ArrowUpRight
             aria-hidden
-            className="h-4 w-4 transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            className="size-4 transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
             strokeWidth={1.75}
           />
         </>
@@ -321,7 +324,7 @@ export default function GrailedPlusInstallPage({
   );
 
   return (
-    <main className="product-landing editorial-page min-h-dvh overflow-clip font-light">
+    <main className="product-landing min-h-dvh overflow-clip bg-canvas font-light text-ink">
       <p className="sr-only" aria-live="polite">
         {isRedirecting ? CTA_OPENING_LABEL : ""}
       </p>
@@ -353,39 +356,47 @@ export default function GrailedPlusInstallPage({
           <ThemeToggle />
         </SiteHeader>
       ) : null}
-      <section className="product-landing-hero editorial-rule relative isolate border-b">
+      <section className="product-landing-hero relative isolate border-b border-rule">
         <EditorialContainer className="grid min-h-[calc(100svh-3rem)] items-start gap-12 py-16 sm:py-20 lg:grid-cols-12 lg:gap-10 lg:py-8">
           <div className="relative z-10 lg:col-span-5 lg:py-8">
             <p
-              data-hero-item
-              className="text-ink mb-7 flex items-center gap-3 text-xs font-semibold tracking-[0.2em] uppercase"
+              className={cn(
+                heroItemClass,
+                "mb-7 flex items-center gap-3 text-xs font-semibold tracking-[0.2em] text-ink uppercase",
+              )}
             >
               <span aria-hidden className="h-px w-8 bg-current" />A sharper
               layer for Grailed
             </p>
 
             <h1
-              data-hero-item
-              className="text-[clamp(4.5rem,11vw,9.5rem)] leading-[0.78] font-black tracking-[-0.065em]"
+              className={cn(
+                heroItemClass,
+                "text-[clamp(4.5rem,11vw,9.5rem)] leading-[0.78] font-black tracking-[-0.065em] [animation-delay:70ms]",
+              )}
             >
               Grailed
               <span className="sr-only"> Plus</span>
-              <span aria-hidden className="text-ink ml-[0.04em] inline-block">
+              <span aria-hidden className="ml-[0.04em] inline-block text-ink">
                 +
               </span>
             </h1>
 
             <p
-              data-hero-item
-              className="editorial-muted mt-8 max-w-xl text-base leading-7 sm:text-lg sm:leading-8"
+              className={cn(
+                heroItemClass,
+                "mt-8 max-w-xl text-base leading-7 text-muted [animation-delay:140ms] sm:text-lg sm:leading-8",
+              )}
             >
               Market context, local currency, and a native-feeling dark mode,
               directly inside the pages you already browse.
             </p>
 
             <ul
-              data-hero-item
-              className="editorial-rule mt-8 flex flex-wrap gap-x-5 gap-y-2 border-y py-4 text-xs font-semibold tracking-[0.14em] uppercase"
+              className={cn(
+                heroItemClass,
+                "mt-8 flex flex-wrap gap-x-5 gap-y-2 border-y border-rule py-4 text-xs font-semibold tracking-[0.14em] uppercase [animation-delay:210ms]",
+              )}
               aria-label="Grailed Plus features"
             >
               {HERO_FEATURE_LINKS.map((feature) => (
@@ -401,8 +412,10 @@ export default function GrailedPlusInstallPage({
             </ul>
 
             <div
-              data-hero-item
-              className="mt-8 flex flex-col items-stretch gap-3 min-[430px]:flex-row min-[430px]:items-center"
+              className={cn(
+                heroItemClass,
+                "mt-8 flex flex-col items-stretch gap-3 [animation-delay:280ms] min-[430px]:flex-row min-[430px]:items-center",
+              )}
             >
               <InstallLink
                 isRedirecting={isRedirecting}
@@ -410,20 +423,22 @@ export default function GrailedPlusInstallPage({
               />
               <a
                 href="#features"
-                className="editorial-secondary group inline-flex min-h-12 items-center justify-center gap-3 px-6 py-3 text-sm font-semibold tracking-[0.08em] uppercase transition-colors duration-200 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-focus))]"
+                className="group inline-flex min-h-12 items-center justify-center gap-3 border border-rule px-6 py-3 text-sm font-semibold tracking-[0.08em] text-ink uppercase transition-colors duration-200 outline-none hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
               >
                 Explore features
                 <ArrowDown
                   aria-hidden
-                  className="h-4 w-4 transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0.5"
+                  className="size-4 transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0.5"
                   strokeWidth={1.75}
                 />
               </a>
             </div>
 
             <p
-              data-hero-item
-              className="editorial-muted mt-4 text-sm leading-6"
+              className={cn(
+                heroItemClass,
+                "mt-4 text-sm leading-6 text-muted [animation-delay:350ms]",
+              )}
             >
               <span className="hidden sm:inline">
                 Installs from the official Chrome Web Store.
@@ -435,20 +450,17 @@ export default function GrailedPlusInstallPage({
             </p>
           </div>
 
-          <div
-            data-hero-preview
-            className="min-w-0 lg:col-span-6 lg:col-start-7"
-          >
+          <div className="min-w-0 animate-[editorial-preview-enter_760ms_cubic-bezier(0.16,1,0.3,1)_260ms_both] lg:col-span-6 lg:col-start-7">
             <div className="flex flex-col gap-3">
-              {/*<div className="editorial-rule flex items-end justify-between gap-5 border-b pb-3">
+              {/*<div className="border-rule flex items-end justify-between gap-5 border-b pb-3">
               <p className="text-xs font-semibold tracking-[0.18em] uppercase">
                 Live product
               </p>
-              <p className="editorial-muted text-right text-xs">
+              <p className="text-muted text-right text-xs">
                 Running the extension’s current UI source.
               </p>
             </div>*/}
-              <div className="editorial-frame overflow-hidden">
+              <div className="overflow-hidden border border-rule bg-transparent">
                 <GrailedPlusLiveDemo
                   eager
                   currencyCode={demoCurrency}
@@ -466,115 +478,115 @@ export default function GrailedPlusInstallPage({
       {!heroOnly ? (
         <>
           <section id="features" className="scroll-mt-0">
-        <EditorialContainer
-          as="header"
-          className="grid gap-8 py-20 sm:py-24 lg:grid-cols-12 lg:py-32"
-        >
-          <p className="text-ink text-xs font-semibold tracking-[0.2em] uppercase lg:col-span-3">
-            Feature index
-          </p>
-          <div className="lg:col-span-6">
-            <h2 className="text-[clamp(2.8rem,6vw,6rem)] leading-[0.92] font-bold tracking-[-0.045em]">
-              Four upgrades.
-              <br />
-              Zero workflow change.
-            </h2>
-          </div>
-          <p className="editorial-muted max-w-md text-base leading-7 lg:col-span-3 lg:pt-2">
-            Grailed Plus works where the decision happens—inside listings,
-            search results, and messages—not in another tab.
-          </p>
-        </EditorialContainer>
+            <EditorialContainer
+              as="header"
+              className="grid gap-8 py-20 sm:py-24 lg:grid-cols-12 lg:py-32"
+            >
+              <p className="text-xs font-semibold tracking-[0.2em] text-ink uppercase lg:col-span-3">
+                Feature index
+              </p>
+              <div className="lg:col-span-6">
+                <h2 className="text-[clamp(2.8rem,6vw,6rem)] leading-[0.92] font-bold tracking-[-0.045em]">
+                  Four upgrades.
+                  <br />
+                  Zero workflow change.
+                </h2>
+              </div>
+              <p className="max-w-md text-base leading-7 text-muted lg:col-span-3 lg:pt-2">
+                Grailed Plus works where the decision happens—inside listings,
+                search results, and messages—not in another tab.
+              </p>
+            </EditorialContainer>
 
-        <EditorialContainer>
-          {FEATURES.map((feature, index) => {
-            const textOnLeft = index % 2 === 0;
+            <EditorialContainer>
+              {FEATURES.map((feature, index) => {
+                const textOnLeft = index % 2 === 0;
 
-            return (
-              <article
-                key={feature.id}
-                id={`feature-${feature.id}`}
-                className="editorial-rule grid snap-y snap-mandatory snap-start gap-10 border-t py-16 sm:py-20 lg:grid-cols-12 lg:gap-12 lg:py-28"
-              >
-                <div
-                  className={cn(
-                    "min-w-0 lg:top-10 lg:col-span-4 lg:self-start",
-                    textOnLeft ? "lg:order-1" : "lg:order-2",
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-6">
-                    <p className="text-ink text-xs font-semibold tracking-[0.2em] uppercase">
-                      {feature.eyebrow}
-                    </p>
-                    <span
-                      aria-hidden
-                      className="editorial-muted font-display text-sm"
+                return (
+                  <article
+                    key={feature.id}
+                    id={`feature-${feature.id}`}
+                    className="grid snap-y snap-mandatory snap-start gap-10 border-t border-rule py-16 sm:py-20 lg:grid-cols-12 lg:gap-12 lg:py-28"
+                  >
+                    <div
+                      className={cn(
+                        "min-w-0 lg:top-10 lg:col-span-4 lg:self-start",
+                        textOnLeft ? "lg:order-1" : "lg:order-2",
+                      )}
                     >
-                      / {feature.number}
-                    </span>
-                  </div>
-                  <h3 className="mt-6 max-w-md text-[clamp(2.5rem,5vw,5rem)] leading-[0.92] font-bold tracking-[-0.045em]">
-                    {feature.title}
-                  </h3>
-                  <p className="editorial-muted mt-6 max-w-lg text-base leading-7 sm:text-lg sm:leading-8">
-                    {feature.description}
-                  </p>
-                </div>
+                      <div className="flex items-start justify-between gap-6">
+                        <p className="text-xs font-semibold tracking-[0.2em] text-ink uppercase">
+                          {feature.eyebrow}
+                        </p>
+                        <span
+                          aria-hidden
+                          className="font-display text-sm text-muted"
+                        >
+                          / {feature.number}
+                        </span>
+                      </div>
+                      <h3 className="mt-6 max-w-md text-[clamp(2.5rem,5vw,5rem)] leading-[0.92] font-bold tracking-[-0.045em]">
+                        {feature.title}
+                      </h3>
+                      <p className="mt-6 max-w-lg text-base leading-7 text-muted sm:text-lg sm:leading-8">
+                        {feature.description}
+                      </p>
+                    </div>
 
-                <div
-                  className={cn(
-                    "min-w-0 lg:col-span-8",
-                    textOnLeft ? "lg:order-2" : "lg:order-1",
-                  )}
-                >
-                  <div className="editorial-frame overflow-hidden">
-                    <GrailedPlusLiveDemo
-                      currencyCode={demoCurrency}
-                      darkModeEnabled={demoDarkMode}
-                      parentDarkMode={darkMode}
-                      feature={feature.id}
-                      title={`Live Grailed Plus ${feature.title} demo`}
-                    />
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </EditorialContainer>
+                    <div
+                      className={cn(
+                        "min-w-0 lg:col-span-8",
+                        textOnLeft ? "lg:order-2" : "lg:order-1",
+                      )}
+                    >
+                      <div className="overflow-hidden border border-rule bg-transparent">
+                        <GrailedPlusLiveDemo
+                          currencyCode={demoCurrency}
+                          darkModeEnabled={demoDarkMode}
+                          parentDarkMode={darkMode}
+                          feature={feature.id}
+                          title={`Live Grailed Plus ${feature.title} demo`}
+                        />
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </EditorialContainer>
           </section>
 
-          <section className="editorial-rule border-y">
-        <EditorialContainer className="grid items-end gap-10 py-20 sm:py-24 lg:grid-cols-12 lg:py-32">
-          <div className="lg:col-span-8">
-            <p className="text-ink mb-6 text-xs font-semibold tracking-[0.2em] uppercase">
-              Ready when you are
-            </p>
-            <h2 className="max-w-5xl text-[clamp(3rem,7.5vw,7.5rem)] leading-[0.88] font-black tracking-[-0.055em]">
-              Make every listing tell you more.
-            </h2>
-          </div>
-          <div className="lg:col-span-4 lg:justify-self-end">
-            <InstallLink
-              className="w-full min-[430px]:w-auto"
-              isRedirecting={isRedirecting}
-              onClick={handleInstallClick}
-            />
-            <p className="editorial-muted mt-4 max-w-sm text-sm leading-6">
-              Official Chrome Web Store install. No subscription or hidden
-              payments required. Grailed Plus is completely free to use.
-            </p>
-          </div>
-        </EditorialContainer>
+          <section className="border-y border-rule">
+            <EditorialContainer className="grid items-end gap-10 py-20 sm:py-24 lg:grid-cols-12 lg:py-32">
+              <div className="lg:col-span-8">
+                <p className="mb-6 text-xs font-semibold tracking-[0.2em] text-ink uppercase">
+                  Ready when you are
+                </p>
+                <h2 className="max-w-5xl text-[clamp(3rem,7.5vw,7.5rem)] leading-[0.88] font-black tracking-[-0.055em]">
+                  Make every listing tell you more.
+                </h2>
+              </div>
+              <div className="lg:col-span-4 lg:justify-self-end">
+                <InstallLink
+                  className="w-full min-[430px]:w-auto"
+                  isRedirecting={isRedirecting}
+                  onClick={handleInstallClick}
+                />
+                <p className="mt-4 max-w-sm text-sm leading-6 text-muted">
+                  Official Chrome Web Store install. No subscription or hidden
+                  payments required. Grailed Plus is completely free to use.
+                </p>
+              </div>
+            </EditorialContainer>
           </section>
 
           <EditorialContainer
             as="footer"
             className="flex min-h-8 flex-col gap-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between"
           >
-            <p className="editorial-muted">Grailed Plus for Chrome</p>
+            <p className="text-muted">Grailed Plus for Chrome</p>
             <Link
               href={PROJECT_ROUTES.home}
-              className="w-fit font-medium underline decoration-[rgb(var(--color-rule))] underline-offset-4 transition-colors hover:text-[rgb(var(--color-action-hover))]"
+              className="w-fit font-medium underline decoration-rule underline-offset-4 transition-colors hover:text-action-hover"
             >
               dextery.dev
             </Link>

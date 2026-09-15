@@ -32,9 +32,7 @@ type ProjectPreviewRendererProps = {
   compact: boolean;
 };
 
-type ProjectPreviewRenderer = (
-  props: ProjectPreviewRendererProps,
-) => ReactNode;
+type ProjectPreviewRenderer = (props: ProjectPreviewRendererProps) => ReactNode;
 
 const PROJECT_PREVIEW_RENDERERS: Record<ProjectId, ProjectPreviewRenderer> = {
   bur1alrites: () => (
@@ -42,6 +40,7 @@ const PROJECT_PREVIEW_RENDERERS: Record<ProjectId, ProjectPreviewRenderer> = {
       title="bur1alrites"
       previewSrc={PROJECT_ROUTES.bur1alritesLive}
       projectHref={PROJECT_ROUTES.bur1alritesLive}
+      mobilePreviewScale={0.75}
       showNavigation={false}
     />
   ),
@@ -53,7 +52,7 @@ const PROJECT_PREVIEW_RENDERERS: Record<ProjectId, ProjectPreviewRenderer> = {
       showControls={!compact}
     />
   ),
-  "nepobabiesruntheunderground": () => (
+  nepobabiesruntheunderground: () => (
     <HtmlProjectPreview
       title="nepobabiesruntheunderground"
       previewSrc={PROJECT_ROUTES.nepobabiesPreview}
@@ -66,6 +65,7 @@ const PROJECT_PREVIEW_RENDERERS: Record<ProjectId, ProjectPreviewRenderer> = {
       title="Elliot Mairet"
       previewSrc={PROJECT_ROUTES.elliotMairetLive}
       projectHref={PROJECT_ROUTES.elliotMairetLive}
+      mobilePreviewScale={0.75}
       showNavigation={false}
     />
   ),
@@ -80,7 +80,7 @@ export default function ProjectLivePreview({
   return (
     <div
       className={cn(
-        "bg-surface relative h-full min-h-0 w-full overflow-hidden",
+        "relative size-full min-h-0 overflow-hidden bg-surface",
         className,
       )}
     >
@@ -89,10 +89,7 @@ export default function ProjectLivePreview({
   );
 }
 
-function renderProjectPreview(
-  projectId: ProjectId,
-  compact: boolean,
-) {
+function renderProjectPreview(projectId: ProjectId, compact: boolean) {
   const renderer = PROJECT_PREVIEW_RENDERERS[projectId];
 
   return renderer?.({ compact });

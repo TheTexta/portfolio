@@ -11,7 +11,7 @@ export type HeaderDirectorySegment = {
 };
 
 const DIRECTORY_SEGMENT_CLASS =
-  "transition-opacity outline-none hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[rgb(var(--color-focus))] active:opacity-80";
+  "transition-opacity outline-none hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-focus active:opacity-80";
 
 function getPathDirectorySegments(pathname: string): HeaderDirectorySegment[] {
   const normalizedPathname = pathname.replace(/\/+$/, "");

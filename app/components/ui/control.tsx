@@ -10,11 +10,11 @@ import {
 import { cn } from "@/lib/cn";
 
 const controlBase = cva(
-  "border-rule bg-canvas text-ink hover:bg-surface inline-flex cursor-pointer appearance-none items-center justify-center border transition-[background-color,border-color,color,transform] duration-150 ease-[var(--ease-out-quint)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-focus))] disabled:pointer-events-none disabled:opacity-45",
+  "inline-flex cursor-pointer appearance-none items-center justify-center border border-rule bg-canvas text-ink transition-[background-color,border-color,color,transform] duration-150 ease-[var(--ease-out-quint)] outline-none hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45",
   {
     variants: {
       layout: {
-        icon: "cursor-pointer p-0 [line-height:1] [&_svg]:pointer-events-none [&_svg]:m-auto [&_svg]:block [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0",
+        icon: "cursor-pointer p-0 [line-height:1] [&_svg]:pointer-events-none [&_svg]:m-auto [&_svg]:block [&_svg]:size-4 [&_svg]:shrink-0",
         action: "gap-2 leading-none font-semibold tracking-[0.08em] uppercase",
       },
       size: {
@@ -31,9 +31,9 @@ const controlBase = cva(
       },
     },
     compoundVariants: [
-      { layout: "icon", size: "sm", class: "h-8 w-8" },
-      { layout: "icon", size: "md", class: "h-10 w-10" },
-      { layout: "icon", size: "lg", class: "h-11 w-11" },
+      { layout: "icon", size: "sm", class: "size-8" },
+      { layout: "icon", size: "md", class: "size-10" },
+      { layout: "icon", size: "lg", class: "size-11" },
       {
         layout: "action",
         size: "sm",

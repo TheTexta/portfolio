@@ -37,7 +37,7 @@ export default function HomePageContent() {
   );
 
   return (
-    <main className="editorial-page min-h-dvh overflow-x-clip">
+    <main className="min-h-dvh overflow-x-clip bg-canvas text-ink">
       <SiteHeader
         directory={
           focusedProjectId ? (
@@ -64,10 +64,11 @@ export default function HomePageContent() {
               Software + multimedia
             </p>
             <h1 className="-ml-[0.035em] text-[clamp(3.25rem,7vw,6.5rem)] leading-[0.84] font-semibold tracking-[-0.05em]">
-              Dexter Young.
+              Dexter Young
             </h1>
-            <p className="editorial-muted mt-4 max-w-3xl text-[clamp(1rem,1.6vw,1.25rem)] leading-7">
-              browser extensions, interactive image systems, and multimedia webworks
+            <p className="mt-4 max-w-3xl text-[clamp(1rem,1.6vw,1.25rem)] leading-7 text-muted">
+              multimedia webworks, browser extensions and interactive image
+              systems
             </p>
           </div>
         </EditorialContainer>
@@ -77,7 +78,7 @@ export default function HomePageContent() {
 
       <footer
         id="contact"
-        className="editorial-rule mt-8 scroll-mt-12 border-t sm:mt-12"
+        className="mt-8 scroll-mt-12 border-t border-rule sm:mt-12"
       >
         <EditorialContainer className="grid gap-6 py-8 sm:py-10 lg:grid-cols-12 lg:py-12">
           <div className="lg:col-span-8">
@@ -88,7 +89,7 @@ export default function HomePageContent() {
               Personal Information
             </h2>
           </div>
-          <ul className="editorial-rule divide-y divide-[rgb(var(--color-rule))] border-y lg:col-span-4">
+          <ul className="divide-y divide-rule border-y border-rule lg:col-span-4">
             {[
               ["GitHub", "https://github.com/TheTexta", "@TheTexta"],
               ["LinkedIn", "https://www.linkedin.com/in/dexter-y", "dexter-y"],
@@ -102,9 +103,7 @@ export default function HomePageContent() {
                   <span className="font-semibold tracking-[0.12em] uppercase">
                     {label}
                   </span>
-                  <span className="editorial-muted ml-auto truncate">
-                    {value}
-                  </span>
+                  <span className="ml-auto truncate text-muted">{value}</span>
                 </a>
               </li>
             ))}
@@ -117,7 +116,7 @@ export default function HomePageContent() {
                 <span className="font-semibold tracking-[0.12em] uppercase">
                   Resume
                 </span>
-                <span className="editorial-muted ml-auto truncate">
+                <span className="ml-auto truncate text-muted">
                   Download PDF
                 </span>
               </a>

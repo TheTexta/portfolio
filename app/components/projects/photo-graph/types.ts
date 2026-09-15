@@ -83,6 +83,7 @@ export type InspectMetadata = {
   sizeMb: number | null;
   downloadUrl: string | null;
   filename: string;
+  status: "loading" | "ready" | "error";
 };
 
 export function toPhotoGraphData(

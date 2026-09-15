@@ -57,17 +57,17 @@ export default function PhotoGraphAdminLoginPage() {
   };
 
   return (
-    <main className="editorial-page min-h-dvh">
+    <main className="min-h-dvh bg-canvas text-ink">
       <SiteHeader>
         <ThemeToggle />
       </SiteHeader>
       <div className="mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-xl items-center px-5 py-12 sm:px-8">
-        <EditorialPanel className="bg-canvas w-full p-5 sm:p-8">
-          <Eyebrow className="editorial-muted">Restricted tool</Eyebrow>
+        <EditorialPanel className="w-full bg-canvas p-5 sm:p-8">
+          <Eyebrow className="text-muted">Restricted tool</Eyebrow>
           <h1 className="mt-4 text-4xl leading-none font-bold tracking-[-0.04em]">
             Photo Graph Admin
           </h1>
-          <p className="editorial-muted mt-3 text-sm leading-6">
+          <p className="mt-3 text-sm leading-6 text-muted">
             Enter the admin password to access batch upload tools.
           </p>
 
@@ -85,7 +85,7 @@ export default function PhotoGraphAdminLoginPage() {
             />
 
             {error && (
-              <p className="border-danger text-danger border p-3 text-sm">
+              <p className="border border-danger p-3 text-sm text-danger">
                 {error}
               </p>
             )}
