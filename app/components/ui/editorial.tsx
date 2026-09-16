@@ -3,14 +3,18 @@ import Link, { type LinkProps } from "next/link";
 import {
   type AnchorHTMLAttributes,
   type ButtonHTMLAttributes,
-  type CSSProperties,
   type HTMLAttributes,
   type ReactNode,
 } from "react";
 
 import { cn } from "@/lib/cn";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
+import { AnimatedBorderContainer } from "@/app/components/ui/animated-border-container";
+import { AnimatedHorizontalRule } from "@/app/components/ui/animated-horizontal-rule";
+import { AnimatedEditorialRuleHeading } from "@/app/components/ui/animated-editorial-rule-heading";
 import HeaderDirectory from "@/app/components/ui/header-directory";
+
+export { AnimatedHorizontalRule } from "@/app/components/ui/animated-horizontal-rule";
 
 const actionStyles = cva(
   "inline-flex min-h-11 cursor-pointer appearance-none items-center justify-center gap-2 border border-ink px-4 py-2 text-center text-xs font-semibold tracking-[0.12em] uppercase no-underline transition-[background-color,color,border-color,opacity,transform] duration-150 ease-[var(--ease-out-quint)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink active:translate-y-px disabled:pointer-events-none disabled:opacity-45",
@@ -125,19 +129,9 @@ export function EditorialRuleHeading({
   height?: "contact" | "section";
 }) {
   return (
-    <div
-      className={cn(
-        "grid w-full grid-cols-[minmax(0,1fr)_fit-content(100%)_minmax(0,1fr)] items-center gap-3 px-5 sm:px-8 lg:px-12",
-        height === "section" ? "h-[4.5rem]" : "h-[4.15625rem]",
-        className,
-      )}
-    >
-      <span aria-hidden className="h-px bg-ink" />
-      <h2 className="font-display text-[length:var(--medium-text-size)] leading-[1.10075] font-semibold tracking-[-0.0963125rem]">
-        {children}
-      </h2>
-      <span aria-hidden className="h-px bg-ink" />
-    </div>
+    <AnimatedEditorialRuleHeading className={className} height={height}>
+      {children}
+    </AnimatedEditorialRuleHeading>
   );
 }
 
@@ -216,25 +210,14 @@ export function BorderContainer({
   ...props
 }: BorderContainerProps) {
   return (
-    <div
-      className={cn(
-        "grid h-full w-full grid-cols-[minmax(0,1fr)_var(--border-center-width)_minmax(0,1fr)] grid-rows-[minmax(0,1fr)_fit-content(100%)_minmax(0,1fr)]",
-        className,
-      )}
-      style={{
-        ...style,
-        "--border-center-width": centerWidth,
-      } as CSSProperties}
+    <AnimatedBorderContainer
+      className={className}
+      centerWidth={centerWidth}
+      style={style}
       {...props}
     >
-      <span aria-hidden className="border-r border-b border-ink" />
-      <span aria-hidden className="col-start-3 border-b border-l border-ink" />
-      <div className="col-start-2 row-start-2 min-w-0 outline-1 outline-solid outline-ink">
-        {children}
-      </div>
-      <span aria-hidden className="row-start-3 border-t border-r border-ink" />
-      <span aria-hidden className="col-start-3 row-start-3 border-t border-l border-ink" />
-    </div>
+      {children}
+    </AnimatedBorderContainer>
   );
 }
 
@@ -273,7 +256,7 @@ export function EditorialHeaderBar({
   return (
     <header
       className={cn(
-        "z-40 border-b border-ink bg-canvas",
+        "relative z-40 bg-canvas",
         sticky && "sticky sm:top-0",
         className,
       )}
@@ -290,6 +273,7 @@ export function EditorialHeaderBar({
           {children}
         </div>
       </nav>
+      <AnimatedHorizontalRule edge="bottom" />
     </header>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { motion, useInView, useReducedMotion } from "framer-motion";
 
 import ProjectBrowser from "@/app/components/projects/project-browser";
 import {
@@ -19,13 +20,33 @@ import HeaderDirectory, {
 import ThemeToggle from "@/app/components/ui/theme-toggle";
 
 function EditorialRule({ children }: { children: string }) {
+  const ruleRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ruleRef, { once: true, amount: 0.8 });
+  const shouldReduceMotion = useReducedMotion();
+  const lineScale = shouldReduceMotion || isInView ? 1 : 0;
+
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-5 sm:px-8 lg:px-12">
-      <span aria-hidden className="h-px bg-ink" />
+    <div
+      ref={ruleRef}
+      className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-5 sm:px-8 lg:px-12"
+    >
+      <motion.span
+        aria-hidden
+        className="h-px origin-right bg-ink"
+        initial={{ scaleX: shouldReduceMotion ? 1 : 0 }}
+        animate={{ scaleX: lineScale }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+      />
       <p className="text-center text-xs font-semibold tracking-[0.18em] uppercase sm:text-sm">
         {children}
       </p>
-      <span aria-hidden className="h-px bg-ink" />
+      <motion.span
+        aria-hidden
+        className="h-px origin-left bg-ink"
+        initial={{ scaleX: shouldReduceMotion ? 1 : 0 }}
+        animate={{ scaleX: lineScale }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+      />
     </div>
   );
 }
@@ -75,11 +96,11 @@ export default function HomePageContent() {
       <section className="py-30 sm:py-20 lg:py-24">
         <div className="space-y-2 sm:space-y-5">
           <EditorialRule>Software + multimedia</EditorialRule>
-          <div className="sm:hidden mx-auto max-w-200 pt-5 ">
+          <div className="mx-auto max-w-200 pt-5 sm:hidden">
             <img
               src="favicon.ico"
               alt=""
-              className="mx-auto justify-center dark:invert-0 invert-100 hue-rotate-180 dark:hue-rotate-0 object-center align-middle"
+              className="mx-auto justify-center object-center align-middle hue-rotate-180 invert-100 dark:hue-rotate-0 dark:invert-0"
             />
           </div>
           <div className="mx-auto h-60 w-[calc(100%-2.5rem)] max-w-200 py-12 sm:h-82.5 sm:w-[calc(100%-4rem)] lg:w-[calc(100%-6rem)]">
@@ -99,8 +120,8 @@ export default function HomePageContent() {
 
       <footer id="contact" className="scroll-mt-12 sm:py-20 lg:py-24">
         <EditorialRuleHeading>Contact</EditorialRuleHeading>
-        <div className="py-4 flex justify-center px-5 sm:pt-10 sm:px-8 lg:px-12">
-          <BorderContainer className="h-60 sm:h-68.25 w-full max-w-228.25">
+        <div className="flex justify-center px-5 py-4 sm:px-8 sm:pt-10 lg:px-12">
+          <BorderContainer className="h-60 w-full max-w-228.25 sm:h-68.25">
             <ul className="grid grid-rows-4">
               {[
                 ["GitHub", "https://github.com/TheTexta", "@TheTexta"],

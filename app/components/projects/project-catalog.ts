@@ -166,7 +166,7 @@ const projectCatalogDefinition = [
     posterSrc: "/projects/posters/elliot-mairet.png",
     posterAlt:
       "Black-and-white Elliot Mairet photograph of people gathered beneath fabric",
-    posterAspectRatio: 1.77,
+    posterAspectRatio: 1.625,
     previewKind: "html",
     role: "Design and development",
     date: "2026",

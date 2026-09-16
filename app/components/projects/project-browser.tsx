@@ -28,6 +28,7 @@ import {
   ActionLink,
   EditorialGutter,
   EditorialHeaderBar,
+  AnimatedHorizontalRule,
   EditorialRuleHeading,
   EDITORIAL_HEADER_CONTROL_CLASS,
   Eyebrow,
@@ -276,9 +277,11 @@ function MobileProjectTable({
                 <button
                   type="button"
                   className="relative block aspect-[var(--aspect)] w-full overflow-hidden border border-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
-                  style={{
-                    "--aspect": project.posterAspectRatio,
-                  } as React.CSSProperties}
+                  style={
+                    {
+                      "--aspect": project.posterAspectRatio,
+                    } as React.CSSProperties
+                  }
                   aria-label={`Open ${project.title} focus view`}
                   onClick={() => onFocusProject(project.id, cardKey)}
                 >
@@ -408,7 +411,8 @@ function FocusCarousel({
         />
       </div>
 
-      <EditorialGutter className="grid gap-4 border-y border-ink py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+      <EditorialGutter className="relative grid gap-4 border-b border-ink py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+        <AnimatedHorizontalRule edge="top" />
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <Eyebrow>
@@ -478,7 +482,7 @@ function FocusPreview({
     <div
       data-project-preview-id={project.id}
       className={cn(
-        "project-focus-preview relative [aspect-ratio:var(--project-preview-aspect)] min-w-0 overflow-hidden sm:border border-ink bg-surface transition-[transform,opacity] duration-[var(--motion-layout)] ease-[var(--ease-out-quint)] motion-reduce:duration-[0.01ms]",
+        "project-focus-preview relative [aspect-ratio:var(--project-preview-aspect)] min-w-0 overflow-hidden border-ink bg-surface transition-[transform,opacity] duration-[var(--motion-layout)] ease-[var(--ease-out-quint)] motion-reduce:duration-[0.01ms] sm:border",
         current
           ? "project-focus-preview--current z-1 w-full md:mx-auto md:w-[min(70vw,68rem)] max-md:portrait:aspect-[3/4] max-md:portrait:h-auto max-md:portrait:min-h-0 [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:[aspect-ratio:auto] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:h-[min(70svh,24rem)] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-64"
           : cn(
