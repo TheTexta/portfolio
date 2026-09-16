@@ -10,13 +10,31 @@
 - Supabase
 - Lucide
 
+## Project structure
+
+- `app/`: Next.js routes, page composition, and UI components.
+- `lib/`: reusable domain logic, integrations, and server utilities.
+- `scripts/`: operational checks, data migrations, and reproducible analysis.
+- `public/`: static project assets and Photo Graph snapshots.
+- `docs/`: compatibility audits, design notes, and Photo Graph research.
+
+Run `npm run check` before opening a pull request. It runs lint, TypeScript,
+and formatting checks in that order.
+
 ## Photo Graph Supabase setup
 
-- Apply schema: `npm run photo-graph:apply-schema`
-- Migrate Firebase data: `npm run photo-graph:migrate`
-- Rename photo graph bucket / normalize storage paths: `npm run photo-graph:rename-storage`
-- Backfill dimensions if needed: `npm run photo-graph:backfill-dimensions`
-- Check bucket, tables, and DB reachability: `npm run photo-graph:doctor`
+| Command                                   | Purpose                                                         | Mutates data |
+| ----------------------------------------- | --------------------------------------------------------------- | ------------ |
+| `npm run photo-graph:doctor`              | Check storage, tables, RPCs, image rendering, and reachability. | No           |
+| `npm run photo-graph:apply-schema`        | Apply the Photo Graph database schema.                          | Yes          |
+| `npm run photo-graph:migrate`             | Migrate legacy Firebase data.                                   | Yes          |
+| `npm run photo-graph:rename-storage`      | Rename the bucket and normalize storage paths.                  | Yes          |
+| `npm run photo-graph:backfill-dimensions` | Populate missing image dimensions.                              | Yes          |
+| `npm run photo-graph:extract-colors`      | Generate the versioned color-feature catalog.                   | Local files  |
+| `npm run photo-graph:backfill-colors`     | Generate and persist color features.                            | Yes          |
+
+Run mutating commands only after confirming the target Supabase project and
+database connection variables. `photo-graph:doctor` is the safe first check.
 
 Supabase-hosted Photo Graph images now generate transformed public URLs through `storage.from(bucket).getPublicUrl(path, { transform })`. Supabase Storage handles WebP negotiation automatically for transformed requests, so Photo Graph and admin previews no longer depend on Vercel/Next image transformations.
 
@@ -59,9 +77,8 @@ Troubleshooting:
 - If the sidecar returns `502`, `SUPABASE_KONG_UPSTREAM` or `SUPABASE_INTERNAL_NETWORK` is wrong.
 - Raw object URLs should still revalidate normally with `304 Not Modified`; only transformed render URLs are being cached at the edge.
 
-## TODO
+## Development notes
 
-- possibly do subtle (low saturation) gradient (masked) versions of all my favourite images that scroll in random paralaxes in the background
-- adding to the above I want to make a full design philosophy for myself.
-- auto recentering on zoomout of graph-view-image
-- explode effect on zooming in/out of photographview
+Open design and interaction ideas belong in the issue tracker or a dated design
+note under `docs/`, rather than an undated README TODO list. This keeps setup
+information stable and makes unfinished ideas easier to prioritize.

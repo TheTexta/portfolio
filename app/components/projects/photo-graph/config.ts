@@ -43,7 +43,7 @@ export const photoGraphControlsPositionClass =
 export const photoGraphControlTextClass =
   "m-0 p-0 text-sm md:text-xs font-medium tracking-[0.04em]";
 export const photoGraphShellClass = "bg-canvas text-ink";
-export const photoGraphPanelClass = "border-rule bg-canvas text-ink";
+export const photoGraphPanelClass = "border-ink bg-canvas text-ink";
 export const photoGraphModalClass = "bg-canvas text-ink";
 export const sliderClass = "range-sm h-2 border-none bg-surface accent-ink";
 export const PHOTO_GRAPH_INSPECT_TRANSITION_MS = 220;

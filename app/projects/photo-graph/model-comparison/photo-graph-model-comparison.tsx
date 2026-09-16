@@ -93,7 +93,7 @@ export default function PhotoGraphModelComparison({
       className="py-16 sm:pt-24 lg:max-w-448 lg:pb-24"
       aria-labelledby="colour-model-study-heading"
     >
-      <div className="grid gap-8 border-t border-rule py-8 lg:grid-cols-12 lg:gap-6">
+      <div className="grid gap-8 border-t border-ink py-8 lg:grid-cols-12 lg:gap-6">
         <p className="text-[0.6875rem] font-semibold tracking-[0.2em] uppercase opacity-55 lg:col-span-2">
           Model selection
         </p>
@@ -121,7 +121,7 @@ export default function PhotoGraphModelComparison({
         </div>
       </div>
 
-      <dl className="grid border-y border-rule sm:grid-cols-3">
+      <dl className="grid border-y border-ink sm:grid-cols-3">
         <div className="py-4 sm:pr-4">
           <dt className="text-[0.625rem] tracking-[0.16em] uppercase opacity-55">
             Reviewed set
@@ -130,13 +130,13 @@ export default function PhotoGraphModelComparison({
             {report.nodeCount} photographs / {queries.length} queries
           </dd>
         </div>
-        <div className="border-t border-rule py-4 sm:border-t-0 sm:border-l sm:px-4">
+        <div className="border-t border-ink py-4 sm:border-t-0 sm:border-l sm:px-4">
           <dt className="text-[0.625rem] tracking-[0.16em] uppercase opacity-55">
             Selected model
           </dt>
           <dd className="mt-1 text-sm font-semibold">Mean LAB / CIEDE2000</dd>
         </div>
-        <div className="border-t border-rule py-4 sm:border-t-0 sm:border-l sm:pl-4">
+        <div className="border-t border-ink py-4 sm:border-t-0 sm:border-l sm:pl-4">
           <dt className="text-[0.625rem] tracking-[0.16em] uppercase opacity-55">
             Reviewed top four
           </dt>
@@ -149,7 +149,7 @@ export default function PhotoGraphModelComparison({
       </dl>
 
       <section
-        className="border-b border-rule py-6"
+        className="border-b border-ink py-6"
         aria-labelledby="query-heading"
       >
         <div className="mb-4 flex items-baseline justify-between gap-4">
@@ -158,7 +158,7 @@ export default function PhotoGraphModelComparison({
           </h3>
           <p className="text-xs opacity-55">Human-reviewed affinity set</p>
         </div>
-        <div className="grid grid-cols-2 border-t border-l border-rule bg-canvas sm:grid-cols-4 xl:grid-cols-[repeat(auto-fit,minmax(15.5rem,1fr))]">
+        <div className="grid grid-cols-2 border-t border-l border-ink bg-canvas sm:grid-cols-4 xl:grid-cols-[repeat(auto-fit,minmax(15.5rem,1fr))]">
           {queries.map((query, index) => {
             const active = query.id === activeQuery?.id;
             return (
@@ -167,7 +167,7 @@ export default function PhotoGraphModelComparison({
                 type="button"
                 aria-pressed={active}
                 onClick={() => setActiveQueryId(query.id)}
-                className={`group grid min-h-20 cursor-pointer grid-cols-[4.5rem_1fr] items-stretch border-r border-b border-rule bg-canvas text-left transition-colors outline-none focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-focus ${
+                className={`group grid min-h-20 cursor-pointer grid-cols-[4.5rem_1fr] items-stretch border-r border-b border-ink bg-canvas text-left transition-colors outline-none focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-ink ${
                   active ? "bg-ink text-canvas" : "hover:bg-surface"
                 }`}
               >
@@ -211,7 +211,7 @@ export default function PhotoGraphModelComparison({
           </p>
         </div>
 
-        <div className="grid gap-px bg-rule sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-px bg-ink sm:grid-cols-2 xl:grid-cols-5">
           {report.models.map((model, modelIndex) => {
             const query = model.queries.find(
               (entry) => entry.id === activeQuery?.id,
@@ -251,7 +251,7 @@ export default function PhotoGraphModelComparison({
                   </span>
                 </div>
 
-                <ol className="mt-px grid grid-cols-2 gap-px bg-rule">
+                <ol className="mt-px grid grid-cols-2 gap-px bg-ink">
                   {query?.neighbors.map((neighbor, index) => (
                     <li key={neighbor.id} className="bg-canvas">
                       <figure className="relative aspect-square overflow-hidden bg-surface">
@@ -281,7 +281,7 @@ export default function PhotoGraphModelComparison({
                   ))}
                 </ol>
 
-                <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-rule pt-3 text-xs">
+                <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-ink pt-3 text-xs">
                   <div>
                     <dt className="text-[0.5625rem] tracking-[0.14em] uppercase opacity-50">
                       Relevant in top four
@@ -324,7 +324,7 @@ export default function PhotoGraphModelComparison({
       </section>
 
       <section
-        className="grid gap-4 border-t border-rule pt-5 text-xs leading-5 opacity-65 md:grid-cols-2"
+        className="grid gap-4 border-t border-ink pt-5 text-xs leading-5 opacity-65 md:grid-cols-2"
         aria-label="Benchmark notes"
       >
         <p>{report.judgmentScope}</p>
@@ -336,7 +336,7 @@ export default function PhotoGraphModelComparison({
       </section>
 
       <section
-        className="mt-12 border-t border-rule py-8 sm:mt-16 sm:py-12"
+        className="mt-12 border-t border-ink py-8 sm:mt-16 sm:py-12"
         aria-labelledby="project-readout-heading"
       >
         <div className="grid gap-8 lg:grid-cols-12 lg:gap-6">
@@ -362,8 +362,8 @@ export default function PhotoGraphModelComparison({
           </div>
         </div>
 
-        <ol className="mt-8 grid border-t border-l border-rule sm:mt-12 sm:grid-cols-3">
-          <li className="min-h-40 border-r border-b border-rule p-4">
+        <ol className="mt-8 grid border-t border-l border-ink sm:mt-12 sm:grid-cols-3">
+          <li className="min-h-40 border-r border-b border-ink p-4">
             <p className="text-[0.625rem] tracking-[0.16em] uppercase opacity-55">
               01 / Index
             </p>
@@ -374,7 +374,7 @@ export default function PhotoGraphModelComparison({
               the centre of the experience.
             </p>
           </li>
-          <li className="min-h-40 border-r border-b border-rule p-4">
+          <li className="min-h-40 border-r border-b border-ink p-4">
             <p className="text-[0.625rem] tracking-[0.16em] uppercase opacity-55">
               02 / Review
             </p>
@@ -385,7 +385,7 @@ export default function PhotoGraphModelComparison({
               instead of assuming numerical closeness matches the eye.
             </p>
           </li>
-          <li className="min-h-40 border-r border-b border-rule p-4">
+          <li className="min-h-40 border-r border-b border-ink p-4">
             <p className="text-[0.625rem] tracking-[0.16em] uppercase opacity-55">
               03 / Browse
             </p>

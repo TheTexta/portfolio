@@ -5,3 +5,5 @@ build/
 .tmp/
 test-results/
 public/projects/photo-graph/
+.vercel/
+coverage/

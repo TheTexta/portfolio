@@ -127,7 +127,7 @@ function InstallLink({ className, isRedirecting, onClick }: InstallLinkProps) {
       aria-busy={isRedirecting}
       aria-disabled={isRedirecting}
       className={cn(
-        "group inline-flex min-h-12 items-center justify-center gap-3 bg-ink px-6 py-3 text-center text-sm font-semibold tracking-[0.08em] text-canvas uppercase transition-[transform,background-color,color,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] outline-none hover:bg-action-hover hover:text-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus active:scale-[0.98] sm:px-8",
+        "group inline-flex min-h-12 items-center justify-center gap-3 bg-ink px-6 py-3 text-center text-sm font-semibold tracking-[0.08em] text-canvas uppercase transition-[transform,background-color,color,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] outline-none hover:bg-action-hover hover:text-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink active:scale-[0.98] sm:px-8",
         !isRedirecting && "hover:-translate-y-0.5",
         isRedirecting && "pointer-events-none opacity-65",
         className,
@@ -356,7 +356,7 @@ export default function GrailedPlusInstallPage({
           <ThemeToggle />
         </SiteHeader>
       ) : null}
-      <section className="product-landing-hero relative isolate border-b border-rule">
+      <section className="product-landing-hero relative isolate border-b border-ink">
         <EditorialContainer className="grid min-h-[calc(100svh-3rem)] items-start gap-12 py-16 sm:py-20 lg:grid-cols-12 lg:gap-10 lg:py-8">
           <div className="relative z-10 lg:col-span-5 lg:py-8">
             <p
@@ -395,7 +395,7 @@ export default function GrailedPlusInstallPage({
             <ul
               className={cn(
                 heroItemClass,
-                "mt-8 flex flex-wrap gap-x-5 gap-y-2 border-y border-rule py-4 text-xs font-semibold tracking-[0.14em] uppercase [animation-delay:210ms]",
+                "mt-8 flex flex-wrap gap-x-5 gap-y-2 border-y border-ink py-4 text-xs font-semibold tracking-[0.14em] uppercase [animation-delay:210ms]",
               )}
               aria-label="Grailed Plus features"
             >
@@ -423,7 +423,7 @@ export default function GrailedPlusInstallPage({
               />
               <a
                 href="#features"
-                className="group inline-flex min-h-12 items-center justify-center gap-3 border border-rule px-6 py-3 text-sm font-semibold tracking-[0.08em] text-ink uppercase transition-colors duration-200 outline-none hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                className="group inline-flex min-h-12 items-center justify-center gap-3 border border-ink px-6 py-3 text-sm font-semibold tracking-[0.08em] text-ink uppercase transition-colors duration-200 outline-none hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
                 Explore features
                 <ArrowDown
@@ -452,7 +452,7 @@ export default function GrailedPlusInstallPage({
 
           <div className="min-w-0 animate-[editorial-preview-enter_760ms_cubic-bezier(0.16,1,0.3,1)_260ms_both] lg:col-span-6 lg:col-start-7">
             <div className="flex flex-col gap-3">
-              {/*<div className="border-rule flex items-end justify-between gap-5 border-b pb-3">
+              {/*<div className="border-ink flex items-end justify-between gap-5 border-b pb-3">
               <p className="text-xs font-semibold tracking-[0.18em] uppercase">
                 Live product
               </p>
@@ -460,7 +460,7 @@ export default function GrailedPlusInstallPage({
                 Running the extension’s current UI source.
               </p>
             </div>*/}
-              <div className="overflow-hidden border border-rule bg-transparent">
+              <div className="overflow-hidden border border-ink bg-transparent">
                 <GrailedPlusLiveDemo
                   eager
                   currencyCode={demoCurrency}
@@ -506,7 +506,7 @@ export default function GrailedPlusInstallPage({
                   <article
                     key={feature.id}
                     id={`feature-${feature.id}`}
-                    className="grid snap-y snap-mandatory snap-start gap-10 border-t border-rule py-16 sm:py-20 lg:grid-cols-12 lg:gap-12 lg:py-28"
+                    className="grid snap-y snap-mandatory snap-start gap-10 border-t border-ink py-16 sm:py-20 lg:grid-cols-12 lg:gap-12 lg:py-28"
                   >
                     <div
                       className={cn(
@@ -539,7 +539,7 @@ export default function GrailedPlusInstallPage({
                         textOnLeft ? "lg:order-2" : "lg:order-1",
                       )}
                     >
-                      <div className="overflow-hidden border border-rule bg-transparent">
+                      <div className="overflow-hidden border border-ink bg-transparent">
                         <GrailedPlusLiveDemo
                           currencyCode={demoCurrency}
                           darkModeEnabled={demoDarkMode}
@@ -555,7 +555,7 @@ export default function GrailedPlusInstallPage({
             </EditorialContainer>
           </section>
 
-          <section className="border-y border-rule">
+          <section className="border-y border-ink">
             <EditorialContainer className="grid items-end gap-10 py-20 sm:py-24 lg:grid-cols-12 lg:py-32">
               <div className="lg:col-span-8">
                 <p className="mb-6 text-xs font-semibold tracking-[0.2em] text-ink uppercase">
@@ -586,7 +586,7 @@ export default function GrailedPlusInstallPage({
             <p className="text-muted">Grailed Plus for Chrome</p>
             <Link
               href={PROJECT_ROUTES.home}
-              className="w-fit font-medium underline decoration-rule underline-offset-4 transition-colors hover:text-action-hover"
+              className="decoration-rule w-fit font-medium underline underline-offset-4 transition-colors hover:text-action-hover"
             >
               dextery.dev
             </Link>

@@ -7,32 +7,37 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --canvas-rgb: 250 250 250;
+  --canvas-rgb: 255 255 255;
   --surface-rgb: 233 233 233;
-  --ink-rgb: 17 17 17;
+  --ink-rgb: 0 0 0;
   --muted-rgb: 101 101 101;
-  --rule-rgb: 27 27 27 / 0.18;
   --action-hover-rgb: 66 66 66;
-  --focus-rgb: 27 27 27;
   --danger-rgb: 185 28 28;
   --warning-rgb: 161 98 7;
   --success-rgb: 21 128 61;
+  --small-text-size: 14px;
+  --medium-text-size: 40px;
+  --large-text-size: 96px;
   --motion-fast: 140ms;
   --motion-state: 240ms;
   --motion-layout: 450ms;
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+@media (max-width: 639px) {
+  :root {
+    --small-text-size: 8px;
+    --medium-text-size: 24px;
+    --large-text-size: 36px;
+  }
+}
+
 html.dark {
   --canvas-rgb: 0 0 0;
   --surface-rgb: 38 38 38;
-  --ink-rgb: 245 245 245;
+  --ink-rgb: 235 235 235;
   --muted-rgb: 171 171 171;
-  --rule-rgb: 53 54 58;
   --action-hover-rgb: 194 194 194;
-  --focus-rgb: 245 245 241;
-  --danger-rgb: 248 113 113;
-  --warning-rgb: 252 211 77;
   --success-rgb: 74 222 128;
 }
 
@@ -41,9 +46,7 @@ html.dark {
   --color-surface: rgb(var(--surface-rgb));
   --color-ink: rgb(var(--ink-rgb));
   --color-muted: rgb(var(--muted-rgb));
-  --color-rule: rgb(var(--rule-rgb));
   --color-action-hover: rgb(var(--action-hover-rgb));
-  --color-focus: rgb(var(--focus-rgb));
   --color-danger: rgb(var(--danger-rgb));
   --color-warning: rgb(var(--warning-rgb));
   --color-success: rgb(var(--success-rgb));
@@ -68,7 +71,7 @@ html.dark {
     @apply underline;
   }
   a:focus-visible {
-    outline: 2px solid var(--color-focus);
+    outline: 2px solid var(--color-ink);
     outline-offset: 3px;
   }
   a:active {

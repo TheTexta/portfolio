@@ -1,27 +1,20 @@
 import { PROJECT_ROUTES } from "./project-routes";
 
-export type ProjectId =
-  | "bur1alrites"
-  | "grailed-plus"
-  | "photo-graph"
-  | "nepobabiesruntheunderground"
-  | "spotify-nodify"
-  | "elliotmairet";
-
 export type ProjectPreviewKind =
-  | "grailed-plus"
-  | "photo-graph"
-  | "html"
-  | "spotify";
+  "grailed-plus" | "photo-graph" | "html" | "spotify";
 
 export type ProjectTitleTreatment =
-  | "bur1alrites"
-  | "grailed"
-  | "photo-graph"
-  | "nepo"
-  | "elliot-mairet";
+  "bur1alrites" | "grailed" | "photo-graph" | "nepo" | "elliot-mairet";
 
-export type GrailedPlusFeature = "price-trend" | "custom-currency" | "dm" | null;
+export type GrailedPlusFeature =
+  "price-trend" | "custom-currency" | "dm" | null;
+
+export type ProjectId =
+  | "photo-graph"
+  | "elliotmairet"
+  | "bur1alrites"
+  | "grailed-plus"
+  | "nepobabiesruntheunderground";
 
 export type ProjectLink = {
   label: string;
@@ -51,10 +44,31 @@ export type ProjectDefinition = {
   links: readonly ProjectLink[];
 };
 
-export const projectCatalog: readonly ProjectDefinition[] = [
+const projectCatalogDefinition = [
+  {
+    id: "photo-graph",
+    number: "01",
+    title: "Photo Node-Gallery",
+    titleTreatment: "photo-graph",
+    eyebrow: "Photography / Data visualization",
+    summary:
+      "A force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review.",
+    technologies: ["Next.js", "D3", "Supabase"],
+    caseStudyHref: PROJECT_ROUTES.photoGraph,
+    experienceHref: PROJECT_ROUTES.photoGraphExperience,
+    posterSrc: "/projects/posters/photo-graph.webp",
+    posterAlt:
+      "Force-directed Photo Node-Gallery with connected photography nodes",
+    posterAspectRatio: 2.0,
+    previewKind: "photo-graph",
+    role: "TBD",
+    date: "TBD",
+    outcome: "TBD",
+    links: [],
+  },
   {
     id: "grailed-plus",
-    number: "01",
+    number: "04",
     title: "Grailed Plus",
     titleTreatment: "grailed",
     eyebrow: "Browser extension / Product layer",
@@ -84,29 +98,8 @@ export const projectCatalog: readonly ProjectDefinition[] = [
     ],
   },
   {
-    id: "photo-graph",
-    number: "02",
-    title: "Photo Node-Gallery",
-    titleTreatment: "photo-graph",
-    eyebrow: "Photography / Data visualization",
-    summary:
-      "A force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review.",
-    technologies: ["Next.js", "D3", "Supabase"],
-    caseStudyHref: PROJECT_ROUTES.photoGraph,
-    experienceHref: PROJECT_ROUTES.photoGraphExperience,
-    posterSrc: "/projects/posters/photo-graph.webp",
-    posterAlt:
-      "Force-directed Photo Node-Gallery with connected photography nodes",
-    posterAspectRatio: 2.00,
-    previewKind: "photo-graph",
-    role: "TBD",
-    date: "TBD",
-    outcome: "TBD",
-    links: [],
-  },
-  {
     id: "nepobabiesruntheunderground",
-    number: "03",
+    number: "05",
     title: "nepobabiesruntheunderground",
     titleTreatment: "nepo",
     eyebrow: "Experimental web / Multimedia",
@@ -136,7 +129,7 @@ export const projectCatalog: readonly ProjectDefinition[] = [
   },
   {
     id: "bur1alrites",
-    number: "04",
+    number: "03",
     title: "bur1alrites",
     titleTreatment: "bur1alrites",
     eyebrow: "Portfolio / Moving-image archive",
@@ -145,8 +138,7 @@ export const projectCatalog: readonly ProjectDefinition[] = [
     technologies: ["Next.js", "TypeScript", "Tailwind CSS"],
     liveHref: PROJECT_ROUTES.bur1alritesLive,
     posterSrc: "/projects/posters/bur1alrites.png",
-    posterAlt:
-      "BUR1ALRITES title over a grainy black moving-image scene",
+    posterAlt: "BUR1ALRITES title over a grainy black moving-image scene",
     posterAspectRatio: 1.5,
     previewKind: "html",
     role: "Design and development",
@@ -162,7 +154,7 @@ export const projectCatalog: readonly ProjectDefinition[] = [
   },
   {
     id: "elliotmairet",
-    number: "05",
+    number: "02",
     title: "Elliot Mairet",
     titleTreatment: "elliot-mairet",
     eyebrow: "Photography / Image archive",
@@ -171,7 +163,7 @@ export const projectCatalog: readonly ProjectDefinition[] = [
     technologies: ["Next.js", "React", "Supabase"],
     liveHref: PROJECT_ROUTES.elliotMairetLive,
     sourceHref: PROJECT_ROUTES.elliotMairetGithub,
-    posterSrc: "/projects/posters/elliot-mairet.jpg",
+    posterSrc: "/projects/posters/elliot-mairet.png",
     posterAlt:
       "Black-and-white Elliot Mairet photograph of people gathered beneath fabric",
     posterAspectRatio: 1.5,
@@ -187,7 +179,19 @@ export const projectCatalog: readonly ProjectDefinition[] = [
       },
     ],
   },
-] as const;
+] as const satisfies readonly ProjectDefinition[];
+
+const projectOrder: readonly string[] = [
+  "photo-graph",
+  "elliotmairet",
+  "bur1alrites",
+  "grailed-plus",
+  "nepobabiesruntheunderground",
+];
+
+export const projectCatalog = [...projectCatalogDefinition].sort(
+  (left, right) => projectOrder.indexOf(left.id) - projectOrder.indexOf(right.id),
+) as readonly ProjectDefinition[] & ReadonlyArray<{ id: ProjectId }>;
 
 export function getProject(projectId: ProjectId) {
   const project = projectCatalog.find(

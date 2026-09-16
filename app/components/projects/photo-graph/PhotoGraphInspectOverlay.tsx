@@ -224,7 +224,7 @@ export default function PhotoGraphInspectOverlay({
           requestClose();
         }
       }}
-      className={`m-auto h-[min(75dvh,48rem)] max-h-none w-[min(75dvw,68rem)] max-w-none overflow-hidden border border-rule p-0 transition-opacity duration-200 backdrop:bg-canvas/[0.78] motion-reduce:transition-none max-md:m-0 max-md:h-dvh max-md:w-dvw max-md:border-0! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:m-0 [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:h-dvh [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:w-dvw [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:border-0! ${photoGraphModalClass} ${
+      className={`m-auto h-[min(75dvh,48rem)] max-h-none w-[min(75dvw,68rem)] max-w-none overflow-hidden border border-ink p-0 transition-opacity duration-200 backdrop:bg-canvas/[0.78] motion-reduce:transition-none max-md:m-0 max-md:h-dvh max-md:w-dvw max-md:border-0! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:m-0 [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:h-dvh [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:w-dvw [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:border-0! ${photoGraphModalClass} ${
         inspectOverlayOpen ? "opacity-100" : "opacity-0"
       }`}
     >
@@ -232,7 +232,7 @@ export default function PhotoGraphInspectOverlay({
         className="flex size-full min-h-0 flex-col"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex min-h-8 w-full shrink-0 items-stretch justify-between border-b border-rule max-md:min-h-[calc(2.75rem+env(safe-area-inset-top))]! max-md:pt-[env(safe-area-inset-top)] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-[calc(2.75rem+env(safe-area-inset-top))]! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:pt-[env(safe-area-inset-top)]">
+        <div className="flex min-h-8 w-full shrink-0 items-stretch justify-between border-b border-ink max-md:min-h-[calc(2.75rem+env(safe-area-inset-top))]! max-md:pt-[env(safe-area-inset-top)] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-[calc(2.75rem+env(safe-area-inset-top))]! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:pt-[env(safe-area-inset-top)]">
           <ControlButton
             className="size-8 shrink-0 border-y-0 border-l-0 max-md:min-h-11! max-md:min-w-11! [@media(hover:none)]:min-h-11! [@media(hover:none)]:min-w-11! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-11! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-w-11! [@media(pointer:coarse)]:min-h-11! [@media(pointer:coarse)]:min-w-11!"
             size="sm"
@@ -282,7 +282,7 @@ export default function PhotoGraphInspectOverlay({
           />
         </div>
 
-        <div className="flex min-h-8 w-full shrink-0 justify-end border-t border-rule max-md:min-h-[calc(2.75rem+env(safe-area-inset-bottom))]! max-md:pb-[env(safe-area-inset-bottom)] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-[calc(2.75rem+env(safe-area-inset-bottom))]! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:pb-[env(safe-area-inset-bottom)]">
+        <div className="flex min-h-8 w-full shrink-0 justify-end border-t border-ink max-md:min-h-[calc(2.75rem+env(safe-area-inset-bottom))]! max-md:pb-[env(safe-area-inset-bottom)] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-[calc(2.75rem+env(safe-area-inset-bottom))]! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:pb-[env(safe-area-inset-bottom)]">
           <ControlAnchor
             href={inspectMetadata?.downloadUrl ?? undefined}
             download={inspectMetadata?.filename}

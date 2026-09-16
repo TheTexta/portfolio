@@ -19,7 +19,7 @@ type SpotifyNodifyProps = {
 const spotifyShell = cva(
   "relative size-full overflow-hidden bg-canvas text-ink transition-colors",
 );
-const spotifySurface = cva("border border-rule bg-surface", {
+const spotifySurface = cva("border border-ink bg-surface", {
   variants: {
     spacing: {
       base: "p-5 md:p-6",
@@ -36,10 +36,10 @@ const spotifySurface = cva("border border-rule bg-surface", {
   },
 });
 const spotifyTrackItem = cva(
-  "grid grid-cols-[auto,1fr] items-start gap-3 border-b border-rule p-3 last:border-b-0 md:px-4",
+  "grid grid-cols-[auto,1fr] items-start gap-3 border-b border-ink p-3 last:border-b-0 md:px-4",
 );
 const spotifyEmptyState = cva(
-  "mt-4 border border-dashed border-rule px-4 py-6 text-sm text-muted",
+  "mt-4 border border-dashed border-ink px-4 py-6 text-sm text-muted",
 );
 
 export default function SpotifyNodify({
@@ -107,10 +107,10 @@ export default function SpotifyNodify({
                       alt={`${getProfileName(session.profile)} avatar`}
                       width={112}
                       height={112}
-                      className="size-28 rounded-full border border-rule object-cover"
+                      className="size-28 rounded-full border border-ink object-cover"
                     />
                   ) : (
-                    <div className="flex size-28 items-center justify-center rounded-full border border-dashed border-rule text-3xl text-muted">
+                    <div className="flex size-28 items-center justify-center rounded-full border border-dashed border-ink text-3xl text-muted">
                       {getProfileInitials(session.profile)}
                     </div>
                   )}
@@ -153,7 +153,7 @@ export default function SpotifyNodify({
                 </div>
 
                 {visibleTracks.length > 0 ? (
-                  <ol className="mt-4 border-y border-rule">
+                  <ol className="mt-4 border-y border-ink">
                     {visibleTracks.map((track, index) => (
                       <li key={track.id} className={spotifyTrackItem()}>
                         <span className="pt-0.5 text-xs font-semibold tracking-[0.2em] uppercase opacity-50">

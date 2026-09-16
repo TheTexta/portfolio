@@ -3,6 +3,7 @@ import Link, { type LinkProps } from "next/link";
 import {
   type AnchorHTMLAttributes,
   type ButtonHTMLAttributes,
+  type CSSProperties,
   type HTMLAttributes,
   type ReactNode,
 } from "react";
@@ -12,15 +13,15 @@ import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import HeaderDirectory from "@/app/components/ui/header-directory";
 
 const actionStyles = cva(
-  "inline-flex min-h-11 cursor-pointer appearance-none items-center justify-center gap-2 border border-rule px-4 py-2 text-center text-xs font-semibold tracking-[0.12em] uppercase no-underline transition-[background-color,color,border-color,opacity,transform] duration-150 ease-[var(--ease-out-quint)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus active:translate-y-px disabled:pointer-events-none disabled:opacity-45",
+  "inline-flex min-h-11 cursor-pointer appearance-none items-center justify-center gap-2 border border-ink px-4 py-2 text-center text-xs font-semibold tracking-[0.12em] uppercase no-underline transition-[background-color,color,border-color,opacity,transform] duration-150 ease-[var(--ease-out-quint)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink active:translate-y-px disabled:pointer-events-none disabled:opacity-45",
   {
     variants: {
       variant: {
         primary:
           "border-ink bg-ink text-canvas hover:border-action-hover hover:bg-action-hover",
-        secondary: "border-rule bg-transparent text-ink hover:bg-surface",
+        secondary: "border-ink bg-transparent text-ink hover:bg-surface",
         quiet:
-          "border-transparent bg-transparent px-2 text-ink hover:border-rule hover:bg-surface",
+          "border-transparent bg-transparent px-2 text-ink hover:border-ink hover:bg-surface",
         danger:
           "border-danger bg-transparent text-danger hover:bg-danger hover:text-canvas",
       },
@@ -114,6 +115,32 @@ export function Eyebrow({
   );
 }
 
+export function EditorialRuleHeading({
+  children,
+  className,
+  height = "contact",
+}: {
+  children: ReactNode;
+  className?: string;
+  height?: "contact" | "section";
+}) {
+  return (
+    <div
+      className={cn(
+        "grid w-full grid-cols-[minmax(0,1fr)_fit-content(100%)_minmax(0,1fr)] items-center gap-3 px-5 sm:px-8 lg:px-12",
+        height === "section" ? "h-[4.5rem]" : "h-[4.15625rem]",
+        className,
+      )}
+    >
+      <span aria-hidden className="h-px bg-ink" />
+      <h2 className="font-display text-[length:var(--medium-text-size)] leading-[1.10075] font-semibold tracking-[-0.0963125rem]">
+        {children}
+      </h2>
+      <span aria-hidden className="h-px bg-ink" />
+    </div>
+  );
+}
+
 export function MediaFrame({
   className,
   ...props
@@ -121,7 +148,7 @@ export function MediaFrame({
   return (
     <div
       className={cn(
-        "relative min-w-0 overflow-hidden border border-rule bg-transparent",
+        "relative min-w-0 overflow-hidden border border-ink bg-transparent",
         className,
       )}
       {...props}
@@ -170,11 +197,44 @@ export function EditorialSection({
   return (
     <section
       className={cn(
-        "mx-auto w-full max-w-[96rem] border-t border-rule px-5 py-14 sm:px-8 sm:py-18 lg:px-12 lg:py-24",
+        "mx-auto w-full max-w-[96rem] border-t border-ink px-5 py-14 sm:px-8 sm:py-18 lg:px-12 lg:py-24",
         className,
       )}
       {...props}
     />
+  );
+}
+type BorderContainerProps = HTMLAttributes<HTMLDivElement> & {
+  centerWidth?: string;
+};
+
+export function BorderContainer({
+  className,
+  children,
+  centerWidth = "70%",
+  style,
+  ...props
+}: BorderContainerProps) {
+  return (
+    <div
+      className={cn(
+        "grid h-full w-full grid-cols-[minmax(0,1fr)_var(--border-center-width)_minmax(0,1fr)] grid-rows-[minmax(0,1fr)_fit-content(100%)_minmax(0,1fr)]",
+        className,
+      )}
+      style={{
+        ...style,
+        "--border-center-width": centerWidth,
+      } as CSSProperties}
+      {...props}
+    >
+      <span aria-hidden className="border-r border-b border-ink" />
+      <span aria-hidden className="col-start-3 border-b border-l border-ink" />
+      <div className="col-start-2 row-start-2 min-w-0 outline-1 outline-solid outline-ink">
+        {children}
+      </div>
+      <span aria-hidden className="row-start-3 border-t border-r border-ink" />
+      <span aria-hidden className="col-start-3 row-start-3 border-t border-l border-ink" />
+    </div>
   );
 }
 
@@ -184,14 +244,14 @@ export function EditorialPanel({
 }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("border border-rule bg-surface p-4 sm:p-5", className)}
+      className={cn("border border-ink bg-surface p-4 sm:p-5", className)}
       {...props}
     />
   );
 }
 
 export const EDITORIAL_HEADER_CONTROL_CLASS =
-  "flex min-h-7 items-center outline-none transition-opacity hover:underline hover:opacity-55 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-focus active:opacity-80";
+  "flex min-h-7 items-center outline-none transition-opacity hover:underline hover:opacity-55 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80";
 
 type EditorialHeaderBarProps = {
   leading: ReactNode;
@@ -213,8 +273,8 @@ export function EditorialHeaderBar({
   return (
     <header
       className={cn(
-        "z-40 border-b border-rule bg-canvas",
-        sticky && "sm:sticky sm:top-0",
+        "z-40 border-b border-ink bg-canvas",
+        sticky && "sticky sm:top-0",
         className,
       )}
     >
@@ -277,7 +337,7 @@ export function SiteHeader({
 }
 
 export const EDITORIAL_INPUT_CLASS =
-  "border-rule min-h-11 w-full border bg-canvas px-3 py-2 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
+  "border-ink min-h-11 w-full border bg-canvas px-3 py-2 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
 
 export const EDITORIAL_LABEL_CLASS =
   "text-xs font-semibold tracking-[0.12em] uppercase";

@@ -9,7 +9,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
   return (
     <label
       className={cn(
-        "inline-flex min-h-8 cursor-pointer items-center gap-2 text-ink uppercase has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-focus",
+        "inline-flex min-h-8 cursor-pointer items-center gap-2 text-ink uppercase has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-ink",
         className,
       )}
     >
@@ -24,7 +24,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
         aria-hidden="true"
         className={cn(
           "inline-flex h-[18px] w-[34px] shrink-0 items-center border p-0.5 transition-[border-color,background-color] duration-150",
-          darkMode ? "border-ink bg-ink" : "border-rule bg-transparent",
+          darkMode ? "border-ink bg-ink" : "border-ink bg-transparent",
         )}
       >
         <span

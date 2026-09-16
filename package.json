@@ -7,8 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
+    "check": "npm run lint && npm run typecheck && npm run format:check",
     "photo-graph:doctor": "tsx scripts/photo-graph/doctor.ts",
     "photo-graph:apply-schema": "tsx scripts/photo-graph/apply-supabase-schema.ts",
     "photo-graph:migrate": "tsx scripts/photo-graph/migrate-firebase-to-supabase.ts",
@@ -24,7 +26,6 @@
     "photo-graph:activate-ciede2000": "tsx scripts/photo-graph/activate-ciede2000.ts"
   },
   "dependencies": {
-    "@plausible-analytics/tracker": "^0.4.6",
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.100.1",
@@ -40,7 +41,6 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-force-graph-2d": "^1.29.1",
-    "recharts": "^3.8.0",
     "sharp": "^0.35.4",
     "supabase": "^2.84.4",
     "tailwind-merge": "^3.4.0",

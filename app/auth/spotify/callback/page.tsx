@@ -98,7 +98,7 @@ export default function SpotifyCallbackPage() {
         className="flex min-h-[calc(100dvh-3rem)] items-center py-12"
         aria-live="polite"
       >
-        <div className="w-full max-w-3xl border-y border-rule py-8 sm:py-12">
+        <div className="w-full max-w-3xl border-y border-ink py-8 sm:py-12">
           <Eyebrow className="text-muted">Authentication status</Eyebrow>
           <h1 className="mt-4 text-[clamp(2.5rem,7vw,6.5rem)] leading-[0.9] font-bold tracking-[-0.05em]">
             Connecting Spotify.

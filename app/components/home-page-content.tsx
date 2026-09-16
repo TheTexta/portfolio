@@ -8,11 +8,27 @@ import {
   type ProjectId,
 } from "@/app/components/projects/project-catalog";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
-import { EditorialContainer, SiteHeader } from "@/app/components/ui/editorial";
+import {
+  BorderContainer,
+  EditorialRuleHeading,
+  SiteHeader,
+} from "@/app/components/ui/editorial";
 import HeaderDirectory, {
   type HeaderDirectorySegment,
 } from "@/app/components/ui/header-directory";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
+
+function EditorialRule({ children }: { children: string }) {
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-5 sm:px-8 lg:px-12">
+      <span aria-hidden className="h-px bg-ink" />
+      <p className="text-center text-xs font-semibold tracking-[0.18em] uppercase sm:text-sm">
+        {children}
+      </p>
+      <span aria-hidden className="h-px bg-ink" />
+    </div>
+  );
+}
 
 function getFocusedDirectorySegments(
   projectId: ProjectId,
@@ -49,80 +65,75 @@ export default function HomePageContent() {
       >
         <a
           href="#contact"
-          className="hidden min-h-7 items-center transition-opacity hover:opacity-55 sm:flex"
+          className="flex min-h-7 items-center transition-opacity hover:opacity-55"
         >
           Contact
         </a>
-        <ThemeToggle />
+        <ThemeToggle className="hidden sm:inline-flex" />
       </SiteHeader>
 
-      <section>
-        <EditorialContainer className="grid py-10 sm:py-12 lg:grid-cols-12 lg:py-14">
-          <div className="lg:col-span-9">
-            <p className="mb-3 flex items-center gap-3 text-[0.6875rem] font-semibold tracking-[0.18em] uppercase">
-              <span aria-hidden className="h-px w-8 bg-current" />
-              Software + multimedia
-            </p>
-            <h1 className="-ml-[0.035em] text-[clamp(3.25rem,7vw,6.5rem)] leading-[0.84] font-semibold tracking-[-0.05em]">
-              Dexter Young
-            </h1>
-            <p className="mt-4 max-w-3xl text-[clamp(1rem,1.6vw,1.25rem)] leading-7 text-muted">
-              multimedia webworks, browser extensions and interactive image
-              systems
-            </p>
+      <section className="py-30 sm:py-20 lg:py-24">
+        <div className="space-y-2 sm:space-y-5">
+          <EditorialRule>Software + multimedia</EditorialRule>
+          <div className="sm:hidden mx-auto max-w-200 pt-5 ">
+            <img
+              src="favicon.ico"
+              alt=""
+              className="mx-auto justify-center bg-[radial-gradient(circle_at_center,black_0%,white_50%)] object-center align-middle"
+            />
           </div>
-        </EditorialContainer>
+          <div className="mx-auto h-60 w-[calc(100%-2.5rem)] max-w-200 py-12 sm:h-82.5 sm:w-[calc(100%-4rem)] lg:w-[calc(100%-6rem)]">
+            <BorderContainer>
+              <h1 className="px-4 py-5 text-center font-display text-4xl leading-[0.7705] font-semibold tracking-tighter whitespace-nowrap sm:text-6xl lg:text-8xl">
+                Dexter Young
+              </h1>
+            </BorderContainer>
+          </div>
+          <EditorialRule>
+            Multimedia webworks, browser extensions and interactive image
+            systems
+          </EditorialRule>
+        </div>
       </section>
-
       <ProjectBrowser onFocusChange={setFocusedProjectId} />
 
-      <footer
-        id="contact"
-        className="mt-8 scroll-mt-12 border-t border-rule sm:mt-12"
-      >
-        <EditorialContainer className="grid gap-6 py-8 sm:py-10 lg:grid-cols-12 lg:py-12">
-          <div className="lg:col-span-8">
-            <p className="text-[0.6875rem] font-semibold tracking-[0.18em] uppercase">
-              Get in touch
-            </p>
-            <h2 className="mt-3 text-[clamp(2rem,4vw,4.25rem)] leading-[0.9] font-semibold tracking-[-0.045em]">
-              Personal Information
-            </h2>
-          </div>
-          <ul className="divide-y divide-rule border-y border-rule lg:col-span-4">
-            {[
-              ["GitHub", "https://github.com/TheTexta", "@TheTexta"],
-              ["LinkedIn", "https://www.linkedin.com/in/dexter-y", "dexter-y"],
-              ["Email", "mailto:dextery777@gmail.com", "dextery777@gmail.com"],
-            ].map(([label, href, value]) => (
-              <li key={label}>
-                <a
-                  href={href}
-                  className="flex min-h-12 items-center justify-between py-2 text-sm transition-opacity hover:opacity-55"
+      <footer id="contact" className="scroll-mt-12 sm:py-20 lg:py-24">
+        <EditorialRuleHeading>Contact</EditorialRuleHeading>
+        <div className="py-4 flex justify-center px-5 sm:pt-10 sm:px-8 lg:px-12">
+          <BorderContainer className="h-60 sm:h-68.25 w-full max-w-228.25">
+            <ul className="grid grid-rows-4">
+              {[
+                ["GitHub", "https://github.com/TheTexta", "@TheTexta"],
+                [
+                  "LinkedIn",
+                  "https://www.linkedin.com/in/dexter-y",
+                  "dexter-y",
+                ],
+                [
+                  "Email",
+                  "mailto:dextery777@gmail.com",
+                  "dextery777@gmail.com",
+                ],
+                ["Resume", "/dexter-young-resume.pdf", "Download PDF"],
+              ].map(([label, href, value]) => (
+                <li
+                  key={label}
+                  className="flex min-h-12 items-center border-b border-ink last:border-b-0"
                 >
-                  <span className="font-semibold tracking-[0.12em] uppercase">
-                    {label}
-                  </span>
-                  <span className="ml-auto truncate text-muted">{value}</span>
-                </a>
-              </li>
-            ))}
-            <li>
-              <a
-                href="/Dexter%20Young%20Resume.pdf"
-                download="Dexter Young Resume.pdf"
-                className="flex min-h-12 items-center justify-between py-2 text-sm transition-opacity hover:opacity-55"
-              >
-                <span className="font-semibold tracking-[0.12em] uppercase">
-                  Resume
-                </span>
-                <span className="ml-auto truncate text-muted">
-                  Download PDF
-                </span>
-              </a>
-            </li>
-          </ul>
-        </EditorialContainer>
+                  <a
+                    href={href}
+                    className="flex w-full items-center justify-between px-3 py-2 text-xs transition-opacity hover:opacity-55 sm:text-sm"
+                  >
+                    <span className="font-semibold tracking-[0.12em] uppercase">
+                      {label}
+                    </span>
+                    <span className="ml-auto truncate text-muted">{value}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </BorderContainer>
+        </div>
       </footer>
     </main>
   );

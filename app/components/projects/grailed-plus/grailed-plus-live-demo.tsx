@@ -385,7 +385,7 @@ export default function GrailedPlusLiveDemo({
           )}
           style={{
             height: frameHeight,
-            width: "calc(100% + 1.25rem)",
+            width: "100%",
             colorScheme: "light",
             overflow: "hidden",
           }}

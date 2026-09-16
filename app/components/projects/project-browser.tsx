@@ -26,9 +26,9 @@ import { cn } from "@/lib/cn";
 
 import {
   ActionLink,
-  EditorialContainer,
   EditorialGutter,
   EditorialHeaderBar,
+  EditorialRuleHeading,
   EDITORIAL_HEADER_CONTROL_CLASS,
   Eyebrow,
 } from "@/app/components/ui/editorial";
@@ -91,7 +91,7 @@ function ProjectCard({
       data-project-id={project.id}
       data-card-key={cardKey}
       className={cn(
-        "project-mini-view group/card relative shrink-0 border-rule bg-surface focus-within:z-1 hover:z-1",
+        "project-mini-view group/card relative shrink-0 border-ink bg-surface focus-within:z-1 hover:z-1",
         layout === "rail"
           ? "h-[clamp(16rem,26vw,24rem)] w-[calc(clamp(16rem,26vw,24rem)*var(--aspect))]"
           : "aspect-[var(--aspect)] h-auto w-full",
@@ -102,11 +102,11 @@ function ProjectCard({
         } as React.CSSProperties
       }
     >
-      <div className="project-mini-view-media relative size-full origin-center overflow-hidden border border-rule">
+      <div className="project-mini-view-media relative size-full origin-center overflow-hidden border border-ink">
         <button
           type="button"
           data-project-trigger
-          className="group absolute inset-0 z-10 size-full cursor-pointer text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
+          className="group absolute inset-0 z-10 size-full cursor-pointer text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
           aria-label={`Show ${project.title} in focus view`}
           onClick={() => {
             if (isTouchPresentation() && !infoVisible) {
@@ -151,7 +151,7 @@ function ProjectCard({
             }
           }}
         >
-          <div className="flex min-h-12 items-center gap-3 border-t border-rule px-3">
+          <div className="flex min-h-12 items-center gap-3 border-t border-ink px-3">
             <ProjectTitle
               as="h3"
               className={cn(
@@ -168,7 +168,7 @@ function ProjectCard({
               {project.number}
             </p>
           </div>
-          <div className="border-t border-rule px-3 pt-2 pb-3">
+          <div className="border-t border-ink px-3 pt-2 pb-3">
             <p className="truncate text-[0.625rem] font-semibold tracking-[0.12em] text-muted uppercase">
               {project.technologies.join(" · ")}
             </p>
@@ -225,34 +225,74 @@ function ProjectRail({
   );
 }
 
-function MobileProjectStack({
+function MobileProjectTable({
   projects,
-  touchInfoKey,
-  onTouchInfoChange,
+  expandedKey,
+  onToggle,
   onFocusProject,
 }: {
   projects: readonly ProjectDefinition[];
-  touchInfoKey: string | null;
-  onTouchInfoChange: (cardKey: string | null) => void;
+  expandedKey: string | null;
+  onToggle: (cardKey: string | null) => void;
   onFocusProject: (projectId: ProjectId, cardKey: string) => void;
 }) {
   return (
-    <div
-      className="grid gap-2 px-2 pb-2 md:hidden [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:grid!"
-      aria-label="Projects"
-    >
+    <div className="border-y border-ink sm:hidden" aria-label="Projects">
       {projects.map((project, index) => {
-        const cardKey = `stack-${project.id}-${index}`;
+        const cardKey = `mobile-table-${project.id}-${index}`;
+        const expanded = expandedKey === cardKey;
+
         return (
-          <ProjectCard
-            key={cardKey}
-            project={project}
-            cardKey={cardKey}
-            layout="stack"
-            infoVisible={touchInfoKey === cardKey}
-            onTouchInfoChange={onTouchInfoChange}
-            onFocusProject={onFocusProject}
-          />
+          <div key={cardKey} className="border-b border-ink last:border-b-0">
+            <button
+              type="button"
+              className="flex min-h-12 w-full items-center justify-between gap-3 px-3 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
+              aria-expanded={expanded}
+              aria-controls={`${cardKey}-preview`}
+              onClick={() => onToggle(expanded ? null : cardKey)}
+            >
+              <ProjectTitle
+                as="span"
+                className="min-w-0 truncate"
+                context="mobile"
+                treatment={project.titleTreatment}
+              >
+                {project.title}
+              </ProjectTitle>
+              <span className="shrink-0 text-[0.625rem] font-semibold tracking-[0.16em] uppercase">
+                {project.number}
+              </span>
+            </button>
+
+            <div
+              id={`${cardKey}-preview`}
+              className={cn(
+                "max-h-0 overflow-hidden border-t-0 border-transparent transition-[max-height,border-top-color,border-top-width] duration-(--motion-state) ease-(--ease-out-quint) motion-reduce:transition-none",
+                expanded && "max-h-[80vw] border-t border-ink",
+              )}
+              style={{ maxHeight: expanded ? "80vw" : "0px" }}
+            >
+              <div className="min-h-0 overflow-hidden p-4">
+                <button
+                  type="button"
+                  className="relative block aspect-[var(--aspect)] w-full overflow-hidden border border-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
+                  style={{
+                    "--aspect": project.posterAspectRatio,
+                  } as React.CSSProperties}
+                  aria-label={`Open ${project.title} focus view`}
+                  onClick={() => onFocusProject(project.id, cardKey)}
+                >
+                  <Image
+                    src={project.posterSrc}
+                    alt={project.posterAlt}
+                    fill
+                    sizes="calc(100vw - 1rem)"
+                    className="object-cover"
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
         );
       })}
     </div>
@@ -299,7 +339,7 @@ function FocusCarousel({
 
   return (
     <section
-      className="project-focus-view outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
+      className="project-focus-view outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
       aria-label={`${current.title} focus view`}
       tabIndex={-1}
       onKeyDown={handleKeyDown}
@@ -368,7 +408,7 @@ function FocusCarousel({
         />
       </div>
 
-      <EditorialGutter className="grid gap-4 border-y border-rule py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+      <EditorialGutter className="grid gap-4 border-y border-ink py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <Eyebrow>
@@ -438,7 +478,7 @@ function FocusPreview({
     <div
       data-project-preview-id={project.id}
       className={cn(
-        "project-focus-preview relative [aspect-ratio:var(--project-preview-aspect)] min-w-0 overflow-hidden border border-rule bg-surface transition-[transform,opacity] duration-[var(--motion-layout)] ease-[var(--ease-out-quint)] motion-reduce:duration-[0.01ms]",
+        "project-focus-preview relative [aspect-ratio:var(--project-preview-aspect)] min-w-0 overflow-hidden sm:border border-ink bg-surface transition-[transform,opacity] duration-[var(--motion-layout)] ease-[var(--ease-out-quint)] motion-reduce:duration-[0.01ms]",
         current
           ? "project-focus-preview--current z-1 w-full md:mx-auto md:w-[min(70vw,68rem)] max-md:portrait:aspect-[3/4] max-md:portrait:h-auto max-md:portrait:min-h-0 [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:[aspect-ratio:auto] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:h-[min(70svh,24rem)] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-64"
           : cn(
@@ -480,7 +520,7 @@ function FocusPreview({
       {!current ? (
         <button
           type="button"
-          className="absolute inset-0 z-20 size-full cursor-pointer bg-transparent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
+          className="absolute inset-0 z-20 size-full cursor-pointer bg-transparent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
           onClick={onSelect}
           aria-label={`Center ${project.title}`}
         >
@@ -510,6 +550,9 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
     null,
   );
   const [touchInfoKey, setTouchInfoKey] = useState<string | null>(null);
+  const [mobileExpandedKey, setMobileExpandedKey] = useState<string | null>(
+    `mobile-table-${projectCatalog[0].id}-0`,
+  );
   const activeViewTransitionRef = useRef<ViewTransition | null>(null);
   const focusedProjectRef = useRef<ProjectId | null>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
@@ -681,6 +724,7 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
       lastFocusedProjectRef.current = projectId;
       lastFocusedCardKeyRef.current = cardKey;
       setTouchInfoKey(null);
+      setMobileExpandedKey(null);
       const sourceCard = galleryRef.current?.querySelector<HTMLElement>(
         `[data-card-key="${cardKey}"]`,
       );
@@ -745,7 +789,7 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
     <div
       ref={galleryRef}
       id="projects"
-      className={cn("scroll-mt-12", styles.root)}
+      className={cn("scroll-mt-12 pb-36 sm:py-15", styles.root)}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) {
           setTouchInfoKey(null);
@@ -753,15 +797,7 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
       }}
     >
       {!focusedProjectId ? (
-        <EditorialContainer className="max-w-384 pb-3">
-          <Eyebrow className="text-muted">
-            Interactive works / 01—
-            {projectCatalog.length.toString().padStart(2, "0")}
-          </Eyebrow>
-          <h2 className="mt-1.5 text-[clamp(1.75rem,3.5vw,3.25rem)] leading-none font-semibold tracking-[-0.035em]">
-            Projects
-          </h2>
-        </EditorialContainer>
+        <EditorialRuleHeading height="section">Projects</EditorialRuleHeading>
       ) : null}
 
       {focusedProjectId ? (
@@ -773,15 +809,15 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
         />
       ) : (
         <>
-          <MobileProjectStack
-            projects={projectCatalog}
-            touchInfoKey={touchInfoKey}
-            onTouchInfoChange={setTouchInfoKey}
-            onFocusProject={openFocus}
-          />
-          <div className="hidden md:block [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:hidden!">
-            {rails}
+          <div className="sm:hidden">
+            <MobileProjectTable
+              projects={projectCatalog}
+              expandedKey={mobileExpandedKey}
+              onToggle={setMobileExpandedKey}
+              onFocusProject={openFocus}
+            />
           </div>
+          <div className="hidden sm:block">{rails}</div>
         </>
       )}
     </div>
