@@ -45,13 +45,10 @@
       :global(.project-mini-view-info--visible)
     ) {
     pointer-events: none;
-    translate: 0 calc(100% - 3rem);
   }
 
   .root :global(.project-mini-view) :global(.project-mini-view-info--visible) {
     pointer-events: auto;
     opacity: 1;
-    translate: 0 0;
   }
 }
-

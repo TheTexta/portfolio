@@ -1,7 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { motion, useInView, useReducedMotion } from "framer-motion";
+import {
+  motion,
+  type Transition,
+  useInView,
+  useReducedMotion,
+} from "framer-motion";
 
 import ProjectBrowser from "@/app/components/projects/project-browser";
 import {
@@ -18,6 +23,15 @@ import HeaderDirectory, {
   type HeaderDirectorySegment,
 } from "@/app/components/ui/header-directory";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
+
+const HOME_MOTION_EASE = [0.22, 1, 0.36, 1] as const;
+const HOME_MOTION_DURATION = 0.65;
+
+function getHomeTransition(shouldReduceMotion: boolean | null): Transition {
+  return shouldReduceMotion
+    ? { duration: 0 }
+    : { duration: HOME_MOTION_DURATION, ease: HOME_MOTION_EASE };
+}
 
 function EditorialRule({ children }: { children: string }) {
   const ruleRef = useRef<HTMLDivElement>(null);
@@ -48,6 +62,66 @@ function EditorialRule({ children }: { children: string }) {
         transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
       />
     </div>
+  );
+}
+
+function MobileFavicon() {
+  const imageRef = useRef<HTMLImageElement>(null);
+  const isInView = useInView(imageRef, { once: true, amount: 0.8 });
+  const shouldReduceMotion = useReducedMotion();
+  const imageOpacity = shouldReduceMotion || isInView ? 1 : 0;
+
+  return (
+    <motion.img
+      ref={imageRef}
+      src="favicon.ico"
+      alt=""
+      className="mx-auto justify-center object-center align-middle hue-rotate-180 invert-100 dark:hue-rotate-0 dark:invert-0"
+      initial={{ opacity: shouldReduceMotion ? 1 : 0 }}
+      animate={{ opacity: imageOpacity }}
+      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+    />
+  );
+}
+
+function ContactLinkRow({
+  label,
+  href,
+  value,
+}: {
+  label: string;
+  href: string;
+  value: string;
+}) {
+  const shouldReduceMotion = useReducedMotion();
+  const contactTransition = getHomeTransition(shouldReduceMotion);
+
+  return (
+    <li className="flex min-h-12 items-center border-b border-ink last:border-b-0">
+      <motion.a
+        href={href}
+        className="group relative isolate flex h-full w-full items-center justify-between overflow-hidden px-3 text-xs transition-opacity sm:text-sm"
+        initial="rest"
+        whileHover="active"
+        whileFocus="active"
+      >
+        <motion.span
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 left-0 z-20 w-full origin-right bg-white mix-blend-difference"
+          variants={{
+            rest: { scaleX: 0 },
+            active: { scaleX: 1 },
+          }}
+          transition={contactTransition}
+        />
+        <span className="relative z-10 font-semibold tracking-[0.12em] uppercase">
+          {label}
+        </span>
+        <span className="relative z-10 ml-auto truncate text-muted">
+          {value}
+        </span>
+      </motion.a>
+    </li>
   );
 }
 
@@ -97,11 +171,7 @@ export default function HomePageContent() {
         <div className="space-y-2 sm:space-y-5">
           <EditorialRule>Software + multimedia</EditorialRule>
           <div className="mx-auto max-w-200 pt-5 sm:hidden">
-            <img
-              src="favicon.ico"
-              alt=""
-              className="mx-auto justify-center object-center align-middle hue-rotate-180 invert-100 dark:hue-rotate-0 dark:invert-0"
-            />
+            <MobileFavicon />
           </div>
           <div className="mx-auto h-60 w-[calc(100%-2.5rem)] max-w-200 py-12 sm:h-82.5 sm:w-[calc(100%-4rem)] lg:w-[calc(100%-6rem)]">
             <BorderContainer>
@@ -137,20 +207,12 @@ export default function HomePageContent() {
                 ],
                 ["Resume", "/public/dexter-young-resume.pdf", "Download PDF"],
               ].map(([label, href, value]) => (
-                <li
+                <ContactLinkRow
                   key={label}
-                  className="flex min-h-12 items-center border-b border-ink last:border-b-0"
-                >
-                  <a
-                    href={href}
-                    className="flex w-full items-center justify-between px-3 py-2 text-xs transition-opacity hover:opacity-55 sm:text-sm"
-                  >
-                    <span className="font-semibold tracking-[0.12em] uppercase">
-                      {label}
-                    </span>
-                    <span className="ml-auto truncate text-muted">{value}</span>
-                  </a>
-                </li>
+                  label={label}
+                  href={href}
+                  value={value}
+                />
               ))}
             </ul>
           </BorderContainer>

@@ -1,6 +1,12 @@
 "use client";
 
 import { ArrowLeft, ArrowRight, ArrowUpRight, X } from "lucide-react";
+import {
+  AnimatePresence,
+  motion,
+  type Transition,
+  useReducedMotion,
+} from "framer-motion";
 import Image from "next/image";
 import {
   type KeyboardEvent,
@@ -39,10 +45,18 @@ import styles from "@/app/components/projects/project-browser.module.css";
 const PROJECT_HASH_PREFIX = "#project-";
 const RAIL_ONE = projectCatalog;
 const VALID_PROJECT_IDS = new Set(projectCatalog.map((project) => project.id));
+const MOTION_EASE = [0.22, 1, 0.36, 1] as const;
+const MOTION_DURATION = 0.65;
 const FOCUS_HEADER_CONTROL_CLASS = cn(
   EDITORIAL_HEADER_CONTROL_CLASS,
   "project-focus-header-control cursor-pointer appearance-none justify-center gap-2 bg-transparent max-md:min-h-11! max-md:min-w-11",
 );
+
+function getStandardTransition(shouldReduceMotion: boolean | null): Transition {
+  return shouldReduceMotion
+    ? { duration: 0 }
+    : { duration: MOTION_DURATION, ease: MOTION_EASE };
+}
 
 type DocumentWithViewTransition = Document & {
   startViewTransition?: (callback: () => void) => ViewTransition;
@@ -87,8 +101,11 @@ function ProjectCard({
   onTouchInfoChange,
   onFocusProject,
 }: ProjectCardProps) {
+  const shouldReduceMotion = useReducedMotion();
+  const infoTransition = getStandardTransition(shouldReduceMotion);
+
   return (
-    <article
+    <motion.article
       data-project-id={project.id}
       data-card-key={cardKey}
       className={cn(
@@ -102,6 +119,9 @@ function ProjectCard({
           "--aspect": project.posterAspectRatio,
         } as React.CSSProperties
       }
+      initial="closed"
+      animate={infoVisible ? "open" : "closed"}
+      whileHover="open"
     >
       <div className="project-mini-view-media relative size-full origin-center overflow-hidden border border-ink">
         <button
@@ -131,14 +151,19 @@ function ProjectCard({
           />
         </button>
 
-        <div
+        <motion.div
           role="button"
           tabIndex={infoVisible ? 0 : -1}
           className={cn(
-            "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 max-h-full translate-y-[calc(100%_-_3rem)] cursor-pointer overflow-hidden bg-canvas text-ink opacity-100 transition-transform duration-[var(--motion-state)] ease-[var(--ease-out-quint)] group-focus-within/card:pointer-events-auto group-focus-within/card:translate-y-0 group-hover/card:pointer-events-auto group-hover/card:translate-y-0 motion-reduce:duration-[0.01ms]",
+            "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 max-h-full cursor-pointer overflow-hidden bg-canvas text-ink opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
             infoVisible &&
-              "project-mini-view-info--visible pointer-events-auto translate-y-0",
+              "project-mini-view-info--visible pointer-events-auto",
           )}
+          variants={{
+            closed: { y: "calc(100% - 3rem)" },
+            open: { y: 0 },
+          }}
+          transition={infoTransition}
           aria-label={`View ${project.title} details`}
           onClick={(event) => {
             event.stopPropagation();
@@ -179,9 +204,9 @@ function ProjectCard({
               </p>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
-    </article>
+    </motion.article>
   );
 }
 
@@ -237,14 +262,20 @@ function MobileProjectTable({
   onToggle: (cardKey: string | null) => void;
   onFocusProject: (projectId: ProjectId, cardKey: string) => void;
 }) {
+  const shouldReduceMotion = useReducedMotion();
+  const previewTransition = getStandardTransition(shouldReduceMotion);
+
   return (
-    <div className="border-y border-ink sm:hidden" aria-label="Projects">
+    <div className="relative sm:hidden" aria-label="Projects">
+      <AnimatedHorizontalRule edge="top" />
+      <AnimatedHorizontalRule edge="bottom" />
       {projects.map((project, index) => {
         const cardKey = `mobile-table-${project.id}-${index}`;
         const expanded = expandedKey === cardKey;
+        const hasNextProject = index < projects.length - 1;
 
         return (
-          <div key={cardKey} className="border-b border-ink last:border-b-0">
+          <div key={cardKey} className="relative">
             <button
               type="button"
               className="flex min-h-12 w-full items-center justify-between gap-3 px-3 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
@@ -265,36 +296,42 @@ function MobileProjectTable({
               </span>
             </button>
 
-            <div
-              id={`${cardKey}-preview`}
-              className={cn(
-                "max-h-0 overflow-hidden border-t-0 border-transparent transition-[max-height,border-top-color,border-top-width] duration-(--motion-state) ease-(--ease-out-quint) motion-reduce:transition-none",
-                expanded && "max-h-[80vw] border-t border-ink",
-              )}
-              style={{ maxHeight: expanded ? "80vw" : "0px" }}
-            >
-              <div className="min-h-0 overflow-hidden p-4">
-                <button
-                  type="button"
-                  className="relative block aspect-[var(--aspect)] w-full overflow-hidden border border-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
-                  style={
-                    {
-                      "--aspect": project.posterAspectRatio,
-                    } as React.CSSProperties
-                  }
-                  aria-label={`Open ${project.title} focus view`}
-                  onClick={() => onFocusProject(project.id, cardKey)}
+            <AnimatePresence initial={false}>
+              {expanded ? (
+                <motion.div
+                  id={`${cardKey}-preview`}
+                  className="relative overflow-hidden"
+                  initial={{ height: 0, opacity: shouldReduceMotion ? 1 : 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: shouldReduceMotion ? 1 : 0 }}
+                  transition={previewTransition}
                 >
-                  <Image
-                    src={project.posterSrc}
-                    alt={project.posterAlt}
-                    fill
-                    sizes="calc(100vw - 1rem)"
-                    className="object-cover"
-                  />
-                </button>
-              </div>
-            </div>
+                  <AnimatedHorizontalRule edge="top" />
+                  <div className="min-h-0 overflow-hidden p-4">
+                    <button
+                      type="button"
+                      className="relative block aspect-[var(--aspect)] w-full overflow-hidden border border-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
+                      style={
+                        {
+                          "--aspect": project.posterAspectRatio,
+                        } as React.CSSProperties
+                      }
+                      aria-label={`Open ${project.title} focus view`}
+                      onClick={() => onFocusProject(project.id, cardKey)}
+                    >
+                      <Image
+                        src={project.posterSrc}
+                        alt={project.posterAlt}
+                        fill
+                        sizes="calc(100vw - 1rem)"
+                        className="object-cover"
+                      />
+                    </button>
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+            {hasNextProject ? <AnimatedHorizontalRule edge="bottom" /> : null}
           </div>
         );
       })}
@@ -317,6 +354,8 @@ function FocusCarousel({
 }: FocusCarouselProps) {
   const { previous, next } = getAdjacentProjects(projectId);
   const current = getProject(projectId);
+  const shouldReduceMotion = useReducedMotion();
+  const detailTransition = getStandardTransition(shouldReduceMotion);
   const currentIndex = projectCatalog.findIndex(
     (project) => project.id === projectId,
   );
@@ -411,55 +450,69 @@ function FocusCarousel({
         />
       </div>
 
-      <EditorialGutter className="relative grid gap-4 border-b border-ink py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+      <EditorialGutter className="relative border-b border-ink py-4">
         <AnimatedHorizontalRule edge="top" />
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <Eyebrow>
-              {current.number} / {current.eyebrow}
-            </Eyebrow>
-            <span className="text-xs text-muted">
-              {current.technologies.join(" · ")}
-            </span>
-          </div>
-          <ProjectTitle
-            as="h2"
-            className="mt-2 wrap-anywhere"
-            context="focus"
-            treatment={current.titleTreatment}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={current.id}
+            className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end"
+            initial={{ opacity: shouldReduceMotion ? 1 : 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: shouldReduceMotion ? 1 : 0, y: -8 }}
+            transition={detailTransition}
           >
-            {current.title}
-          </ProjectTitle>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            {current.summary}
-          </p>
-        </div>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <Eyebrow>
+                  {current.number} / {current.eyebrow}
+                </Eyebrow>
+                <span className="text-xs text-muted">
+                  {current.technologies.join(" · ")}
+                </span>
+              </div>
+              <ProjectTitle
+                as="h2"
+                className="mt-2 wrap-anywhere"
+                context="focus"
+                treatment={current.titleTreatment}
+              >
+                {current.title}
+              </ProjectTitle>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+                {current.summary}
+              </p>
+            </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
-          {current.caseStudyHref ? (
-            <ActionLink
-              href={current.caseStudyHref}
-              variant="primary"
-              className="w-full sm:w-auto"
-            >
-              Open case study
-              <ArrowUpRight aria-hidden className="size-4" />
-            </ActionLink>
-          ) : null}
-          {current.sourceHref ? (
-            <ActionLink href={current.sourceHref} className="w-full sm:w-auto">
-              View source
-            </ActionLink>
-          ) : null}
-          {current.experienceHref || current.liveHref ? (
-            <ActionLink
-              href={current.experienceHref ?? current.liveHref ?? "/"}
-              className="w-full sm:w-auto"
-            >
-              Launch experience
-            </ActionLink>
-          ) : null}
-        </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
+              {current.caseStudyHref ? (
+                <ActionLink
+                  href={current.caseStudyHref}
+                  variant="primary"
+                  className="w-full sm:w-auto"
+                >
+                  Open case study
+                  <ArrowUpRight aria-hidden className="size-4" />
+                </ActionLink>
+              ) : null}
+              {current.sourceHref ? (
+                <ActionLink
+                  href={current.sourceHref}
+                  className="w-full sm:w-auto"
+                >
+                  View source
+                </ActionLink>
+              ) : null}
+              {current.experienceHref || current.liveHref ? (
+                <ActionLink
+                  href={current.experienceHref ?? current.liveHref ?? "/"}
+                  className="w-full sm:w-auto"
+                >
+                  Launch experience
+                </ActionLink>
+              ) : null}
+            </div>
+          </motion.div>
+        </AnimatePresence>
       </EditorialGutter>
     </section>
   );
@@ -477,30 +530,40 @@ function FocusPreview({
   onSelect?: () => void;
 }) {
   const current = position === "current";
+  const shouldReduceMotion = useReducedMotion();
+  const previewTransition = getStandardTransition(shouldReduceMotion);
 
   return (
-    <div
+    <motion.div
       data-project-preview-id={project.id}
       className={cn(
-        "project-focus-preview relative [aspect-ratio:var(--project-preview-aspect)] min-w-0 overflow-hidden border-ink bg-surface transition-[transform,opacity] duration-[var(--motion-layout)] ease-[var(--ease-out-quint)] motion-reduce:duration-[0.01ms] sm:border",
+        "project-focus-preview relative [aspect-ratio:var(--project-preview-aspect)] min-w-0 overflow-hidden border-ink bg-surface sm:border",
         current
           ? "project-focus-preview--current z-1 w-full md:mx-auto md:w-[min(70vw,68rem)] max-md:portrait:aspect-[3/4] max-md:portrait:h-auto max-md:portrait:min-h-0 [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:[aspect-ratio:auto] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:h-[min(70svh,24rem)] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-64"
           : cn(
-              "project-focus-preview--side absolute top-1/2 hidden w-[44vw] opacity-40 focus-within:opacity-70 hover:opacity-70 md:block",
+              "project-focus-preview--side absolute top-1/2 hidden w-[44vw] md:block",
               position === "previous"
                 ? "project-focus-preview--previous left-0"
                 : "project-focus-preview--next right-0",
             ),
       )}
+      initial={false}
+      animate={{
+        opacity: current ? 1 : 0.4,
+        x:
+          position === "previous"
+            ? "-66.666%"
+            : position === "next"
+              ? "66.666%"
+              : "0%",
+        y: current ? "0%" : "-50%",
+      }}
+      whileHover={current ? undefined : { opacity: 0.7 }}
+      whileFocus={current ? undefined : { opacity: 0.7 }}
+      transition={previewTransition}
       style={
         {
           "--project-preview-aspect": project.posterAspectRatio,
-          translate:
-            position === "previous"
-              ? "-66.666% -50%"
-              : position === "next"
-                ? "66.666% -50%"
-                : undefined,
           viewTransitionName:
             transitionProjectId === project.id
               ? `project-poster-${project.id}`
@@ -531,7 +594,7 @@ function FocusPreview({
           <span className="sr-only">Center {project.title}</span>
         </button>
       ) : null}
-    </div>
+    </motion.div>
   );
 }
 
