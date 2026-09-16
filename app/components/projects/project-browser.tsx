@@ -47,15 +47,17 @@ const RAIL_ONE = projectCatalog;
 const VALID_PROJECT_IDS = new Set(projectCatalog.map((project) => project.id));
 const MOTION_EASE = [0.22, 1, 0.36, 1] as const;
 const MOTION_DURATION = 0.65;
+const HOVER_MOTION_DURATION = 0.28;
 const FOCUS_HEADER_CONTROL_CLASS = cn(
   EDITORIAL_HEADER_CONTROL_CLASS,
   "project-focus-header-control cursor-pointer appearance-none justify-center gap-2 bg-transparent max-md:min-h-11! max-md:min-w-11",
 );
 
-function getStandardTransition(shouldReduceMotion: boolean | null): Transition {
-  return shouldReduceMotion
-    ? { duration: 0 }
-    : { duration: MOTION_DURATION, ease: MOTION_EASE };
+function getStandardTransition(
+  shouldReduceMotion: boolean | null,
+  duration = MOTION_DURATION,
+): Transition {
+  return shouldReduceMotion ? { duration: 0 } : { duration, ease: MOTION_EASE };
 }
 
 type DocumentWithViewTransition = Document & {
@@ -102,7 +104,10 @@ function ProjectCard({
   onFocusProject,
 }: ProjectCardProps) {
   const shouldReduceMotion = useReducedMotion();
-  const infoTransition = getStandardTransition(shouldReduceMotion);
+  const infoTransition = getStandardTransition(
+    shouldReduceMotion,
+    HOVER_MOTION_DURATION,
+  );
 
   return (
     <motion.article
@@ -403,7 +408,7 @@ function FocusCarousel({
       >
         <button
           type="button"
-          className={FOCUS_HEADER_CONTROL_CLASS}
+          className={cn(FOCUS_HEADER_CONTROL_CLASS, "sm:hidden")}
           onClick={selectPrevious}
           aria-label={`Show ${previous.title}`}
         >
@@ -412,7 +417,7 @@ function FocusCarousel({
         </button>
         <button
           type="button"
-          className={FOCUS_HEADER_CONTROL_CLASS}
+          className={cn(FOCUS_HEADER_CONTROL_CLASS, "sm:hidden")}
           onClick={selectNext}
           aria-label={`Show ${next.title}`}
         >

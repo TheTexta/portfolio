@@ -107,14 +107,14 @@ function ContactLinkRow({
       >
         <motion.span
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 z-20 w-full origin-right bg-white mix-blend-difference"
+          className="pointer-events-none absolute inset-y-0 left-0 z-20 w-full origin-left bg-white mix-blend-difference"
           variants={{
             rest: { scaleX: 0 },
             active: { scaleX: 1 },
           }}
           transition={contactTransition}
         />
-        <span className="relative z-10 font-semibold tracking-[0.12em] uppercase">
+        <span className="relative z-10 font-semibold tracking-[0.12em] text-muted uppercase">
           {label}
         </span>
         <span className="relative z-10 ml-auto truncate text-muted">
@@ -173,9 +173,9 @@ export default function HomePageContent() {
           <div className="mx-auto max-w-200 pt-5 sm:hidden">
             <MobileFavicon />
           </div>
-          <div className="mx-auto h-60 w-[calc(100%-2.5rem)] max-w-200 py-12 sm:h-82.5 sm:w-[calc(100%-4rem)] lg:w-[calc(100%-6rem)]">
+          <div className="mx-auto h-60 w-[calc(100%-2.5rem)] max-w-200 lg:max-w-225 py-12 sm:h-82.5 sm:w-[calc(100%-4rem)] lg:w-[calc(100%-6rem)]">
             <BorderContainer>
-              <h1 className="px-4 py-5 text-center font-display text-4xl leading-[0.7705] font-semibold tracking-tighter whitespace-nowrap sm:text-6xl lg:text-8xl">
+              <h1 className="px-4 py-5 lg:py-8 text-center font-display text-4xl leading-[0.7705] font-semibold tracking-tighter whitespace-nowrap sm:text-6xl lg:text-8xl object-center">
                 Dexter Young
               </h1>
             </BorderContainer>
