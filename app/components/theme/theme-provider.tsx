@@ -10,6 +10,7 @@ import {
 } from "react";
 import {
   THEME_MEDIA_QUERY,
+  THEME_MOBILE_QUERY,
   THEME_STORAGE_KEY,
   type ThemePreference,
 } from "@/lib/theme";
@@ -69,39 +70,32 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(THEME_MEDIA_QUERY);
+    const mobileQuery = window.matchMedia(THEME_MOBILE_QUERY);
 
-    const syncTheme = (nextPreference: ThemePreference) => {
-      const nextDarkMode = resolveDarkMode(nextPreference);
+    const syncTheme = () => {
+      const nextDarkMode = mobileQuery.matches
+        ? mediaQuery.matches
+        : resolveDarkMode(preference);
       applyDocumentTheme(nextDarkMode);
       setThemeState((current) =>
-        current.darkMode === nextDarkMode &&
-        current.preference === nextPreference
+        current.darkMode === nextDarkMode
           ? current
           : {
               darkMode: nextDarkMode,
-              preference: nextPreference,
+              preference: current.preference,
             },
       );
     };
 
-    syncTheme(preference);
+    syncTheme();
 
-    const handleChange = (event: MediaQueryListEvent) => {
-      if (preference !== "system") {
-        return;
-      }
+    mediaQuery.addEventListener("change", syncTheme);
+    mobileQuery.addEventListener("change", syncTheme);
 
-      applyDocumentTheme(event.matches);
-      setThemeState((current) =>
-        current.preference === "system"
-          ? { ...current, darkMode: event.matches }
-          : current,
-      );
+    return () => {
+      mediaQuery.removeEventListener("change", syncTheme);
+      mobileQuery.removeEventListener("change", syncTheme);
     };
-
-    mediaQuery.addEventListener("change", handleChange);
-
-    return () => mediaQuery.removeEventListener("change", handleChange);
   }, [preference]);
 
   useEffect(() => {
@@ -121,6 +115,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     () => ({
       darkMode,
       toggleTheme: () => {
+        if (window.matchMedia(THEME_MOBILE_QUERY).matches) {
+          applyDocumentTheme(window.matchMedia(THEME_MEDIA_QUERY).matches);
+          return;
+        }
+
         const nextDarkMode = !darkMode;
         applyDocumentTheme(nextDarkMode);
         setThemeState({

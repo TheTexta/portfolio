@@ -114,7 +114,7 @@ export default function HomePageContent() {
                   "mailto:dextery777@gmail.com",
                   "dextery777@gmail.com",
                 ],
-                ["Resume", "/dexter-young-resume.pdf", "Download PDF"],
+                ["Resume", "/public/dexter-young-resume.pdf", "Download PDF"],
               ].map(([label, href, value]) => (
                 <li
                   key={label}
