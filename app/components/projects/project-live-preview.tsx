@@ -69,7 +69,6 @@ const PROJECT_PREVIEW_RENDERERS: Record<ProjectId, ProjectPreviewRenderer> = {
       showNavigation={false}
     />
   ),
-  "spotify-nodify": () => null,
 };
 
 export default function ProjectLivePreview({

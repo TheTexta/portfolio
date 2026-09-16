@@ -79,7 +79,7 @@ export default function HomePageContent() {
             <img
               src="favicon.ico"
               alt=""
-              className="mx-auto justify-center bg-[radial-gradient(circle_at_center,black_0%,white_50%)] object-center align-middle"
+              className="mx-auto justify-center dark:bg-none bg-[radial-gradient(circle_at_center,black_0%,white_50%)] object-center align-middle"
             />
           </div>
           <div className="mx-auto h-60 w-[calc(100%-2.5rem)] max-w-200 py-12 sm:h-82.5 sm:w-[calc(100%-4rem)] lg:w-[calc(100%-6rem)]">
