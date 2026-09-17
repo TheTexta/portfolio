@@ -114,10 +114,10 @@ function ContactLinkRow({
           }}
           transition={contactTransition}
         />
-        <span className="relative z-10 font-semibold tracking-[0.12em] text-muted uppercase">
+        <span className="relative z-10 tracking-[0.18em] text-xs sm:text-sm uppercase font-semibold">
           {label}
         </span>
-        <span className="relative z-10 ml-auto truncate text-muted">
+        <span className="relative z-10 ml-auto truncate text-xs sm:text-sm">
           {value}
         </span>
       </motion.a>
@@ -205,7 +205,7 @@ export default function HomePageContent() {
                   "mailto:dextery777@gmail.com",
                   "dextery777@gmail.com",
                 ],
-                ["Resume", "/public/dexter-young-resume.pdf", "Download PDF"],
+                ["Resume", "/dexter-young-resume.pdf", "Download PDF"],
               ].map(([label, href, value]) => (
                 <ContactLinkRow
                   key={label}

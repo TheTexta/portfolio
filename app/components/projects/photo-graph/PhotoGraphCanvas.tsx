@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { animate, useMotionValue } from "framer-motion";
 import { usePathname } from "next/navigation";
 
 import {
@@ -28,10 +29,9 @@ import {
   DEFAULT_GRAPH_CONTROLS,
   GRAPH_CONFIG,
   PHOTO_GRAPH_ALPHA_DECAY,
-  PHOTO_GRAPH_CONNECTION_REVEAL_TICKS,
-  PHOTO_GRAPH_VISIBLE_SETTLE_TICKS,
   PHOTO_GRAPH_INSPECT_PREVIEW_QUALITY,
   PHOTO_GRAPH_INSPECT_PREVIEW_WIDTH,
+  PHOTO_GRAPH_VISIBLE_SETTLE_TICKS,
   photoGraphShellClass,
 } from "./config";
 import type {
@@ -62,10 +62,6 @@ type ConnectionIntroAnchor = {
   pinnedFx: number;
   pinnedFy: number;
 };
-
-function easeOutQuart(progress: number) {
-  return 1 - Math.pow(1 - progress, 4);
-}
 
 function fitGraphToWeightedCenter(
   graph: PhotoGraphInstance,
@@ -175,9 +171,12 @@ export default function PhotoGraphCanvas({
   const connectionIntroStartedRef = useRef(false);
   const connectionIntroRunningRef = useRef(false);
   const connectionIntroAnchorRef = useRef<ConnectionIntroAnchor | null>(null);
-  const visibleSettleTickCountRef = useRef(0);
   const connectionRevealProgressRef = useRef(0);
+  const connectionRevealAnimationRef = useRef<ReturnType<
+    typeof animate
+  > | null>(null);
   const fitToCanvasAppliedRef = useRef(false);
+  const connectionRevealProgress = useMotionValue(0);
 
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [graphMounted, setGraphMounted] = useState(false);
@@ -268,8 +267,8 @@ export default function PhotoGraphCanvas({
       releaseConnectionIntroAnchor();
       preparedGraphDataRef.current = graphData;
       connectionIntroStartedRef.current = false;
-      visibleSettleTickCountRef.current = 0;
-      connectionRevealProgressRef.current = reducedMotionRef.current ? 1 : 0;
+      connectionRevealAnimationRef.current?.stop();
+      connectionRevealProgress.set(reducedMotionRef.current ? 1 : 0);
       let cancelled = false;
       queueMicrotask(() => {
         if (!cancelled) {
@@ -289,9 +288,22 @@ export default function PhotoGraphCanvas({
     configureRuntimeForces,
     graphData,
     graphMounted,
+    connectionRevealProgress,
     releaseConnectionIntroAnchor,
     reinitializeCollisionForce,
   ]);
+
+  useEffect(() => {
+    const unsubscribe = connectionRevealProgress.on("change", (value) => {
+      connectionRevealProgressRef.current = value;
+      fgRef.current?.resumeAnimation();
+    });
+
+    return () => {
+      unsubscribe();
+      connectionRevealAnimationRef.current?.stop();
+    };
+  }, [connectionRevealProgress]);
 
   const handleNodeMutation = useCallback(
     (resortNodes = false) => {
@@ -415,26 +427,12 @@ export default function PhotoGraphCanvas({
   }, []);
 
   const handleEngineTick = useCallback(() => {
-    if (
-      reducedMotionRef.current ||
-      !connectionIntroRunningRef.current ||
-      visibleSettleTickCountRef.current >= PHOTO_GRAPH_CONNECTION_REVEAL_TICKS
-    ) {
+    if (!connectionIntroRunningRef.current) {
       return;
     }
 
-    visibleSettleTickCountRef.current += 1;
-    connectionRevealProgressRef.current = easeOutQuart(
-      visibleSettleTickCountRef.current / PHOTO_GRAPH_CONNECTION_REVEAL_TICKS,
-    );
-
-    if (
-      visibleSettleTickCountRef.current === PHOTO_GRAPH_CONNECTION_REVEAL_TICKS
-    ) {
-      releaseConnectionIntroAnchor();
-      connectionIntroRunningRef.current = false;
-    }
-  }, [releaseConnectionIntroAnchor]);
+    fgRef.current?.resumeAnimation();
+  }, []);
 
   const handleRenderFramePre = useCallback(() => {
     handleGraphReady();
@@ -511,6 +509,20 @@ export default function PhotoGraphCanvas({
     anchorNode.fy = pinnedFy;
     connectionIntroStartedRef.current = true;
     connectionIntroRunningRef.current = true;
+    connectionRevealAnimationRef.current?.stop();
+    connectionRevealProgress.set(0);
+    connectionRevealAnimationRef.current = animate(
+      connectionRevealProgress,
+      1,
+      {
+        duration: 1.3,
+        ease: [0.22, 1, 0.36, 1],
+      },
+    );
+    connectionRevealAnimationRef.current.then(() => {
+      releaseConnectionIntroAnchor();
+      connectionIntroRunningRef.current = false;
+    });
     graph.d3ReheatSimulation();
   }, [
     dimensions.height,
@@ -519,6 +531,8 @@ export default function PhotoGraphCanvas({
     handleGraphReady,
     preparedGraphData.links.length,
     preparedGraphData.nodes,
+    releaseConnectionIntroAnchor,
+    connectionRevealProgress,
   ]);
 
   return (
