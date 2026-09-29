@@ -28,6 +28,7 @@ import {
 } from "@/app/components/projects/project-catalog";
 import ProjectLivePreview from "@/app/components/projects/project-live-preview";
 import ProjectTitle from "@/app/components/projects/project-title";
+import { useElementSize } from "@/app/hooks/use-element-size";
 import { cn } from "@/lib/cn";
 
 import {
@@ -48,6 +49,7 @@ const VALID_PROJECT_IDS = new Set(projectCatalog.map((project) => project.id));
 const MOTION_EASE = [0.22, 1, 0.36, 1] as const;
 const MOTION_DURATION = 0.65;
 const HOVER_MOTION_DURATION = 0.28;
+const SIDE_PREVIEW_VIEWPORT_WIDTH = 1024;
 const FOCUS_HEADER_CONTROL_CLASS = cn(
   EDITORIAL_HEADER_CONTROL_CLASS,
   "project-focus-header-control cursor-pointer appearance-none justify-center gap-2 bg-transparent max-md:min-h-11! max-md:min-w-11",
@@ -436,23 +438,32 @@ function FocusCarousel({
       </EditorialHeaderBar>
 
       <div className="project-focus-stage relative mx-auto w-full overflow-hidden p-2 md:p-[clamp(0.5rem,1.25vw,1.25rem)]">
-        <FocusPreview
-          project={previous}
-          position="previous"
-          transitionProjectId={transitionProjectId}
-          onSelect={selectPrevious}
-        />
-        <FocusPreview
-          project={current}
-          position="current"
-          transitionProjectId={transitionProjectId}
-        />
-        <FocusPreview
-          project={next}
-          position="next"
-          transitionProjectId={transitionProjectId}
-          onSelect={selectNext}
-        />
+        {projectCatalog.map((project) => {
+          const position =
+            project.id === previous.id
+              ? "previous"
+              : project.id === current.id
+                ? "current"
+                : project.id === next.id
+                  ? "next"
+                  : "hidden";
+
+          return (
+            <FocusPreview
+              key={project.id}
+              project={project}
+              position={position}
+              transitionProjectId={transitionProjectId}
+              onSelect={
+                position === "previous"
+                  ? selectPrevious
+                  : position === "next"
+                    ? selectNext
+                    : undefined
+              }
+            />
+          );
+        })}
       </div>
 
       <EditorialGutter className="relative border-b border-ink py-4">
@@ -461,9 +472,9 @@ function FocusCarousel({
           <motion.div
             key={current.id}
             className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end"
-            initial={{ opacity: shouldReduceMotion ? 1 : 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: shouldReduceMotion ? 1 : 0, y: -8 }}
+            initial={{ opacity: shouldReduceMotion ? 1 : 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: shouldReduceMotion ? 1 : 0 }}
             transition={detailTransition}
           >
             <div className="min-w-0">
@@ -523,6 +534,44 @@ function FocusCarousel({
   );
 }
 
+function FocusPreviewContent({
+  project,
+  position,
+}: {
+  project: ProjectDefinition;
+  position: "previous" | "current" | "next" | "hidden";
+}) {
+  const frameRef = useRef<HTMLDivElement>(null);
+  const { width, height } = useElementSize(frameRef, {
+    preserveLastNonZero: true,
+  });
+  const isMeasured = width > 0 && height > 0;
+  const current = position === "current";
+  const scale = width / SIDE_PREVIEW_VIEWPORT_WIDTH;
+
+  return (
+    <div ref={frameRef} className="relative size-full overflow-hidden">
+      {isMeasured ? (
+        <div
+          className="absolute top-0 left-0 origin-top-left"
+          style={{
+            left: position === "previous" ? "66.666%" : 0,
+            width: current ? "100%" : SIDE_PREVIEW_VIEWPORT_WIDTH,
+            height: current ? "100%" : height / scale,
+            transform: current ? undefined : `scale(${scale})`,
+          }}
+        >
+          <ProjectLivePreview
+            project={project}
+            compact={!current}
+            keepMounted
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function FocusPreview({
   project,
   position,
@@ -530,11 +579,12 @@ function FocusPreview({
   onSelect,
 }: {
   project: ProjectDefinition;
-  position: "previous" | "current" | "next";
+  position: "previous" | "current" | "next" | "hidden";
   transitionProjectId: ProjectId | null;
   onSelect?: () => void;
 }) {
   const current = position === "current";
+  const side = position === "previous" || position === "next";
   const shouldReduceMotion = useReducedMotion();
   const previewTransition = getStandardTransition(shouldReduceMotion);
 
@@ -545,26 +595,27 @@ function FocusPreview({
         "project-focus-preview relative [aspect-ratio:var(--project-preview-aspect)] min-w-0 overflow-hidden border-ink bg-surface sm:border",
         current
           ? "project-focus-preview--current z-1 w-full md:mx-auto md:w-[min(70vw,68rem)] max-md:portrait:aspect-[3/4] max-md:portrait:h-auto max-md:portrait:min-h-0 [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:[aspect-ratio:auto] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:h-[min(70svh,24rem)] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-64"
-          : cn(
-              "project-focus-preview--side absolute top-1/2 hidden w-[44vw] md:block",
-              position === "previous"
-                ? "project-focus-preview--previous left-0"
-                : "project-focus-preview--next right-0",
-            ),
+          : side
+            ? cn(
+                "project-focus-preview--side absolute top-1/2 hidden w-[44vw] -translate-y-1/2 md:block",
+                position === "previous"
+                  ? "project-focus-preview--previous left-0"
+                  : "project-focus-preview--next right-0",
+              )
+            : "project-focus-preview--hidden absolute top-1/2 hidden w-[44vw]",
       )}
       initial={false}
       animate={{
-        opacity: current ? 1 : 0.4,
+        opacity: current ? 1 : side ? 0.4 : 0,
         x:
           position === "previous"
             ? "-66.666%"
             : position === "next"
               ? "66.666%"
               : "0%",
-        y: current ? "0%" : "-50%",
       }}
-      whileHover={current ? undefined : { opacity: 0.7 }}
-      whileFocus={current ? undefined : { opacity: 0.7 }}
+      whileHover={side ? { opacity: 0.7 } : undefined}
+      whileFocus={side ? { opacity: 0.7 } : undefined}
       transition={previewTransition}
       style={
         {
@@ -577,19 +628,9 @@ function FocusPreview({
       }
     >
       <div className="relative h-full" inert={!current} aria-hidden={!current}>
-        {current ? (
-          <ProjectLivePreview project={project} />
-        ) : (
-          <Image
-            src={project.posterSrc}
-            alt=""
-            fill
-            sizes="22vw"
-            className="object-cover"
-          />
-        )}
+        <FocusPreviewContent project={project} position={position} />
       </div>
-      {!current ? (
+      {side ? (
         <button
           type="button"
           className="absolute inset-0 z-20 size-full cursor-pointer bg-transparent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"

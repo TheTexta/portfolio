@@ -10,6 +10,7 @@ import { cn } from "@/lib/cn";
 
 type GrailedPlusPreviewProps = {
   className?: string;
+  keepMounted?: boolean;
 };
 
 const GRAILED_PLUS_HERO_PREVIEW_ROUTE = `${PROJECT_ROUTES.grailedPlus}?view=hero`;
@@ -18,6 +19,7 @@ const NARROW_PREVIEW_BREAKPOINT = 640;
 
 export default function GrailedPlusPreview({
   className,
+  keepMounted = false,
 }: GrailedPlusPreviewProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const frameSize = useElementSize(frameRef);
@@ -60,14 +62,21 @@ export default function GrailedPlusPreview({
             <ArrowUpRight aria-hidden className="size-4" strokeWidth={1.75} />
           </ActionLink>
         </div>
-      ) : (
+      ) : null}
+      {(!isNarrowFrame || keepMounted) && (
         <iframe
           src={GRAILED_PLUS_HERO_PREVIEW_ROUTE}
           title="Grailed Plus product hero preview"
           loading="lazy"
           referrerPolicy="strict-origin"
           scrolling="auto"
-          className="absolute top-0 left-0 block border-0 bg-canvas"
+          aria-hidden={isNarrowFrame}
+          inert={isNarrowFrame}
+          tabIndex={isNarrowFrame ? -1 : undefined}
+          className={cn(
+            "absolute top-0 left-0 block border-0 bg-canvas",
+            isNarrowFrame && "invisible",
+          )}
           style={
             hasMeasuredFrame
               ? {

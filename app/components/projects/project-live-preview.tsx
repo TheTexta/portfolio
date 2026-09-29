@@ -26,10 +26,12 @@ type ProjectLivePreviewProps = {
   project: ProjectDefinition;
   className?: string;
   compact?: boolean;
+  keepMounted?: boolean;
 };
 
 type ProjectPreviewRendererProps = {
   compact: boolean;
+  keepMounted: boolean;
 };
 
 type ProjectPreviewRenderer = (props: ProjectPreviewRendererProps) => ReactNode;
@@ -44,7 +46,9 @@ const PROJECT_PREVIEW_RENDERERS: Record<ProjectId, ProjectPreviewRenderer> = {
       showNavigation={false}
     />
   ),
-  "grailed-plus": () => <GrailedPlusPreview />,
+  "grailed-plus": ({ keepMounted }) => (
+    <GrailedPlusPreview keepMounted={keepMounted} />
+  ),
   "photo-graph": ({ compact }) => (
     <PhotoGraphCanvas
       fitToCanvas
@@ -75,6 +79,7 @@ export default function ProjectLivePreview({
   project,
   className,
   compact = false,
+  keepMounted = false,
 }: ProjectLivePreviewProps) {
   return (
     <div
@@ -83,13 +88,17 @@ export default function ProjectLivePreview({
         className,
       )}
     >
-      {renderProjectPreview(project.id, compact)}
+      {renderProjectPreview(project.id, compact, keepMounted)}
     </div>
   );
 }
 
-function renderProjectPreview(projectId: ProjectId, compact: boolean) {
+function renderProjectPreview(
+  projectId: ProjectId,
+  compact: boolean,
+  keepMounted: boolean,
+) {
   const renderer = PROJECT_PREVIEW_RENDERERS[projectId];
 
-  return renderer?.({ compact });
+  return renderer?.({ compact, keepMounted });
 }

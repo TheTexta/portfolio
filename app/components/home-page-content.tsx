@@ -100,7 +100,7 @@ function ContactLinkRow({
     <li className="flex min-h-12 items-center border-b border-ink last:border-b-0">
       <motion.a
         href={href}
-        className="group relative isolate flex h-full w-full items-center justify-between overflow-hidden px-3 text-xs transition-opacity sm:text-sm"
+        className="group relative isolate flex h-full w-full items-center justify-between overflow-hidden bg-canvas px-3 text-xs transition-opacity sm:text-sm"
         initial="rest"
         whileHover="active"
         whileFocus="active"

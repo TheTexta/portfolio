@@ -11,6 +11,7 @@ const EMPTY_SIZE: ElementSize = { width: 0, height: 0 };
 
 export function useElementSize<T extends HTMLElement>(
   elementRef: RefObject<T | null>,
+  { preserveLastNonZero = false }: { preserveLastNonZero?: boolean } = {},
 ) {
   const [size, setSize] = useState<ElementSize>(EMPTY_SIZE);
 
@@ -22,6 +23,10 @@ export function useElementSize<T extends HTMLElement>(
     }
 
     const updateSize = ({ width, height }: ElementSize) => {
+      if (preserveLastNonZero && (width <= 0 || height <= 0)) {
+        return;
+      }
+
       setSize((current) =>
         current.width === width && current.height === height
           ? current
@@ -39,7 +44,7 @@ export function useElementSize<T extends HTMLElement>(
     resizeObserver.observe(element);
 
     return () => resizeObserver.disconnect();
-  }, [elementRef]);
+  }, [elementRef, preserveLastNonZero]);
 
   return size;
 }
