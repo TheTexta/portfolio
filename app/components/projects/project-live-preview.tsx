@@ -43,6 +43,7 @@ const PROJECT_PREVIEW_RENDERERS: Record<ProjectId, ProjectPreviewRenderer> = {
       title="bur1alrites"
       previewSrc={PROJECT_ROUTES.bur1alritesLive}
       projectHref={PROJECT_ROUTES.bur1alritesLive}
+      desktopPreviewScale={0.8}
       mobilePreviewScale={0.75}
       showNavigation={false}
     />

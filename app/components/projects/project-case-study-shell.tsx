@@ -70,7 +70,7 @@ export default function ProjectCaseStudyShell({
       </EditorialContainer>
 
       <EditorialContainer className="py-8">
-        <MediaFrame className="h-[min(70svh,48rem)] min-h-[30rem] max-md:portrait:aspect-[3/4] max-md:portrait:h-auto max-md:portrait:min-h-0 [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:[aspect-ratio:auto] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:h-[min(70svh,24rem)] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-64">
+        <MediaFrame className="mx-auto aspect-video w-full">
           <ProjectLivePreview project={project} />
         </MediaFrame>
       </EditorialContainer>

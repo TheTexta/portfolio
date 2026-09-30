@@ -77,6 +77,7 @@ type RailProps = {
   projects: readonly ProjectDefinition[];
   direction: "forward" | "reverse";
   railLabel: string;
+  returnProjectId: ProjectId | null;
   groupRef: RefObject<HTMLDivElement | null>;
   trackRef: RefObject<HTMLDivElement | null>;
   touchInfoKey: string | null;
@@ -92,6 +93,7 @@ type ProjectCardProps = {
   project: ProjectDefinition;
   cardKey: string;
   layout: "rail" | "stack";
+  returnProjectId: ProjectId | null;
   infoVisible: boolean;
   onTouchInfoChange: (cardKey: string | null) => void;
   onFocusProject: (projectId: ProjectId, cardKey: string) => void;
@@ -101,6 +103,7 @@ function ProjectCard({
   project,
   cardKey,
   layout,
+  returnProjectId,
   infoVisible,
   onTouchInfoChange,
   onFocusProject,
@@ -124,6 +127,10 @@ function ProjectCard({
       style={
         {
           "--aspect": project.posterAspectRatio,
+          viewTransitionName:
+            returnProjectId === project.id
+              ? `project-poster-${project.id}`
+              : undefined,
         } as React.CSSProperties
       }
       initial="closed"
@@ -221,6 +228,7 @@ function ProjectRail({
   projects,
   direction,
   railLabel,
+  returnProjectId,
   groupRef,
   trackRef,
   touchInfoKey,
@@ -246,6 +254,7 @@ function ProjectRail({
                 project={project}
                 cardKey={cardKey}
                 layout="rail"
+                returnProjectId={returnProjectId}
                 infoVisible={touchInfoKey === cardKey}
                 onTouchInfoChange={onTouchInfoChange}
                 onFocusProject={onFocusProject}
@@ -261,11 +270,13 @@ function ProjectRail({
 function MobileProjectTable({
   projects,
   expandedKey,
+  returnProjectId,
   onToggle,
   onFocusProject,
 }: {
   projects: readonly ProjectDefinition[];
   expandedKey: string | null;
+  returnProjectId: ProjectId | null;
   onToggle: (cardKey: string | null) => void;
   onFocusProject: (projectId: ProjectId, cardKey: string) => void;
 }) {
@@ -282,7 +293,7 @@ function MobileProjectTable({
         const hasNextProject = index < projects.length - 1;
 
         return (
-          <div key={cardKey} className="relative">
+          <div key={cardKey} data-card-key={cardKey} className="relative">
             <button
               type="button"
               className="flex min-h-12 w-full items-center justify-between gap-3 px-3 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
@@ -317,10 +328,15 @@ function MobileProjectTable({
                   <div className="min-h-0 overflow-hidden p-4">
                     <button
                       type="button"
+                      data-project-trigger
                       className="relative block aspect-[var(--aspect)] w-full overflow-hidden border border-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
                       style={
                         {
                           "--aspect": project.posterAspectRatio,
+                          viewTransitionName:
+                            returnProjectId === project.id
+                              ? `project-poster-${project.id}`
+                              : undefined,
                         } as React.CSSProperties
                       }
                       aria-label={`Open ${project.title} focus view`}
@@ -555,7 +571,7 @@ function FocusPreviewContent({
         <div
           className="absolute top-0 left-0 origin-top-left"
           style={{
-            left: position === "previous" ? "66.666%" : 0,
+            left: 0,
             width: current ? "100%" : SIDE_PREVIEW_VIEWPORT_WIDTH,
             height: current ? "100%" : height / scale,
             transform: current ? undefined : `scale(${scale})`,
@@ -592,9 +608,9 @@ function FocusPreview({
     <motion.div
       data-project-preview-id={project.id}
       className={cn(
-        "project-focus-preview relative [aspect-ratio:var(--project-preview-aspect)] min-w-0 overflow-hidden border-ink bg-surface sm:border",
+        "project-focus-preview relative aspect-video min-w-0 overflow-hidden border-ink bg-surface sm:border",
         current
-          ? "project-focus-preview--current z-1 w-full md:mx-auto md:w-[min(70vw,68rem)] max-md:portrait:aspect-[3/4] max-md:portrait:h-auto max-md:portrait:min-h-0 [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:[aspect-ratio:auto] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:h-[min(70svh,24rem)] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-64"
+          ? "project-focus-preview--current z-1 w-full md:mx-auto md:w-[min(70vw,68rem)]"
           : side
             ? cn(
                 "project-focus-preview--side absolute top-1/2 hidden w-[44vw] -translate-y-1/2 md:block",
@@ -607,21 +623,20 @@ function FocusPreview({
       initial={false}
       animate={{
         opacity: current ? 1 : side ? 0.4 : 0,
-        x:
-          position === "previous"
-            ? "-66.666%"
-            : position === "next"
-              ? "66.666%"
-              : "0%",
       }}
       whileHover={side ? { opacity: 0.7 } : undefined}
       whileFocus={side ? { opacity: 0.7 } : undefined}
       transition={previewTransition}
       style={
         {
-          "--project-preview-aspect": project.posterAspectRatio,
+          x:
+            position === "previous"
+              ? "-66.666%"
+              : position === "next"
+                ? "66.666%"
+                : "0%",
           viewTransitionName:
-            transitionProjectId === project.id
+            (current || side) && transitionProjectId
               ? `project-poster-${project.id}`
               : undefined,
         } as React.CSSProperties
@@ -662,6 +677,9 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
   const [focusedProjectId, setFocusedProjectId] = useState<ProjectId | null>(
     null,
   );
+  const [returnProjectId, setReturnProjectId] = useState<ProjectId | null>(
+    null,
+  );
   const [touchInfoKey, setTouchInfoKey] = useState<string | null>(null);
   const [mobileExpandedKey, setMobileExpandedKey] = useState<string | null>(
     `mobile-table-${projectCatalog[0].id}-0`,
@@ -673,7 +691,6 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
   const firstRailTrackRef = useRef<HTMLDivElement>(null);
   const firstRailGroupRef = useRef<HTMLDivElement>(null);
   const railScrollYRef = useRef(0);
-  const lastFocusedProjectRef = useRef<ProjectId | null>(null);
   const lastFocusedCardKeyRef = useRef<string | null>(null);
   const restoreRailRef = useRef(false);
   const restoreRailFocusRef = useRef(false);
@@ -696,36 +713,41 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
     rails: railMotion,
   });
 
-  const updateWithTransition = useCallback((callback: () => void) => {
-    const documentWithTransition = document as DocumentWithViewTransition;
-    const reducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+  const updateWithTransition = useCallback(
+    (callback: () => void, onFinished?: () => void) => {
+      const documentWithTransition = document as DocumentWithViewTransition;
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
 
-    if (!documentWithTransition.startViewTransition || reducedMotion) {
-      callback();
-      return;
-    }
+      if (!documentWithTransition.startViewTransition || reducedMotion) {
+        callback();
+        onFinished?.();
+        return;
+      }
 
-    activeViewTransitionRef.current?.skipTransition();
+      activeViewTransitionRef.current?.skipTransition();
 
-    const transition = documentWithTransition.startViewTransition(() => {
-      flushSync(callback);
-    });
-    activeViewTransitionRef.current = transition;
-
-    // `ready` rejects with AbortError when a newer interaction supersedes this
-    // transition. That is expected carousel behavior, not an application error.
-    void transition.ready.catch(() => undefined);
-    void transition.updateCallbackDone.catch(() => undefined);
-    void transition.finished
-      .catch(() => undefined)
-      .finally(() => {
-        if (activeViewTransitionRef.current === transition) {
-          activeViewTransitionRef.current = null;
-        }
+      const transition = documentWithTransition.startViewTransition(() => {
+        flushSync(callback);
       });
-  }, []);
+      activeViewTransitionRef.current = transition;
+
+      // `ready` rejects with AbortError when a newer interaction supersedes this
+      // transition. That is expected carousel behavior, not an application error.
+      void transition.ready.catch(() => undefined);
+      void transition.updateCallbackDone.catch(() => undefined);
+      void transition.finished
+        .catch(() => undefined)
+        .finally(() => {
+          if (activeViewTransitionRef.current === transition) {
+            activeViewTransitionRef.current = null;
+          }
+          onFinished?.();
+        });
+    },
+    [],
+  );
 
   useEffect(() => {
     const syncFromHash = () => {
@@ -772,15 +794,7 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
       }
 
       restoreRailFocusRef.current = false;
-      const projectId = lastFocusedProjectRef.current;
-      const cardKey = lastFocusedCardKeyRef.current;
-      if (projectId && cardKey) {
-        galleryRef.current
-          ?.querySelector<HTMLElement>(
-            `[data-card-key="${cardKey}"] [data-project-trigger]`,
-          )
-          ?.focus({ preventScroll: true });
-      }
+      galleryRef.current?.focus({ preventScroll: true });
     });
 
     return () => window.cancelAnimationFrame(frame);
@@ -819,11 +833,6 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
         nextUrl,
       );
       updateWithTransition(() => {
-        galleryRef.current
-          ?.querySelectorAll<HTMLElement>("[data-project-preview-id]")
-          .forEach((preview) => {
-            preview.style.viewTransitionName = "";
-          });
         focusedProjectRef.current = projectId;
         setFocusedProjectId(projectId);
       });
@@ -834,7 +843,6 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
   const openFocus = useCallback(
     (projectId: ProjectId, cardKey: string) => {
       railScrollYRef.current = window.scrollY;
-      lastFocusedProjectRef.current = projectId;
       lastFocusedCardKeyRef.current = cardKey;
       setTouchInfoKey(null);
       setMobileExpandedKey(null);
@@ -852,29 +860,36 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
   const closeFocus = useCallback(
     (restoreFocus: boolean) => {
       const nextUrl = getLocationUrl();
+      const projectId = focusedProjectRef.current;
+      const projectIndex = projectCatalog.findIndex(
+        (project) => project.id === projectId,
+      );
       restoreRailRef.current = true;
       restoreRailFocusRef.current = restoreFocus;
 
       window.history.replaceState({}, "", nextUrl);
-      updateWithTransition(() => {
-        focusedProjectRef.current = null;
-        setFocusedProjectId(null);
-      });
+      updateWithTransition(
+        () => {
+          if (projectId && projectIndex !== -1) {
+            setReturnProjectId(projectId);
+            setMobileExpandedKey(`mobile-table-${projectId}-${projectIndex}`);
+            lastFocusedCardKeyRef.current =
+              lastFocusedCardKeyRef.current?.startsWith("mobile-table-")
+                ? `mobile-table-${projectId}-${projectIndex}`
+                : `forward-${projectId}-${projectIndex}`;
+          }
+          focusedProjectRef.current = null;
+          setFocusedProjectId(null);
+          window.scrollTo({ top: railScrollYRef.current });
+        },
+        () => setReturnProjectId(null),
+      );
     },
     [getLocationUrl, updateWithTransition],
   );
 
   const changeFocusedProject = useCallback(
     (projectId: ProjectId) => {
-      galleryRef.current
-        ?.querySelectorAll<HTMLElement>("[data-project-preview-id]")
-        .forEach((preview) => {
-          preview.style.viewTransitionName =
-            preview.dataset.projectPreviewId === projectId
-              ? `project-poster-${projectId}`
-              : "none";
-        });
-
       setProjectHash(projectId, "replace");
     },
     [setProjectHash],
@@ -887,6 +902,7 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
           projects={RAIL_ONE}
           direction="forward"
           railLabel="Projects"
+          returnProjectId={returnProjectId}
           groupRef={firstRailGroupRef}
           trackRef={firstRailTrackRef}
           touchInfoKey={touchInfoKey}
@@ -895,13 +911,16 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
         />
       </div>
     ),
-    [openFocus, touchInfoKey],
+    [openFocus, returnProjectId, touchInfoKey],
   );
 
   return (
     <div
       ref={galleryRef}
       id="projects"
+      role="region"
+      aria-label="Projects"
+      tabIndex={-1}
       className={cn("scroll-mt-12 pb-36 sm:py-15", styles.root)}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) {
@@ -926,6 +945,7 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
             <MobileProjectTable
               projects={projectCatalog}
               expandedKey={mobileExpandedKey}
+              returnProjectId={returnProjectId}
               onToggle={setMobileExpandedKey}
               onFocusProject={openFocus}
             />

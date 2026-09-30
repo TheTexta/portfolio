@@ -10,6 +10,7 @@ type HtmlProjectPreviewProps = {
   title: string;
   previewSrc: string;
   projectHref: string;
+  desktopPreviewScale?: number;
   mobilePreviewScale?: number;
   showNavigation?: boolean;
 };
@@ -30,6 +31,7 @@ export default function HtmlProjectPreview({
   title,
   previewSrc,
   projectHref,
+  desktopPreviewScale = 1,
   mobilePreviewScale = 1,
   showNavigation = true,
 }: HtmlProjectPreviewProps) {
@@ -43,14 +45,12 @@ export default function HtmlProjectPreview({
   });
   const currentStatus =
     previewState.src === previewSrc ? previewState.status : "loading";
-  const hasMobileScale = mobilePreviewScale > 0 && mobilePreviewScale < 1;
   const isMeasured = shellSize.width > 0 && shellSize.height > 0;
   const previewScale =
-    hasMobileScale &&
     typeof window !== "undefined" &&
     window.matchMedia(COMPACT_PREVIEW_QUERY).matches
       ? mobilePreviewScale
-      : 1;
+      : desktopPreviewScale;
   const previewWidth = isMeasured ? shellSize.width / previewScale : 0;
   const previewHeight = isMeasured ? shellSize.height / previewScale : 0;
 
