@@ -16,7 +16,7 @@ import HeaderDirectory from "@/app/components/ui/header-directory";
 
 export { AnimatedHorizontalRule } from "@/app/components/ui/animated-horizontal-rule";
 
-const actionStyles = cva(
+export const actionStyles = cva(
   "inline-flex min-h-11 cursor-pointer appearance-none items-center justify-center gap-2 border border-ink px-4 py-2 text-center text-xs font-semibold tracking-[0.12em] uppercase no-underline transition-[background-color,color,border-color,opacity,transform] duration-150 ease-[var(--ease-out-quint)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink active:translate-y-px disabled:pointer-events-none disabled:opacity-45",
   {
     variants: {

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import ExperienceNav from "@/app/components/ui/experience-nav";
 import { useElementSize } from "@/app/hooks/use-element-size";
+import { useIframeOpenOnClick } from "@/app/hooks/use-iframe-open-on-click";
 import { cn } from "@/lib/cn";
 
 type HtmlProjectPreviewProps = {
@@ -33,6 +34,8 @@ export default function HtmlProjectPreview({
   showNavigation = true,
 }: HtmlProjectPreviewProps) {
   const shellRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const iframeClick = useIframeOpenOnClick(iframeRef, projectHref, previewSrc);
   const shellSize = useElementSize(shellRef);
   const [previewState, setPreviewState] = useState<PreviewState>({
     src: previewSrc,
@@ -56,30 +59,40 @@ export default function HtmlProjectPreview({
       {currentStatus === "error" ? (
         <div
           role="alert"
-          className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center"
+          className="relative flex h-full flex-col items-center justify-center gap-3 px-6 text-center"
         >
           <p className="text-sm">This preview is unavailable right now.</p>
+          <span className="border border-ink bg-canvas px-3 py-2 text-xs font-semibold tracking-[0.08em] text-ink uppercase">
+            Open {title}
+          </span>
           <a
             href={projectHref}
-            className="border border-ink bg-canvas px-3 py-2 text-xs font-semibold tracking-[0.08em] text-ink uppercase outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-          >
-            Open {title}
-          </a>
+            aria-label={`Open the full ${title} site`}
+            className="absolute inset-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
+          />
         </div>
       ) : (
         <iframe
+          ref={iframeRef}
           title={`${title} preview`}
           src={previewSrc}
           loading="lazy"
           scrolling="auto"
           sandbox="allow-forms allow-popups allow-same-origin allow-scripts"
+          onPointerEnter={iframeClick.onPointerEnter}
+          onPointerLeave={iframeClick.onPointerLeave}
+          onMouseEnter={iframeClick.onMouseEnter}
+          onMouseLeave={iframeClick.onMouseLeave}
           className={cn(htmlPreviewFrame, !isMeasured && "invisible")}
           style={{
             width: previewWidth,
             height: previewHeight,
             transform: `scale(${previewScale})`,
           }}
-          onLoad={() => setPreviewState({ src: previewSrc, status: "loaded" })}
+          onLoad={() => {
+            iframeClick.onLoad();
+            setPreviewState({ src: previewSrc, status: "loaded" });
+          }}
           onError={() => setPreviewState({ src: previewSrc, status: "error" })}
         />
       )}

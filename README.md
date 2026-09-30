@@ -21,6 +21,22 @@
 Run `npm run check` before opening a pull request. It runs lint, TypeScript,
 and formatting checks in that order.
 
+## Embedded project previews
+
+The project browser embeds the Grailed Plus page and three separately hosted
+sites. Links clicked inside those previews open their destination as the
+top-level page while wheel and touch scrolling remain inside the preview. Grailed
+Plus links are read directly because its frame shares this site's origin. The
+other sites send clicked URLs with a `dextery-preview-navigation` `postMessage`;
+the portfolio checks the sender's frame and origin before navigating. A click
+without a reported link opens the project's main site.
+Bur1alrites video clicks use the selected video's direct link and open its
+video room on the full site.
+
+Deploy matching preview-navigation changes in `bur1alrites`, `elliotmairet`,
+and `nepobabiesruntheunderground` to enable destination links in their previews.
+Until each site is updated, its preview still opens the project's main site.
+
 ## Photo Graph Supabase setup
 
 | Command                                   | Purpose                                                         | Mutates data |
