@@ -5,9 +5,7 @@ import {
   replacePhotoGraphNeighborSnapshot,
   savePhotoGraphEdgeGenerationConfig,
 } from "@/lib/photo-graph/database";
-import {
-  countGraphEdges,
-} from "@/lib/photo-graph/edge-generation";
+import { countGraphEdges } from "@/lib/photo-graph/edge-generation";
 import {
   generateSparsePhotoGraph,
   parseSparseEdgeGenerationConfig,
@@ -19,10 +17,7 @@ import {
 } from "@/lib/photo-graph/graph-store";
 import type { PhotoGraphEdgeGenerationConfig } from "@/lib/photo-graph/types";
 import { PHOTO_GRAPH_SIMILARITY_MODELS } from "@/lib/photo-graph/similarity-models";
-import {
-  ADMIN_SESSION_COOKIE_NAME,
-  isValidAdminSessionToken,
-} from "@/lib/server/admin-session";
+import { getAdminUser } from "@/lib/server/admin-auth";
 
 type SaveEdgeDefaultsPayload = {
   config?: unknown;
@@ -30,11 +25,6 @@ type SaveEdgeDefaultsPayload = {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function isAuthorized(request: NextRequest) {
-  const token = request.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
-  return isValidAdminSessionToken(token);
-}
 
 function parseEdgeGenerationConfig(
   value: unknown,
@@ -58,8 +48,8 @@ function isMissingNeighborPersistence(error: unknown) {
   );
 }
 
-export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
+export async function GET() {
+  if (!(await getAdminUser())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -68,7 +58,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!(await getAdminUser())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -106,7 +96,9 @@ export async function POST(request: NextRequest) {
     (entry) => entry.id === config.model,
   );
   const missingColorFeatures = model?.requiresColorV1
-    ? loaded.nodes.filter((node) => !node.feature?.colorV1).map((node) => node.id)
+    ? loaded.nodes
+        .filter((node) => !node.feature?.colorV1)
+        .map((node) => node.id)
     : [];
   if (missingColorFeatures.length > 0) {
     return NextResponse.json(

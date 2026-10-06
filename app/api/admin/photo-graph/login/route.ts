@@ -2,16 +2,14 @@ import { createHash } from "node:crypto";
 
 import { NextResponse } from "next/server";
 
-import {
-  createAdminSessionToken,
-  isValidAdminPassword,
-  setAdminSessionCookie,
-} from "@/lib/server/admin-session";
+import { isAdminUser } from "@/lib/server/admin-auth";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type LoginRequestBody = {
+  email?: string;
   password?: string;
 };
 
@@ -29,7 +27,8 @@ const FAILED_LOGIN_MAX_ENTRIES = 10_000;
 
 function getClientIdentifier(request: Request) {
   const forwardedFor = request.headers.get("x-forwarded-for");
-  const clientAddress = forwardedFor?.split(",", 1)[0]?.trim() ||
+  const clientAddress =
+    forwardedFor?.split(",", 1)[0]?.trim() ||
     request.headers.get("x-real-ip") ||
     "unknown";
   const userAgent = request.headers.get("user-agent") || "unknown";
@@ -127,7 +126,14 @@ export async function POST(request: Request) {
   let body: LoginRequestBody;
 
   try {
-    body = (await request.json()) as LoginRequestBody;
+    const payload: unknown = await request.json();
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      return NextResponse.json(
+        { error: "Email and password are required." },
+        { status: 400 },
+      );
+    }
+    body = payload as LoginRequestBody;
   } catch {
     return NextResponse.json(
       {
@@ -137,9 +143,38 @@ export async function POST(request: Request) {
     );
   }
 
-  const password = body.password ?? "";
+  const email = typeof body.email === "string" ? body.email.trim() : "";
+  const password = typeof body.password === "string" ? body.password : "";
 
-  if (!password || !isValidAdminPassword(password)) {
+  if (!email || !password || email.length > 254 || password.length > 4096) {
+    return NextResponse.json(
+      { error: "A valid email and password are required." },
+      { status: 400 },
+    );
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error && (!error.status || error.status >= 500)) {
+    return NextResponse.json(
+      { error: "Sign-in is temporarily unavailable. Try again." },
+      { status: 503 },
+    );
+  }
+
+  if (error?.status === 429) {
+    return tooManyFailedLogins(60);
+  }
+
+  if (error || !isAdminUser(data.user)) {
+    // A valid Supabase account alone does not grant admin access.
+    if (data.session) {
+      await supabase.auth.signOut({ scope: "local" });
+    }
     const failedAttempt = recordFailedLogin(clientIdentifier, now);
 
     if (failedAttempt.blockedUntil > now) {
@@ -150,7 +185,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        error: "Invalid password.",
+        error: "Unable to sign in with this account.",
       },
       { status: 401 },
     );
@@ -158,10 +193,7 @@ export async function POST(request: Request) {
 
   clearFailedLogins(clientIdentifier);
 
-  const response = NextResponse.json({
+  return NextResponse.json({
     ok: true,
   });
-
-  setAdminSessionCookie(response, createAdminSessionToken());
-  return response;
 }

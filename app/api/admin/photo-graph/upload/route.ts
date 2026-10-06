@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { buildCanonicalPhotoGraphStoragePath } from "@/lib/photo-graph/config";
 import { scaleFromLongSide } from "@/lib/photo-graph/correlation";
-import {
-  countGraphEdges,
-} from "@/lib/photo-graph/edge-generation";
+import { countGraphEdges } from "@/lib/photo-graph/edge-generation";
 import {
   cloneGraphNodes,
   ensureGraphStoragePaths,
@@ -28,10 +26,7 @@ import {
   type RankedPhotoGraphNeighbor,
 } from "@/lib/photo-graph/sparse-edge-generation";
 import { PHOTO_GRAPH_SIMILARITY_MODELS } from "@/lib/photo-graph/similarity-models";
-import {
-  ADMIN_SESSION_COOKIE_NAME,
-  isValidAdminSessionToken,
-} from "@/lib/server/admin-session";
+import { getAdminUser } from "@/lib/server/admin-auth";
 import { getServiceRoleSupabase } from "@/lib/server/supabase";
 import { getPhotoGraphStorageBucket } from "@/lib/supabase/config";
 import type {
@@ -194,11 +189,6 @@ function normalizeUploads(value: unknown) {
   return uploads;
 }
 
-function isAuthorized(request: NextRequest) {
-  const token = request.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
-  return isValidAdminSessionToken(token);
-}
-
 function nextNodeId(nodes: GraphNode[]) {
   const maxExistingId = nodes.reduce((currentMax, node) => {
     const parsed = Number(node.id);
@@ -228,7 +218,10 @@ function changedNeighborSourceIds(
   addedIds: string[],
 ) {
   const addedIdSet = new Set(addedIds);
-  const previousBySource = Map.groupBy(previous, (neighbor) => neighbor.sourceId);
+  const previousBySource = Map.groupBy(
+    previous,
+    (neighbor) => neighbor.sourceId,
+  );
   const nextBySource = Map.groupBy(next, (neighbor) => neighbor.sourceId);
   const sourceIds = new Set([
     ...previousBySource.keys(),
@@ -244,7 +237,7 @@ function changedNeighborSourceIds(
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!(await getAdminUser())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -284,7 +277,9 @@ export async function POST(request: NextRequest) {
     (entry) => entry.id === edgeGenerationConfig.model,
   );
   const missingColorFeatures = model?.requiresColorV1
-    ? loaded.nodes.filter((node) => !node.feature?.colorV1).map((node) => node.id)
+    ? loaded.nodes
+        .filter((node) => !node.feature?.colorV1)
+        .map((node) => node.id)
     : [];
   if (missingColorFeatures.length > 0) {
     return NextResponse.json(
@@ -394,10 +389,7 @@ export async function POST(request: NextRequest) {
           existingNeighbors,
           edgeGenerationConfig,
         )
-      : generateSparsePhotoGraph(
-          cloneGraphNodes(nodes),
-          edgeGenerationConfig,
-        );
+      : generateSparsePhotoGraph(cloneGraphNodes(nodes), edgeGenerationConfig);
     generatedNodes = generated.nodes;
     const sourceIds = hasDirectedSnapshot
       ? changedNeighborSourceIds(

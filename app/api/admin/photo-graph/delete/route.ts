@@ -11,10 +11,7 @@ import {
   deletePhotoGraphNodeRecord,
   upsertPhotoGraphNodes,
 } from "@/lib/photo-graph/database";
-import {
-  ADMIN_SESSION_COOKIE_NAME,
-  isValidAdminSessionToken,
-} from "@/lib/server/admin-session";
+import { getAdminUser } from "@/lib/server/admin-auth";
 import { getServiceRoleSupabase } from "@/lib/server/supabase";
 import { getPhotoGraphStorageBucket } from "@/lib/supabase/config";
 
@@ -25,13 +22,8 @@ type DeletePhotoPayload = {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function isAuthorized(request: NextRequest) {
-  const token = request.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
-  return isValidAdminSessionToken(token);
-}
-
 export async function POST(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!(await getAdminUser())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

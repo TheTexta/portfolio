@@ -4,15 +4,10 @@ import {
   loadPhotoGraphRuntimeControls,
   savePhotoGraphRuntimeControls,
 } from "@/lib/photo-graph/database";
-import {
-  parsePhotoGraphRuntimeControls,
-} from "@/lib/photo-graph/graph-controls";
+import { parsePhotoGraphRuntimeControls } from "@/lib/photo-graph/graph-controls";
 import { loadGraphWithFallback } from "@/lib/photo-graph/graph-store";
 import type { PhotoGraphRuntimeControls } from "@/lib/photo-graph/types";
-import {
-  ADMIN_SESSION_COOKIE_NAME,
-  isValidAdminSessionToken,
-} from "@/lib/server/admin-session";
+import { getAdminUser } from "@/lib/server/admin-auth";
 
 type SaveGraphDefaultsPayload = {
   controls?: Partial<Record<keyof PhotoGraphRuntimeControls, unknown>>;
@@ -21,17 +16,12 @@ type SaveGraphDefaultsPayload = {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function isAuthorized(request: NextRequest) {
-  const token = request.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
-  return isValidAdminSessionToken(token);
-}
-
 function parseGraphControls(value: unknown): PhotoGraphRuntimeControls | null {
   return parsePhotoGraphRuntimeControls(value);
 }
 
-export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
+export async function GET() {
+  if (!(await getAdminUser())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -40,7 +30,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!(await getAdminUser())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -39,7 +39,8 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
             key: "Permissions-Policy",
-            value: "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
+            value:
+              "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
           },
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
         ],
@@ -48,6 +49,21 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      {
+        source: "/admin/photo-graph",
+        destination: "/admin",
+        permanent: true,
+      },
+      {
+        source: "/admin/photo-graph/login",
+        destination: "/admin",
+        permanent: true,
+      },
+      {
+        source: "/admin/photo-graph/upload",
+        destination: "/admin",
+        permanent: true,
+      },
       {
         source: "/go/grailed-plus",
         destination: "/grailed-plus",

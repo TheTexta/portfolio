@@ -1,12 +1,20 @@
 import { NextResponse } from "next/server";
 
-import { clearAdminSessionCookie } from "@/lib/server/admin-session";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST() {
-  const response = NextResponse.json({ ok: true });
-  clearAdminSessionCookie(response);
-  return response;
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase.auth.signOut({ scope: "local" });
+
+  if (error) {
+    return NextResponse.json(
+      { error: "Unable to sign out. Try again." },
+      { status: 503 },
+    );
+  }
+
+  return NextResponse.json({ ok: true });
 }

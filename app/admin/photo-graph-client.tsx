@@ -277,11 +277,12 @@ function buildPreviewGraphUrl(
   return `/api/admin/photo-graph/graph-preview?${searchParams.toString()}`;
 }
 
-export default function PhotoGraphUploadClient() {
+export default function PhotoGraphAdminClient() {
   const router = useRouter();
 
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [isSavingEdgeDefaults, setIsSavingEdgeDefaults] = useState(false);
   const [isSavingGraphDefaults, setIsSavingGraphDefaults] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -938,12 +939,23 @@ export default function PhotoGraphUploadClient() {
   };
 
   const handleLogout = async () => {
-    await fetch("/api/admin/photo-graph/logout", {
-      method: "POST",
-    });
+    setIsSigningOut(true);
+    try {
+      const response = await fetch("/api/admin/photo-graph/logout", {
+        method: "POST",
+      });
 
-    router.push("/admin/photo-graph/login");
-    router.refresh();
+      if (!response.ok) {
+        throw new Error("Unable to sign out. Try again.");
+      }
+
+      router.refresh();
+    } catch {
+      setErrorMessage("Unable to sign out. Try again.");
+      appendVerboseLog("Sign-out failed. Try again.", "error");
+    } finally {
+      setIsSigningOut(false);
+    }
   };
 
   const uploadDisabled =
@@ -966,25 +978,23 @@ export default function PhotoGraphUploadClient() {
         <button
           type="button"
           onClick={handleLogout}
+          disabled={isSigningOut}
           className={EDITORIAL_HEADER_CONTROL_CLASS}
         >
-          Log Out
+          {isSigningOut ? "Signing out..." : "Log Out"}
         </button>
       </SiteHeader>
       <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-8">
         <div className="mb-6 flex flex-col gap-4 border-b border-ink pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-3xl">
             <p className="text-[11px] font-medium tracking-[0.28em] uppercase opacity-55">
-              Colour Similarity Studio
+              Admin
             </p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-              Photo Graph Upload Admin
+              Photo Graph
             </h1>
             <p className="mt-2 text-sm leading-6 opacity-70">
-              Uploads still extract image features in the browser, but edge
-              generation, live preview, and saved defaults now run on the
-              server. The public project graph continues to read the persisted
-              edge snapshot.
+              Manage photos, preview the graph, and save its defaults.
             </p>
           </div>
         </div>

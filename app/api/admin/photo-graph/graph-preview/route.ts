@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { loadPhotoGraphEdgeGenerationConfig } from "@/lib/photo-graph/database";
-import {
-  countGraphEdges,
-} from "@/lib/photo-graph/edge-generation";
+import { countGraphEdges } from "@/lib/photo-graph/edge-generation";
 import { buildPhotoGraphPayload } from "@/lib/photo-graph/force-graph";
 import {
   cloneGraphNodes,
@@ -13,21 +11,13 @@ import {
   generateSparsePhotoGraph,
   parseSparseEdgeGenerationConfigFromSearchParams,
 } from "@/lib/photo-graph/sparse-edge-generation";
-import {
-  ADMIN_SESSION_COOKIE_NAME,
-  isValidAdminSessionToken,
-} from "@/lib/server/admin-session";
+import { getAdminUser } from "@/lib/server/admin-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function isAuthorized(request: NextRequest) {
-  const token = request.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
-  return isValidAdminSessionToken(token);
-}
-
 export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!(await getAdminUser())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

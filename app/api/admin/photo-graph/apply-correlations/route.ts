@@ -6,10 +6,7 @@ import {
   writeRuntimeGraph,
 } from "@/lib/photo-graph/graph-store";
 import { replacePhotoGraphEdges } from "@/lib/photo-graph/database";
-import {
-  ADMIN_SESSION_COOKIE_NAME,
-  isValidAdminSessionToken,
-} from "@/lib/server/admin-session";
+import { getAdminUser } from "@/lib/server/admin-auth";
 
 type CorrelationUpdate = {
   leftId: string;
@@ -23,11 +20,6 @@ type ApplyCorrelationsPayload = {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function isAuthorized(request: NextRequest) {
-  const token = request.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
-  return isValidAdminSessionToken(token);
-}
 
 function normalizeCorrelation(value: unknown) {
   if (value === null) {
@@ -72,7 +64,7 @@ function normalizeUpdates(value: unknown) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!(await getAdminUser())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

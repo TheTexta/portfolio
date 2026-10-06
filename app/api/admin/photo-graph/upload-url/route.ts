@@ -3,10 +3,7 @@ import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 import { buildPendingPhotoGraphStoragePath } from "@/lib/photo-graph/config";
-import {
-  ADMIN_SESSION_COOKIE_NAME,
-  isValidAdminSessionToken,
-} from "@/lib/server/admin-session";
+import { getAdminUser } from "@/lib/server/admin-auth";
 import { getServiceRoleSupabase } from "@/lib/server/supabase";
 import { getPhotoGraphStorageBucket } from "@/lib/supabase/config";
 
@@ -21,11 +18,6 @@ type UploadUrlRequest = {
   contentType?: string;
 };
 
-function isAuthorized(request: NextRequest) {
-  const token = request.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
-  return isValidAdminSessionToken(token);
-}
-
 function extensionForUpload(filename: string | undefined, contentType: string) {
   if (contentType === "image/png") return "png";
   if (contentType === "image/jpeg") return "jpg";
@@ -39,7 +31,7 @@ function extensionForUpload(filename: string | undefined, contentType: string) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!(await getAdminUser())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -64,10 +56,7 @@ export async function POST(request: NextRequest) {
   }
 
   const extension = extensionForUpload(body.filename, contentType);
-  const objectPath = buildPendingPhotoGraphStoragePath(
-    randomUUID(),
-    extension,
-  );
+  const objectPath = buildPendingPhotoGraphStoragePath(randomUUID(), extension);
   const bucket = getPhotoGraphStorageBucket();
   const supabase = getServiceRoleSupabase();
   const { data, error } = await supabase.storage

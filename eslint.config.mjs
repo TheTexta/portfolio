@@ -26,7 +26,7 @@ const eslintConfig = defineConfig([
   },
   {
     files: [
-      "app/admin/photo-graph/upload/upload-client.tsx",
+      "app/admin/photo-graph-client.tsx",
       "app/components/projects/photo-graph/PhotoGraphInspectOverlay.tsx",
     ],
     rules: {

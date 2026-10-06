@@ -37,6 +37,44 @@ Deploy matching preview-navigation changes in `bur1alrites`, `elliotmairet`,
 and `nepobabiesruntheunderground` to enable destination links in their previews.
 Until each site is updated, its preview still opens the project's main site.
 
+## Photo Graph admin
+
+Open `/admin` to sign in and manage Photo Graph uploads, photos, and graph
+defaults. Signing in and out keeps you at the same URL. The former
+`/admin/photo-graph`, `/admin/photo-graph/login`, and `/admin/photo-graph/upload`
+URLs permanently redirect to `/admin`.
+
+Admin sign-in uses Supabase Auth email/password accounts. There is no public
+registration flow. To enable access:
+
+1. Create or identify the admin account in your Supabase project's Authentication
+   users panel. The account needs a confirmed email and a password.
+2. Set `SUPABASE_ADMIN_USER_IDS` on the Next.js application to that user's UUID.
+   Use a comma-separated list for multiple admins. This is a server-only allowlist;
+   an empty or missing value denies all admin access.
+3. Keep `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` pointed at
+   that same project, and retain `SUPABASE_SERVICE_ROLE_KEY` for privileged Photo
+   Graph data operations. Authentication itself uses the anon key.
+4. Redeploy the application and sign in at `/admin` with the account's email and
+   password. Remove the old `PHOTO_GRAPH_ADMIN_PASSWORD` and
+   `PHOTO_GRAPH_SESSION_SECRET` environment variables; they are no longer used.
+
+The migration invalidates the former shared-password sessions. Supabase tokens
+are stored in HttpOnly cookies, and Next.js `proxy.ts` refreshes them only for
+admin pages and APIs. The page and each `/api/admin/photo-graph/` data route
+independently validate the current user with Supabase Auth and check the
+allowlist. Sign-out ends the current session without signing out other devices.
+The browser's signed-upload client remains separate from authentication.
+
+This follows Supabase's [server-side Auth setup](https://supabase.com/docs/guides/auth/server-side/creating-a-client).
+No Photo Graph schema, Storage policy, or data migration is required.
+
+Run `npm run admin:validate-auth` to verify authorization, login, refresh, and
+sign-out against a local Auth stub. It copies the application into a temporary
+fixture and starts its own Next.js development server with test-only Supabase
+settings. It never accesses production Auth, Storage, or database services and
+does not interrupt the regular development server.
+
 ## Photo Graph Supabase setup
 
 | Command                                   | Purpose                                                         | Mutates data |

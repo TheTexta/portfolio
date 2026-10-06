@@ -4,7 +4,7 @@ import { SITE_ORIGIN } from "@/lib/site-config";
 
 const DISALLOWED_PATHS = [
   "/api/",
-  "/admin/",
+  "/admin",
   "/auth/spotify/callback",
   "/grailed-plus/experience",
   "/projects/photo-graph/experience",
