@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -6,7 +5,12 @@ import ProjectCaseStudyShell from "@/app/components/projects/project-case-study-
 import { getProject } from "@/app/components/projects/project-catalog";
 import { loadGraphWithFallback } from "@/lib/photo-graph/graph-store";
 import type { GraphNode } from "@/lib/photo-graph/types";
-import { SITE_ORIGIN } from "@/lib/site-config";
+import StructuredData from "@/app/components/structured-data";
+import {
+  createPageMetadata,
+  createPageStructuredData,
+  PUBLIC_PAGES,
+} from "@/lib/seo";
 import { buildSupabaseStorageRenderUrl } from "@/lib/supabase/config";
 
 import PhotoGraphModelComparison from "./model-comparison/photo-graph-model-comparison";
@@ -15,13 +19,7 @@ const project = getProject("photo-graph");
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Photo Node-Gallery — Dexter Young",
-  description: project.summary,
-  alternates: {
-    canonical: `${SITE_ORIGIN}${project.caseStudyHref}`,
-  },
-};
+export const metadata = createPageMetadata(PUBLIC_PAGES.photoGraph);
 
 type BenchmarkReport = {
   version: 1;
@@ -94,6 +92,9 @@ export default async function Page() {
 
   return (
     <ProjectCaseStudyShell project={project}>
+      <StructuredData
+        data={createPageStructuredData(PUBLIC_PAGES.photoGraph)}
+      />
       <PhotoGraphModelComparison
         report={report}
         queries={queries}

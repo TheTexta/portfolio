@@ -36,6 +36,8 @@ export type ProjectDefinition = {
   sourceHref?: string;
   posterSrc: string;
   posterAlt: string;
+  posterWidth: number;
+  posterHeight: number;
   posterAspectRatio: number;
   previewKind: ProjectPreviewKind;
   role: string;
@@ -57,6 +59,8 @@ const projectCatalogDefinition = [
     caseStudyHref: PROJECT_ROUTES.photoGraph,
     experienceHref: PROJECT_ROUTES.photoGraphExperience,
     posterSrc: "/projects/posters/photo-graph.webp",
+    posterWidth: 3306,
+    posterHeight: 1859,
     posterAlt:
       "Force-directed Photo Node-Gallery with connected photography nodes",
     posterAspectRatio: 2.0,
@@ -78,6 +82,8 @@ const projectCatalogDefinition = [
     experienceHref: PROJECT_ROUTES.grailedPlus,
     liveHref: PROJECT_ROUTES.grailedPlus,
     posterSrc: "/projects/posters/grailed-plus.webp",
+    posterWidth: 1440,
+    posterHeight: 820,
     posterAlt:
       "Grailed listing with Grailed Plus pricing insights and market comparison",
     posterAspectRatio: 1.75,
@@ -108,6 +114,8 @@ const projectCatalogDefinition = [
     technologies: ["HTML", "CSS", "JavaScript", "WebGL"],
     liveHref: PROJECT_ROUTES.nepobabiesLive,
     posterSrc: "/projects/posters/nepobabies.webp",
+    posterWidth: 1440,
+    posterHeight: 812,
     posterAlt: "Experimental nepobabiesruntheunderground website composition",
     posterAspectRatio: 1.77,
     previewKind: "html",
@@ -138,6 +146,8 @@ const projectCatalogDefinition = [
     technologies: ["Next.js", "TypeScript", "Tailwind CSS"],
     liveHref: PROJECT_ROUTES.bur1alritesLive,
     posterSrc: "/projects/posters/bur1alrites.png",
+    posterWidth: 1500,
+    posterHeight: 1000,
     posterAlt: "BUR1ALRITES title over a grainy black moving-image scene",
     posterAspectRatio: 1.5,
     previewKind: "html",
@@ -164,6 +174,8 @@ const projectCatalogDefinition = [
     liveHref: PROJECT_ROUTES.elliotMairetLive,
     sourceHref: PROJECT_ROUTES.elliotMairetGithub,
     posterSrc: "/projects/posters/elliot-mairet.png",
+    posterWidth: 2160,
+    posterHeight: 1350,
     posterAlt:
       "Black-and-white Elliot Mairet photograph of people gathered beneath fabric",
     posterAspectRatio: 1.625,
@@ -190,7 +202,8 @@ const projectOrder: readonly string[] = [
 ];
 
 export const projectCatalog = [...projectCatalogDefinition].sort(
-  (left, right) => projectOrder.indexOf(left.id) - projectOrder.indexOf(right.id),
+  (left, right) =>
+    projectOrder.indexOf(left.id) - projectOrder.indexOf(right.id),
 ) as readonly ProjectDefinition[] & ReadonlyArray<{ id: ProjectId }>;
 
 export function getProject(projectId: ProjectId) {
@@ -212,4 +225,13 @@ export function getAdjacentProjects(projectId: ProjectId) {
   const next = projectCatalog[(index + 1) % projectCatalog.length];
 
   return { previous, next };
+}
+
+export function getProjectHref(project: ProjectDefinition) {
+  return (
+    project.caseStudyHref ??
+    project.liveHref ??
+    project.experienceHref ??
+    PROJECT_ROUTES.portfolioProjects
+  );
 }

@@ -8,7 +8,9 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "@/app/components/theme/theme-provider";
 import SmoothScrollProvider from "@/app/components/ui/smooth-scroll-provider";
-import { SITE_ORIGIN } from "@/lib/site-config";
+import StructuredData from "@/app/components/structured-data";
+import { createSiteStructuredData, PUBLIC_PAGES } from "@/lib/seo";
+import { SITE_ORIGIN, SITE_PROFILE } from "@/lib/site-config";
 import { getThemeInitScript } from "@/lib/theme";
 
 const redHatText = localFont({
@@ -62,9 +64,10 @@ const instrumentSerif = Instrument_Serif({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_ORIGIN),
-  title: "Dexter Young",
-  description:
-    "Showcase of programming and multimedia projects by Dexter Young",
+  title: PUBLIC_PAGES.portfolio.title,
+  description: SITE_PROFILE.description,
+  authors: [{ name: SITE_PROFILE.name, url: SITE_ORIGIN }],
+  robots: { googleBot: { "max-image-preview": "large" } },
 };
 
 export default function RootLayout({
@@ -79,6 +82,7 @@ export default function RootLayout({
       className={`${redHatText.variable} ${redHatDisplay.variable} ${newsreader.variable} ${instrumentSerif.variable}`}
     >
       <body className="bg-canvas font-sans text-ink">
+        <StructuredData data={createSiteStructuredData()} />
         <Script id="theme-preference" strategy="beforeInteractive">
           {getThemeInitScript()}
         </Script>

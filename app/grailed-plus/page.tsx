@@ -1,9 +1,12 @@
-import type { Metadata } from "next";
 import Script from "next/script";
 
-import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import GrailedPlusInstallPage from "@/app/components/projects/grailed-plus/grailed-plus-install-page";
-import { SITE_ORIGIN } from "@/lib/site-config";
+import StructuredData from "@/app/components/structured-data";
+import {
+  createPageMetadata,
+  createPageStructuredData,
+  PUBLIC_PAGES,
+} from "@/lib/seo";
 
 const DEFAULT_GOOGLE_ADS_ID = "AW-18008800880";
 const DEFAULT_GOOGLE_ADS_GRAILED_PLUS_INSTALL_LABEL = "96j6CPOdxIwcEPD8oYtD";
@@ -47,15 +50,7 @@ const grailedPlusDemoOrigin = normalizeDemoOrigin(
   process.env.NEXT_PUBLIC_GRAILED_PLUS_DEMO_ORIGIN,
 );
 
-export const metadata: Metadata = {
-  title:
-    "Grailed Plus — Price Insights, Market Compare, Currency, and Dark Mode",
-  description:
-    "Explore live Grailed Plus demos for price insights, market comparison, custom currency conversion, seller context, and dark mode.",
-  alternates: {
-    canonical: `${SITE_ORIGIN}${PROJECT_ROUTES.grailedPlus}`,
-  },
-};
+export const metadata = createPageMetadata(PUBLIC_PAGES.grailedPlus);
 
 type GrailedPlusPageProps = {
   searchParams: Promise<{
@@ -69,6 +64,9 @@ export default async function Page({ searchParams }: GrailedPlusPageProps) {
 
   return (
     <>
+      <StructuredData
+        data={createPageStructuredData(PUBLIC_PAGES.grailedPlus)}
+      />
       <link rel="preconnect" href={grailedPlusDemoOrigin} />
       {googleAdsId ? (
         <>

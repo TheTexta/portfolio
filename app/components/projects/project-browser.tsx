@@ -22,6 +22,7 @@ import { flushSync } from "react-dom";
 import {
   getAdjacentProjects,
   getProject,
+  getProjectHref,
   projectCatalog,
   type ProjectDefinition,
   type ProjectId,
@@ -165,11 +166,12 @@ function ProjectCard({
           />
         </button>
 
-        <motion.div
+        <motion.a
+          href={getProjectHref(project)}
           role="button"
           tabIndex={infoVisible ? 0 : -1}
           className={cn(
-            "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 max-h-full cursor-pointer overflow-hidden bg-canvas text-ink opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
+            "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 block max-h-full cursor-pointer overflow-hidden bg-canvas text-ink no-underline opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
             infoVisible &&
               "project-mini-view-info--visible pointer-events-auto",
           )}
@@ -180,6 +182,16 @@ function ProjectCard({
           transition={infoTransition}
           aria-label={`View ${project.title} details`}
           onClick={(event) => {
+            if (
+              event.metaKey ||
+              event.ctrlKey ||
+              event.shiftKey ||
+              event.altKey
+            ) {
+              return;
+            }
+
+            event.preventDefault();
             event.stopPropagation();
             onFocusProject(project.id, cardKey);
           }}
@@ -218,7 +230,7 @@ function ProjectCard({
               </p>
             </div>
           </div>
-        </motion.div>
+        </motion.a>
       </div>
     </motion.article>
   );
@@ -326,8 +338,9 @@ function MobileProjectTable({
                 >
                   <AnimatedHorizontalRule edge="top" />
                   <div className="min-h-0 overflow-hidden p-4">
-                    <button
-                      type="button"
+                    <a
+                      href={getProjectHref(project)}
+                      role="button"
                       data-project-trigger
                       className="relative block aspect-[var(--aspect)] w-full overflow-hidden border border-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
                       style={
@@ -340,7 +353,25 @@ function MobileProjectTable({
                         } as React.CSSProperties
                       }
                       aria-label={`Open ${project.title} focus view`}
-                      onClick={() => onFocusProject(project.id, cardKey)}
+                      onClick={(event) => {
+                        if (
+                          event.metaKey ||
+                          event.ctrlKey ||
+                          event.shiftKey ||
+                          event.altKey
+                        ) {
+                          return;
+                        }
+
+                        event.preventDefault();
+                        onFocusProject(project.id, cardKey);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === " ") {
+                          event.preventDefault();
+                          onFocusProject(project.id, cardKey);
+                        }
+                      }}
                     >
                       <Image
                         src={project.posterSrc}
@@ -349,7 +380,7 @@ function MobileProjectTable({
                         sizes="calc(100vw - 1rem)"
                         className="object-cover"
                       />
-                    </button>
+                    </a>
                   </div>
                 </motion.div>
               ) : null}

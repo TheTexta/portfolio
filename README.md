@@ -21,6 +21,27 @@
 Run `npm run check` before opening a pull request. It runs lint, TypeScript,
 and formatting checks in that order.
 
+## Search metadata
+
+`lib/site-config.ts` holds the portfolio identity and official profile links.
+`lib/seo.ts` defines metadata for the three indexable public pages, their preview
+images, and their content-update dates. Update a page's `lastModified` date after
+significant changes to its content, links, or structured data; sitemap generation
+does not change these dates automatically.
+
+Project imagery and dimensions come from the shared project catalog. Public pages
+include Open Graph and Twitter previews, JSON-LD, and permission for large Google
+image previews. `/sitemap.xml` lists the existing project posters on the portfolio.
+Existing project cards expose permanent links while retaining the interactive
+browser. Existing experience routes retain their indexing restrictions.
+
+After deployment, submit `/sitemap.xml` in Google Search Console and use URL
+Inspection to check the public pages and request a recrawl. Search appearance and
+indexing remain Google's decision. The existing `/` to `/portfolio` redirect is
+preserved; Google's site-name documentation specifies domain-root placement for
+`WebSite` markup, so site-name eligibility should be checked against that routing
+if the homepage is moved in a future change.
+
 ## Embedded project previews
 
 The project browser embeds the Grailed Plus page and three separately hosted
