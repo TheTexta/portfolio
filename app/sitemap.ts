@@ -10,6 +10,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     images:
       page.path === PUBLIC_PAGES.portfolio.path
         ? projectCatalog.map((project) => absoluteUrl(project.posterSrc))
-        : undefined,
+        : [absoluteUrl(page.image.posterSrc)],
   }));
 }

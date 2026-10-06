@@ -12,7 +12,9 @@ import {
 import { ControlAnchor, ControlButton } from "@/app/components/ui/control";
 
 import {
+  photoGraphControlRowClass,
   photoGraphControlTextClass,
+  photoGraphIconControlClass,
   photoGraphModalClass,
   PHOTO_GRAPH_INSPECT_TRANSITION_MS,
 } from "./config";
@@ -224,7 +226,7 @@ export default function PhotoGraphInspectOverlay({
           requestClose();
         }
       }}
-      className={`m-auto h-[min(75dvh,48rem)] max-h-none w-[min(75dvw,68rem)] max-w-none overflow-hidden border border-ink p-0 transition-opacity duration-200 backdrop:bg-canvas/[0.78] motion-reduce:transition-none max-md:m-0 max-md:h-dvh max-md:w-dvw max-md:border-0! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:m-0 [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:h-dvh [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:w-dvw [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:border-0! ${photoGraphModalClass} ${
+      className={`m-auto h-[min(75dvh,48rem)] max-h-none w-[min(75dvw,68rem)] max-w-none overflow-hidden border border-ink p-0 transition-opacity duration-200 backdrop:bg-canvas/[0.78] motion-reduce:transition-none max-md:m-0 max-md:h-dvh max-md:w-dvw [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:m-0 [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:h-dvh [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:w-dvw ${photoGraphModalClass} ${
         inspectOverlayOpen ? "opacity-100" : "opacity-0"
       }`}
     >
@@ -232,14 +234,16 @@ export default function PhotoGraphInspectOverlay({
         className="flex size-full min-h-0 flex-col"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex min-h-8 w-full shrink-0 items-stretch justify-between border-b border-ink max-md:min-h-[calc(2.75rem+env(safe-area-inset-top))]! max-md:pt-[env(safe-area-inset-top)] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-[calc(2.75rem+env(safe-area-inset-top))]! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:pt-[env(safe-area-inset-top)]">
+        <div
+          className={`flex w-full shrink-0 items-stretch justify-between border-b border-ink pt-[env(safe-area-inset-top)] ${photoGraphControlRowClass}`}
+        >
           <ControlButton
-            className="size-8 shrink-0 border-y-0 border-l-0 max-md:min-h-11! max-md:min-w-11! [@media(hover:none)]:min-h-11! [@media(hover:none)]:min-w-11! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-11! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-w-11! [@media(pointer:coarse)]:min-h-11! [@media(pointer:coarse)]:min-w-11!"
+            className={`shrink-0 border-y-0 border-l-0 focus-visible:-outline-offset-2 ${photoGraphIconControlClass}`}
             size="sm"
             aria-label="Close inspect overlay"
             onClick={requestClose}
           >
-            <X />
+            <X aria-hidden />
           </ControlButton>
 
           <div
@@ -282,13 +286,15 @@ export default function PhotoGraphInspectOverlay({
           />
         </div>
 
-        <div className="flex min-h-8 w-full shrink-0 justify-end border-t border-ink max-md:min-h-[calc(2.75rem+env(safe-area-inset-bottom))]! max-md:pb-[env(safe-area-inset-bottom)] [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-[calc(2.75rem+env(safe-area-inset-bottom))]! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:pb-[env(safe-area-inset-bottom)]">
+        <div
+          className={`flex w-full shrink-0 justify-end border-t border-ink pb-[env(safe-area-inset-bottom)] ${photoGraphControlRowClass}`}
+        >
           <ControlAnchor
             href={inspectMetadata?.downloadUrl ?? undefined}
             download={inspectMetadata?.filename}
             layout="action"
-            size="sm"
-            className={`min-h-8 shrink-0 gap-1 border-y-0 border-r-0 max-md:min-h-11! max-md:min-w-11! [@media(hover:none)]:min-h-11! [@media(hover:none)]:min-w-11! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-11! [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-w-11! [@media(pointer:coarse)]:min-h-11! [@media(pointer:coarse)]:min-w-11! ${
+            size="md"
+            className={`shrink-0 gap-1 border-y-0 border-r-0 text-xs focus-visible:-outline-offset-2 ${photoGraphControlRowClass} ${
               inspectMetadata?.downloadUrl
                 ? ""
                 : "pointer-events-none opacity-50"
@@ -296,7 +302,7 @@ export default function PhotoGraphInspectOverlay({
             aria-disabled={!inspectMetadata?.downloadUrl}
           >
             Download Original
-            <Download className="size-4" />
+            <Download aria-hidden className="size-4" />
           </ControlAnchor>
         </div>
       </div>

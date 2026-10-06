@@ -2,15 +2,9 @@ import type { MetadataRoute } from "next";
 
 import { SITE_ORIGIN } from "@/lib/site-config";
 
-const DISALLOWED_PATHS = [
-  "/api/",
-  "/admin",
-  "/auth/spotify/callback",
-  "/grailed-plus/experience",
-  "/projects/photo-graph/experience",
-  "/projects/spotify-nodify/experience",
-  "/components/projects/nepobabiesruntheunderground/preview",
-];
+// Public noindex pages must remain crawlable so crawlers can read their metadata.
+// Legacy URLs also remain crawlable so their redirects or 404s can be discovered.
+const DISALLOWED_PATHS = ["/api/", "/admin"];
 
 export default function robots(): MetadataRoute.Robots {
   return {

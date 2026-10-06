@@ -31,13 +31,50 @@ does not change these dates automatically.
 
 Project imagery and dimensions come from the shared project catalog. Public pages
 include Open Graph and Twitter previews, JSON-LD, and permission for large Google
-image previews. `/sitemap.xml` lists the existing project posters on the portfolio.
+image previews. `/sitemap.xml` lists all project posters on the portfolio and each
+project page's own poster on its entry.
 Existing project cards expose permanent links while retaining the interactive
-browser. Existing experience routes retain their indexing restrictions.
+browser. Public experience routes are crawlable but retain `noindex, nofollow`
+metadata so Google can read their indexing restrictions. Admin and API paths
+remain blocked in robots.txt. Legacy public URLs remain crawlable so Google can
+observe their permanent redirects or 404 responses.
+
+With a local production server running, validate the HTTP indexing signals:
+
+```bash
+npm run build
+npm run start
+# Run in a second terminal; defaults to http://localhost:3000:
+npm run seo:validate
+# Check the deployed application after deployment:
+npm run seo:validate -- --base-url https://dextery.dev
+```
+
+The validator only makes GET requests and exits nonzero on failures. It checks
+ordinary and Googlebot user agents, public-page status, titles, descriptions,
+canonical URLs, server-rendered content and portfolio links, sitemap URLs/images
+and content dates, crawl rules, experience-page noindex metadata, legacy
+redirects, and the removed preview's 404. Local pages still declare production
+canonical URLs. These smoke checks do not prove that Google can access or index
+the site, and do not modify Search Console or hosting settings.
+
+Vercel's project domain settings explicitly redirect `www.dextery.dev` permanently
+to `dextery.dev` with HTTP 308, replacing the automatic temporary 307 redirect.
+When changing domain settings, verify the redirect preserves both path and query,
+for example `https://www.dextery.dev/grailed-plus?view=hero` should point to
+`https://dextery.dev/grailed-plus?view=hero`. HTTP requests should also redirect
+permanently to HTTPS. Hosting changes are separate from the repository changes.
 
 After deployment, submit `/sitemap.xml` in Google Search Console and use URL
-Inspection to check the public pages and request a recrawl. Search appearance and
-indexing remain Google's decision. The existing `/` to `/portfolio` redirect is
+Inspection to check `/portfolio`, `/projects/photo-graph`, and `/grailed-plus`,
+confirm their Google-selected canonicals and rendered content, and request
+indexing. Inspect the affected URLs behind any duplicate, unauthorized (401), or
+crawled-but-unindexed entries before deciding whether further fixes are needed;
+redirect sources and protected endpoints may be intentional exclusions. The
+October 6, 2026 coverage export contains aggregate counts without affected URLs,
+and its chart ends on September 20, so it cannot identify current URL-level
+problems. Search appearance and indexing remain Google's decision. The existing
+`/` to `/portfolio` redirect is
 preserved; Google's site-name documentation specifies domain-root placement for
 `WebSite` markup, so site-name eligibility should be checked against that routing
 if the homepage is moved in a future change.

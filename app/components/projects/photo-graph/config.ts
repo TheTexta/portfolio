@@ -42,6 +42,10 @@ export const photoGraphControlsPositionClass =
   "absolute top-2 left-2 z-[5] flex max-h-[calc(100%-1rem)] flex-col overflow-y-auto";
 export const photoGraphControlTextClass =
   "m-0 p-0 text-sm md:text-xs font-medium tracking-[0.04em]";
+export const photoGraphIconControlClass =
+  "max-md:size-11 [@media(hover:none)]:size-11 [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:size-11 [@media(pointer:coarse)]:size-11";
+export const photoGraphControlRowClass =
+  "min-h-8 max-md:min-h-11 [@media(hover:none)]:min-h-11 [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:min-h-11 [@media(pointer:coarse)]:min-h-11";
 export const photoGraphShellClass = "bg-canvas text-ink";
 export const photoGraphPanelClass = "border-ink bg-canvas text-ink";
 export const photoGraphModalClass = "bg-canvas text-ink";

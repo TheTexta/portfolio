@@ -32,6 +32,7 @@ import {
   PHOTO_GRAPH_INSPECT_PREVIEW_QUALITY,
   PHOTO_GRAPH_INSPECT_PREVIEW_WIDTH,
   PHOTO_GRAPH_VISIBLE_SETTLE_TICKS,
+  photoGraphControlRowClass,
   photoGraphShellClass,
 } from "./config";
 import type {
@@ -566,6 +567,7 @@ export default function PhotoGraphCanvas({
               isFullPageRoute ? undefined : PROJECT_ROUTES.photoGraphExperience
             }
             ariaLabel="Photo graph controls"
+            className="[&>*]:size-8 [&>*]:min-h-8"
           />
         )}
 
@@ -628,7 +630,12 @@ export default function PhotoGraphCanvas({
                   {loadStatus === "error" && "Photo graph unavailable"}
                 </p>
                 {loadStatus === "error" && (
-                  <ControlButton layout="action" size="sm" onClick={retry}>
+                  <ControlButton
+                    layout="action"
+                    size="md"
+                    className={photoGraphControlRowClass}
+                    onClick={retry}
+                  >
                     Try again
                   </ControlButton>
                 )}

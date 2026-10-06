@@ -1,3 +1,5 @@
+import { cn } from "@/lib/cn";
+
 import type { GraphControls, GraphSliderConfig } from "./types";
 
 type GraphSliderFieldProps = {
@@ -6,6 +8,7 @@ type GraphSliderFieldProps = {
   idPrefix: string;
   onChange: (key: GraphSliderConfig["key"], value: number) => void;
   compact?: boolean;
+  inputClassName?: string;
 };
 
 export default function GraphSliderField({
@@ -14,6 +17,7 @@ export default function GraphSliderField({
   idPrefix,
   onChange,
   compact = false,
+  inputClassName,
 }: GraphSliderFieldProps) {
   const { key, label, min, max, scale = 1, formatValue } = config;
   const inputId = `${idPrefix}-${key}`;
@@ -39,7 +43,10 @@ export default function GraphSliderField({
         onChange={(event) => onChange(key, Number(event.target.value) * scale)}
         aria-describedby={valueId}
         aria-valuetext={valueText}
-        className="range-sm h-2 w-full border-none bg-surface accent-ink"
+        className={cn(
+          "range-sm h-2 w-full border-none bg-surface accent-ink",
+          inputClassName,
+        )}
       />
     </div>
   );
