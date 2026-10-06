@@ -6,7 +6,10 @@ import {
   regenerateLabGraphCorrelations,
 } from "../../lib/photo-graph/edge-generation";
 import { normalizeSparseEdgeGenerationConfig } from "../../lib/photo-graph/sparse-edge-generation";
-import type { GraphNode, PhotoGraphEdgeGenerationConfig } from "../../lib/photo-graph/types";
+import type {
+  GraphNode,
+  PhotoGraphEdgeGenerationConfig,
+} from "../../lib/photo-graph/types";
 
 function createFixtureNodes(): GraphNode[] {
   return [
@@ -63,7 +66,11 @@ function createFixtureNodes(): GraphNode[] {
 
 function assertSymmetry(nodes: GraphNode[]) {
   for (const node of nodes) {
-    assert.equal(node.correlations[node.id], undefined, "self-edges are invalid");
+    assert.equal(
+      node.correlations[node.id],
+      undefined,
+      "self-edges are invalid",
+    );
 
     for (const [targetId, correlation] of Object.entries(node.correlations)) {
       const target = nodes.find((entry) => entry.id === targetId);

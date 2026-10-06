@@ -40,7 +40,8 @@ export type LabEdgeGenerationParams = {
   minCorrelation: number;
 };
 
-export type PhotoGraphEdgeGenerationConfig = PhotoGraphSparseEdgeGenerationConfig;
+export type PhotoGraphEdgeGenerationConfig =
+  PhotoGraphSparseEdgeGenerationConfig;
 
 export type PhotoGraphNeighborRow = {
   source_node_id: number;

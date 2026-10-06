@@ -20,12 +20,12 @@ const SCHEMA_PATH = path.join(
 function resolveRemoteCommand() {
   const script = [
     "set -euo pipefail",
-    "container=$(docker ps --format \"{{.Names}}\" | grep \"^supabase-db-\" | head -n 1)",
-    "if [ -z \"$container\" ]; then echo \"Missing supabase-db container.\" >&2; exit 1; fi",
-    "db_user=$(docker exec \"$container\" env | grep \"^POSTGRES_USER=\" | cut -d= -f2-)",
-    "db_name=$(docker exec \"$container\" env | grep \"^POSTGRES_DB=\" | cut -d= -f2-)",
-    "db_pass=$(docker exec \"$container\" env | grep \"^POSTGRES_PASSWORD=\" | cut -d= -f2-)",
-    "docker exec -e PGPASSWORD=\"$db_pass\" -i \"$container\" psql -v ON_ERROR_STOP=1 -h localhost -U \"$db_user\" -d \"$db_name\"",
+    'container=$(docker ps --format "{{.Names}}" | grep "^supabase-db-" | head -n 1)',
+    'if [ -z "$container" ]; then echo "Missing supabase-db container." >&2; exit 1; fi',
+    'db_user=$(docker exec "$container" env | grep "^POSTGRES_USER=" | cut -d= -f2-)',
+    'db_name=$(docker exec "$container" env | grep "^POSTGRES_DB=" | cut -d= -f2-)',
+    'db_pass=$(docker exec "$container" env | grep "^POSTGRES_PASSWORD=" | cut -d= -f2-)',
+    'docker exec -e PGPASSWORD="$db_pass" -i "$container" psql -v ON_ERROR_STOP=1 -h localhost -U "$db_user" -d "$db_name"',
   ].join("; ");
 
   return `bash -lc '${script}'`;
@@ -45,10 +45,7 @@ function resolveRemoteSshInvocation(remoteServer: RemoteServerConfig) {
       args.push("-hostkey", remoteServer.hostKey);
     }
 
-    args.push(
-      `${remoteServer.username}@${remoteServer.host}`,
-      remoteCommand,
-    );
+    args.push(`${remoteServer.username}@${remoteServer.host}`, remoteCommand);
 
     return {
       command: "plink.exe",
@@ -86,7 +83,10 @@ async function applySchemaDirect(sql: string) {
   }
 }
 
-async function applySchemaOverSsh(sql: string, remoteServer: RemoteServerConfig) {
+async function applySchemaOverSsh(
+  sql: string,
+  remoteServer: RemoteServerConfig,
+) {
   const { command, args } = resolveRemoteSshInvocation(remoteServer);
 
   await new Promise<void>((resolve, reject) => {

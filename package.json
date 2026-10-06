@@ -27,7 +27,6 @@
     "photo-graph:activate-ciede2000": "tsx scripts/photo-graph/activate-ciede2000.ts"
   },
   "dependencies": {
-    "@spotify/web-api-ts-sdk": "^1.2.0",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.100.1",
     "@vercel/analytics": "^1.6.1",

@@ -64,9 +64,8 @@ function getInitialThemeState() {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [{ darkMode, preference }, setThemeState] = useState(
-    getInitialThemeState,
-  );
+  const [{ darkMode, preference }, setThemeState] =
+    useState(getInitialThemeState);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(THEME_MEDIA_QUERY);

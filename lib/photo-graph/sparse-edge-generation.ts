@@ -7,12 +7,13 @@ import type {
   PhotoGraphSparseEdgeGenerationConfig,
 } from "@/lib/photo-graph/types";
 
-export const CIEDE2000_EDGE_GENERATION_CONFIG: PhotoGraphSparseEdgeGenerationConfig = {
-  version: 2,
-  model: "mean-lab-ciede2000",
-  neighborsPerNode: 4,
-  maxDistance: 16,
-};
+export const CIEDE2000_EDGE_GENERATION_CONFIG: PhotoGraphSparseEdgeGenerationConfig =
+  {
+    version: 2,
+    model: "mean-lab-ciede2000",
+    neighborsPerNode: 4,
+    maxDistance: 16,
+  };
 
 export const DEFAULT_SPARSE_EDGE_GENERATION_CONFIG =
   CIEDE2000_EDGE_GENERATION_CONFIG;
@@ -41,7 +42,9 @@ function finiteNumber(value: unknown) {
   return Number.NaN;
 }
 
-function isModel(value: unknown): value is PhotoGraphSparseEdgeGenerationConfig["model"] {
+function isModel(
+  value: unknown,
+): value is PhotoGraphSparseEdgeGenerationConfig["model"] {
   return PHOTO_GRAPH_SIMILARITY_MODELS.some((model) => model.id === value);
 }
 
@@ -71,9 +74,11 @@ export function normalizeSparseEdgeGenerationConfig(
         ? clamp(
             maxDistance,
             SPARSE_EDGE_GENERATION_LIMITS.maxDistance.min,
-            model?.maxDistanceLimit ?? SPARSE_EDGE_GENERATION_LIMITS.maxDistance.max,
+            model?.maxDistanceLimit ??
+              SPARSE_EDGE_GENERATION_LIMITS.maxDistance.max,
           )
-        : model?.defaultMaxDistance ?? DEFAULT_SPARSE_EDGE_GENERATION_CONFIG.maxDistance,
+        : (model?.defaultMaxDistance ??
+          DEFAULT_SPARSE_EDGE_GENERATION_CONFIG.maxDistance),
     };
   }
 
@@ -114,7 +119,8 @@ export function parseSparseEdgeGenerationConfig(
     neighborsPerNode > SPARSE_EDGE_GENERATION_LIMITS.neighborsPerNode.max ||
     !Number.isFinite(maxDistance) ||
     maxDistance < SPARSE_EDGE_GENERATION_LIMITS.maxDistance.min ||
-    maxDistance > (model?.maxDistanceLimit ?? SPARSE_EDGE_GENERATION_LIMITS.maxDistance.max)
+    maxDistance >
+      (model?.maxDistanceLimit ?? SPARSE_EDGE_GENERATION_LIMITS.maxDistance.max)
   ) {
     return null;
   }
@@ -197,20 +203,18 @@ function rankCandidates(
         compareNodeIds(left.targetId, right.targetId),
     )
     .slice(0, config.neighborsPerNode)
-    .map(
-      (candidate, index): RankedPhotoGraphNeighbor => ({
-        sourceId,
-        targetId: candidate.targetId,
-        model: config.model,
-        feature_version: 1,
-        distance: candidate.distance,
-        correlation: correlationFromDistance(
-          candidate.distance,
-          config.maxDistance,
-        ),
-        rank: index + 1,
-      }),
-    );
+    .map((candidate, index): RankedPhotoGraphNeighbor => ({
+      sourceId,
+      targetId: candidate.targetId,
+      model: config.model,
+      feature_version: 1,
+      distance: candidate.distance,
+      correlation: correlationFromDistance(
+        candidate.distance,
+        config.maxDistance,
+      ),
+      rank: index + 1,
+    }));
 }
 
 export function applyRankedNeighborsToGraph(
@@ -254,7 +258,11 @@ export function generateSparsePhotoGraph(
     if (!left.feature) {
       continue;
     }
-    for (let rightIndex = leftIndex + 1; rightIndex < nodes.length; rightIndex += 1) {
+    for (
+      let rightIndex = leftIndex + 1;
+      rightIndex < nodes.length;
+      rightIndex += 1
+    ) {
       const right = nodes[rightIndex];
       if (!right.feature) {
         continue;

@@ -37,9 +37,9 @@ function readString(value: unknown, maxLength = 240) {
 }
 
 export async function POST(request: Request) {
-  const body = (await request.json().catch(() => null)) as
-    | RedirectTrackingRequest
-    | null;
+  const body = (await request
+    .json()
+    .catch(() => null)) as RedirectTrackingRequest | null;
 
   const properties = Object.fromEntries(
     TRACKABLE_STRING_KEYS.flatMap((key) => {

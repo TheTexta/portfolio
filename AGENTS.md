@@ -16,18 +16,18 @@ The site presents software, creative technology, photography, design, and other 
 
 The application uses:
 
-* Next.js App Router
-* React
-* TypeScript
-* Tailwind CSS v4
-* Framer Motion
-* D3.js
-* `react-force-graph-2d`
-* Supabase Postgres and Storage
-* Spotify Web API
-* Sharp
-* Vercel Analytics and Speed Insights
-* Vercel for frontend hosting
+- Next.js App Router
+- React
+- TypeScript
+- Tailwind CSS v4
+- Framer Motion
+- D3.js
+- `react-force-graph-2d`
+- Supabase Postgres and Storage
+- Spotify Web API
+- Sharp
+- Vercel Analytics and Speed Insights
+- Vercel for frontend hosting
 
 The Supabase backend is self-hosted through Coolify.
 
@@ -67,13 +67,13 @@ Be deliberate about Server Component and Client Component boundaries. Do not add
 
 Preserve existing:
 
-* redirects
-* metadata
-* canonical behavior
-* sitemap generation
-* robots behavior
-* security headers
-* remote image configuration
+- redirects
+- metadata
+- canonical behavior
+- sitemap generation
+- robots behavior
+- security headers
+- remote image configuration
 
 when changing routing or site structure.
 
@@ -83,13 +83,13 @@ The design direction is intentional and should remain consistent across the port
 
 The core aesthetic is:
 
-* monochrome
-* editorial
-* restrained
-* sharp
-* functional
-* authentic
-* unpretentious
+- monochrome
+- editorial
+- restrained
+- sharp
+- functional
+- authentic
+- unpretentious
 
 The interface uses dense uppercase metadata, fluid display typography, thin rules, compact spacing, solid surfaces, and project media as the primary source of color.
 
@@ -97,15 +97,15 @@ All first-party frames, cards, panels, buttons, form controls, navigation elemen
 
 Do not introduce:
 
-* rounded cards or containers
-* pill-shaped UI
-* glassmorphism
-* backdrop blur as decoration
-* decorative gradients
-* drop shadows
-* unnecessary bright accent colors
-* generic dashboard aesthetics
-* ornamental UI that competes with project content
+- rounded cards or containers
+- pill-shaped UI
+- glassmorphism
+- backdrop blur as decoration
+- decorative gradients
+- drop shadows
+- unnecessary bright accent colors
+- generic dashboard aesthetics
+- ornamental UI that competes with project content
 
 Circles should only be used where the existing design system intentionally calls for them, such as native controls, specific interaction handles, or external/avatar imagery.
 
@@ -143,13 +143,13 @@ The primary Photo Graph schema is defined in:
 
 The graph currently includes data structures for:
 
-* nodes
-* edges
-* generated nearest-neighbor relationships
-* color features
-* image dimensions
-* model/version metadata
-* graph settings
+- nodes
+- edges
+- generated nearest-neighbor relationships
+- color features
+- image dimensions
+- model/version metadata
+- graph settings
 
 Photo Graph database functions and service-role-only operations are part of the data pipeline. Do not weaken their authorization or expose privileged operations to browser code.
 
@@ -163,22 +163,22 @@ Photo Graph is both an interactive user-facing feature and a data-processing pip
 
 Relevant application and domain logic lives primarily under:
 
-* `lib/photo-graph/`
-* `app/admin/photo-graph/`
-* `scripts/photo-graph/`
-* `supabase/photo-graph-schema.sql`
+- `lib/photo-graph/`
+- `app/admin/photo-graph/`
+- `scripts/photo-graph/`
+- `supabase/photo-graph-schema.sql`
 
 Do not treat generated graph relationships, color features, storage paths, image dimensions, or model/version metadata as arbitrary data.
 
 Preserve compatibility between:
 
-* database schema
-* graph-generation scripts
-* runtime graph loading
-* admin functionality
-* image storage
-* color-feature extraction
-* edge/neighbor generation
+- database schema
+- graph-generation scripts
+- runtime graph loading
+- admin functionality
+- image storage
+- color-feature extraction
+- edge/neighbor generation
 
 when changing any one of these areas.
 
@@ -212,10 +212,10 @@ Do not run mutating Photo Graph commands against production merely as a diagnost
 
 Before running one, confirm:
 
-* the requested task actually requires it
-* the target Supabase project is correct
-* the database connection points to the intended instance
-* the operation will not unintentionally overwrite or destroy existing data
+- the requested task actually requires it
+- the target Supabase project is correct
+- the database connection points to the intended instance
+- the operation will not unintentionally overwrite or destroy existing data
 
 Do not perform migration, storage-renaming, mass-backfill, schema-application, or model-activation operations unless required by the task.
 
@@ -227,11 +227,11 @@ Photo Graph supports versioned image/color feature models and generated neighbor
 
 When modifying similarity or color-processing logic:
 
-* preserve explicit model/version information
-* do not silently reinterpret existing persisted features using a new algorithm
-* regenerate dependent neighbor data when required by a model change
-* keep persisted data and runtime assumptions in sync
-* use the existing validation and benchmark tooling rather than relying only on visual inspection
+- preserve explicit model/version information
+- do not silently reinterpret existing persisted features using a new algorithm
+- regenerate dependent neighbor data when required by a model change
+- keep persisted data and runtime assumptions in sync
+- use the existing validation and benchmark tooling rather than relying only on visual inspection
 
 Relevant commands include:
 
@@ -267,9 +267,9 @@ The cache uses persistent storage and is expected to survive container replaceme
 
 When modifying the image-cache deployment, preserve the distinction between:
 
-* raw Storage objects
-* transformed image requests
-* non-image Supabase traffic
+- raw Storage objects
+- transformed image requests
+- non-image Supabase traffic
 
 Use:
 
@@ -352,17 +352,17 @@ npm run build
 
 when changes could affect:
 
-* production builds
-* routing
-* metadata or SEO
-* server/client boundaries
-* API routes
-* authentication
-* environment variables
-* Supabase integration
-* Next.js configuration
-* image configuration
-* deployment behavior
+- production builds
+- routing
+- metadata or SEO
+- server/client boundaries
+- API routes
+- authentication
+- environment variables
+- Supabase integration
+- Next.js configuration
+- image configuration
+- deployment behavior
 
 Use the Photo Graph-specific validation commands when modifying the corresponding pipeline.
 
@@ -388,12 +388,12 @@ Infrastructure configuration stored under `deploy/` should be treated as product
 
 For changes involving Docker, NGINX, Traefik, Coolify, Supabase networking, or cache volumes:
 
-* inspect the existing configuration before editing it
-* preserve unrelated services
-* avoid destructive Docker operations
-* do not delete persistent volumes unless explicitly requested
-* keep environment-specific values out of committed files where appropriate
-* update documentation when operational behavior changes
+- inspect the existing configuration before editing it
+- preserve unrelated services
+- avoid destructive Docker operations
+- do not delete persistent volumes unless explicitly requested
+- keep environment-specific values out of committed files where appropriate
+- update documentation when operational behavior changes
 
 Changes to the standalone image cache should not require modifying unrelated Supabase services.
 
@@ -401,14 +401,14 @@ Changes to the standalone image cache should not require modifying unrelated Sup
 
 Do not commit:
 
-* `.env` files containing secrets
-* access tokens
-* refresh tokens
-* API secrets
-* Supabase service-role keys
-* database passwords
-* SSH credentials
-* private keys
+- `.env` files containing secrets
+- access tokens
+- refresh tokens
+- API secrets
+- Supabase service-role keys
+- database passwords
+- SSH credentials
+- private keys
 
 Browser-visible environment variables must contain only values intentionally safe to expose publicly.
 
@@ -420,17 +420,17 @@ Avoid weakening authentication, database authorization, Storage permissions, OAu
 
 Update `README.md` in the same change whenever a modification changes:
 
-* setup or development instructions
-* environment variables
-* Photo Graph architecture
-* database schema
-* Storage architecture
-* data migration procedures
-* admin workflows
-* image delivery or caching
-* infrastructure
-* deployment procedures
-* operational commands
+- setup or development instructions
+- environment variables
+- Photo Graph architecture
+- database schema
+- Storage architecture
+- data migration procedures
+- admin workflows
+- image delivery or caching
+- infrastructure
+- deployment procedures
+- operational commands
 
 Keep README instructions consistent with the actual implementation.
 

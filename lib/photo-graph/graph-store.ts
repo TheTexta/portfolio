@@ -1,9 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import {
-  hexToRgb,
-} from "@/lib/photo-graph/feature-extraction";
+import { hexToRgb } from "@/lib/photo-graph/feature-extraction";
 import { parsePhotoGraphColorFeatureV1 } from "@/lib/photo-graph/color-features";
 import {
   imagePathForLegacyId,

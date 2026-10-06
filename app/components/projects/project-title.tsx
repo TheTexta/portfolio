@@ -13,8 +13,7 @@ const projectTitleStyles = cva("font-display [font-synthesis:none]", {
       caseStudy: "text-[clamp(2.75rem,7vw,6.5rem)]",
     },
     treatment: {
-      bur1alrites:
-        "leading-[0.78] font-black tracking-[-0.085em] uppercase",
+      bur1alrites: "leading-[0.78] font-black tracking-[-0.085em] uppercase",
       grailed: "leading-[0.78] font-black tracking-[-0.065em]",
       "photo-graph":
         "font-editorial leading-[0.98] font-medium tracking-[-0.025em]",

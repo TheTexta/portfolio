@@ -53,11 +53,7 @@ function deltaE76(
   left: [number, number, number],
   right: [number, number, number],
 ) {
-  return Math.hypot(
-    left[0] - right[0],
-    left[1] - right[1],
-    left[2] - right[2],
-  );
+  return Math.hypot(left[0] - right[0], left[1] - right[1], left[2] - right[2]);
 }
 
 function degreesToRadians(value: number) {
@@ -126,14 +122,10 @@ export function deltaE2000(
       Math.sqrt(20 + (meanLightness - 50) ** 2);
   const chromaScale = 1 + 0.045 * meanAdjustedChroma;
   const hueScale = 1 + 0.015 * meanAdjustedChroma * t;
-  const rotationDegrees =
-    30 * Math.exp(-(((meanHue - 275) / 25) ** 2));
+  const rotationDegrees = 30 * Math.exp(-(((meanHue - 275) / 25) ** 2));
   const rotation =
     -2 *
-    Math.sqrt(
-      meanAdjustedChroma ** 7 /
-        (meanAdjustedChroma ** 7 + 25 ** 7),
-    ) *
+    Math.sqrt(meanAdjustedChroma ** 7 / (meanAdjustedChroma ** 7 + 25 ** 7)) *
     Math.sin(degreesToRadians(2 * rotationDegrees));
   const normalizedL = deltaL / lightnessScale;
   const normalizedChroma = deltaChroma / chromaScale;
@@ -170,7 +162,13 @@ type FlowEdge = {
   cost: number;
 };
 
-function addFlowEdge(graph: FlowEdge[][], from: number, to: number, capacity: number, cost: number) {
+function addFlowEdge(
+  graph: FlowEdge[][],
+  from: number,
+  to: number,
+  capacity: number,
+  cost: number,
+) {
   const forward: FlowEdge = {
     to,
     reverseIndex: graph[to].length,
@@ -223,7 +221,9 @@ export function paletteEarthMoverDistance(
   let totalFlow = 0;
 
   while (totalFlow < 1 - 1e-9) {
-    const distances = new Array<number>(graph.length).fill(Number.POSITIVE_INFINITY);
+    const distances = new Array<number>(graph.length).fill(
+      Number.POSITIVE_INFINITY,
+    );
     const previousNode = new Array<number>(graph.length).fill(-1);
     const previousEdge = new Array<number>(graph.length).fill(-1);
     distances[source] = 0;
@@ -234,7 +234,11 @@ export function paletteEarthMoverDistance(
         if (!Number.isFinite(distances[node])) {
           continue;
         }
-        for (let edgeIndex = 0; edgeIndex < graph[node].length; edgeIndex += 1) {
+        for (
+          let edgeIndex = 0;
+          edgeIndex < graph[node].length;
+          edgeIndex += 1
+        ) {
           const edge = graph[node][edgeIndex];
           if (edge.capacity <= 1e-12) {
             continue;

@@ -114,7 +114,7 @@ function ContactLinkRow({
           }}
           transition={contactTransition}
         />
-        <span className="relative z-10 tracking-[0.18em] text-xs sm:text-sm uppercase font-semibold">
+        <span className="relative z-10 text-xs font-semibold tracking-[0.18em] uppercase sm:text-sm">
           {label}
         </span>
         <span className="relative z-10 ml-auto truncate text-xs sm:text-sm">
@@ -173,9 +173,9 @@ export default function HomePageContent() {
           <div className="mx-auto max-w-200 pt-5 sm:hidden">
             <MobileFavicon />
           </div>
-          <div className="mx-auto h-60 w-[calc(100%-2.5rem)] max-w-200 lg:max-w-225 py-12 sm:h-82.5 sm:w-[calc(100%-4rem)] lg:w-[calc(100%-6rem)]">
+          <div className="mx-auto h-60 w-[calc(100%-2.5rem)] max-w-200 py-12 sm:h-82.5 sm:w-[calc(100%-4rem)] lg:w-[calc(100%-6rem)] lg:max-w-225">
             <BorderContainer>
-              <h1 className="px-4 py-5 lg:py-8 text-center font-display text-4xl leading-[0.7705] font-semibold tracking-tighter whitespace-nowrap sm:text-6xl lg:text-8xl object-center">
+              <h1 className="object-center px-4 py-5 text-center font-display text-4xl leading-[0.7705] font-semibold tracking-tighter whitespace-nowrap sm:text-6xl lg:py-8 lg:text-8xl">
                 Dexter Young
               </h1>
             </BorderContainer>

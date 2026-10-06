@@ -4,8 +4,6 @@ export const PROJECT_ROUTES = {
   photoGraph: "/projects/photo-graph",
   photoGraphExperience: "/projects/photo-graph/experience",
   admin: "/admin",
-  spotifyNodify: "/projects/spotify-nodify",
-  spotifyNodifyExperience: "/projects/spotify-nodify/experience",
   grailedPlus: "/grailed-plus",
   grailedPlusExperience: "/grailed-plus/experience",
   grailedPlusChromeWebStore:

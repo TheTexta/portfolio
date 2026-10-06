@@ -51,7 +51,9 @@ async function ensureBucketExists(bucket: string) {
   });
 
   if (createError) {
-    throw new Error(`Failed to create bucket ${bucket}: ${createError.message}`);
+    throw new Error(
+      `Failed to create bucket ${bucket}: ${createError.message}`,
+    );
   }
 }
 

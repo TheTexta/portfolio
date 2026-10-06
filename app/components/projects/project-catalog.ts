@@ -1,7 +1,6 @@
 import { PROJECT_ROUTES } from "./project-routes";
 
-export type ProjectPreviewKind =
-  "grailed-plus" | "photo-graph" | "html" | "spotify";
+export type ProjectPreviewKind = "grailed-plus" | "photo-graph" | "html";
 
 export type ProjectTitleTreatment =
   "bur1alrites" | "grailed" | "photo-graph" | "nepo" | "elliot-mairet";

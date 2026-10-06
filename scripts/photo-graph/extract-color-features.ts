@@ -153,7 +153,9 @@ async function run() {
   loadEnvConfig(process.cwd());
   const shouldPersist = process.argv.includes("--persist");
   const loaded = await loadGraphWithFallback();
-  const nodes = [...loaded.nodes].sort((left, right) => Number(left.id) - Number(right.id));
+  const nodes = [...loaded.nodes].sort(
+    (left, right) => Number(left.id) - Number(right.id),
+  );
   const features = await mapWithConcurrency(nodes, 4, async (node, index) => {
     const feature = await extractNodeFeature(node);
     process.stdout.write(`\rExtracted ${index + 1}/${nodes.length} images`);
@@ -165,7 +167,9 @@ async function run() {
     version: 1,
     generatedAt: new Date().toISOString(),
     source: loaded.source,
-    nodes: Object.fromEntries(nodes.map((node, index) => [node.id, features[index]])),
+    nodes: Object.fromEntries(
+      nodes.map((node, index) => [node.id, features[index]]),
+    ),
   };
 
   await mkdir(path.dirname(OUTPUT_PATH), { recursive: true });
@@ -188,7 +192,11 @@ async function run() {
 
   console.log(`Wrote ${nodes.length} versioned features to ${OUTPUT_PATH}.`);
   console.log(`Wrote contact sheet to ${CONTACT_SHEET_PATH}.`);
-  console.log(shouldPersist ? "Persisted features to Supabase." : "Database unchanged; pass --persist after applying the schema migration.");
+  console.log(
+    shouldPersist
+      ? "Persisted features to Supabase."
+      : "Database unchanged; pass --persist after applying the schema migration.",
+  );
 }
 
 run().catch((error) => {

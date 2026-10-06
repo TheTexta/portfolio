@@ -57,11 +57,7 @@ export function rgbToOklab(rgb: [number, number, number]): OklabColor {
 }
 
 export function oklabDistance(left: OklabColor, right: OklabColor) {
-  return Math.hypot(
-    left[0] - right[0],
-    left[1] - right[1],
-    left[2] - right[2],
-  );
+  return Math.hypot(left[0] - right[0], left[1] - right[1], left[2] - right[2]);
 }
 
 function histogramIndex(lIndex: number, aIndex: number, bIndex: number) {
@@ -174,7 +170,8 @@ function buildPalette(
     });
   }
 
-  const totalWeight = clusterWeights.reduce((sum, weight) => sum + weight, 0) || 1;
+  const totalWeight =
+    clusterWeights.reduce((sum, weight) => sum + weight, 0) || 1;
 
   return centers
     .map((color, index) => ({
@@ -278,7 +275,8 @@ export function parsePhotoGraphColorFeatureV1(
     !Array.isArray(histogram) ||
     histogram.length !== PHOTO_GRAPH_HISTOGRAM_LENGTH ||
     histogram.some(
-      (entry) => typeof entry !== "number" || !Number.isFinite(entry) || entry < 0,
+      (entry) =>
+        typeof entry !== "number" || !Number.isFinite(entry) || entry < 0,
     ) ||
     !Array.isArray(palette) ||
     palette.length < 1 ||
@@ -286,7 +284,10 @@ export function parsePhotoGraphColorFeatureV1(
   ) {
     return null;
   }
-  const histogramTotal = histogram.reduce<number>((sum, entry) => sum + entry, 0);
+  const histogramTotal = histogram.reduce<number>(
+    (sum, entry) => sum + entry,
+    0,
+  );
   if (Math.abs(histogramTotal - 1) > 1e-6) {
     return null;
   }

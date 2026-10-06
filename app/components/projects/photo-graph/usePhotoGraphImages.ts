@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  type RefObject,
-  useCallback,
-  useEffect,
-  useRef,
-} from "react";
+import { type RefObject, useCallback, useEffect, useRef } from "react";
 
 import {
   getPhotoGraphLinkValue,
@@ -25,11 +20,7 @@ import type {
   PhotoGraphLink,
   PhotoGraphNode,
 } from "./types";
-import {
-  getCurrentDevicePixelRatio,
-  isAbortError,
-  loadImage,
-} from "./utils";
+import { getCurrentDevicePixelRatio, isAbortError, loadImage } from "./utils";
 
 type UsePhotoGraphImagesArgs = {
   activeDarkMode: boolean;
@@ -78,14 +69,17 @@ export function usePhotoGraphImages({
     [getNodeTargetWidth],
   );
 
-  const logNodeImageError = useCallback((node: PhotoGraphNode, error: unknown) => {
-    if (errorLogRef.current.has(node.id)) {
-      return;
-    }
+  const logNodeImageError = useCallback(
+    (node: PhotoGraphNode, error: unknown) => {
+      if (errorLogRef.current.has(node.id)) {
+        return;
+      }
 
-    errorLogRef.current.add(node.id);
-    console.error(`Failed to load image for node ${node.id}`, error);
-  }, []);
+      errorLogRef.current.add(node.id);
+      console.error(`Failed to load image for node ${node.id}`, error);
+    },
+    [],
+  );
 
   const applyLoadedImage = useCallback(
     (node: PhotoGraphNode, image: HTMLImageElement, loadedWidth: number) => {
@@ -170,8 +164,7 @@ export function usePhotoGraphImages({
 
         if (!image) {
           throw (
-            lastError ??
-            new Error(`Failed to load image for node ${node.id}.`)
+            lastError ?? new Error(`Failed to load image for node ${node.id}.`)
           );
         }
 
@@ -226,7 +219,10 @@ export function usePhotoGraphImages({
   );
 
   const queueNodes = useCallback(
-    (nextNodes: PhotoGraphNode[], resolveWidth: (node: PhotoGraphNode) => number) => {
+    (
+      nextNodes: PhotoGraphNode[],
+      resolveWidth: (node: PhotoGraphNode) => number,
+    ) => {
       for (const node of nextNodes) {
         requestNodeImage(node, resolveWidth(node));
       }

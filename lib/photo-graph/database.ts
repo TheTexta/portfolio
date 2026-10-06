@@ -54,7 +54,10 @@ function assertNoSupabaseError<T extends { message?: string }>(
   throw new Error(`${message}: ${error.message ?? "Unknown Supabase error"}`);
 }
 
-function isMissingTableError(error: { message?: string } | null, tableName: string) {
+function isMissingTableError(
+  error: { message?: string } | null,
+  tableName: string,
+) {
   return Boolean(error?.message?.includes(tableName));
 }
 
@@ -321,9 +324,7 @@ async function loadPhotoGraphSettingValue<T>(
 
     return normalizeValue(data?.value);
   } catch (error) {
-    if (
-      isRecoverablePhotoGraphDatabaseError(error, ["photo_graph_settings"])
-    ) {
+    if (isRecoverablePhotoGraphDatabaseError(error, ["photo_graph_settings"])) {
       return fallbackValue;
     }
 
@@ -344,20 +345,22 @@ async function savePhotoGraphSettingValue(key: string, value: unknown) {
 export async function loadPhotoGraphFromDatabase() {
   const supabase = getServiceRoleSupabase();
   const [nodeRows, edgeRows] = await Promise.all([
-    selectAllRows<PhotoGraphNodeRow>(async (from, to) =>
-      await supabase
-        .from("photo_graph_nodes")
-        .select("*")
-        .order("id", { ascending: true })
-        .range(from, to),
+    selectAllRows<PhotoGraphNodeRow>(
+      async (from, to) =>
+        await supabase
+          .from("photo_graph_nodes")
+          .select("*")
+          .order("id", { ascending: true })
+          .range(from, to),
     ),
-    selectAllRows<PhotoGraphEdgeRow>(async (from, to) =>
-      await supabase
-        .from("photo_graph_edges")
-        .select("*")
-        .order("left_node_id", { ascending: true })
-        .order("right_node_id", { ascending: true })
-        .range(from, to),
+    selectAllRows<PhotoGraphEdgeRow>(
+      async (from, to) =>
+        await supabase
+          .from("photo_graph_edges")
+          .select("*")
+          .order("left_node_id", { ascending: true })
+          .order("right_node_id", { ascending: true })
+          .range(from, to),
     ),
   ]);
 
@@ -386,8 +389,14 @@ export async function upsertPhotoGraphNodes(nodes: GraphNode[]) {
 }
 
 export async function reservePhotoGraphNodeIds(requestedCount: number) {
-  if (!Number.isInteger(requestedCount) || requestedCount < 1 || requestedCount > 100) {
-    throw new Error("Photo graph ID reservation count must be between 1 and 100.");
+  if (
+    !Number.isInteger(requestedCount) ||
+    requestedCount < 1 ||
+    requestedCount > 100
+  ) {
+    throw new Error(
+      "Photo graph ID reservation count must be between 1 and 100.",
+    );
   }
   const supabase = getServiceRoleSupabase();
   const { data, error } = await supabase.rpc("reserve_photo_graph_node_ids", {
@@ -405,28 +414,27 @@ export async function loadPhotoGraphNeighbors(
   featureVersion = 1,
 ) {
   const supabase = getServiceRoleSupabase();
-  const rows = await selectAllRows<PhotoGraphNeighborRow>(async (from, to) =>
-    await supabase
-      .from("photo_graph_neighbors")
-      .select("*")
-      .eq("model", model)
-      .eq("feature_version", featureVersion)
-      .order("source_node_id", { ascending: true })
-      .order("rank", { ascending: true })
-      .range(from, to),
+  const rows = await selectAllRows<PhotoGraphNeighborRow>(
+    async (from, to) =>
+      await supabase
+        .from("photo_graph_neighbors")
+        .select("*")
+        .eq("model", model)
+        .eq("feature_version", featureVersion)
+        .order("source_node_id", { ascending: true })
+        .order("rank", { ascending: true })
+        .range(from, to),
   );
 
-  return rows.map(
-    (row): RankedPhotoGraphNeighbor => ({
-      sourceId: String(row.source_node_id),
-      targetId: String(row.target_node_id),
-      model: row.model,
-      feature_version: row.feature_version,
-      distance: row.distance,
-      correlation: row.correlation,
-      rank: row.rank,
-    }),
-  );
+  return rows.map((row): RankedPhotoGraphNeighbor => ({
+    sourceId: String(row.source_node_id),
+    targetId: String(row.target_node_id),
+    model: row.model,
+    feature_version: row.feature_version,
+    distance: row.distance,
+    correlation: row.correlation,
+    rank: row.rank,
+  }));
 }
 
 export async function replacePhotoGraphNeighborSnapshot(
@@ -463,7 +471,9 @@ export async function replacePhotoGraphNeighborSnapshot(
     "Failed to replace photo graph neighbor snapshot",
   );
   if (typeof data !== "number" || !Number.isFinite(data)) {
-    throw new Error("Photo graph neighbor snapshot returned an invalid edge count.");
+    throw new Error(
+      "Photo graph neighbor snapshot returned an invalid edge count.",
+    );
   }
   return data;
 }
@@ -493,7 +503,10 @@ export async function loadPhotoGraphRuntimeControls() {
 export async function savePhotoGraphRuntimeControls(
   controls: PhotoGraphRuntimeControls,
 ) {
-  await savePhotoGraphSettingValue(DEFAULT_GRAPH_CONTROLS_SETTING_KEY, controls);
+  await savePhotoGraphSettingValue(
+    DEFAULT_GRAPH_CONTROLS_SETTING_KEY,
+    controls,
+  );
 }
 
 export async function replacePhotoGraphEdges(nodes: GraphNode[]) {

@@ -52,7 +52,10 @@ export default function SmoothScrollProvider({
       event.preventDefault();
 
       const nextUrl = `${destination.pathname}${destination.search}${destination.hash}`;
-      if (`${window.location.pathname}${window.location.search}${window.location.hash}` !== nextUrl) {
+      if (
+        `${window.location.pathname}${window.location.search}${window.location.hash}` !==
+        nextUrl
+      ) {
         window.history.pushState({}, "", nextUrl);
         window.dispatchEvent(new HashChangeEvent("hashchange"));
       }

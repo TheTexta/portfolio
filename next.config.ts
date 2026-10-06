@@ -50,6 +50,16 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/projects/spotify-nodify/:path*",
+        destination: "/portfolio#projects",
+        permanent: true,
+      },
+      {
+        source: "/components/projects/spotify-nodify/:path*",
+        destination: "/portfolio#projects",
+        permanent: true,
+      },
+      {
         source: "/admin/photo-graph",
         destination: "/admin",
         permanent: true,

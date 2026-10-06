@@ -49,7 +49,9 @@ export function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-export function normalizePhotoGraphAspectRatio(aspectRatio: number | undefined) {
+export function normalizePhotoGraphAspectRatio(
+  aspectRatio: number | undefined,
+) {
   if (!Number.isFinite(aspectRatio) || !aspectRatio || aspectRatio <= 0) {
     return 1;
   }
@@ -96,8 +98,7 @@ export function sizePhotoGraphNode<T extends SizedNode>(node: T) {
     0,
     1,
   );
-  const areaBoost =
-    1 + progress * (PHOTO_GRAPH_NODE_CONFIG.maxAreaBoost - 1);
+  const areaBoost = 1 + progress * (PHOTO_GRAPH_NODE_CONFIG.maxAreaBoost - 1);
   const targetArea = baseSize * baseSize * areaBoost;
 
   let width = Math.sqrt(targetArea * aspectRatio);
@@ -144,7 +145,9 @@ export function getPhotoGraphNodeLayerArea(node: LayeredNode) {
   return Math.max(1, baseArea * blurScale);
 }
 
-export function sortPhotoGraphNodesForRender<T extends LayeredNode>(nodes: T[]) {
+export function sortPhotoGraphNodesForRender<T extends LayeredNode>(
+  nodes: T[],
+) {
   nodes.sort((left, right) => {
     const areaDelta =
       getPhotoGraphNodeLayerArea(right) - getPhotoGraphNodeLayerArea(left);
@@ -198,12 +201,10 @@ export function computePhotoGraphLinkDistance<TNode extends LinkedNode>(
   return Math.max(desiredDistance, minAxisDistance);
 }
 
-export function computePhotoGraphLinkStrength(
-  link: {
-    baseValue?: number;
-    value: number;
-  },
-) {
+export function computePhotoGraphLinkStrength(link: {
+  baseValue?: number;
+  value: number;
+}) {
   const value = getPhotoGraphLinkValue(link);
 
   return (
@@ -243,7 +244,9 @@ export function buildPhotoGraphPayload(nodes: GraphNode[]): PhotoGraphPayload {
   for (const node of nodes) {
     const sourceId = node.id;
 
-    for (const [targetId, rawValue] of Object.entries(node.correlations ?? {})) {
+    for (const [targetId, rawValue] of Object.entries(
+      node.correlations ?? {},
+    )) {
       if (sourceId === targetId) continue;
       if (!nodeIds.has(sourceId) || !nodeIds.has(targetId)) continue;
 

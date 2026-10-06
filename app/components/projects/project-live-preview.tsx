@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import type { ReactNode } from "react";
 
 import type {
@@ -79,10 +78,6 @@ export default function ProjectLivePreview({
   compact = false,
   keepMounted = false,
 }: ProjectLivePreviewProps) {
-  const fullHref =
-    project.experienceHref ?? project.liveHref ?? project.caseStudyHref;
-  const linkPhotoGraph = project.previewKind === "photo-graph" && !compact;
-
   return (
     <div
       className={cn(
@@ -90,24 +85,9 @@ export default function ProjectLivePreview({
         className,
       )}
     >
-      <div
-        className="size-full"
-        inert={linkPhotoGraph}
-        aria-hidden={linkPhotoGraph}
-      >
-        {renderProjectPreview(project.id, compact, keepMounted)}
-      </div>
-      {linkPhotoGraph && fullHref ? (
-        <Link
-          href={fullHref}
-          aria-label={`Open the full ${project.title} experience`}
-          className="absolute inset-0 z-20 cursor-pointer touch-pan-y focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
-        >
-          <span className="sr-only">
-            Open the full {project.title} experience
-          </span>
-        </Link>
-      ) : null}
+      {/* Photo Graph handles dragging, zooming, and inspection in the preview.
+          Other previews keep their own click-to-open navigation. */}
+      {renderProjectPreview(project.id, compact, keepMounted)}
     </div>
   );
 }

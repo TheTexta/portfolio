@@ -205,7 +205,9 @@ export function countGraphEdges(
   let count = 0;
 
   for (const node of nodes) {
-    for (const [targetId, correlation] of Object.entries(node.correlations ?? {})) {
+    for (const [targetId, correlation] of Object.entries(
+      node.correlations ?? {},
+    )) {
       if (
         !Number.isFinite(correlation) ||
         correlation <= 0 ||

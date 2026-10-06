@@ -54,9 +54,7 @@ async function run() {
     }
 
     await replacePhotoGraphEdges(generated.nodes);
-    await savePhotoGraphEdgeGenerationConfig(
-      CIEDE2000_EDGE_GENERATION_CONFIG,
-    );
+    await savePhotoGraphEdgeGenerationConfig(CIEDE2000_EDGE_GENERATION_CONFIG);
     edgeCount = countGraphEdges(generated.nodes);
     persistence = "legacy-edge-snapshot";
   }
@@ -70,8 +68,12 @@ async function run() {
   console.log("Activated CIEDE2000 for the Photo Graph.");
   console.log(`  Nodes: ${generated.nodes.length}`);
   console.log(`  Edges: ${edgeCount}`);
-  console.log(`  Neighbors per node: ${CIEDE2000_EDGE_GENERATION_CONFIG.neighborsPerNode}`);
-  console.log(`  Maximum Delta E 00: ${CIEDE2000_EDGE_GENERATION_CONFIG.maxDistance}`);
+  console.log(
+    `  Neighbors per node: ${CIEDE2000_EDGE_GENERATION_CONFIG.neighborsPerNode}`,
+  );
+  console.log(
+    `  Maximum Delta E 00: ${CIEDE2000_EDGE_GENERATION_CONFIG.maxDistance}`,
+  );
   console.log(`  Persistence: ${persistence}`);
 }
 

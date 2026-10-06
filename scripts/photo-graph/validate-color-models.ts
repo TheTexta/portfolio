@@ -77,10 +77,7 @@ function run() {
   });
 
   const purple = feature([128, 0, 128], solidRgba(128, 0, 128, 64));
-  const split = feature(
-    [128, 0, 128],
-    splitRgba([255, 0, 0], [0, 0, 255], 64),
-  );
+  const split = feature([128, 0, 128], splitRgba([255, 0, 0], [0, 0, 255], 64));
   const deterministic = feature(
     [128, 0, 128],
     splitRgba([255, 0, 0], [0, 0, 255], 64),
@@ -106,7 +103,10 @@ function run() {
     "palette transport must distinguish split colors from flat purple",
   );
 
-  assert.ok(Math.abs(deltaE2000([50, 2.6772, -79.7751], [50, 0, -82.7485]) - 2.0425) < 0.0001);
+  assert.ok(
+    Math.abs(deltaE2000([50, 2.6772, -79.7751], [50, 0, -82.7485]) - 2.0425) <
+      0.0001,
+  );
   assert.equal(hellingerDistance([0.5, 0.5], [0.5, 0.5]), 0);
   assert.ok(Math.abs(hellingerDistance([1, 0], [0, 1]) - 1) < 1e-12);
   assert.ok(

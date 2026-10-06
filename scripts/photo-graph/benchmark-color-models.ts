@@ -70,16 +70,14 @@ function rankedDistances(
 
   return candidates
     .filter((candidate) => candidate.id !== query.id && candidate.feature)
-    .map(
-      (candidate): DistanceEntry => ({
-        id: candidate.id,
-        distance: computePhotoGraphModelDistance(
-          query.feature!,
-          candidate.feature!,
-          model,
-        ),
-      }),
-    )
+    .map((candidate): DistanceEntry => ({
+      id: candidate.id,
+      distance: computePhotoGraphModelDistance(
+        query.feature!,
+        candidate.feature!,
+        model,
+      ),
+    }))
     .filter((entry) => Number.isFinite(entry.distance))
     .sort(
       (left, right) =>
@@ -135,7 +133,9 @@ function validateJudgments(nodeById: Map<string, GraphNode>) {
   );
   const missingIds = [...referencedIds].filter((id) => !nodeById.has(id));
   if (missingIds.length > 0) {
-    throw new Error(`Benchmark judgments reference missing nodes: ${missingIds.join(", ")}`);
+    throw new Error(
+      `Benchmark judgments reference missing nodes: ${missingIds.join(", ")}`,
+    );
   }
 }
 
@@ -164,7 +164,11 @@ async function run() {
     const timingStart = performance.now();
     let pairCount = 0;
     for (let leftIndex = 0; leftIndex < nodes.length; leftIndex += 1) {
-      for (let rightIndex = leftIndex + 1; rightIndex < nodes.length; rightIndex += 1) {
+      for (
+        let rightIndex = leftIndex + 1;
+        rightIndex < nodes.length;
+        rightIndex += 1
+      ) {
         computePhotoGraphModelDistance(
           nodes[leftIndex].feature!,
           nodes[rightIndex].feature!,
@@ -196,7 +200,9 @@ async function run() {
         ...judgment.positiveIds,
         ...judgment.negativeIds,
       ]);
-      const judgedRanking = fullRanking.filter((entry) => judgedIds.has(entry.id));
+      const judgedRanking = fullRanking.filter((entry) =>
+        judgedIds.has(entry.id),
+      );
       const topJudged = judgedRanking.slice(0, NEIGHBORS_PER_NODE);
       const precisionAtK =
         topJudged.filter((entry) => positiveIds.has(entry.id)).length /
@@ -220,11 +226,13 @@ async function run() {
         label: judgment.label,
         precisionAtK: round(precisionAtK, 4),
         pairwiseAgreement: round(correctPairs / comparisonCount, 4),
-        neighbors: fullRanking.slice(0, DISPLAY_NEIGHBOR_COUNT).map((entry) => ({
-          id: entry.id,
-          distance: round(entry.distance),
-          judgedRelevant: positiveIds.has(entry.id),
-        })),
+        neighbors: fullRanking
+          .slice(0, DISPLAY_NEIGHBOR_COUNT)
+          .map((entry) => ({
+            id: entry.id,
+            distance: round(entry.distance),
+            judgedRelevant: positiveIds.has(entry.id),
+          })),
       };
     });
     const averagePrecisionAtK =

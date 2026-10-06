@@ -44,6 +44,15 @@ if the homepage is moved in a future change.
 
 ## Embedded project previews
 
+Photo Node-Gallery is interactive inside its preview: drag and zoom the graph,
+and select a photo to inspect it without leaving the portfolio. Use Launch
+experience to open the full gallery. It is exempt from the click-to-open behavior
+used by the other previews.
+
+Spotify Nodify has been removed. Its former project URLs and Spotify sign-in
+callback redirect to `/portfolio#projects`. Spotify environment variables are no
+longer required.
+
 The project browser embeds the Grailed Plus page and three separately hosted
 sites. Links clicked inside those previews open their destination as the
 top-level page while wheel and touch scrolling remain inside the preview. Grailed
