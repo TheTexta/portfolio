@@ -58,6 +58,15 @@ Media consumers to inventory and update together:
   cache-control repair, and deletion. The existing Supabase bucket-rename script
   is **not** an R2 copier.
 
+The current shared Worker does **not** accept every Photo Graph transform
+request. `lib/image-optimization.ts` includes widths 48, 80, 112, 144, 224,
+288, 576, 896, 1024, 1152, and 1280 that are absent from the Worker's
+allowlist; `app/projects/photo-graph/page.tsx` also requests width 560 at
+quality 86, neither of which is allowed. Before adding a Photo Graph binding,
+choose and test project-scoped accepted widths/qualities or explicitly map
+Photo Graph callers to supported variants. Do not silently expand Elliot's or
+bur1alrites' transform options as a side effect.
+
 The static fallback and generated color-feature/benchmark JSON files are graph
 metadata, not image originals; preserve their node-ID/media resolution rather
 than treating them as objects to copy. Do not regenerate graph relationships or
