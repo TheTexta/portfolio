@@ -64,6 +64,16 @@ export function buildPendingPhotoGraphStoragePath(
   return `${imageBasePath}/_pending/${token}.${normalizePhotoGraphExtension(extension)}`;
 }
 
+export function isPendingPhotoGraphStoragePath(path: string) {
+  const prefix = `${photoGraphImageBasePath().replace(/\/$/, "")}/_pending/`;
+  return (
+    path.startsWith(prefix) &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(png|jpg|webp)$/i.test(
+      path.slice(prefix.length),
+    )
+  );
+}
+
 export function imagePathForLegacyId(id: string) {
   return `${photoGraphImageBasePath().replace(/\/$/, "")}/${id}.png`;
 }

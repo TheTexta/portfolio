@@ -305,7 +305,12 @@ function MobileProjectTable({
         const hasNextProject = index < projects.length - 1;
 
         return (
-          <div key={cardKey} data-card-key={cardKey} className="relative">
+          <div
+            key={cardKey}
+            data-card-key={cardKey}
+            data-project-id={project.id}
+            className="relative"
+          >
             <button
               type="button"
               className="flex min-h-12 w-full items-center justify-between gap-3 px-3 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
@@ -421,6 +426,19 @@ function FocusCarousel({
   const selectNext = useCallback(() => onChange(next.id), [next.id, onChange]);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (
+      event.defaultPrevented ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey ||
+      (event.target instanceof HTMLElement &&
+        event.target.closest(
+          "input, textarea, select, [contenteditable=true], [role=slider]",
+        ))
+    ) {
+      return;
+    }
     if (event.key === "ArrowLeft") {
       event.preventDefault();
       selectPrevious();
@@ -787,6 +805,13 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
         return;
       }
 
+      if (focusedProjectRef.current && !projectId) {
+        restoreRailRef.current = true;
+        restoreRailFocusRef.current = true;
+        const cardKey = lastFocusedCardKeyRef.current;
+        if (cardKey?.startsWith("mobile-table-")) setMobileExpandedKey(cardKey);
+      }
+
       updateWithTransition(() => {
         focusedProjectRef.current = projectId;
         setFocusedProjectId(projectId);
@@ -825,7 +850,22 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
       }
 
       restoreRailFocusRef.current = false;
-      galleryRef.current?.focus({ preventScroll: true });
+      const cardKey = lastFocusedCardKeyRef.current;
+      const trigger = cardKey
+        ? galleryRef.current?.querySelector<HTMLElement>(
+            `[data-card-key="${cardKey}"] [data-project-trigger]`,
+          )
+        : null;
+      if (trigger && trigger.getClientRects().length > 0) {
+        trigger.scrollIntoView({
+          block: "nearest",
+          inline: "nearest",
+          behavior: "instant",
+        });
+        trigger.focus({ preventScroll: true });
+      } else {
+        galleryRef.current?.focus({ preventScroll: true });
+      }
     });
 
     return () => window.cancelAnimationFrame(frame);
@@ -903,11 +943,12 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
         () => {
           if (projectId && projectIndex !== -1) {
             setReturnProjectId(projectId);
-            setMobileExpandedKey(`mobile-table-${projectId}-${projectIndex}`);
-            lastFocusedCardKeyRef.current =
-              lastFocusedCardKeyRef.current?.startsWith("mobile-table-")
-                ? `mobile-table-${projectId}-${projectIndex}`
-                : `forward-${projectId}-${projectIndex}`;
+            setMobileExpandedKey(
+              restoreFocus &&
+                lastFocusedCardKeyRef.current?.startsWith("mobile-table-")
+                ? lastFocusedCardKeyRef.current
+                : `mobile-table-${projectId}-${projectIndex}`,
+            );
           }
           focusedProjectRef.current = null;
           setFocusedProjectId(null);

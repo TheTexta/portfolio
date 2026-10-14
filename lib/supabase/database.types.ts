@@ -38,6 +38,31 @@ export type SupabaseDatabase = {
     };
     Views: Record<string, never>;
     Functions: {
+      begin_photo_graph_upload: {
+        Args: {
+          upload_id: string;
+          admin_id: string;
+          upload_payload: unknown;
+          id_floor: number;
+        };
+        Returns: unknown;
+      };
+      photo_graph_upload_revision: {
+        Args: Record<string, never>;
+        Returns: string;
+      };
+      commit_photo_graph_upload: {
+        Args: {
+          upload_id: string;
+          expected_revision: string;
+          node_rows: unknown;
+          source_ids: number[];
+          neighbor_rows: unknown;
+          generation_config: unknown;
+          upload_result: unknown;
+        };
+        Returns: unknown;
+      };
       reserve_photo_graph_node_ids: {
         Args: { requested_count: number };
         Returns: number[];

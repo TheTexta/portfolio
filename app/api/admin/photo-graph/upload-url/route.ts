@@ -2,7 +2,10 @@ import { randomUUID } from "node:crypto";
 
 import { NextRequest, NextResponse } from "next/server";
 
-import { buildPendingPhotoGraphStoragePath } from "@/lib/photo-graph/config";
+import {
+  buildPendingPhotoGraphStoragePath,
+  isPendingPhotoGraphStoragePath,
+} from "@/lib/photo-graph/config";
 import { getAdminUser } from "@/lib/server/admin-auth";
 import { getServiceRoleSupabase } from "@/lib/server/supabase";
 import { getPhotoGraphStorageBucket } from "@/lib/supabase/config";
@@ -16,6 +19,7 @@ const ALLOWED_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 type UploadUrlRequest = {
   filename?: string;
   contentType?: string;
+  storagePath?: string;
 };
 
 function extensionForUpload(filename: string | undefined, contentType: string) {
@@ -46,7 +50,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const contentType = String(body.contentType ?? "").toLowerCase();
+  const contentType = String(body?.contentType ?? "").toLowerCase();
 
   if (!ALLOWED_MIME_TYPES.has(contentType)) {
     return NextResponse.json(
@@ -56,7 +60,20 @@ export async function POST(request: NextRequest) {
   }
 
   const extension = extensionForUpload(body.filename, contentType);
-  const objectPath = buildPendingPhotoGraphStoragePath(randomUUID(), extension);
+  if (
+    body.storagePath !== undefined &&
+    (typeof body.storagePath !== "string" ||
+      !isPendingPhotoGraphStoragePath(body.storagePath) ||
+      !body.storagePath.endsWith(`.${extension}`))
+  ) {
+    return NextResponse.json(
+      { error: "Invalid pending upload path." },
+      { status: 400 },
+    );
+  }
+  const objectPath =
+    body.storagePath ??
+    buildPendingPhotoGraphStoragePath(randomUUID(), extension);
   const bucket = getPhotoGraphStorageBucket();
   const supabase = getServiceRoleSupabase();
   const { data, error } = await supabase.storage

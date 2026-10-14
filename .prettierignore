@@ -4,6 +4,7 @@ out/
 build/
 .tmp/
 test-results/
+playwright-report/
 public/projects/photo-graph/
 .vercel/
 coverage/

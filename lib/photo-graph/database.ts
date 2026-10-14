@@ -1,4 +1,8 @@
 import { imagePathForLegacyId } from "@/lib/photo-graph/config";
+import type {
+  PhotoGraphUploadRegistration,
+  PhotoGraphUploadResponse,
+} from "@/lib/photo-graph/admin-types";
 import { isRecoverablePhotoGraphDatabaseError } from "@/lib/photo-graph/database-errors";
 import {
   DEFAULT_SPARSE_EDGE_GENERATION_CONFIG,
@@ -386,6 +390,98 @@ export async function loadPhotoGraphFromDatabase() {
 
 export async function upsertPhotoGraphNodes(nodes: GraphNode[]) {
   await upsertNodeRows(nodes.map(toNodeRow));
+}
+
+export async function loadPhotoGraphUploadRevision() {
+  const { data, error } = await getServiceRoleSupabase().rpc(
+    "photo_graph_upload_revision",
+    {},
+  );
+  assertNoSupabaseError(
+    error,
+    "Upload recovery schema is unavailable; apply the Photo Graph schema",
+  );
+  if (typeof data !== "string") throw new Error("Invalid graph revision.");
+  return data;
+}
+
+export async function beginPhotoGraphUpload(
+  uploadId: string,
+  adminId: string,
+  uploads: PhotoGraphUploadRegistration[],
+  idFloor: number,
+) {
+  const { data, error } = await getServiceRoleSupabase().rpc(
+    "begin_photo_graph_upload",
+    {
+      upload_id: uploadId,
+      admin_id: adminId,
+      upload_payload: uploads,
+      id_floor: idFloor,
+    },
+  );
+  assertNoSupabaseError(error, "Failed to reserve recoverable upload");
+  const reservation = data as {
+    nodeIds: (string | number)[];
+    result: PhotoGraphUploadResponse | null;
+  };
+  if (
+    !Array.isArray(reservation?.nodeIds) ||
+    reservation.nodeIds.length !== uploads.length
+  ) {
+    throw new Error("Invalid upload reservation.");
+  }
+  return {
+    nodeIds: reservation.nodeIds.map(String),
+    result: reservation.result,
+  };
+}
+
+export async function commitPhotoGraphUpload(
+  uploadId: string,
+  revision: string,
+  nodes: GraphNode[],
+  sourceIds: string[],
+  neighbors: RankedPhotoGraphNeighbor[],
+  config: PhotoGraphEdgeGenerationConfig,
+  result: Omit<PhotoGraphUploadResponse, "edgeCount">,
+) {
+  const sourceIdSet = new Set(sourceIds);
+  const { data, error } = await getServiceRoleSupabase().rpc(
+    "commit_photo_graph_upload",
+    {
+      upload_id: uploadId,
+      expected_revision: revision,
+      node_rows: nodes.map(toNodeRow),
+      source_ids: sourceIds.map(Number),
+      neighbor_rows: neighbors
+        .filter((neighbor) => sourceIdSet.has(neighbor.sourceId))
+        .map((neighbor) => ({
+          source_node_id: Number(neighbor.sourceId),
+          target_node_id: Number(neighbor.targetId),
+          model: neighbor.model,
+          feature_version: neighbor.feature_version,
+          distance: neighbor.distance,
+          correlation: neighbor.correlation,
+          rank: neighbor.rank,
+        })),
+      generation_config: config,
+      upload_result: result,
+    },
+  );
+  assertNoSupabaseError(
+    error,
+    "Upload commit failed; retry registration with the same upload key",
+  );
+  const response = data as PhotoGraphUploadResponse;
+  if (
+    !response?.ok ||
+    !Array.isArray(response.createdIds) ||
+    !Number.isFinite(response.edgeCount)
+  ) {
+    throw new Error("Invalid upload commit response; retry registration.");
+  }
+  return response;
 }
 
 export async function reservePhotoGraphNodeIds(requestedCount: number) {

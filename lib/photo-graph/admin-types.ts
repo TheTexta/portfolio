@@ -12,6 +12,7 @@ export type PhotoGraphUploadResponse = {
   edgeCount: number;
   edgeGenerationConfig: PhotoGraphEdgeGenerationConfig;
   error?: string;
+  warning?: string;
 };
 
 export type PhotoGraphUploadUrlResponse = {

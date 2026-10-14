@@ -257,6 +257,7 @@ async function validate() {
       ["graph-defaults", "GET"],
       ["graph-defaults", "POST"],
       ["upload-url", "POST"],
+      ["upload-status", "POST"],
       ["upload", "POST"],
       ["delete", "POST"],
       ["apply-correlations", "POST"],

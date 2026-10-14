@@ -1,22 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { buildCanonicalPhotoGraphStoragePath } from "@/lib/photo-graph/config";
+import {
+  buildCanonicalPhotoGraphStoragePath,
+  isPendingPhotoGraphStoragePath,
+} from "@/lib/photo-graph/config";
 import { scaleFromLongSide } from "@/lib/photo-graph/correlation";
-import { countGraphEdges } from "@/lib/photo-graph/edge-generation";
 import {
   cloneGraphNodes,
   ensureGraphStoragePaths,
   ensureProcessingFeatures,
   loadGraphWithFallback,
-  writeRuntimeGraph,
 } from "@/lib/photo-graph/graph-store";
 import {
   loadPhotoGraphEdgeGenerationConfig,
   loadPhotoGraphNeighbors,
-  replacePhotoGraphNeighborSnapshot,
-  reservePhotoGraphNodeIds,
-  savePhotoGraphEdgeGenerationConfig,
-  upsertPhotoGraphNodes,
+  beginPhotoGraphUpload,
+  commitPhotoGraphUpload,
+  loadPhotoGraphUploadRevision,
 } from "@/lib/photo-graph/database";
 import { featureFromRgb, rgbToHex } from "@/lib/photo-graph/feature-extraction";
 import { parsePhotoGraphColorFeatureV1 } from "@/lib/photo-graph/color-features";
@@ -29,6 +29,10 @@ import { PHOTO_GRAPH_SIMILARITY_MODELS } from "@/lib/photo-graph/similarity-mode
 import { getAdminUser } from "@/lib/server/admin-auth";
 import { getServiceRoleSupabase } from "@/lib/server/supabase";
 import { getPhotoGraphStorageBucket } from "@/lib/supabase/config";
+import {
+  cleanupPhotoGraphUploadAssets,
+  preparePhotoGraphUploadAssets,
+} from "@/lib/server/photo-graph-upload-storage";
 import type {
   GraphFeature,
   GraphImageDimensions,
@@ -46,6 +50,7 @@ type UploadRegistration = {
 };
 
 type UploadRegistrationPayload = {
+  uploadId?: string;
   uploads?: UploadRegistration[];
 };
 
@@ -150,7 +155,7 @@ function parseDimensionsPayload(
 }
 
 function normalizeUploads(value: unknown) {
-  if (!Array.isArray(value) || value.length === 0) {
+  if (!Array.isArray(value) || value.length === 0 || value.length > 100) {
     return null;
   }
 
@@ -164,7 +169,7 @@ function normalizeUploads(value: unknown) {
     const record = entry as Record<string, unknown>;
     const storagePath = String(record.storagePath ?? "").trim();
 
-    if (!storagePath) {
+    if (!isPendingPhotoGraphStoragePath(storagePath)) {
       return null;
     }
 
@@ -186,7 +191,10 @@ function normalizeUploads(value: unknown) {
     });
   }
 
-  return uploads;
+  return new Set(uploads.map((upload) => upload.storagePath)).size ===
+    uploads.length
+    ? uploads
+    : null;
 }
 
 function nextNodeId(nodes: GraphNode[]) {
@@ -237,7 +245,8 @@ function changedNeighborSourceIds(
 }
 
 export async function POST(request: NextRequest) {
-  if (!(await getAdminUser())) {
+  const admin = await getAdminUser();
+  if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -252,7 +261,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const uploads = normalizeUploads(payload.uploads);
+  const uploads = normalizeUploads(payload?.uploads);
 
   if (!uploads) {
     return NextResponse.json(
@@ -260,6 +269,46 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
+
+  if (
+    typeof payload.uploadId !== "string" ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      payload.uploadId,
+    )
+  ) {
+    return NextResponse.json(
+      { error: "A valid uploadId is required for recoverable registration." },
+      { status: 400 },
+    );
+  }
+
+  try {
+    return await registerUpload(payload.uploadId, admin.id, uploads);
+  } catch (error) {
+    console.error("Recoverable Photo Graph upload failed", {
+      uploadId: payload.uploadId,
+      error,
+    });
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Registration failed. Retry with the same upload key.",
+        uploadId: payload.uploadId,
+      },
+      { status: 503 },
+    );
+  }
+}
+
+async function registerUpload(
+  uploadId: string,
+  adminId: string,
+  uploads: ParsedUploadRegistration[],
+) {
+  // Read before any graph queries so commit detects changes during generation.
+  const revision = await loadPhotoGraphUploadRevision();
 
   const loaded = await loadGraphWithFallback();
   if (!loaded.databaseAvailable) {
@@ -270,6 +319,21 @@ export async function POST(request: NextRequest) {
       },
       { status: 503 },
     );
+  }
+
+  const reservation = await beginPhotoGraphUpload(
+    uploadId,
+    adminId,
+    uploads,
+    nextNodeId(loaded.nodes) - 1,
+  );
+  const storage = getServiceRoleSupabase().storage.from(
+    getPhotoGraphStorageBucket(),
+  );
+  const pendingPaths = uploads.map((upload) => upload.storagePath);
+  if (reservation.result) {
+    const warning = await cleanupPhotoGraphUploadAssets(storage, pendingPaths);
+    return NextResponse.json({ ...reservation.result, warning });
   }
 
   const edgeGenerationConfig = await loadPhotoGraphEdgeGenerationConfig();
@@ -298,37 +362,20 @@ export async function POST(request: NextRequest) {
 
   const createdIds: string[] = [];
   const createdNodes: GraphNode[] = [];
-  const databaseReservedIds =
-    loaded.source === "database"
-      ? await reservePhotoGraphNodeIds(uploads.length)
-      : null;
-  let staticIdCounter = nextNodeId(nodes);
-  const bucket = getPhotoGraphStorageBucket();
-  const supabase = getServiceRoleSupabase();
+  const assets: { source: string; destination: string }[] = [];
 
   for (const [uploadIndex, upload] of uploads.entries()) {
-    const id = databaseReservedIds?.[uploadIndex] ?? String(staticIdCounter);
-    staticIdCounter += 1;
+    const id = reservation.nodeIds[uploadIndex];
     createdIds.push(id);
     const canonicalStoragePath = buildCanonicalPhotoGraphStoragePath(
       id,
       upload.storagePath,
     );
 
-    if (upload.storagePath !== canonicalStoragePath) {
-      const { error } = await supabase.storage
-        .from(bucket)
-        .move(upload.storagePath, canonicalStoragePath);
-
-      if (error) {
-        return NextResponse.json(
-          {
-            error: `Failed to finalize uploaded asset ${upload.storagePath}: ${error.message}`,
-          },
-          { status: 500 },
-        );
-      }
-    }
+    assets.push({
+      source: upload.storagePath,
+      destination: canonicalStoragePath,
+    });
 
     createdNodes.push({
       id,
@@ -340,6 +387,8 @@ export async function POST(request: NextRequest) {
       dimensions: upload.dimensions,
     });
   }
+
+  await preparePhotoGraphUploadAssets(storage, assets);
 
   nodes.push(...createdNodes);
 
@@ -364,7 +413,8 @@ export async function POST(request: NextRequest) {
   }
 
   let generatedNodes: GraphNode[];
-  let edgeCount: number;
+  let neighbors: RankedPhotoGraphNeighbor[];
+  let sourceIds: string[];
 
   if (loaded.source === "static") {
     const generated = generateSparsePhotoGraph(
@@ -372,11 +422,9 @@ export async function POST(request: NextRequest) {
       edgeGenerationConfig,
     );
     generatedNodes = generated.nodes;
-    await writeRuntimeGraph(generatedNodes);
-    await savePhotoGraphEdgeGenerationConfig(edgeGenerationConfig);
-    edgeCount = countGraphEdges(generatedNodes);
+    neighbors = generated.neighbors;
+    sourceIds = generatedNodes.map((node) => node.id);
   } else {
-    await upsertPhotoGraphNodes(nodes);
     const existingNeighbors = await loadPhotoGraphNeighbors(
       edgeGenerationConfig.model,
     );
@@ -391,26 +439,30 @@ export async function POST(request: NextRequest) {
         )
       : generateSparsePhotoGraph(cloneGraphNodes(nodes), edgeGenerationConfig);
     generatedNodes = generated.nodes;
-    const sourceIds = hasDirectedSnapshot
+    sourceIds = hasDirectedSnapshot
       ? changedNeighborSourceIds(
           existingNeighbors,
           generated.neighbors,
           createdIds,
         )
       : generatedNodes.map((node) => node.id);
-    edgeCount = await replacePhotoGraphNeighborSnapshot(
-      sourceIds,
-      generated.neighbors,
-      edgeGenerationConfig,
-    );
+    neighbors = generated.neighbors;
   }
 
-  return NextResponse.json({
-    ok: true,
-    createdIds,
-    source: loaded.source,
-    nodeCount: nodes.length,
-    edgeCount,
+  const result = await commitPhotoGraphUpload(
+    uploadId,
+    revision,
+    generatedNodes,
+    sourceIds,
+    neighbors,
     edgeGenerationConfig,
-  });
+    {
+      ok: true,
+      createdIds,
+      nodeCount: nodes.length,
+      edgeGenerationConfig,
+    },
+  );
+  const warning = await cleanupPhotoGraphUploadAssets(storage, pendingPaths);
+  return NextResponse.json({ ...result, warning });
 }

@@ -21,6 +21,21 @@
 Run `npm run check` before opening a pull request. It runs lint, TypeScript,
 and formatting checks in that order.
 
+## Automated tests
+
+- `npm test`: upload recovery/storage tests and transactional SQL tests using an
+  isolated in-memory PGlite database. No production services are contacted.
+- `npx playwright install chromium` (once), then `npm run test:e2e`: desktop and
+  mobile Chromium tests for project navigation, keyboard focus, history, preview
+  links, and retrying uploads after a reload.
+- `npm run admin:validate-auth`: authorization checks against a local Auth stub.
+
+Browser tests copy the application into a disposable `.tmp/` fixture and run on
+port 3107 with test-only Supabase settings, a local Auth stub, and intercepted
+Storage requests. They do not load `.env.local` or use production credentials.
+GitHub Actions runs checks, tests, Auth validation, and a production build on
+pull requests and pushes to `main`.
+
 ## Search metadata
 
 `lib/site-config.ts` holds the portfolio identity and official profile links.
@@ -133,8 +148,75 @@ independently validate the current user with Supabase Auth and check the
 allowlist. Sign-out ends the current session without signing out other devices.
 The browser's signed-upload client remains separate from authentication.
 
-This follows Supabase's [server-side Auth setup](https://supabase.com/docs/guides/auth/server-side/creating-a-client).
-No Photo Graph schema, Storage policy, or data migration is required.
+### Recoverable uploads
+
+Before deploying the recoverable-upload code to another instance, review and
+apply both `20261014212606_photo_graph_recoverable_uploads.sql` and
+`20261014212629_restrict_photo_graph_upload_rpc_permissions.sql` under
+`supabase/migrations/`, or use the updated `supabase/photo-graph-schema.sql`
+through the existing schema-application procedure. Both migrations were applied
+to `https://api.dextery.dev` through MCP on October 14, 2026. This adds a service-role-only
+`photo_graph_uploads` journal and registration RPCs; it does not rename existing
+objects or rewrite existing graph data. Until the schema is installed,
+registration fails safely without moving or deleting uploaded originals.
+
+Function permissions explicitly revoke `PUBLIC`, `anon`, and `authenticated`:
+revoking only `PUBLIC` is insufficient on instances that explicitly grant
+execution to browser roles through default privileges. Verification confirmed
+that only the service role can access the upload journal and Photo Graph upload
+RPCs, with existing graph counts and the graph revision unchanged. The local
+doctor currently fails its image-render preflight with `401 Unauthorized` because
+the local `.env.local` Supabase keys are stale. The production anon key and public
+graph endpoint were verified separately. Do not rotate shared server credentials
+or weaken RLS to address a stale local environment file.
+
+Each registration sends an immutable UUID `uploadId` with its image metadata.
+The journal reserves stable node IDs, and Storage copies retain the `_pending/`
+originals until nodes, relationships, settings, and the completed result commit
+in one database transaction. A revision check rejects a graph generated from
+stale data. Retrying the same key and metadata reuses reserved assets or returns
+the original committed result, rather than creating duplicate nodes. Keys cannot
+be reused with different metadata or a different admin account.
+
+The admin browser stores recovery metadata (no credentials or signed tokens) in
+local storage **before** each direct upload. **Retry registration** checks pending
+originals through an independently authorized `upload-status` endpoint and resumes
+received images without uploading again, including after a reload or a lost
+Storage response. If an original is missing, reselect its file: recovery verifies
+its SHA-256 hash and obtains a new signed URL for that exact pending path without
+overwriting an existing object. Images never attempted must be selected afterward.
+Do not clear browser storage while registration is pending. An upload key and its
+metadata can also be recovered from the service-role-only journal after
+registration has started.
+
+Web Locks serialize uploading, sealing, registration and cleanup across admin
+tabs. A second tab cannot register a still-growing batch or clear another tab's
+journal; it receives storage-event updates and re-reads recovery state while
+holding the lock. Uploads fail closed if Web Locks or local storage are unavailable.
+The batch is sealed before the first registration request, so retries retain the
+same immutable metadata.
+
+Temporary source copies are removed only after commit. Cleanup failures are
+reported as warnings, retain browser recovery state, and can be retried with the
+same batch. Incomplete journal entries and their copied assets are intentionally
+retained for recovery; do not delete them as a diagnostic step. There is no
+automatic age-based cleanup of abandoned uploads.
+
+Authentication follows Supabase's [server-side Auth setup](https://supabase.com/docs/guides/auth/server-side/creating-a-client).
+The authentication flow itself requires no Storage policy or data migration;
+recoverable uploads require the schema migrations described above.
+
+### Frontend deployment
+
+The existing Vercel project is `thetextas-projects/portfolio` (`dextery.dev`).
+Production environment variables are managed in Vercel, not copied from stale
+local files. `.vercelignore` excludes environment files, `.tmp/` fixtures,
+documentation caches and browser-test artifacts from CLI uploads. Inspect upload
+inputs with `vercel deploy --dry --json` before deploying. Build with
+`vercel deploy --prod --skip-domain`, validate the resulting deployment, then use
+`vercel promote <deployment-url> --yes` to switch the live domain. Retain the
+previous deployment URL for rollback. This release uses patch updates Next.js
+16.3.8 and Sharp 0.35.5 to resolve the production dependency audit advisories.
 
 Run `npm run admin:validate-auth` to verify authorization, login, refresh, and
 sign-out against a local Auth stub. It copies the application into a temporary
