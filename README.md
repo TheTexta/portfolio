@@ -226,6 +226,11 @@ does not interrupt the regular development server.
 
 ## Photo Graph Supabase setup
 
+The proposed, not-yet-deployed Photo Graph R2 migration contract is documented
+in [`docs/photo-graph-r2-migration.md`](./docs/photo-graph-r2-migration.md).
+Current instructions below still describe the live Supabase Storage workflow;
+do not treat the proposal as an enabled R2 upload or delivery path.
+
 | Command                                   | Purpose                                                         | Mutates data |
 | ----------------------------------------- | --------------------------------------------------------------- | ------------ |
 | `npm run photo-graph:doctor`              | Check storage, tables, RPCs, image rendering, and reachability. | No           |
