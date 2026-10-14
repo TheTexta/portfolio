@@ -17,7 +17,7 @@ bucket `dextery-photo-graph-staging`, and published paths under
 `https://images.dextery.dev/photo-graph/` (transforms) and
 `https://media.dextery.dev/photo-graph/` (original bytes). The shared Worker
 currently lives in `bur1alrites/cloudflare-assets/`; a local-only
-`dextery-infrastructure/` private repository contains an unchanged copy but is
+`TheTexta/dextery-infrastructure` private repository contains an unchanged copy but is
 **not** its production deploy owner yet. Both proposed R2 buckets were created
 empty on 2026-10-14, with public r2.dev access disabled; no Worker bindings,
 public routes, bucket CORS, upload credentials, or media migration exist yet.
@@ -66,6 +66,22 @@ quality 86, neither of which is allowed. Before adding a Photo Graph binding,
 choose and test project-scoped accepted widths/qualities or explicitly map
 Photo Graph callers to supported variants. Do not silently expand Elliot's or
 bur1alrites' transform options as a side effect.
+
+The proposed R2 route serves only canonical
+`photography-images/<numeric-id>.(png|jpg|webp)` keys; it does not expose
+arbitrary files under the bucket prefix. The existing
+`PHOTO_GRAPH_IMAGE_BASE_PATH` override can generate different paths, so R2
+cutover code **must call** `assertPhotoGraphR2ImageBasePath()` before enabling
+new writes or R2 URL generation and fail closed if the configured prefix is
+different. This guard does not change legacy Supabase behavior until invoked.
+Read-only inventory on 2026-10-14 showed all 102 graph-node paths use this
+canonical shape. Of 108 Storage objects, 102 match; the other six are nested
+`photography-images/_pending/*.png` recovery objects. Preserve those pending
+sources until their owning upload batches are reconciled or independently
+reviewed, even if their browser recovery state is no longer available. Do not
+put them in the published R2 bucket as public objects. Re-run this inventory and inspect the
+deployed prefix configuration immediately before cutover; a dated snapshot
+does not prove future upload paths will still match.
 
 The static fallback and generated color-feature/benchmark JSON files are graph
 metadata, not image originals; preserve their node-ID/media resolution rather

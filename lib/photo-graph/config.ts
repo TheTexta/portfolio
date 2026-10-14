@@ -3,6 +3,20 @@ const DEFAULT_PHOTO_GRAPH_EXTENSION = "png";
 export const PHOTO_GRAPH_CACHE_CONTROL_SECONDS = "31536000";
 export const PHOTO_GRAPH_CACHE_CONTROL_HEADER = `max-age=${PHOTO_GRAPH_CACHE_CONTROL_SECONDS}`;
 
+// The proposed shared R2 Worker intentionally serves only this canonical prefix.
+// Call this preflight before enabling R2 writes or public delivery; legacy
+// Supabase installations may still use PHOTO_GRAPH_IMAGE_BASE_PATH overrides.
+export function assertPhotoGraphR2ImageBasePath(
+  configured = photoGraphImageBasePath(),
+) {
+  if (configured.replace(/\/$/, "") !== DEFAULT_IMAGE_BASE_PATH) {
+    throw new Error(
+      `Photo Graph R2 delivery requires PHOTO_GRAPH_IMAGE_BASE_PATH=${DEFAULT_IMAGE_BASE_PATH}.`,
+    );
+  }
+  return DEFAULT_IMAGE_BASE_PATH;
+}
+
 export function photoGraphImageBasePath() {
   return process.env.PHOTO_GRAPH_IMAGE_BASE_PATH ?? DEFAULT_IMAGE_BASE_PATH;
 }
