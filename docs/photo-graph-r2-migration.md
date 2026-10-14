@@ -17,8 +17,10 @@ bucket `dextery-photo-graph-staging`, and published paths under
 `https://images.dextery.dev/photo-graph/` (transforms) and
 `https://media.dextery.dev/photo-graph/` (original bytes). The shared Worker
 currently lives in `bur1alrites/cloudflare-assets/`; a local-only
-`dextery-infrastructure/` repository contains an unchanged copy but is **not**
-its production deploy owner yet. No new buckets or routes currently exist.
+`dextery-infrastructure/` private repository contains an unchanged copy but is
+**not** its production deploy owner yet. Both proposed R2 buckets were created
+empty on 2026-10-14, with public r2.dev access disabled; no Worker bindings,
+public routes, bucket CORS, upload credentials, or media migration exist yet.
 
 ## Media locator seam
 
