@@ -23,7 +23,8 @@ The application uses:
 - Framer Motion
 - D3.js
 - `react-force-graph-2d`
-- Supabase Postgres and Storage
+- Supabase Postgres/Auth and retained Storage originals
+- Cloudflare R2 and the shared image/media Worker for published Photo Graph media
 - Spotify Web API
 - Sharp
 - Vercel Analytics and Speed Insights
@@ -129,7 +130,9 @@ Treat public project URLs as persistent unless the task explicitly involves chan
 
 ## Supabase
 
-Supabase is used for Photo Graph data and image storage.
+Supabase is used for Photo Graph data, Auth, retained original images, and
+in-flight legacy upload recovery. Published Photo Graph media are delivered
+from Cloudflare R2; the old Storage bucket must remain available for rollback.
 
 The production Photo Graph Storage bucket is:
 
@@ -247,9 +250,14 @@ When introducing a new model or feature representation, prefer versioning it rat
 
 ## Image Delivery
 
-Photo Graph images are served from Supabase Storage.
+The 102 referenced Photo Graph originals are served from published R2 under
+`/photo-graph/` on the shared image/media Worker domains. The six unregistered
+Supabase `_pending/` objects remain untouched. Mixed-provider reads and
+recoverable in-flight Supabase uploads still need their legacy Storage path.
 
-Transformed image URLs use Supabase's image-render endpoint rather than relying on Vercel's image transformation pipeline for Photo Graph media.
+R2-backed transforms use the shared Worker; Supabase-backed legacy transforms
+use Supabase's image-render endpoint. Neither uses Vercel image transformations
+for Photo Graph media.
 
 The self-hosted Supabase image-transform path is fronted by a dedicated NGINX cache defined under:
 

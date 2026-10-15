@@ -224,38 +224,44 @@ fixture and starts its own Next.js development server with test-only Supabase
 settings. It never accesses production Auth, Storage, or database services and
 does not interrupt the regular development server.
 
-## Photo Graph Supabase setup
+## Photo Graph storage and migration
 
-The proposed, not-yet-deployed Photo Graph R2 migration contract is documented
-in [`docs/photo-graph-r2-migration.md`](./docs/photo-graph-r2-migration.md).
-Current instructions below still describe the live Supabase Storage workflow;
-do not treat the proposal as an enabled R2 upload or delivery path.
+Photo Graph metadata/Auth remain in Supabase. On 2026-10-15 all 102 referenced
+originals (1,250,719,633 source bytes) were copied and SHA-256 read-back
+verified in private published R2 bucket `dextery-photo-graph`. All 102 graph
+rows now use the R2 provider and the shared image/media Worker's `/photo-graph/`
+routes. **Supabase originals and six unregistered `_pending/` objects remain
+untouched** for rollback and browser recovery. The Supabase render cache stays
+available for legacy uploads and rollback. See
+[`docs/photo-graph-r2-migration.md`](./docs/photo-graph-r2-migration.md).
 
-The two Photo Graph R2 buckets exist privately. A 2026-10-15 copy of all 102
-referenced originals (1,250,719,633 source bytes) was read back from R2 and
-SHA-256-verified; the six unregistered `_pending/` originals remain only in
-Supabase. No graph row, upload route, public Worker route or application setting
-has been switched. `npm run photo-graph:copy:r2 -- --manifest <file>` performs
-a dry-run preflight; add `--copy` only after confirming the target and manifest.
-The copier requires an existing authenticated Cloudflare token in the process
-environment and never removes Supabase objects or overwrites differing R2 data.
+The 2026-10-15 additive migration
+`supabase/migrations/20261015000937_photo_graph_storage_provider.sql` adds
+provider-qualified rows and a durable R2 deletion journal. R2 uploads are
+selected only when server-side `PHOTO_GRAPH_MEDIA_WRITE_PROVIDER=r2`; the
+`PHOTO_GRAPH_R2_S3_ENDPOINT`, `PHOTO_GRAPH_R2_ACCESS_KEY_ID`, and
+`PHOTO_GRAPH_R2_SECRET_ACCESS_KEY` settings must point to an Object Read & Write
+credential scoped **only** to `dextery-photo-graph` and private
+`dextery-photo-graph-staging`. Never put credentials in `NEXT_PUBLIC_*`.
+Unfinished legacy Supabase batches keep their original provider across deploys.
+The admin **Retry R2 Cleanup** action retries queued, unreferenced R2 deletes.
 
-The in-progress dual-provider application code defaults to Supabase writes.
-When deployed and separately approved for R2 uploads, the server-only settings
-are `PHOTO_GRAPH_MEDIA_WRITE_PROVIDER=r2`, `PHOTO_GRAPH_R2_S3_ENDPOINT`,
-`PHOTO_GRAPH_R2_ACCESS_KEY_ID` and `PHOTO_GRAPH_R2_SECRET_ACCESS_KEY`. The R2
-credential must grant Object Read & Write only for `dextery-photo-graph` and
-`dextery-photo-graph-staging`; never put it in `NEXT_PUBLIC_*` variables. The
-private staging bucket permits PUT CORS only from dextery.dev,
-www.dextery.dev, and localhost:3000, with the signed content-type, checksum,
-and source-metadata headers; its r2.dev access remains disabled. A synthetic
-signed PUT, SHA-256 read-back, published copy, and cleanup passed with an
-existing in-memory credential; no app credential has been installed.
-Apply `supabase/migrations/20261015000937_photo_graph_storage_provider.sql`
-before enabling R2 writes; it preserves legacy Supabase rows and adds a durable
-cleanup journal for R2 deletes. The admin **Retry R2 Cleanup** action retries
-only queued, unreferenced published objects. Do not activate R2 write mode or
-flip node providers while the local `photo-graph:doctor` still returns 401.
+The private staging bucket allows PUT CORS only from dextery.dev,
+www.dextery.dev, and localhost:3000 for signed content-type, checksum, and
+source-metadata headers; it is not bound to the public Worker. A synthetic
+signed PUT, published copy, SHA-256 read-back, and cleanup passed. To reconcile
+originals without deleting Supabase data, run
+`npm run photo-graph:copy:r2 -- --manifest <file>` for a dry run; add `--copy`
+only after confirming the target and manifest. The copier requires a Cloudflare
+token in its process environment and refuses differing R2 objects.
+
+For rollback **before any new R2 uploads**, verify all 102 retained Supabase
+originals and switch just those matching graph rows back to provider `supabase`
+in a guarded transaction, then disable R2 writes and restore the previous app
+deployment if needed. **After new R2 uploads**, first copy and verify every
+R2-only original back to Supabase and reconcile pending batches; only then
+switch providers or restore Supabase-only code. Never delete the six existing
+pending uploads or retained originals as part of rollback.
 
 | Command                                   | Purpose                                                         | Mutates data |
 | ----------------------------------------- | --------------------------------------------------------------- | ------------ |
@@ -270,7 +276,7 @@ flip node providers while the local `photo-graph:doctor` still returns 401.
 Run mutating commands only after confirming the target Supabase project and
 database connection variables. `photo-graph:doctor` is the safe first check.
 
-Supabase-hosted Photo Graph images now generate transformed public URLs through `storage.from(bucket).getPublicUrl(path, { transform })`. Supabase Storage handles WebP negotiation automatically for transformed requests, so Photo Graph and admin previews no longer depend on Vercel/Next image transformations.
+Legacy Supabase-backed Photo Graph images generate transformed public URLs through `storage.from(bucket).getPublicUrl(path, { transform })`. Supabase Storage handles WebP negotiation for those legacy requests; R2-backed images instead use the shared image Worker. Neither path depends on Vercel/Next image transformations.
 
 `photo-graph:apply-schema` accepts either a full `postgres://` connection string in `SUPABASE_DB_URL` (or `DATABASE_URL` / `POSTGRES_URL`) or a split self-hosted setup using `SUPABASE_DB_URL=<host>:<port>`, `SUPABASE_DB_USER`, `SUPABASE_DB_PASSWORD`, and optional `SUPABASE_DB_NAME`.
 If your Coolify Postgres container is internal-only, `photo-graph:doctor` will warn about the DB socket instead of failing, as long as the Storage bucket, graph tables, and cached image render route are already in place.
