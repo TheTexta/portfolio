@@ -306,6 +306,10 @@ export default function PhotoGraphAdminClient() {
   const [loadingGraphNodes, setLoadingGraphNodes] = useState(false);
   const [deletingNodeId, setDeletingNodeId] = useState<string | null>(null);
   const [isCleaningR2, setIsCleaningR2] = useState(false);
+  const [isCheckingR2, setIsCheckingR2] = useState(false);
+  const [r2DiagnosticMessage, setR2DiagnosticMessage] = useState<string | null>(
+    null,
+  );
   const [manageQuery, setManageQuery] = useState("");
   const [verbosePanelOpen, setVerbosePanelOpen] = useState(true);
   const [verboseLogs, setVerboseLogs] = useState<VerboseLogEntry[]>([]);
@@ -856,6 +860,33 @@ export default function PhotoGraphAdminClient() {
     }
   };
 
+  const handleCheckR2Access = async () => {
+    setIsCheckingR2(true);
+    setR2DiagnosticMessage(null);
+    try {
+      const response = await fetch("/api/admin/photo-graph/r2-diagnostic", {
+        method: "POST",
+      });
+      const body = await parseJsonOrThrow<{
+        ok?: boolean;
+        stage?: string;
+        upstreamStatus?: number | null;
+        cleanupPending?: boolean;
+      }>(response);
+      const message = body.ok
+        ? "R2 published read and private staging write/read/cleanup passed."
+        : `R2 check failed at ${body.stage ?? "unknown stage"}${body.upstreamStatus ? ` (HTTP ${body.upstreamStatus})` : ""}.${body.cleanupPending ? " Private test-object cleanup needs review." : " No photo was registered."}`;
+      setR2DiagnosticMessage(message);
+      setStatusWithLog(message, body.ok ? "success" : "warn");
+    } catch {
+      setR2DiagnosticMessage(
+        "R2 access check unavailable. No photo was registered.",
+      );
+    } finally {
+      setIsCheckingR2(false);
+    }
+  };
+
   const handleUpload = async () => {
     if (
       (!files.length && !pendingUpload) ||
@@ -1218,6 +1249,7 @@ export default function PhotoGraphAdminClient() {
     isSavingGraphDefaults ||
     isSavingEdgeDefaults ||
     isCleaningR2 ||
+    isCheckingR2 ||
     persistenceUnavailable;
   const adminBusy =
     isProcessing ||
@@ -1225,6 +1257,7 @@ export default function PhotoGraphAdminClient() {
     isSavingEdgeDefaults ||
     loadingGraphNodes ||
     isCleaningR2 ||
+    isCheckingR2 ||
     deletingNodeId !== null;
 
   return (
@@ -1723,8 +1756,22 @@ export default function PhotoGraphAdminClient() {
               >
                 {isCleaningR2 ? "Cleaning..." : "Retry R2 Cleanup"}
               </ControlButton>
+              <ControlButton
+                onClick={() => void handleCheckR2Access()}
+                disabled={adminBusy || persistenceUnavailable}
+                layout="action"
+                size="sm"
+              >
+                {isCheckingR2 ? "Checking..." : "Check R2 Access"}
+              </ControlButton>
             </div>
           </div>
+
+          {r2DiagnosticMessage && (
+            <p role="status" className="mt-3 text-xs">
+              {r2DiagnosticMessage}
+            </p>
+          )}
 
           <div className="mt-3">
             <input
