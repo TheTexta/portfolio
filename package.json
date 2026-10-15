@@ -16,6 +16,7 @@
     "seo:validate": "tsx scripts/seo/validate-indexing.ts",
     "admin:validate-auth": "tsx scripts/admin/validate-auth.ts",
     "photo-graph:doctor": "tsx scripts/photo-graph/doctor.ts",
+    "photo-graph:copy:r2": "tsx scripts/photo-graph/copy-media-to-r2.ts",
     "photo-graph:apply-schema": "tsx scripts/photo-graph/apply-supabase-schema.ts",
     "photo-graph:migrate": "tsx scripts/photo-graph/migrate-firebase-to-supabase.ts",
     "photo-graph:rename-storage": "tsx scripts/photo-graph/rename-photo-graph-storage.ts",
@@ -30,6 +31,8 @@
     "photo-graph:activate-ciede2000": "tsx scripts/photo-graph/activate-ciede2000.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1144.0",
+    "@aws-sdk/s3-request-presigner": "^3.1144.0",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.100.1",
     "@vercel/analytics": "^1.6.1",

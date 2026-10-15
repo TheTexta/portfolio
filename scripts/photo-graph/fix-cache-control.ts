@@ -80,7 +80,11 @@ async function run() {
   const storagePaths = [
     ...new Set(
       nodes
-        .map((node) => node.storagePath?.trim() ?? null)
+        .map((node) =>
+          node.storageProvider === "r2"
+            ? null
+            : (node.storagePath?.trim() ?? null),
+        )
         .filter(
           (value): value is string =>
             typeof value === "string" &&

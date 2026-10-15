@@ -126,6 +126,8 @@ export function usePhotoGraphImages({
         node.storagePath,
         node.sourceUrl,
         targetWidth,
+        undefined,
+        node.storageProvider,
       );
       if (candidateUrls.length === 0) {
         logNodeImageError(

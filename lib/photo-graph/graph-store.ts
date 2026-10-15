@@ -12,7 +12,10 @@ import {
   replacePhotoGraphGraph,
 } from "@/lib/photo-graph/database";
 import { isRecoverablePhotoGraphDatabaseError } from "@/lib/photo-graph/database-errors";
-import { buildSupabaseStoragePublicUrl } from "@/lib/supabase/config";
+import {
+  photoGraphMediaUrl,
+  photoGraphStorageProvider,
+} from "@/lib/photo-graph/media-url";
 import type {
   GraphImageDimensions,
   GraphLoadSource,
@@ -206,6 +209,8 @@ function normalizeNode(
       ? rawNode.storagePath
       : undefined;
 
+  const storageProvider = photoGraphStorageProvider(rawNode.storageProvider);
+
   const url = typeof rawNode.url === "string" ? rawNode.url : undefined;
 
   return {
@@ -216,6 +221,7 @@ function normalizeNode(
     feature,
     dimensions,
     storagePath,
+    ...(storageProvider === "r2" ? { storageProvider: "r2" as const } : {}),
     url,
   };
 }
@@ -299,7 +305,10 @@ export function ensureGraphStoragePaths(nodes: GraphNode[]) {
     }
 
     if (!node.url && node.storagePath) {
-      node.url = buildSupabaseStoragePublicUrl(node.storagePath);
+      node.url = photoGraphMediaUrl({
+        storagePath: node.storagePath,
+        storageProvider: node.storageProvider,
+      });
     }
   }
 }
@@ -346,6 +355,7 @@ export function toPublicGraphNodes(nodes: GraphNode[]): PublicGraphNode[] {
     colour: node.colour,
     correlations: node.correlations,
     storagePath: node.storagePath,
+    ...(node.storageProvider ? { storageProvider: node.storageProvider } : {}),
     dimensions: node.dimensions ? { ...node.dimensions } : undefined,
     url: node.url,
   }));

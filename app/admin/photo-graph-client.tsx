@@ -305,6 +305,7 @@ export default function PhotoGraphAdminClient() {
   const [writesEnabled, setWritesEnabled] = useState(true);
   const [loadingGraphNodes, setLoadingGraphNodes] = useState(false);
   const [deletingNodeId, setDeletingNodeId] = useState<string | null>(null);
+  const [isCleaningR2, setIsCleaningR2] = useState(false);
   const [manageQuery, setManageQuery] = useState("");
   const [verbosePanelOpen, setVerbosePanelOpen] = useState(true);
   const [verboseLogs, setVerboseLogs] = useState<VerboseLogEntry[]>([]);
@@ -796,12 +797,16 @@ export default function PhotoGraphAdminClient() {
           `Deleted node ${body.deletedId}. Remaining nodes: ${body.nodeCount}.`,
           "success",
         );
+        if (body.warning) appendVerboseLog(body.warning, "warn");
 
         setCreatedIds((current) => current.filter((id) => id !== node.id));
         await fetchGraphNodes({
           silent: true,
         });
-        setStatusWithLog(`Node ${body.deletedId} deleted.`, "success");
+        setStatusWithLog(
+          body.warning ?? `Node ${body.deletedId} deleted.`,
+          body.warning ? "warn" : "success",
+        );
       } catch (error) {
         const message =
           error instanceof Error
@@ -823,6 +828,33 @@ export default function PhotoGraphAdminClient() {
       setStatusWithLog,
     ],
   );
+
+  const handleRetryR2Cleanup = async () => {
+    setIsCleaningR2(true);
+    setErrorMessage(null);
+    try {
+      const response = await fetch("/api/admin/photo-graph/cleanup", {
+        method: "POST",
+      });
+      const body = await parseJsonOrThrow<{
+        ok?: boolean;
+        attempted?: number;
+        resolved?: number;
+        failed?: number;
+        error?: string;
+      }>(response);
+      if (!response.ok)
+        throw new Error(body.error ?? "Unable to inspect R2 cleanup jobs.");
+      const message = `R2 cleanup: ${body.resolved ?? 0} completed, ${body.failed ?? 0} still pending.`;
+      setStatusWithLog(message, body.failed ? "warn" : "success");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "R2 cleanup failed.",
+      );
+    } finally {
+      setIsCleaningR2(false);
+    }
+  };
 
   const handleUpload = async () => {
     if (
@@ -871,6 +903,14 @@ export default function PhotoGraphAdminClient() {
               "success",
             );
 
+            const sha256 = Array.from(
+              new Uint8Array(
+                await crypto.subtle.digest("SHA-256", await file.arrayBuffer()),
+              ),
+            )
+              .map((byte) => byte.toString(16).padStart(2, "0"))
+              .join("");
+
             setStatusWithLog(
               `Requesting upload URL (${index + 1}/${files.length}): ${file.name}`,
             );
@@ -884,6 +924,8 @@ export default function PhotoGraphAdminClient() {
                 body: JSON.stringify({
                   filename: file.name,
                   contentType: file.type,
+                  size: file.size,
+                  sha256,
                 }),
               },
             );
@@ -900,18 +942,19 @@ export default function PhotoGraphAdminClient() {
             }
 
             setStatusWithLog(
-              `Uploading directly to Supabase (${index + 1}/${files.length}): ${file.name}`,
+              `Uploading directly to ${uploadUrlBody.storageProvider === "r2" ? "R2" : "Supabase"} (${index + 1}/${files.length}): ${file.name}`,
             );
 
-            const sha256 = Array.from(
-              new Uint8Array(
-                await crypto.subtle.digest("SHA-256", await file.arrayBuffer()),
-              ),
-            )
-              .map((byte) => byte.toString(16).padStart(2, "0"))
-              .join("");
             batch.uploads.push({
               storagePath: uploadUrlBody.objectPath,
+              ...(uploadUrlBody.storageProvider === "r2"
+                ? {
+                    storageProvider: "r2" as const,
+                    sourceSha256: sha256,
+                    sourceSize: file.size,
+                    contentType: file.type,
+                  }
+                : {}),
               feature: {
                 rgb: featurePayload.rgb,
                 lab: featurePayload.lab,
@@ -929,22 +972,37 @@ export default function PhotoGraphAdminClient() {
             // Persist intent before bytes: a lost response must not lose the object.
             savePhotoGraphUploadRecovery(localStorage, batch);
             setPendingUpload({ ...batch });
-            const { error: uploadError } = await supabase.storage
-              .from(uploadUrlBody.bucket)
-              .uploadToSignedUrl(
-                uploadUrlBody.objectPath,
-                uploadUrlBody.token,
-                file,
-                {
-                  cacheControl: PHOTO_GRAPH_CACHE_CONTROL_SECONDS,
-                  contentType: file.type,
-                },
-              );
+            if (uploadUrlBody.storageProvider === "r2") {
+              const response = await fetch(uploadUrlBody.signedUrl, {
+                method: "PUT",
+                headers: uploadUrlBody.headers ?? { "Content-Type": file.type },
+                body: file,
+              });
+              if (!response.ok)
+                throw new Error(
+                  `Direct R2 upload failed (${response.status}). Retry to confirm whether the original was received.`,
+                );
+            } else {
+              if (!uploadUrlBody.token)
+                throw new Error("Supabase upload token was missing.");
+              const { error: uploadError } = await supabase.storage
+                .from(uploadUrlBody.bucket)
+                .uploadToSignedUrl(
+                  uploadUrlBody.objectPath,
+                  uploadUrlBody.token,
+                  file,
+                  {
+                    cacheControl: PHOTO_GRAPH_CACHE_CONTROL_SECONDS,
+                    contentType: file.type,
+                  },
+                );
 
-            if (uploadError) {
-              throw new Error(
-                uploadError.message || `Direct upload failed for ${file.name}.`,
-              );
+              if (uploadError) {
+                throw new Error(
+                  uploadError.message ||
+                    `Direct upload failed for ${file.name}.`,
+                );
+              }
             }
 
             appendVerboseLog(
@@ -964,7 +1022,17 @@ export default function PhotoGraphAdminClient() {
               method: "POST",
               headers: { "content-type": "application/json" },
               body: JSON.stringify({
-                paths: batch.uploads.map((upload) => upload.storagePath),
+                items: batch.uploads.map((upload) => ({
+                  storagePath: upload.storagePath,
+                  ...(upload.storageProvider === "r2"
+                    ? {
+                        storageProvider: "r2",
+                        sourceSha256: upload.sourceSha256,
+                        sourceSize: upload.sourceSize,
+                        contentType: upload.contentType,
+                      }
+                    : {}),
+                })),
               }),
             },
           );
@@ -1010,6 +1078,8 @@ export default function PhotoGraphAdminClient() {
                   filename: file.name,
                   contentType: file.type,
                   storagePath: path,
+                  size: file.size,
+                  sha256,
                 }),
               },
             );
@@ -1019,16 +1089,41 @@ export default function PhotoGraphAdminClient() {
               );
             if (!signedResponse.ok || !signed.ok)
               throw new Error(signed.error ?? "Unable to resume upload.");
-            const { error } = await supabase.storage
-              .from(signed.bucket)
-              .uploadToSignedUrl(path, signed.token, file, {
-                cacheControl: PHOTO_GRAPH_CACHE_CONTROL_SECONDS,
-                contentType: file.type,
-              });
-            if (error)
+            const entry = batch.uploads.find(
+              (upload) => upload.storagePath === path,
+            );
+            if (
+              (signed.storageProvider ?? "supabase") !==
+              (entry?.storageProvider ?? "supabase")
+            ) {
               throw new Error(
-                `${error.message}. Retry to confirm whether the original was received.`,
+                "The upload backend changed during recovery. Recovery metadata has been retained.",
               );
+            }
+            if (signed.storageProvider === "r2") {
+              const response = await fetch(signed.signedUrl, {
+                method: "PUT",
+                headers: signed.headers ?? { "Content-Type": file.type },
+                body: file,
+              });
+              if (!response.ok)
+                throw new Error(
+                  `Direct R2 retry failed (${response.status}). Retry to confirm whether the original was received.`,
+                );
+            } else {
+              if (!signed.token)
+                throw new Error("Supabase upload token was missing.");
+              const { error } = await supabase.storage
+                .from(signed.bucket)
+                .uploadToSignedUrl(path, signed.token, file, {
+                  cacheControl: PHOTO_GRAPH_CACHE_CONTROL_SECONDS,
+                  contentType: file.type,
+                });
+              if (error)
+                throw new Error(
+                  `${error.message}. Retry to confirm whether the original was received.`,
+                );
+            }
           }
           // Seal before registration; retries must never append to a reserved batch.
           batch.phase = "registering";
@@ -1122,12 +1217,14 @@ export default function PhotoGraphAdminClient() {
     isProcessing ||
     isSavingGraphDefaults ||
     isSavingEdgeDefaults ||
+    isCleaningR2 ||
     persistenceUnavailable;
   const adminBusy =
     isProcessing ||
     isSavingGraphDefaults ||
     isSavingEdgeDefaults ||
     loadingGraphNodes ||
+    isCleaningR2 ||
     deletingNodeId !== null;
 
   return (
@@ -1617,6 +1714,14 @@ export default function PhotoGraphAdminClient() {
                 size="sm"
               >
                 {loadingGraphNodes ? "Refreshing..." : "Refresh"}
+              </ControlButton>
+              <ControlButton
+                onClick={() => void handleRetryR2Cleanup()}
+                disabled={adminBusy || persistenceUnavailable}
+                layout="action"
+                size="sm"
+              >
+                {isCleaningR2 ? "Cleaning..." : "Retry R2 Cleanup"}
               </ControlButton>
             </div>
           </div>

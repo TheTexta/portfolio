@@ -6,7 +6,7 @@ import {
 } from "@/lib/photo-graph/database";
 import { loadGraphWithFallback } from "@/lib/photo-graph/graph-store";
 import { getAdminUser } from "@/lib/server/admin-auth";
-import { buildSupabaseStorageRenderUrl } from "@/lib/supabase/config";
+import { photoGraphMediaUrl } from "@/lib/photo-graph/media-url";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,18 +14,22 @@ export const dynamic = "force-dynamic";
 const ADMIN_PREVIEW_WIDTH = 96;
 const ADMIN_PREVIEW_QUALITY = 75;
 
-function buildAdminPreviewUrl(storagePath?: string, url?: string) {
+function buildAdminPreviewUrl(
+  storagePath?: string,
+  url?: string,
+  storageProvider?: "r2",
+) {
   if (!storagePath) {
     return url;
   }
 
   try {
-    return buildSupabaseStorageRenderUrl(storagePath, {
-      width: ADMIN_PREVIEW_WIDTH,
-      quality: ADMIN_PREVIEW_QUALITY,
-    });
+    return photoGraphMediaUrl(
+      { storagePath, storageProvider },
+      { width: ADMIN_PREVIEW_WIDTH, quality: ADMIN_PREVIEW_QUALITY },
+    );
   } catch {
-    return url;
+    return storageProvider === "r2" ? undefined : url;
   }
 }
 
@@ -45,7 +49,11 @@ export async function GET() {
   ]);
   const nodesWithPreview = nodes.map((node) => ({
     ...node,
-    previewUrl: buildAdminPreviewUrl(node.storagePath, node.url),
+    previewUrl: buildAdminPreviewUrl(
+      node.storagePath,
+      node.url,
+      node.storageProvider,
+    ),
   }));
 
   return NextResponse.json(

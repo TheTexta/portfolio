@@ -5,6 +5,10 @@ import type {
 } from "@/lib/photo-graph/admin-types";
 import { isRecoverablePhotoGraphDatabaseError } from "@/lib/photo-graph/database-errors";
 import {
+  photoGraphMediaUrl,
+  photoGraphStorageProvider,
+} from "@/lib/photo-graph/media-url";
+import {
   DEFAULT_SPARSE_EDGE_GENERATION_CONFIG,
   normalizeSparseEdgeGenerationConfig,
   type RankedPhotoGraphNeighbor,
@@ -23,10 +27,6 @@ import type {
   PhotoGraphSettingRow,
 } from "@/lib/photo-graph/types";
 import { getServiceRoleSupabase } from "@/lib/server/supabase";
-import {
-  buildSupabaseStoragePublicUrl,
-  getPhotoGraphStorageBucket,
-} from "@/lib/supabase/config";
 
 const PAGE_SIZE = 1_000;
 const DEFAULT_EDGE_GENERATION_SETTING_KEY = "default_edge_generation";
@@ -86,7 +86,14 @@ function normalizeExternalUrl(node: GraphNode, storagePath: string | null) {
     return null;
   }
 
-  if (storagePath && node.url === buildSupabaseStoragePublicUrl(storagePath)) {
+  if (
+    storagePath &&
+    node.url ===
+      photoGraphMediaUrl({
+        storagePath,
+        storageProvider: node.storageProvider,
+      })
+  ) {
     return null;
   }
 
@@ -103,6 +110,9 @@ function toNodeRow(node: GraphNode): PhotoGraphNodeInsert {
     scale: node.scale,
     colour: node.colour,
     storage_path: storagePath,
+    ...(node.storageProvider === "r2"
+      ? { storage_provider: "r2" as const }
+      : {}),
     external_url: normalizeExternalUrl(node, storagePath),
     feature_rgb_r: feature?.rgb[0] ?? null,
     feature_rgb_g: feature?.rgb[1] ?? null,
@@ -121,21 +131,15 @@ function toNodeRow(node: GraphNode): PhotoGraphNodeInsert {
 }
 
 function resolveNodeUrl(row: PhotoGraphNodeRow) {
-  if (row.storage_path) {
-    return buildSupabaseStoragePublicUrl(
-      row.storage_path,
-      getPhotoGraphStorageBucket(),
-    );
-  }
-
-  if (row.external_url) {
-    return row.external_url;
-  }
-
-  return undefined;
+  return photoGraphMediaUrl({
+    storagePath: row.storage_path,
+    storageProvider: row.storage_provider,
+    externalUrl: row.external_url,
+  });
 }
 
 function mapNodeRow(row: PhotoGraphNodeRow): GraphNode {
+  const provider = photoGraphStorageProvider(row.storage_provider);
   const hasFeature =
     row.feature_rgb_r !== null &&
     row.feature_rgb_g !== null &&
@@ -181,6 +185,7 @@ function mapNodeRow(row: PhotoGraphNodeRow): GraphNode {
     colour: row.colour,
     correlations: {},
     storagePath: row.storage_path ?? undefined,
+    ...(provider === "r2" ? { storageProvider: "r2" as const } : {}),
     url: resolveNodeUrl(row),
     feature,
     dimensions,
@@ -650,4 +655,69 @@ export async function deletePhotoGraphNodeRecord(nodeId: string) {
     .eq("id", parsedNodeId);
 
   assertNoSupabaseError(error, "Failed to delete photo graph node");
+}
+
+export async function queuePhotoGraphR2Deletion(nodeId: string) {
+  const parsedNodeId = Number(nodeId);
+  if (!Number.isSafeInteger(parsedNodeId) || parsedNodeId < 1) {
+    throw new Error("Invalid Photo Graph node ID.");
+  }
+  const { data, error } = await getServiceRoleSupabase().rpc(
+    "queue_photo_graph_r2_deletion",
+    { p_node_id: parsedNodeId },
+  );
+  assertNoSupabaseError(error, "Failed to queue R2 Photo Graph deletion");
+  const jobId = Number(data);
+  if (!Number.isSafeInteger(jobId) || jobId < 1) {
+    throw new Error("R2 cleanup job ID is missing.");
+  }
+  return jobId;
+}
+
+export async function listPendingPhotoGraphR2CleanupJobs(limit = 20) {
+  const { data, error } = await getServiceRoleSupabase()
+    .from("photo_graph_media_cleanup_jobs")
+    .select("id, storage_path")
+    .is("completed_at", null)
+    .order("id", { ascending: true })
+    .limit(limit);
+  assertNoSupabaseError(error, "Failed to list Photo Graph R2 cleanup jobs");
+  return data ?? [];
+}
+
+export async function loadPhotoGraphR2CleanupJob(id: number) {
+  const { data, error } = await getServiceRoleSupabase()
+    .from("photo_graph_media_cleanup_jobs")
+    .select("id, storage_path, completed_at")
+    .eq("id", id)
+    .maybeSingle();
+  assertNoSupabaseError(error, "Failed to load Photo Graph R2 cleanup job");
+  if (!data) throw new Error("Photo Graph R2 cleanup job is missing.");
+  return data;
+}
+
+export async function photoGraphR2PathIsReferenced(storagePath: string) {
+  const { data, error } = await getServiceRoleSupabase()
+    .from("photo_graph_nodes")
+    .select("id")
+    .eq("storage_provider", "r2")
+    .eq("storage_path", storagePath)
+    .limit(1);
+  assertNoSupabaseError(
+    error,
+    "Failed to verify R2 Photo Graph object references",
+  );
+  return Boolean(data?.length);
+}
+
+export async function completePhotoGraphR2CleanupJob(id: number) {
+  const { error } = await getServiceRoleSupabase()
+    .from("photo_graph_media_cleanup_jobs")
+    .update({ completed_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("completed_at", null);
+  assertNoSupabaseError(
+    error,
+    "Failed to mark Photo Graph R2 cleanup complete",
+  );
 }

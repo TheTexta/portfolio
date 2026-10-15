@@ -2,7 +2,7 @@ import {
   CANVAS_IMAGE_QUALITY,
   PHOTO_GRAPH_IMAGE_WIDTHS,
 } from "@/lib/image-optimization";
-import { buildSupabaseStorageRenderUrl } from "@/lib/supabase/config";
+import { photoGraphMediaUrl } from "@/lib/photo-graph/media-url";
 
 type OptimizableNode = {
   w: number;
@@ -48,16 +48,31 @@ export function buildOptimizedImageUrl(
   sourceUrl: string | undefined,
   width: number,
   quality = CANVAS_IMAGE_QUALITY,
+  storageProvider?: "r2",
 ) {
   if (!storagePath) {
     return sourceUrl ?? null;
   }
 
+  if (storageProvider === "r2") {
+    try {
+      return (
+        photoGraphMediaUrl(
+          { storageProvider, storagePath },
+          { width, quality },
+        ) ?? null
+      );
+    } catch {
+      return null;
+    }
+  }
+
   try {
-    return buildSupabaseStorageRenderUrl(storagePath, {
-      width,
-      quality,
-    });
+    return (
+      photoGraphMediaUrl({ storagePath }, { width, quality }) ??
+      sourceUrl ??
+      null
+    );
   } catch {
     return sourceUrl ?? null;
   }
@@ -68,12 +83,31 @@ export function buildOptimizedImageCandidates(
   sourceUrl: string | undefined,
   width: number,
   quality = CANVAS_IMAGE_QUALITY,
+  storageProvider?: "r2",
 ) {
+  if (storageProvider === "r2") {
+    // Do not fall back to an unverified URL after an invalid/private R2 path.
+    try {
+      const reference = { storagePath, storageProvider } as const;
+      const optimized = photoGraphMediaUrl(reference, { width, quality });
+      const original = photoGraphMediaUrl(reference);
+      return [optimized, original].filter(
+        (value, index, values): value is string =>
+          typeof value === "string" &&
+          value.length > 0 &&
+          values.indexOf(value) === index,
+      );
+    } catch {
+      return [];
+    }
+  }
+
   const optimizedUrl = buildOptimizedImageUrl(
     storagePath,
     sourceUrl,
     width,
     quality,
+    storageProvider,
   );
   const candidates = [optimizedUrl, sourceUrl].filter(
     (value, index, values): value is string =>

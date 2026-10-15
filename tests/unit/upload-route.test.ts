@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   graph: vi.fn(),
   prepare: vi.fn(),
   cleanup: vi.fn(),
+  publishR2: vi.fn(),
+  cleanupR2: vi.fn(),
 }));
 vi.mock("@/lib/server/admin-auth", () => ({ getAdminUser: mocks.admin }));
 vi.mock("@/lib/server/supabase", () => ({
@@ -22,6 +24,10 @@ vi.mock("@/lib/supabase/config", () => ({
 vi.mock("@/lib/server/photo-graph-upload-storage", () => ({
   preparePhotoGraphUploadAssets: mocks.prepare,
   cleanupPhotoGraphUploadAssets: mocks.cleanup,
+}));
+vi.mock("@/lib/server/photo-graph-r2", () => ({
+  publishPhotoGraphR2Upload: mocks.publishR2,
+  removePhotoGraphR2StagedObject: mocks.cleanupR2,
 }));
 vi.mock("@/lib/photo-graph/database", () => ({
   loadPhotoGraphUploadRevision: mocks.revision,
@@ -55,6 +61,14 @@ const upload = {
   },
   dimensions: { width: 1, height: 1, aspectRatio: 1 },
 };
+const r2Upload = {
+  ...upload,
+  storagePath: `staging/${uploadId}.png`,
+  storageProvider: "r2",
+  sourceSha256: "a".repeat(64),
+  sourceSize: 123,
+  contentType: "image/png",
+};
 const result = {
   ok: true,
   createdIds: ["101"],
@@ -84,6 +98,8 @@ beforeEach(() => {
   });
   mocks.begin.mockResolvedValue({ nodeIds: ["101"], result: null });
   mocks.commit.mockResolvedValue(result);
+  mocks.publishR2.mockResolvedValue("photography-images/101.png");
+  mocks.cleanupR2.mockResolvedValue(undefined);
 });
 
 describe("upload registration route", () => {
@@ -135,5 +151,57 @@ describe("upload registration route", () => {
     expect(mocks.cleanup.mock.invocationCallOrder[0]).toBeGreaterThan(
       mocks.commit.mock.invocationCallOrder[0],
     );
+  });
+  it("publishes an R2 original before commit and cleans staging afterward", async () => {
+    const response = await POST(request({ uploadId, uploads: [r2Upload] }));
+    expect(response.status).toBe(200);
+    expect(mocks.prepare).not.toHaveBeenCalled();
+    expect(mocks.publishR2).toHaveBeenCalledWith({
+      source: r2Upload.storagePath,
+      nodeId: "101",
+      contentType: "image/png",
+      size: 123,
+      sha256: r2Upload.sourceSha256,
+    });
+    expect(mocks.commit.mock.calls[0][2][0]).toMatchObject({
+      storageProvider: "r2",
+      storagePath: "photography-images/101.png",
+    });
+    expect(mocks.cleanupR2).toHaveBeenCalledWith(r2Upload.storagePath);
+    expect(mocks.cleanupR2.mock.invocationCallOrder[0]).toBeGreaterThan(
+      mocks.commit.mock.invocationCallOrder[0],
+    );
+  });
+  it("keeps R2 staging after commit failure and retries cleanup after an ambiguous response", async () => {
+    mocks.commit.mockRejectedValueOnce(new Error("Transaction unavailable"));
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(
+      (await POST(request({ uploadId, uploads: [r2Upload] }))).status,
+    ).toBe(503);
+    expect(mocks.cleanupR2).not.toHaveBeenCalled();
+    mocks.begin.mockResolvedValueOnce({ nodeIds: ["101"], result });
+    expect(
+      (await POST(request({ uploadId, uploads: [r2Upload] }))).status,
+    ).toBe(200);
+    expect(mocks.cleanupR2).toHaveBeenCalledWith(r2Upload.storagePath);
+    expect(mocks.publishR2).toHaveBeenCalledTimes(1);
+    log.mockRestore();
+  });
+  it("rejects incomplete or mismatched R2 metadata before reserving an upload", async () => {
+    for (const changes of [
+      { sourceSha256: "bad" },
+      { sourceSize: 0 },
+      { storagePath: upload.storagePath },
+      { contentType: "image/jpeg" },
+    ]) {
+      expect(
+        (
+          await POST(
+            request({ uploadId, uploads: [{ ...r2Upload, ...changes }] }),
+          )
+        ).status,
+      ).toBe(400);
+    }
+    expect(mocks.begin).not.toHaveBeenCalled();
   });
 });

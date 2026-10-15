@@ -4,6 +4,12 @@ import {
   buildCanonicalPhotoGraphStoragePath,
   isPendingPhotoGraphStoragePath,
 } from "@/lib/photo-graph/config";
+import {
+  isPhotoGraphR2StagingKey,
+  PHOTO_GRAPH_R2_MAX_UPLOAD_BYTES,
+  photoGraphR2Extension,
+  photoGraphR2PublishedKey,
+} from "@/lib/photo-graph/r2-paths";
 import { scaleFromLongSide } from "@/lib/photo-graph/correlation";
 import {
   cloneGraphNodes,
@@ -27,6 +33,10 @@ import {
 } from "@/lib/photo-graph/sparse-edge-generation";
 import { PHOTO_GRAPH_SIMILARITY_MODELS } from "@/lib/photo-graph/similarity-models";
 import { getAdminUser } from "@/lib/server/admin-auth";
+import {
+  publishPhotoGraphR2Upload,
+  removePhotoGraphR2StagedObject,
+} from "@/lib/server/photo-graph-r2";
 import { getServiceRoleSupabase } from "@/lib/server/supabase";
 import { getPhotoGraphStorageBucket } from "@/lib/supabase/config";
 import {
@@ -44,6 +54,10 @@ export const dynamic = "force-dynamic";
 
 type UploadRegistration = {
   storagePath?: string;
+  storageProvider?: "r2";
+  sourceSha256?: string;
+  sourceSize?: number;
+  contentType?: string;
   feature?: GraphFeature;
   dimensions?: GraphImageDimensions;
   colour?: string;
@@ -54,12 +68,22 @@ type UploadRegistrationPayload = {
   uploads?: UploadRegistration[];
 };
 
-type ParsedUploadRegistration = {
+type ParsedUploadBase = {
   storagePath: string;
   feature: GraphFeature;
   dimensions: GraphImageDimensions;
   colour: string;
 };
+type ParsedUploadRegistration = ParsedUploadBase &
+  (
+    | { storageProvider?: undefined }
+    | {
+        storageProvider: "r2";
+        sourceSha256: string;
+        sourceSize: number;
+        contentType: string;
+      }
+  );
 
 function parseNumber(value: unknown) {
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -169,8 +193,32 @@ function normalizeUploads(value: unknown) {
     const record = entry as Record<string, unknown>;
     const storagePath = String(record.storagePath ?? "").trim();
 
-    if (!isPendingPhotoGraphStoragePath(storagePath)) {
+    const isR2 = record.storageProvider === "r2";
+    if (
+      isR2
+        ? !isPhotoGraphR2StagingKey(storagePath) ||
+          !Number.isSafeInteger(record.sourceSize) ||
+          typeof record.sourceSize !== "number" ||
+          record.sourceSize < 1 ||
+          record.sourceSize > PHOTO_GRAPH_R2_MAX_UPLOAD_BYTES ||
+          typeof record.sourceSha256 !== "string" ||
+          !/^[a-f0-9]{64}$/.test(record.sourceSha256) ||
+          typeof record.contentType !== "string"
+        : record.storageProvider !== undefined ||
+          !isPendingPhotoGraphStoragePath(storagePath)
+    )
       return null;
+    if (isR2) {
+      try {
+        if (
+          !storagePath.endsWith(
+            `.${photoGraphR2Extension(record.contentType as string)}`,
+          )
+        )
+          return null;
+      } catch {
+        return null;
+      }
     }
 
     const feature = parseFeaturePayload(record.feature);
@@ -183,12 +231,21 @@ function normalizeUploads(value: unknown) {
       return null;
     }
 
-    uploads.push({
+    const parsed: ParsedUploadBase = {
       storagePath,
       feature,
       dimensions,
       colour: rgbToHex(feature.rgb),
-    });
+    };
+    if (isR2) {
+      uploads.push({
+        ...parsed,
+        storageProvider: "r2",
+        sourceSha256: record.sourceSha256 as string,
+        sourceSize: record.sourceSize as number,
+        contentType: record.contentType as string,
+      });
+    } else uploads.push(parsed);
   }
 
   return new Set(uploads.map((upload) => upload.storagePath)).size ===
@@ -327,12 +384,41 @@ async function registerUpload(
     uploads,
     nextNodeId(loaded.nodes) - 1,
   );
-  const storage = getServiceRoleSupabase().storage.from(
-    getPhotoGraphStorageBucket(),
+  const legacyUploads = uploads.filter(
+    (upload) => upload.storageProvider !== "r2",
   );
-  const pendingPaths = uploads.map((upload) => upload.storagePath);
+  const r2Uploads = uploads.filter(
+    (
+      upload,
+    ): upload is ParsedUploadBase &
+      Extract<ParsedUploadRegistration, { storageProvider: "r2" }> =>
+      upload.storageProvider === "r2",
+  );
+  const storage = legacyUploads.length
+    ? getServiceRoleSupabase().storage.from(getPhotoGraphStorageBucket())
+    : null;
+  async function cleanupSources() {
+    const warnings: string[] = [];
+    if (storage) {
+      const warning = await cleanupPhotoGraphUploadAssets(
+        storage,
+        legacyUploads.map((upload) => upload.storagePath),
+      );
+      if (warning) warnings.push(warning);
+    }
+    for (const upload of r2Uploads) {
+      try {
+        await removePhotoGraphR2StagedObject(upload.storagePath);
+      } catch {
+        warnings.push(
+          "Photos were registered, but private R2 upload cleanup remains. Retry registration to retry cleanup.",
+        );
+      }
+    }
+    return warnings.length ? warnings.join(" ") : undefined;
+  }
   if (reservation.result) {
-    const warning = await cleanupPhotoGraphUploadAssets(storage, pendingPaths);
+    const warning = await cleanupSources();
     return NextResponse.json({ ...reservation.result, warning });
   }
 
@@ -362,20 +448,37 @@ async function registerUpload(
 
   const createdIds: string[] = [];
   const createdNodes: GraphNode[] = [];
-  const assets: { source: string; destination: string }[] = [];
+  const legacyAssets: { source: string; destination: string }[] = [];
+  const r2Assets: Array<{
+    source: string;
+    nodeId: string;
+    contentType: string;
+    size: number;
+    sha256: string;
+  }> = [];
 
   for (const [uploadIndex, upload] of uploads.entries()) {
     const id = reservation.nodeIds[uploadIndex];
     createdIds.push(id);
-    const canonicalStoragePath = buildCanonicalPhotoGraphStoragePath(
-      id,
-      upload.storagePath,
-    );
+    const canonicalStoragePath =
+      upload.storageProvider === "r2"
+        ? photoGraphR2PublishedKey(id, upload.storagePath)
+        : buildCanonicalPhotoGraphStoragePath(id, upload.storagePath);
 
-    assets.push({
-      source: upload.storagePath,
-      destination: canonicalStoragePath,
-    });
+    if (upload.storageProvider === "r2") {
+      r2Assets.push({
+        source: upload.storagePath,
+        nodeId: id,
+        contentType: upload.contentType,
+        size: upload.sourceSize,
+        sha256: upload.sourceSha256,
+      });
+    } else {
+      legacyAssets.push({
+        source: upload.storagePath,
+        destination: canonicalStoragePath,
+      });
+    }
 
     createdNodes.push({
       id,
@@ -383,12 +486,17 @@ async function registerUpload(
       colour: upload.colour,
       correlations: {},
       storagePath: canonicalStoragePath,
+      ...(upload.storageProvider === "r2"
+        ? { storageProvider: "r2" as const }
+        : {}),
       feature: upload.feature,
       dimensions: upload.dimensions,
     });
   }
 
-  await preparePhotoGraphUploadAssets(storage, assets);
+  if (storage && legacyAssets.length)
+    await preparePhotoGraphUploadAssets(storage, legacyAssets);
+  for (const asset of r2Assets) await publishPhotoGraphR2Upload(asset);
 
   nodes.push(...createdNodes);
 
@@ -463,6 +571,6 @@ async function registerUpload(
       edgeGenerationConfig,
     },
   );
-  const warning = await cleanupPhotoGraphUploadAssets(storage, pendingPaths);
+  const warning = await cleanupSources();
   return NextResponse.json({ ...result, warning });
 }

@@ -21,7 +21,7 @@ import {
   getPhotoGraphLinkValue,
   sortPhotoGraphNodesForRender,
 } from "@/lib/photo-graph/force-graph";
-import { buildSupabaseStorageRenderUrl } from "@/lib/supabase/config";
+import { photoGraphMediaUrl } from "@/lib/photo-graph/media-url";
 
 import PhotoGraphControls from "./PhotoGraphControls";
 import PhotoGraphInspectOverlay from "./PhotoGraphInspectOverlay";
@@ -144,10 +144,22 @@ function buildInspectPreviewUrl(node: PhotoGraphNode) {
     return node.sourceUrl;
   }
 
-  return buildSupabaseStorageRenderUrl(node.storagePath, {
-    width: PHOTO_GRAPH_INSPECT_PREVIEW_WIDTH,
-    quality: PHOTO_GRAPH_INSPECT_PREVIEW_QUALITY,
-  });
+  try {
+    return (
+      photoGraphMediaUrl(
+        {
+          storagePath: node.storagePath,
+          storageProvider: node.storageProvider,
+        },
+        {
+          width: PHOTO_GRAPH_INSPECT_PREVIEW_WIDTH,
+          quality: PHOTO_GRAPH_INSPECT_PREVIEW_QUALITY,
+        },
+      ) ?? node.sourceUrl
+    );
+  } catch {
+    return node.storageProvider === "r2" ? "" : node.sourceUrl;
+  }
 }
 
 export default function PhotoGraphCanvas({

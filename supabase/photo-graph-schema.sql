@@ -8,6 +8,7 @@ create table if not exists public.photo_graph_nodes (
   scale double precision not null,
   colour text not null,
   storage_path text,
+  storage_provider text not null default 'supabase',
   external_url text,
   feature_rgb_r double precision,
   feature_rgb_g double precision,
@@ -27,6 +28,35 @@ create table if not exists public.photo_graph_nodes (
 
 alter table public.photo_graph_nodes
   add column if not exists feature_color_v1 jsonb;
+
+alter table public.photo_graph_nodes
+  add column if not exists storage_provider text not null default 'supabase';
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.photo_graph_nodes'::regclass
+      and conname = 'photo_graph_nodes_storage_provider_check'
+  ) then
+    alter table public.photo_graph_nodes
+      add constraint photo_graph_nodes_storage_provider_check
+      check (storage_provider in ('supabase', 'r2'));
+  end if;
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.photo_graph_nodes'::regclass
+      and conname = 'photo_graph_nodes_r2_path_check'
+  ) then
+    alter table public.photo_graph_nodes
+      add constraint photo_graph_nodes_r2_path_check
+      check (
+        storage_provider <> 'r2'
+        or (storage_path is not null and storage_path ~ '^photography-images/[0-9]+[.](png|jpg|webp)$')
+      );
+  end if;
+end;
+$$;
 
 create sequence if not exists public.photo_graph_node_id_seq;
 
@@ -288,7 +318,7 @@ begin
   insert into public.photo_graph_nodes
   select populated.* from jsonb_array_elements(node_rows) item,
     lateral jsonb_populate_record(null::public.photo_graph_nodes,
-      jsonb_build_object('created_at', now(), 'updated_at', now()) || item) populated
+      jsonb_build_object('created_at', now(), 'updated_at', now(), 'storage_provider', 'supabase') || item) populated
   on conflict (id) do update set
     scale = excluded.scale,
     updated_at = excluded.updated_at;
@@ -306,5 +336,44 @@ revoke all on function public.commit_photo_graph_upload(uuid, text, jsonb, bigin
 grant execute on function public.begin_photo_graph_upload(uuid, uuid, jsonb, bigint) to service_role;
 grant execute on function public.photo_graph_upload_revision() to service_role;
 grant execute on function public.commit_photo_graph_upload(uuid, text, jsonb, bigint[], jsonb, jsonb, jsonb) to service_role;
+
+-- Preserve an R2 deletion target in the same transaction that removes its node.
+create table if not exists public.photo_graph_media_cleanup_jobs (
+  id bigint generated always as identity primary key,
+  node_id bigint not null,
+  storage_provider text not null check (storage_provider = 'r2'),
+  storage_path text not null check (storage_path ~ '^photography-images/[0-9]+[.](png|jpg|webp)$'),
+  created_at timestamptz not null default now(),
+  completed_at timestamptz,
+  unique (node_id, storage_provider, storage_path)
+);
+alter table public.photo_graph_media_cleanup_jobs enable row level security;
+revoke all on table public.photo_graph_media_cleanup_jobs from public, anon, authenticated;
+grant select, insert, update, delete on table public.photo_graph_media_cleanup_jobs to service_role;
+create index if not exists photo_graph_media_cleanup_pending_idx
+  on public.photo_graph_media_cleanup_jobs (id) where completed_at is null;
+
+create or replace function public.queue_photo_graph_r2_deletion(p_node_id bigint)
+returns bigint
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  source_path text;
+  provider text;
+  job_id bigint;
+begin
+  select storage_path, storage_provider into source_path, provider
+    from public.photo_graph_nodes where id = p_node_id for update;
+  if not found or provider <> 'r2' or source_path is null then
+    raise exception 'R2 Photo Graph node not found';
+  end if;
+  insert into public.photo_graph_media_cleanup_jobs (node_id, storage_provider, storage_path)
+    values (p_node_id, provider, source_path) returning id into job_id;
+  delete from public.photo_graph_nodes where id = p_node_id;
+  return job_id;
+end;
+$$;
+revoke all on function public.queue_photo_graph_r2_deletion(bigint) from public, anon, authenticated;
+grant execute on function public.queue_photo_graph_r2_deletion(bigint) to service_role;
 
 notify pgrst, 'reload schema';

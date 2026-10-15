@@ -142,7 +142,12 @@ test("failed registration survives reload and retries the same batch without reu
       json: {
         ok: true,
         missing: [],
-        present: route.request().postDataJSON().paths,
+        present:
+          route
+            .request()
+            .postDataJSON()
+            .items?.map((item: { storagePath: string }) => item.storagePath) ??
+          route.request().postDataJSON().paths,
       },
     }),
   );
@@ -200,6 +205,132 @@ test("failed registration survives reload and retries the same batch without reu
       localStorage.getItem("photo-graph-upload-recovery-v1"),
     ),
   ).toBeNull();
+});
+
+test("R2 staging upload preserves its provider and immutable batch across registration retries", async ({
+  page,
+  context,
+}) => {
+  const objectPath = "staging/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.png";
+  const original = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=",
+    "base64",
+  );
+  const registrations: unknown[] = [];
+  const signedRequests: unknown[] = [];
+  const statusRequests: unknown[] = [];
+  let directUploads = 0;
+  await context.route("https://**/*", (route) => route.abort());
+  await context.route("**/api/admin/photo-graph/graph**", (route) =>
+    route.fulfill({
+      json: {
+        source: "database",
+        nodes: [],
+        links: [],
+        writesEnabled: true,
+        defaultEdgeGeneration: DEFAULT_SPARSE_EDGE_GENERATION_CONFIG,
+        defaultGraphControls: DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS,
+      },
+    }),
+  );
+  await context.route("**/api/admin/photo-graph/upload-url", (route) => {
+    signedRequests.push(route.request().postDataJSON());
+    return route.fulfill({
+      json: {
+        ok: true,
+        storageProvider: "r2",
+        bucket: "dextery-photo-graph-staging",
+        objectPath,
+        signedUrl: "https://example.r2.cloudflarestorage.com/test-upload",
+        headers: { "Content-Type": "image/png" },
+        expiresInSeconds: 3600,
+      },
+    });
+  });
+  await context.route(
+    "https://example.r2.cloudflarestorage.com/test-upload",
+    (route) => {
+      const headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "PUT, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      };
+      if (route.request().method() === "OPTIONS") {
+        return route.fulfill({ status: 204, headers });
+      }
+      directUploads++;
+      expect(route.request().method()).toBe("PUT");
+      return route.fulfill({ status: 200, headers });
+    },
+  );
+  await context.route("**/api/admin/photo-graph/upload-status", (route) => {
+    statusRequests.push(route.request().postDataJSON());
+    return route.fulfill({
+      json: { ok: true, present: [objectPath], missing: [] },
+    });
+  });
+  await context.route("**/api/admin/photo-graph/upload", (route) => {
+    registrations.push(route.request().postDataJSON());
+    if (registrations.length === 1) {
+      return route.fulfill({
+        status: 503,
+        json: { error: "Retry registration." },
+      });
+    }
+    return route.fulfill({
+      json: {
+        ok: true,
+        createdIds: ["128"],
+        nodeCount: 1,
+        edgeCount: 0,
+        edgeGenerationConfig: DEFAULT_SPARSE_EDGE_GENERATION_CONFIG,
+      },
+    });
+  });
+  const login = await context.request.post("/api/admin/photo-graph/login", {
+    data: { email: "admin@example.test", password: "test-password" },
+  });
+  expect(login.ok()).toBeTruthy();
+  await page.goto("/admin");
+  await expect(page.locator('input[type="file"]')).toBeEnabled();
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "test.png",
+    mimeType: "image/png",
+    buffer: original,
+  });
+  await page.getByRole("button", { name: "Upload + Update Graph" }).click();
+  await expect(
+    page.getByText("Retry registration.", { exact: true }),
+  ).toBeVisible();
+  const saved = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("photo-graph-upload-recovery-v1")!),
+  );
+  expect(saved.uploads[0]).toMatchObject({
+    storagePath: objectPath,
+    storageProvider: "r2",
+    sourceSize: original.length,
+    contentType: "image/png",
+  });
+  await page.reload();
+  await page.getByRole("button", { name: "Retry registration" }).click();
+  await expect(page.getByText("Created node IDs: 128")).toBeVisible();
+  expect(directUploads).toBe(1);
+  expect(registrations).toHaveLength(2);
+  expect(registrations[1]).toEqual(registrations[0]);
+  expect(signedRequests).toHaveLength(1);
+  expect((signedRequests[0] as { sha256: string }).sha256).toMatch(
+    /^[a-f0-9]{64}$/,
+  );
+  expect(statusRequests).toHaveLength(1);
+  expect(statusRequests[0]).toMatchObject({
+    items: [
+      {
+        storagePath: objectPath,
+        storageProvider: "r2",
+        sourceSize: original.length,
+      },
+    ],
+  });
 });
 
 test("a lost Storage response retains intent and another tab cannot seal an active batch", async ({

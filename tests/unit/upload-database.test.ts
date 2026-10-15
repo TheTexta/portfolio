@@ -152,6 +152,7 @@ describe.sequential("atomic upload registration", () => {
     for (const file of [
       "20261014212606_photo_graph_recoverable_uploads.sql",
       "20261014212629_restrict_photo_graph_upload_rpc_permissions.sql",
+      "20261015000937_photo_graph_storage_provider.sql",
     ]) {
       await db.exec(
         await readFile(
@@ -222,5 +223,54 @@ describe.sequential("atomic upload registration", () => {
       "select value from photo_graph_settings where key = 'default_edge_generation'",
     );
     expect(config.rows[0].value).toEqual({ model: "mean-lab-cie76" });
+  });
+  it("keeps the explicit R2 provider in a committed upload without changing legacy nodes", async () => {
+    const thirdId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+    const r2Payload = [
+      {
+        storagePath: "staging/private.png",
+        storageProvider: "r2",
+      },
+    ];
+    const reserved = await db.query<{ result: { nodeIds: number[] } }>(
+      "select begin_photo_graph_upload($1,$2,$3::jsonb,60) result",
+      [thirdId, adminId, JSON.stringify(r2Payload)],
+    );
+    const id = reserved.rows[0].result.nodeIds[0];
+    await db.query(
+      "select commit_photo_graph_upload($1,$2,$3::jsonb,$4::bigint[],$5::jsonb,$6::jsonb,$7::jsonb)",
+      [
+        thirdId,
+        await revision(),
+        JSON.stringify([
+          {
+            id,
+            scale: 1,
+            colour: "#808080",
+            storage_path: `photography-images/${id}.png`,
+            storage_provider: "r2",
+          },
+        ]),
+        [id],
+        JSON.stringify([]),
+        JSON.stringify({
+          model: "mean-lab-cie76",
+          neighborsPerNode: 2,
+          maxDistance: 1,
+        }),
+        JSON.stringify({ ok: true, createdIds: [String(id)], nodeCount: 3 }),
+      ],
+    );
+    const nodes = await db.query<{ id: number; storage_provider: string }>(
+      "select id, storage_provider from public.photo_graph_nodes order by id",
+    );
+    expect(nodes.rows.find((node) => node.id === id)?.storage_provider).toBe(
+      "r2",
+    );
+    expect(
+      nodes.rows
+        .filter((node) => node.id !== id)
+        .every((node) => node.storage_provider === "supabase"),
+    ).toBe(true);
   });
 });

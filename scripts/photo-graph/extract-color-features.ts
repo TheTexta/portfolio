@@ -6,7 +6,7 @@ import sharp, { type OverlayOptions } from "sharp";
 import { extractPhotoGraphColorFeatureV1 } from "../../lib/photo-graph/color-features";
 import { upsertPhotoGraphNodes } from "../../lib/photo-graph/database";
 import { loadGraphWithFallback } from "../../lib/photo-graph/graph-store";
-import { buildSupabaseStorageRenderUrl } from "../../lib/supabase/config";
+import { photoGraphMediaUrl } from "../../lib/photo-graph/media-url";
 import type {
   GraphNode,
   PhotoGraphColorFeatureV1,
@@ -37,15 +37,15 @@ type FeatureCatalog = {
 };
 
 function sourceUrl(node: GraphNode, width = EXTRACTION_WIDTH) {
-  if (node.storagePath) {
-    return buildSupabaseStorageRenderUrl(node.storagePath, {
-      width,
-      quality: 85,
-    });
-  }
-  if (node.url) {
-    return node.url;
-  }
+  const url = photoGraphMediaUrl(
+    {
+      storagePath: node.storagePath,
+      storageProvider: node.storageProvider,
+      externalUrl: node.url,
+    },
+    { width, quality: 85 },
+  );
+  if (url) return url;
   throw new Error(`Node ${node.id} has no image source.`);
 }
 

@@ -11,7 +11,7 @@ import {
   createPageStructuredData,
   PUBLIC_PAGES,
 } from "@/lib/seo";
-import { buildSupabaseStorageRenderUrl } from "@/lib/supabase/config";
+import { photoGraphMediaUrl } from "@/lib/photo-graph/media-url";
 
 import PhotoGraphModelComparison from "./model-comparison/photo-graph-model-comparison";
 
@@ -57,11 +57,15 @@ type BenchmarkReport = {
 
 function imageUrl(node: GraphNode) {
   if (node.storagePath) {
-    return buildSupabaseStorageRenderUrl(node.storagePath, {
-      width: 560,
-      quality: 86,
-      resize: "cover",
-    });
+    return (
+      photoGraphMediaUrl(
+        {
+          storagePath: node.storagePath,
+          storageProvider: node.storageProvider,
+        },
+        { width: 560, quality: 86, resize: "cover" },
+      ) ?? ""
+    );
   }
 
   return node.url ?? "";

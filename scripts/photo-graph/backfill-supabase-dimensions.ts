@@ -6,7 +6,7 @@ import {
   readDatabaseGraph,
   writeRuntimeGraph,
 } from "../../lib/photo-graph/graph-store";
-import { buildSupabaseStoragePublicUrl } from "../../lib/supabase/config";
+import { photoGraphMediaUrl } from "../../lib/photo-graph/media-url";
 import type {
   GraphImageDimensions,
   GraphNode,
@@ -74,7 +74,10 @@ async function resolveNodeDimensions(node: GraphNode) {
   }
 
   const response = await fetch(
-    buildSupabaseStoragePublicUrl(node.storagePath),
+    photoGraphMediaUrl({
+      storagePath: node.storagePath,
+      storageProvider: node.storageProvider,
+    })!,
     {
       cache: "no-store",
     },

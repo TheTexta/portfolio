@@ -231,6 +231,29 @@ in [`docs/photo-graph-r2-migration.md`](./docs/photo-graph-r2-migration.md).
 Current instructions below still describe the live Supabase Storage workflow;
 do not treat the proposal as an enabled R2 upload or delivery path.
 
+The two Photo Graph R2 buckets exist privately. A 2026-10-15 copy of all 102
+referenced originals (1,250,719,633 source bytes) was read back from R2 and
+SHA-256-verified; the six unregistered `_pending/` originals remain only in
+Supabase. No graph row, upload route, public Worker route or application setting
+has been switched. `npm run photo-graph:copy:r2 -- --manifest <file>` performs
+a dry-run preflight; add `--copy` only after confirming the target and manifest.
+The copier requires an existing authenticated Cloudflare token in the process
+environment and never removes Supabase objects or overwrites differing R2 data.
+
+The in-progress dual-provider application code defaults to Supabase writes.
+When deployed and separately approved for R2 uploads, the server-only settings
+are `PHOTO_GRAPH_MEDIA_WRITE_PROVIDER=r2`, `PHOTO_GRAPH_R2_S3_ENDPOINT`,
+`PHOTO_GRAPH_R2_ACCESS_KEY_ID` and `PHOTO_GRAPH_R2_SECRET_ACCESS_KEY`. The R2
+credential must grant Object Read & Write only for `dextery-photo-graph` and
+`dextery-photo-graph-staging`; never put it in `NEXT_PUBLIC_*` variables. The
+private staging bucket permits PUT CORS only from dextery.dev,
+www.dextery.dev, and localhost:3000; its r2.dev access remains disabled.
+Apply `supabase/migrations/20261015000937_photo_graph_storage_provider.sql`
+before enabling R2 writes; it preserves legacy Supabase rows and adds a durable
+cleanup journal for R2 deletes. The admin **Retry R2 Cleanup** action retries
+only queued, unreferenced published objects. Do not activate R2 write mode or
+flip node providers while the local `photo-graph:doctor` still returns 401.
+
 | Command                                   | Purpose                                                         | Mutates data |
 | ----------------------------------------- | --------------------------------------------------------------- | ------------ |
 | `npm run photo-graph:doctor`              | Check storage, tables, RPCs, image rendering, and reachability. | No           |

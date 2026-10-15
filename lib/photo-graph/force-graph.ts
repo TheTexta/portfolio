@@ -226,6 +226,9 @@ export function buildPhotoGraphPayload(nodes: GraphNode[]): PhotoGraphPayload {
       id: node.id,
       sourceUrl: resolvePayloadSourceUrl(node),
       storagePath: node.storagePath,
+      ...(node.storageProvider
+        ? { storageProvider: node.storageProvider }
+        : {}),
       baseSize,
       aspectRatio: resolvePhotoGraphAspectRatio(node.dimensions),
       hasKnownAspectRatio: Boolean(node.dimensions),

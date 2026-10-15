@@ -9,9 +9,11 @@ import {
 } from "@/lib/photo-graph/graph-store";
 import {
   deletePhotoGraphNodeRecord,
+  queuePhotoGraphR2Deletion,
   upsertPhotoGraphNodes,
 } from "@/lib/photo-graph/database";
 import { getAdminUser } from "@/lib/server/admin-auth";
+import { processPhotoGraphR2CleanupJob } from "@/lib/server/photo-graph-r2-cleanup";
 import { getServiceRoleSupabase } from "@/lib/server/supabase";
 import { getPhotoGraphStorageBucket } from "@/lib/supabase/config";
 
@@ -82,14 +84,27 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  let cleanupJobId: number | undefined;
   if (loaded.source === "static") {
     await writeRuntimeGraph(nodes);
   } else {
-    await deletePhotoGraphNodeRecord(nodeId);
+    if (deletedNode.storageProvider === "r2") {
+      cleanupJobId = await queuePhotoGraphR2Deletion(nodeId);
+    } else {
+      await deletePhotoGraphNodeRecord(nodeId);
+    }
     await upsertPhotoGraphNodes(nodes);
   }
 
-  if (deletedNode.storagePath) {
+  let warning: string | undefined;
+  if (cleanupJobId !== undefined) {
+    try {
+      await processPhotoGraphR2CleanupJob(cleanupJobId);
+    } catch {
+      warning =
+        "Photo was removed from the graph, but its R2 object is queued for cleanup. Retry R2 cleanup from the admin area.";
+    }
+  } else if (deletedNode.storagePath) {
     try {
       const supabase = getServiceRoleSupabase();
       await supabase.storage
@@ -105,5 +120,6 @@ export async function POST(request: NextRequest) {
     deletedId: nodeId,
     nodeCount: nodes.length,
     source: loaded.source,
+    warning,
   });
 }

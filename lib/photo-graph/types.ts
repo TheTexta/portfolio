@@ -82,6 +82,7 @@ export type GraphNode = {
   colour: string;
   correlations: Record<string, number>;
   storagePath?: string;
+  storageProvider?: "r2";
   feature?: GraphFeature;
   dimensions?: GraphImageDimensions;
   url?: string;
@@ -95,6 +96,7 @@ export type PhotoGraphPayloadNode = {
   id: string;
   sourceUrl: string;
   storagePath?: string;
+  storageProvider?: "r2";
   baseSize: number;
   aspectRatio: number;
   hasKnownAspectRatio: boolean;
@@ -125,6 +127,8 @@ export type PhotoGraphNodeRow = {
   scale: number;
   colour: string;
   storage_path: string | null;
+  /** Absent on pre-migration rows; null/absent means the original Supabase bucket. */
+  storage_provider?: "supabase" | "r2" | null;
   external_url: string | null;
   feature_rgb_r: number | null;
   feature_rgb_g: number | null;

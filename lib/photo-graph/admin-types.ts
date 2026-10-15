@@ -19,9 +19,12 @@ export type PhotoGraphUploadUrlResponse = {
   ok: boolean;
   bucket: string;
   objectPath: string;
-  token: string;
+  /** Present only for legacy Supabase signed uploads. */
+  token?: string;
   signedUrl: string;
   expiresInSeconds: number;
+  storageProvider?: "r2";
+  headers?: Record<string, string>;
   error?: string;
 };
 
@@ -30,6 +33,7 @@ export type AdminPhotoGraphNode = {
   scale?: number;
   colour?: string;
   storagePath?: string;
+  storageProvider?: "r2";
   url?: string;
   previewUrl?: string;
   correlations: Record<string, number>;
@@ -64,11 +68,17 @@ export type DeletePhotoGraphResponse = {
   ok: boolean;
   deletedId: string;
   nodeCount: number;
+  warning?: string;
   error?: string;
 };
 
 export type PhotoGraphUploadRegistration = {
   storagePath: string;
+  /** Absent in legacy recovery/journal payloads. */
+  storageProvider?: "r2";
+  sourceSha256?: string;
+  sourceSize?: number;
+  contentType?: string;
   feature: GraphFeature;
   dimensions: GraphImageDimensions;
 };

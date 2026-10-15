@@ -20,6 +20,18 @@ export type SupabaseDatabase = {
         Omit<PhotoGraphNodeRow, "created_at">,
         Partial<Omit<PhotoGraphNodeRow, "created_at">>
       >;
+      photo_graph_media_cleanup_jobs: TableDefinition<
+        {
+          id: number;
+          node_id: number;
+          storage_provider: "r2";
+          storage_path: string;
+          created_at: string;
+          completed_at: string | null;
+        },
+        { node_id: number; storage_provider: "r2"; storage_path: string },
+        { completed_at?: string | null }
+      >;
       photo_graph_edges: TableDefinition<
         PhotoGraphEdgeRow,
         Omit<PhotoGraphEdgeRow, "created_at">,
@@ -38,6 +50,10 @@ export type SupabaseDatabase = {
     };
     Views: Record<string, never>;
     Functions: {
+      queue_photo_graph_r2_deletion: {
+        Args: { p_node_id: number };
+        Returns: number;
+      };
       begin_photo_graph_upload: {
         Args: {
           upload_id: string;

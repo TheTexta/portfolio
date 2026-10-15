@@ -1,8 +1,19 @@
 # Photo Graph media migration to Cloudflare R2
 
-Status: design proposal, 2026-10-14. **No R2 bucket, Worker route, application
-switch, database change, or media copy is authorized by this document.** Read
+Status: staged implementation; no Photo Graph application/Worker route, database
+provider switch, or R2 upload mode is live. **This document does not authorize
+deletion of existing Supabase objects or pending recovery uploads.** Read
 `AGENTS.md` and the current Photo Graph sections of `README.md` before editing.
+
+Implementation progress (2026-10-15): the owner authorized a staged migration,
+and a non-destructive copy of 102 referenced originals to the still-private R2
+bucket passed SHA-256 read-back verification. The six Supabase pending objects
+remain untouched. Provider-aware code and an additive SQL migration are being
+prepared on a worktree, not deployed; neither the Worker feature route nor R2
+uploads are active. Local `photo-graph:doctor` currently fails a service-role
+PostgREST read with 401 while the deployed public graph responds 200. Resolve
+the local credential/configuration problem before production schema or URL
+cutover. This document does not itself authorize removal of legacy objects.
 
 ## Current state and target
 
@@ -15,12 +26,13 @@ objects and upload journals must remain usable during a mixed-provider rollout.
 The chosen target uses published R2 bucket `dextery-photo-graph`, private staging
 bucket `dextery-photo-graph-staging`, and published paths under
 `https://images.dextery.dev/photo-graph/` (transforms) and
-`https://media.dextery.dev/photo-graph/` (original bytes). The shared Worker
-currently lives in `bur1alrites/cloudflare-assets/`; a local-only
-`TheTexta/dextery-infrastructure` private repository contains an unchanged copy but is
-**not** its production deploy owner yet. Both proposed R2 buckets were created
-empty on 2026-10-14, with public r2.dev access disabled; no Worker bindings,
-public routes, bucket CORS, upload credentials, or media migration exist yet.
+`https://media.dextery.dev/photo-graph/` (original bytes). The shared Worker is
+published from the private `TheTexta/dextery-infrastructure` repository;
+its Photo Graph route/binding remains on a separate undeployed branch. The
+published R2 bucket contains 102 checksum-verified copies, while the private
+staging bucket remains empty and has restricted PUT CORS. Public r2.dev access
+is disabled for both buckets; no Photo Graph Worker binding/route, S3 upload
+credential, database provider switch, or R2 application write mode is live.
 
 ## Media locator seam
 
@@ -103,11 +115,16 @@ before signing, and recovery rules for partial uploads.
 
 1. Authenticate and authorize the upload URL request. Upload originals directly
    to private R2 staging using short-lived signed requests. Persist provider,
-   source bucket/key, intended destination bucket/key, size and checksum in
-   browser recovery intent before sending bytes; support partial batches.
+   exact source bucket/key, destination **policy**, size and checksum in browser
+   recovery intent before sending bytes; support partial batches. Do not claim
+   the numeric-ID destination key is known yet: its node ID is reserved only
+   at registration.
 2. On registration, reserve the immutable batch ID, owner, payload, and stable
    node IDs in the Postgres journal. Include explicit provider/location in that
-   reservation so a retry cannot switch to another object or bucket.
+   reservation so a retry cannot switch to another object or bucket. Derive the
+   canonical published key from each reserved node ID and retain the exact
+   destination in the same recovery contract; legacy JSONB payloads must keep
+   their original shape so already-reserved batches can retry unchanged.
 3. Verify original bytes, then prepare the opaque canonical object in the
    published bucket without destroying the staging source. Ensure an ambiguous
    copy result can be retried by checking the exact destination and checksum;
@@ -132,6 +149,11 @@ not accidentally be checked or deleted using the Supabase bucket. Recoveries
 after reload or a lost response must reuse the original destination and the
 same committed result. Retain Supabase `_pending/` objects until their own
 registration has completed and cleanup is verified.
+The six pending PNG objects found in the live Supabase bucket on 2026-10-14
+have **no database upload-journal rows**. Do not infer ownership from their
+per-object UUID: it differs from the batch ID. They may rely on a browser's
+local recovery state, so leave them in Supabase for separate review and never
+copy them to the public R2 bucket as a migration shortcut.
 
 Signed R2 uploads that never reach registration will not have a Postgres
 reservation under the current ordering; browser recovery intent is their only
@@ -147,6 +169,14 @@ fetch**, including percent-encoded variants. The existing Supabase shape is
 `key.startsWith("_pending/")` test is insufficient. Tests must assert the
 Worker never calls the bucket for these requests. A project prefix does not
 provide a privacy boundary by itself.
+
+For R2-backed node deletion, the additive schema queues the exact provider and
+canonical key in `photo_graph_media_cleanup_jobs` in the same Postgres
+transaction that deletes the node. Object deletion follows only after checking
+that no R2 node still references the key; failures remain queued and the admin
+UI displays a warning with a **Retry R2 Cleanup** action. Legacy Supabase node
+deletion remains on its existing path. No cleanup command deletes the retained
+Supabase originals or the six pending recovery objects during this migration.
 
 ## Migration and cutover sequence
 
