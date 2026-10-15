@@ -33,6 +33,11 @@ published R2 bucket contains 102 checksum-verified copies, while the private
 staging bucket remains empty and has restricted PUT CORS. Public r2.dev access
 is disabled for both buckets; no Photo Graph Worker binding/route, S3 upload
 credential, database provider switch, or R2 application write mode is live.
+The browser PUT must send the signed `Content-Type`, `x-amz-checksum-sha256`,
+`x-amz-meta-sourcesha256`, and `x-amz-meta-expectedsize` headers: R2 does not
+persist user metadata supplied only in presigned URL query parameters. The
+staging CORS rule allows those specific headers. A synthetic PUT/copy/read-back
+test passed and both synthetic objects were removed with absence verified.
 
 ## Media locator seam
 

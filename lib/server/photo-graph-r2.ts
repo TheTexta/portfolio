@@ -101,11 +101,22 @@ export async function signPhotoGraphR2Upload(
   return {
     signedUrl: await getSignedUrl(s3, command, {
       expiresIn: SIGNED_UPLOAD_SECONDS,
+      signableHeaders: new Set(["content-type"]),
+      unhoistableHeaders: new Set([
+        "x-amz-checksum-sha256",
+        "x-amz-meta-sourcesha256",
+        "x-amz-meta-expectedsize",
+      ]),
     }),
     expiresInSeconds: SIGNED_UPLOAD_SECONDS,
-    // The presigner places the checksum and metadata in the signed URL query;
-    // sending duplicate browser headers is unnecessary and broadens CORS.
-    headers: { "Content-Type": input.contentType },
+    // R2 does not persist metadata hoisted into the presigned URL query.
+    // Sign and send it as request headers so HEAD can verify the upload.
+    headers: {
+      "Content-Type": input.contentType,
+      "x-amz-checksum-sha256": checksum,
+      "x-amz-meta-sourcesha256": input.sha256,
+      "x-amz-meta-expectedsize": String(input.size),
+    },
   };
 }
 

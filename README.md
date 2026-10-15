@@ -247,7 +247,10 @@ are `PHOTO_GRAPH_MEDIA_WRITE_PROVIDER=r2`, `PHOTO_GRAPH_R2_S3_ENDPOINT`,
 credential must grant Object Read & Write only for `dextery-photo-graph` and
 `dextery-photo-graph-staging`; never put it in `NEXT_PUBLIC_*` variables. The
 private staging bucket permits PUT CORS only from dextery.dev,
-www.dextery.dev, and localhost:3000; its r2.dev access remains disabled.
+www.dextery.dev, and localhost:3000, with the signed content-type, checksum,
+and source-metadata headers; its r2.dev access remains disabled. A synthetic
+signed PUT, SHA-256 read-back, published copy, and cleanup passed with an
+existing in-memory credential; no app credential has been installed.
 Apply `supabase/migrations/20261015000937_photo_graph_storage_provider.sql`
 before enabling R2 writes; it preserves legacy Supabase rows and adds a durable
 cleanup journal for R2 deletes. The admin **Retry R2 Cleanup** action retries

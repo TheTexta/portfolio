@@ -109,10 +109,17 @@ describe("Photo Graph R2 server operations", () => {
       expect(url.pathname).toBe(`/${source}`);
       expect(signed.expiresInSeconds).toBe(3600);
       expect(signed.headers["Content-Type"]).toBe("image/png");
-      expect(url.searchParams.get("x-amz-checksum-sha256")).toBe(
+      expect(signed.headers["x-amz-checksum-sha256"]).toBe(
         Buffer.from(sha256, "hex").toString("base64"),
       );
-      expect(url.searchParams.get("x-amz-meta-sourcesha256")).toBe(sha256);
+      expect(signed.headers["x-amz-meta-sourcesha256"]).toBe(sha256);
+      expect(signed.headers["x-amz-meta-expectedsize"]).toBe(
+        String(expected.size),
+      );
+      expect(url.searchParams.has("x-amz-meta-sourcesha256")).toBe(false);
+      expect(url.searchParams.get("X-Amz-SignedHeaders")).toContain(
+        "x-amz-meta-sourcesha256",
+      );
       await expect(
         signPhotoGraphR2Upload(
           {

@@ -234,7 +234,8 @@ test("R2 staging upload preserves its provider and immutable batch across regist
     }),
   );
   await context.route("**/api/admin/photo-graph/upload-url", (route) => {
-    signedRequests.push(route.request().postDataJSON());
+    const request = route.request().postDataJSON();
+    signedRequests.push(request);
     return route.fulfill({
       json: {
         ok: true,
@@ -242,7 +243,14 @@ test("R2 staging upload preserves its provider and immutable batch across regist
         bucket: "dextery-photo-graph-staging",
         objectPath,
         signedUrl: "https://example.r2.cloudflarestorage.com/test-upload",
-        headers: { "Content-Type": "image/png" },
+        headers: {
+          "Content-Type": "image/png",
+          "x-amz-checksum-sha256": Buffer.from(request.sha256, "hex").toString(
+            "base64",
+          ),
+          "x-amz-meta-sourcesha256": request.sha256,
+          "x-amz-meta-expectedsize": String(request.size),
+        },
         expiresInSeconds: 3600,
       },
     });
@@ -253,13 +261,24 @@ test("R2 staging upload preserves its provider and immutable batch across regist
       const headers = {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "PUT, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Headers":
+          "Content-Type, x-amz-checksum-sha256, x-amz-meta-sourcesha256, x-amz-meta-expectedsize",
       };
       if (route.request().method() === "OPTIONS") {
         return route.fulfill({ status: 204, headers });
       }
       directUploads++;
       expect(route.request().method()).toBe("PUT");
+      const signed = signedRequests[0] as { sha256: string; size: number };
+      expect(route.request().headers()["x-amz-meta-sourcesha256"]).toBe(
+        signed.sha256,
+      );
+      expect(route.request().headers()["x-amz-meta-expectedsize"]).toBe(
+        String(signed.size),
+      );
+      expect(route.request().headers()["x-amz-checksum-sha256"]).toBe(
+        Buffer.from(signed.sha256, "hex").toString("base64"),
+      );
       return route.fulfill({ status: 200, headers });
     },
   );
