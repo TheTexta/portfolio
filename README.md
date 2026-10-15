@@ -228,9 +228,10 @@ does not interrupt the regular development server.
 
 Photo Graph metadata/Auth remain in Supabase. On 2026-10-15 all 102 referenced
 originals (1,250,719,633 source bytes) were copied and SHA-256 read-back
-verified in private published R2 bucket `dextery-photo-graph`. All 102 graph
-rows now use the R2 provider and the shared image/media Worker's `/photo-graph/`
-routes. **Supabase originals and six unregistered `_pending/` objects remain
+verified in private published R2 bucket `dextery-photo-graph`. Those 102 graph
+rows use the R2 provider and the shared image/media Worker's `/photo-graph/`
+routes; the first live R2 upload subsequently added node 128. **The 102
+migrated Supabase originals and six unregistered `_pending/` objects remain
 untouched** for rollback and browser recovery. The Supabase render cache stays
 available for legacy uploads and rollback. See
 [`docs/photo-graph-r2-migration.md`](./docs/photo-graph-r2-migration.md).
@@ -255,8 +256,13 @@ credentials. Inspect private staging if it reports `cleanupPending: true`.
 The private staging bucket allows PUT CORS only from dextery.dev,
 www.dextery.dev, and localhost:3000 for signed content-type, checksum, and
 source-metadata headers; it is not bound to the public Worker. A synthetic
-signed PUT, published copy, SHA-256 read-back, and cleanup passed. To reconcile
-originals without deleting Supabase data, run
+signed PUT, published copy, SHA-256 read-back, and cleanup passed.
+The first authenticated Production R2 upload then committed node 128; its
+published bytes matched the journal's SHA-256 and size, its image transform
+returned HTTP 200, and private staging remained empty. The previously copied
+102 originals still have their Supabase source copies. Node 128 and subsequent
+R2 uploads do **not** have Supabase source copies; include them in any rollback.
+To reconcile originals without deleting Supabase data, run
 `npm run photo-graph:copy:r2 -- --manifest <file>` for a dry run; add `--copy`
 only after confirming the target and manifest. The copier requires a Cloudflare
 token in its process environment and refuses differing R2 objects.

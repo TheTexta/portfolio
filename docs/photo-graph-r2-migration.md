@@ -40,6 +40,10 @@ The browser PUT must send the signed `Content-Type`, `x-amz-checksum-sha256`,
 persist user metadata supplied only in presigned URL query parameters. The
 staging CORS rule allows those specific headers. A synthetic PUT/copy/read-back
 test passed and both synthetic objects were removed with absence verified.
+After correcting the site-scoped Production credential, a real authenticated
+upload committed node 128. The new published object matched its journal SHA-256
+and expected size on read-back, its 560px transform returned HTTP 200, and
+private staging was empty. The six pre-existing Supabase pending objects remain.
 
 ## Media locator seam
 
@@ -256,7 +260,7 @@ is needed. Preserve full-resolution originals either way.
   credentials in CI or run mutating maintenance scripts as health checks.
 
 Remaining operational work: establish a retention period for the retained
-Supabase originals and six pending objects, verify a real authenticated
-production R2 upload through the scoped app credential, and exercise the
-post-new-upload rollback copy. The existing originals must not be retired as
-part of this deployment.
+Supabase originals and six pending objects, and exercise the post-new-upload
+rollback copy. Node 128 is R2-only; a Supabase-only rollback now needs its
+bytes copied and verified back to the original bucket before reverting code.
+The existing originals must not be retired as part of this deployment.
