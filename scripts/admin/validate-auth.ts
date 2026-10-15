@@ -257,9 +257,11 @@ async function validate() {
       ["graph-defaults", "GET"],
       ["graph-defaults", "POST"],
       ["upload-url", "POST"],
+      ["r2-diagnostic", "POST"],
       ["upload-status", "POST"],
       ["upload", "POST"],
       ["delete", "POST"],
+      ["cleanup", "POST"],
       ["apply-correlations", "POST"],
     ];
     for (const cookie of [

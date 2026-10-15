@@ -245,6 +245,11 @@ credential scoped **only** to `dextery-photo-graph` and private
 `dextery-photo-graph-staging`. Never put credentials in `NEXT_PUBLIC_*`.
 Unfinished legacy Supabase batches keep their original provider across deploys.
 The admin **Retry R2 Cleanup** action retries queued, unreferenced R2 deletes.
+For a rollout check when a production key is non-readable, an authenticated
+administrator may POST to `/api/admin/photo-graph/r2-diagnostic`. It reports
+only the failed stage/status after checking a published canary and attempting
+one private staging PUT/HEAD/DELETE; it never registers a graph node or exposes
+credentials. Inspect private staging if it reports `cleanupPending: true`.
 
 The private staging bucket allows PUT CORS only from dextery.dev,
 www.dextery.dev, and localhost:3000 for signed content-type, checksum, and

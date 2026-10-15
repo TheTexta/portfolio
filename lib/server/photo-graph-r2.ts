@@ -1,3 +1,5 @@
+import { createHash, randomUUID } from "node:crypto";
+
 import {
   CopyObjectCommand,
   DeleteObjectCommand,
@@ -265,4 +267,82 @@ export async function removePhotoGraphR2PublishedObject(
       Key: key,
     }),
   );
+}
+
+/** Admin-only rollout probe. It never creates a graph row or published object. */
+export async function diagnosePhotoGraphR2Access(client?: S3Client) {
+  const s3 = client ?? r2Client();
+  const body = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=",
+    "base64",
+  );
+  const checksum = createHash("sha256").update(body).digest();
+  const key = `staging/${randomUUID()}.png`;
+  let stage:
+    "published read" | "staging write" | "staging read" | "staging cleanup" =
+    "published read";
+  let wrote = false;
+
+  try {
+    // Existing, verified published canary. The private staging object is synthetic.
+    const published = await s3.send(
+      new HeadObjectCommand({
+        Bucket: PHOTO_GRAPH_R2_PUBLISHED_BUCKET,
+        Key: "photography-images/83.jpg",
+      }),
+    );
+    if (published.ContentLength !== 42709) {
+      throw new Error("Published canary does not match expected size.");
+    }
+
+    stage = "staging write";
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: PHOTO_GRAPH_R2_STAGING_BUCKET,
+        Key: key,
+        Body: body,
+        ContentType: "image/png",
+        ChecksumSHA256: checksum.toString("base64"),
+        Metadata: {
+          sourcesha256: checksum.toString("hex"),
+          expectedsize: String(body.length),
+        },
+      }),
+    );
+    wrote = true;
+    stage = "staging read";
+    const head = await photoGraphR2StagedObjectStatus(key, s3);
+    if (
+      head?.ContentLength !== body.length ||
+      head.ContentType !== "image/png" ||
+      head.Metadata?.sourcesha256 !== checksum.toString("hex") ||
+      head.Metadata?.expectedsize !== String(body.length)
+    ) {
+      throw new Error("Private staging read-back failed.");
+    }
+    stage = "staging cleanup";
+    await removePhotoGraphR2StagedObject(key, s3);
+    wrote = false;
+    return { ok: true as const };
+  } catch (error) {
+    const upstreamStatus =
+      typeof error === "object" && error !== null && "$metadata" in error
+        ? (error.$metadata as { httpStatusCode?: number }).httpStatusCode
+        : undefined;
+    let cleanupPending = wrote;
+    if (wrote) {
+      try {
+        await removePhotoGraphR2StagedObject(key, s3);
+        cleanupPending = false;
+      } catch {
+        // Keep the failure visible for an operator to inspect private staging.
+      }
+    }
+    return {
+      ok: false as const,
+      stage,
+      upstreamStatus: Number.isInteger(upstreamStatus) ? upstreamStatus : null,
+      cleanupPending,
+    };
+  }
 }
