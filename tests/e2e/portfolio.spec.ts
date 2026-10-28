@@ -28,6 +28,41 @@ test.beforeEach(async ({ context }) => {
   });
 });
 
+test("project browsing omits per-project number labels", async ({
+  page,
+}, info) => {
+  await page.goto("/portfolio");
+  const labels =
+    info.project.name === "mobile"
+      ? page.locator('button[aria-controls$="-preview"]')
+      : page.locator(".project-mini-view-info");
+  await expect(labels).toHaveCount(5);
+  await expect(labels.getByText(/^\d{2}$/)).toHaveCount(0);
+});
+
+test("launch experience is primary and owns the outgoing arrow", async ({
+  page,
+}) => {
+  await page.goto("/portfolio#project-photo-graph");
+  const focusView = page.getByRole("region", {
+    name: "Photo Node-Gallery focus view",
+  });
+  const caseStudy = focusView.getByRole("link", { name: "Open case study" });
+  const experience = focusView.getByRole("link", {
+    name: "Launch experience",
+  });
+
+  await expect(caseStudy).toHaveClass(/\bbg-transparent\b/);
+  await expect(caseStudy.locator("svg")).toHaveCount(0);
+  await expect(caseStudy).toHaveAttribute("href", "/projects/photo-graph");
+  await expect(experience).toHaveClass(/\bbg-ink\b/);
+  await expect(experience.locator("svg")).toHaveCount(1);
+  await expect(experience).toHaveAttribute(
+    "href",
+    "/projects/photo-graph/experience",
+  );
+});
+
 test("keyboard close restores the originating project after changing projects", async ({
   page,
 }, info) => {
@@ -105,7 +140,7 @@ test("mobile accordion opens another project and close restores its trigger", as
 }, info) => {
   test.skip(info.project.name !== "mobile", "Mobile project table only");
   await page.goto("/portfolio");
-  const row = page.getByRole("button", { name: "bur1alrites 03", exact: true });
+  const row = page.getByRole("button", { name: "bur1alrites", exact: true });
   await row.click();
   await expect(row).toHaveAttribute("aria-expanded", "true");
   const trigger = page.getByRole("button", {

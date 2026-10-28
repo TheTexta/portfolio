@@ -216,9 +216,6 @@ function ProjectCard({
             >
               {project.title}
             </ProjectTitle>
-            <p className="text-[0.625rem] font-semibold tracking-[0.16em] uppercase">
-              {project.number}
-            </p>
           </div>
           <div className="border-t border-ink px-3 pt-2 pb-3">
             <p className="truncate text-[0.625rem] font-semibold tracking-[0.12em] text-muted uppercase">
@@ -326,9 +323,6 @@ function MobileProjectTable({
               >
                 {project.title}
               </ProjectTitle>
-              <span className="shrink-0 text-[0.625rem] font-semibold tracking-[0.16em] uppercase">
-                {project.number}
-              </span>
             </button>
 
             <AnimatePresence initial={false}>
@@ -568,11 +562,9 @@ function FocusCarousel({
               {current.caseStudyHref ? (
                 <ActionLink
                   href={current.caseStudyHref}
-                  variant="primary"
                   className="w-full sm:w-auto"
                 >
                   Open case study
-                  <ArrowUpRight aria-hidden className="size-4" />
                 </ActionLink>
               ) : null}
               {current.sourceHref ? (
@@ -586,9 +578,11 @@ function FocusCarousel({
               {current.experienceHref || current.liveHref ? (
                 <ActionLink
                   href={current.experienceHref ?? current.liveHref ?? "/"}
+                  variant="primary"
                   className="w-full sm:w-auto"
                 >
                   Launch experience
+                  <ArrowUpRight aria-hidden className="size-4" />
                 </ActionLink>
               ) : null}
             </div>
