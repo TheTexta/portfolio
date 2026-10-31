@@ -29,7 +29,7 @@ export type ProjectDefinition = {
   eyebrow: string;
   summary: string;
   technologies: readonly string[];
-  caseStudyHref?: string;
+  writeUpHref?: string;
   experienceHref?: string;
   liveHref?: string;
   sourceHref?: string;
@@ -39,6 +39,7 @@ export type ProjectDefinition = {
   posterHeight: number;
   posterAspectRatio: number;
   previewKind: ProjectPreviewKind;
+  previewScale?: number;
   role: string;
   date: string;
   outcome: string;
@@ -55,7 +56,7 @@ const projectCatalogDefinition = [
     summary:
       "A force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review.",
     technologies: ["Next.js", "D3", "Supabase"],
-    caseStudyHref: PROJECT_ROUTES.photoGraph,
+    writeUpHref: PROJECT_ROUTES.photoGraph,
     experienceHref: PROJECT_ROUTES.photoGraphExperience,
     posterSrc: "/projects/posters/photo-graph.webp",
     posterWidth: 3306,
@@ -141,8 +142,9 @@ const projectCatalogDefinition = [
     titleTreatment: "bur1alrites",
     eyebrow: "Portfolio / Moving-image archive",
     summary:
-      "A black-and-white moving-image archive where clips begin as inverted studies and reveal their colour on hover.",
-    technologies: ["Next.js", "TypeScript", "Tailwind CSS"],
+      "A portfolio for Allie's reactive lighting, with cursor-driven visuals, a 3D gallery, and a projector room.",
+    technologies: ["Next.js", "Three.js", "TypeScript", "Tailwind CSS"],
+    writeUpHref: PROJECT_ROUTES.bur1alritesWriteUp,
     liveHref: PROJECT_ROUTES.bur1alritesLive,
     posterSrc: "/projects/posters/bur1alrites.png",
     posterWidth: 1500,
@@ -152,7 +154,7 @@ const projectCatalogDefinition = [
     previewKind: "html",
     role: "Design and development",
     date: "2026",
-    outcome: "An archive for moving-image work",
+    outcome: "A reactive portfolio for Allie's lighting work",
     links: [
       {
         label: "Open live site",
@@ -170,6 +172,7 @@ const projectCatalogDefinition = [
     summary:
       "A photographic archive that pairs an expansive image index with colour palettes and related-image discovery.",
     technologies: ["Next.js", "React", "Supabase"],
+    writeUpHref: PROJECT_ROUTES.elliotMairetWriteUp,
     liveHref: PROJECT_ROUTES.elliotMairetLive,
     sourceHref: PROJECT_ROUTES.elliotMairetGithub,
     posterSrc: "/projects/posters/elliot-mairet.png",
@@ -179,6 +182,7 @@ const projectCatalogDefinition = [
       "Black-and-white Elliot Mairet photograph of people gathered beneath fabric",
     posterAspectRatio: 1.625,
     previewKind: "html",
+    previewScale: 0.85,
     role: "Design and development",
     date: "2026",
     outcome: "A browsable online archive for Elliot Mairet's photographs",
@@ -228,7 +232,7 @@ export function getAdjacentProjects(projectId: ProjectId) {
 
 export function getProjectHref(project: ProjectDefinition) {
   return (
-    project.caseStudyHref ??
+    project.writeUpHref ??
     project.liveHref ??
     project.experienceHref ??
     PROJECT_ROUTES.portfolioProjects

@@ -189,6 +189,7 @@ async function validate() {
     for (const path of [
       "app",
       "lib",
+      "mdx-components.tsx",
       "next.config.ts",
       "proxy.ts",
       "tsconfig.json",

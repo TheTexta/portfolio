@@ -19,6 +19,8 @@ type PublicPage = {
 };
 
 const photoGraph = getProject("photo-graph");
+const elliotMairet = getProject("elliotmairet");
+const bur1alrites = getProject("bur1alrites");
 const grailedPlus = getProject("grailed-plus");
 
 // Update these dates when the corresponding public content changes significantly.
@@ -27,16 +29,32 @@ export const PUBLIC_PAGES = {
     path: PROJECT_ROUTES.home,
     title: `${SITE_PROFILE.name} — Software Developer & Creative Technologist`,
     description: SITE_PROFILE.description,
-    lastModified: "2026-10-06",
+    lastModified: "2026-10-30",
     image: photoGraph,
   },
   photoGraph: {
     path: PROJECT_ROUTES.photoGraph,
     title: `${photoGraph.title} — ${SITE_PROFILE.name}`,
     description: photoGraph.summary,
-    lastModified: "2026-10-06",
+    lastModified: "2026-10-30",
     image: photoGraph,
     project: photoGraph,
+  },
+  elliotMairet: {
+    path: PROJECT_ROUTES.elliotMairetWriteUp,
+    title: `${elliotMairet.title} — ${SITE_PROFILE.name}`,
+    description: elliotMairet.summary,
+    lastModified: "2026-10-30",
+    image: elliotMairet,
+    project: elliotMairet,
+  },
+  bur1alrites: {
+    path: PROJECT_ROUTES.bur1alritesWriteUp,
+    title: `${bur1alrites.title} — ${SITE_PROFILE.name}`,
+    description: bur1alrites.summary,
+    lastModified: "2026-10-30",
+    image: bur1alrites,
+    project: bur1alrites,
   },
   grailedPlus: {
     path: PROJECT_ROUTES.grailedPlus,

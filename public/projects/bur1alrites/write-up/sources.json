@@ -1,0 +1,47 @@
+{
+  "capturedOn": "2026-10-30",
+  "method": "The first three images are Chrome viewport screenshots of the public website, converted to WebP at quality 86; no public page content was altered. scene-inspection.webp is a separately labelled local inspection of the actual scene, not a screenshot of Blender or the production presentation.",
+  "credit": "Lighting: Allie / bur1alrites. Website design and development: Dexter Young.",
+  "viewport": { "width": 1440, "height": 1000, "deviceScaleFactor": 1 },
+  "assets": [
+    {
+      "file": "hero.webp",
+      "sourceUrl": "https://bur1alrites.vercel.app/",
+      "state": "The opening reel and wordmark at the top of the page.",
+      "scrollY": 0
+    },
+    {
+      "file": "gallery.webp",
+      "sourceUrl": "https://bur1alrites.vercel.app/",
+      "state": "Selected work with inverted previews, scrolled to the first gallery row.",
+      "scrollY": 581
+    },
+    {
+      "file": "projector.webp",
+      "sourceUrl": "https://bur1alrites.vercel.app/",
+      "state": "Opened the clip labelled 032026ii, dj blast + JARTIN, performance clip, 2026 to enter its projector room."
+    },
+    {
+      "file": "scene-inspection.webp",
+      "sourceRepository": "bur1alrites",
+      "sourceRevision": "33591fd36f586567a7d7ac058bf8bac9047d73a5",
+      "sourceFiles": [
+        "src/app/hero-scene.tsx",
+        "src/app/room.tsx",
+        "src/app/scene-layout.ts"
+      ],
+      "viewport": { "width": 1600, "height": 1000, "deviceScaleFactor": 1 },
+      "method": "Mounted the actual HeroScene and SceneQualityProvider in a disposable local copy with no credentials. Exposed the R3F scene/renderer from Canvas.onCreated, paused the render loop and video, and rendered directly through WebGLRenderer with an inspection camera. The source checkout and hosted site were not modified. Converted the viewport capture to WebP at quality 90.",
+      "state": "Opening home scene at scrollY 0, very-high quality. Gallery items omitted because this capture inspects the opening scene. Real wordmark/font, floor artwork, screen dimensions and shader displacement retained. Video paused at 10.0427 seconds.",
+      "mediaSource": "https://media.dextery.dev/bur1alrites/portfolio-images/streams/hero/master.m3u8",
+      "inspectionChanges": [
+        "Perspective camera at [32, 20, 12], looking at [0, 2, -24], 44-degree field of view.",
+        "Direct scene render bypasses bloom; video plane given a neutral inspection fragment shader while retaining the actual vertex-displacement shader.",
+        "Added orange wireframe overlay with a 60-by-60 inspection grid; the original 180-by-180 screen mesh remains unchanged.",
+        "Mirror replaced by a neutral floor, room walls/ceiling hidden for a cutaway view, and wordmark materials given neutral inspection colours.",
+        "Added floor grid, axes, screen bounds and a helper for the original camera; the helper frustum is shortened to 19 scene units for readability.",
+        "Hidden the local Next.js development indicator. No fabricated editor interface or controls."
+      ]
+    }
+  ]
+}

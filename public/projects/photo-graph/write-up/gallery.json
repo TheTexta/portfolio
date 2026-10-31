@@ -1,0 +1,138 @@
+{
+  "reviewImages": [
+    {
+      "id": "14",
+      "src": "/projects/photo-graph/write-up/photographs/14.webp",
+      "width": 560,
+      "height": 560,
+      "alt": "A snow-covered street lined with trees at night.",
+      "label": "Snow / pale neutral"
+    },
+    {
+      "id": "46",
+      "src": "/projects/photo-graph/write-up/photographs/46.webp",
+      "width": 560,
+      "height": 420,
+      "alt": "Dense texture across a wall of perforated metal panels.",
+      "label": "Dense neutral texture"
+    },
+    {
+      "id": "49",
+      "src": "/projects/photo-graph/write-up/photographs/49.webp",
+      "width": 560,
+      "height": 700,
+      "alt": "A high-contrast scene with magenta light and layered lettering.",
+      "label": "Magenta performance light"
+    },
+    {
+      "id": "57",
+      "src": "/projects/photo-graph/write-up/photographs/57.webp",
+      "width": 560,
+      "height": 407,
+      "alt": "A black-and-white view down a narrow alley.",
+      "label": "Dark monochrome"
+    },
+    {
+      "id": "65",
+      "src": "/projects/photo-graph/write-up/photographs/65.webp",
+      "width": 560,
+      "height": 962,
+      "alt": "An amber-lit interior with carved wood and a row of statues.",
+      "label": "Warm amber interior"
+    },
+    {
+      "id": "69",
+      "src": "/projects/photo-graph/write-up/photographs/69.webp",
+      "width": 560,
+      "height": 364,
+      "alt": "Dense green woodland around a clearing.",
+      "label": "Woodland green"
+    },
+    {
+      "id": "112",
+      "src": "/projects/photo-graph/write-up/photographs/112.webp",
+      "width": 560,
+      "height": 308,
+      "alt": "People at a performance under blue and magenta lights.",
+      "label": "Deep blue atmosphere"
+    }
+  ],
+  "comparison": {
+    "query": {
+      "id": "112",
+      "src": "/projects/photo-graph/write-up/photographs/112.webp",
+      "width": 560,
+      "height": 308,
+      "alt": "People at a performance under blue and magenta lights.",
+      "label": "Starting photograph"
+    },
+    "rows": [
+      {
+        "label": "Mean Oklab",
+        "images": [
+          {
+            "id": "75",
+            "src": "/projects/photo-graph/write-up/photographs/75.webp",
+            "width": 560,
+            "height": 328,
+            "alt": "A crowd facing a stage under blue light."
+          },
+          {
+            "id": "27",
+            "src": "/projects/photo-graph/write-up/photographs/27.webp",
+            "width": 560,
+            "height": 314,
+            "alt": "Sailboats in a harbour at blue hour."
+          },
+          {
+            "id": "105",
+            "src": "/projects/photo-graph/write-up/photographs/105.webp",
+            "width": 560,
+            "height": 373,
+            "alt": "Steps and vegetation overlooking a sheltered inlet."
+          },
+          {
+            "id": "13",
+            "src": "/projects/photo-graph/write-up/photographs/13.webp",
+            "width": 560,
+            "height": 572,
+            "alt": "A stark black-and-white image of people and bicycles."
+          }
+        ]
+      },
+      {
+        "label": "Mean LAB / CIEDE2000",
+        "images": [
+          {
+            "id": "75",
+            "src": "/projects/photo-graph/write-up/photographs/75.webp",
+            "width": 560,
+            "height": 328,
+            "alt": "A crowd facing a stage under blue light."
+          },
+          {
+            "id": "27",
+            "src": "/projects/photo-graph/write-up/photographs/27.webp",
+            "width": 560,
+            "height": 314,
+            "alt": "Sailboats in a harbour at blue hour."
+          },
+          {
+            "id": "24",
+            "src": "/projects/photo-graph/write-up/photographs/24.webp",
+            "width": 560,
+            "height": 560,
+            "alt": "Snow-covered mountains beneath a dark sky."
+          },
+          {
+            "id": "32",
+            "src": "/projects/photo-graph/write-up/photographs/32.webp",
+            "width": 560,
+            "height": 304,
+            "alt": "A crowd beneath bright violet stage lighting."
+          }
+        ]
+      }
+    ]
+  }
+}

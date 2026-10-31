@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useInView, useReducedMotion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 
+import { useReducedMotion } from "@/app/hooks/use-reduced-motion";
 import { cn } from "@/lib/cn";
 
 const horizontalRuleTransition = {
@@ -35,7 +36,9 @@ export function AnimatedHorizontalRule({
       )}
       initial={{ scaleX: shouldReduceMotion ? 1 : 0 }}
       animate={{ scaleX: lineScale }}
-      transition={horizontalRuleTransition}
+      transition={
+        shouldReduceMotion ? { duration: 0 } : horizontalRuleTransition
+      }
     />
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import ExperienceNav from "@/app/components/ui/experience-nav";
 import { useElementSize } from "@/app/hooks/use-element-size";
 import { useIframeOpenOnClick } from "@/app/hooks/use-iframe-open-on-click";
@@ -13,6 +13,9 @@ type HtmlProjectPreviewProps = {
   desktopPreviewScale?: number;
   mobilePreviewScale?: number;
   showNavigation?: boolean;
+  interaction?: "launch" | "native";
+  allowPointerLock?: boolean;
+  allowAutoplay?: boolean;
 };
 
 type PreviewState = {
@@ -27,6 +30,20 @@ const htmlPreviewShellTone = "bg-neutral-950 text-neutral-100";
 const COMPACT_PREVIEW_QUERY =
   "(max-width: 767px), (orientation: landscape) and (max-width: 1023px) and (max-height: 500px)";
 
+function subscribeToCompactPreview(callback: () => void) {
+  const query = window.matchMedia(COMPACT_PREVIEW_QUERY);
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
+function getCompactPreview() {
+  return window.matchMedia(COMPACT_PREVIEW_QUERY).matches;
+}
+
+function getServerCompactPreview() {
+  return false;
+}
+
 export default function HtmlProjectPreview({
   title,
   previewSrc,
@@ -34,10 +51,18 @@ export default function HtmlProjectPreview({
   desktopPreviewScale = 1,
   mobilePreviewScale = 1,
   showNavigation = true,
+  interaction = "launch",
+  allowPointerLock = false,
+  allowAutoplay = false,
 }: HtmlProjectPreviewProps) {
   const shellRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const iframeClick = useIframeOpenOnClick(iframeRef, projectHref, previewSrc);
+  const iframeClick = useIframeOpenOnClick(
+    iframeRef,
+    projectHref,
+    previewSrc,
+    interaction === "launch",
+  );
   const shellSize = useElementSize(shellRef);
   const [previewState, setPreviewState] = useState<PreviewState>({
     src: previewSrc,
@@ -46,11 +71,12 @@ export default function HtmlProjectPreview({
   const currentStatus =
     previewState.src === previewSrc ? previewState.status : "loading";
   const isMeasured = shellSize.width > 0 && shellSize.height > 0;
-  const previewScale =
-    typeof window !== "undefined" &&
-    window.matchMedia(COMPACT_PREVIEW_QUERY).matches
-      ? mobilePreviewScale
-      : desktopPreviewScale;
+  const isCompact = useSyncExternalStore(
+    subscribeToCompactPreview,
+    getCompactPreview,
+    getServerCompactPreview,
+  );
+  const previewScale = isCompact ? mobilePreviewScale : desktopPreviewScale;
   const previewWidth = isMeasured ? shellSize.width / previewScale : 0;
   const previewHeight = isMeasured ? shellSize.height / previewScale : 0;
 
@@ -78,7 +104,11 @@ export default function HtmlProjectPreview({
           src={previewSrc}
           loading="lazy"
           scrolling="auto"
-          sandbox="allow-forms allow-popups allow-same-origin allow-scripts"
+          // With no portfolio referrer, the hosted site's click-to-launch
+          // bridge stays inactive and its native controls/navigation work.
+          referrerPolicy={interaction === "native" ? "no-referrer" : undefined}
+          sandbox={`allow-forms allow-popups allow-same-origin allow-scripts${allowPointerLock ? " allow-pointer-lock" : ""}`}
+          allow={allowAutoplay ? "autoplay" : undefined}
           onPointerEnter={iframeClick.onPointerEnter}
           onPointerLeave={iframeClick.onPointerLeave}
           onMouseEnter={iframeClick.onMouseEnter}

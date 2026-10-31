@@ -339,6 +339,8 @@ async function main() {
         if (page.path === PUBLIC_PAGES.portfolio.path) {
           for (const projectPage of [
             PUBLIC_PAGES.photoGraph,
+            PUBLIC_PAGES.elliotMairet,
+            PUBLIC_PAGES.bur1alrites,
             PUBLIC_PAGES.grailedPlus,
           ]) {
             assert.ok(

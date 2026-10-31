@@ -1,16 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import {
-  motion,
-  type Transition,
-  useInView,
-  useReducedMotion,
-} from "framer-motion";
+import { motion, type Transition, useInView } from "framer-motion";
 
 import ProjectBrowser from "@/app/components/projects/project-browser";
 import {
   getProject,
+  projectCatalog,
   type ProjectId,
 } from "@/app/components/projects/project-catalog";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
@@ -23,6 +19,7 @@ import HeaderDirectory, {
   type HeaderDirectorySegment,
 } from "@/app/components/ui/header-directory";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
+import { useReducedMotion } from "@/app/hooks/use-reduced-motion";
 
 const HOME_MOTION_EASE = [0.22, 1, 0.36, 1] as const;
 const HOME_MOTION_DURATION = 0.65;
@@ -49,7 +46,7 @@ function EditorialRule({ children }: { children: string }) {
         className="h-px origin-right bg-ink"
         initial={{ scaleX: shouldReduceMotion ? 1 : 0 }}
         animate={{ scaleX: lineScale }}
-        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        transition={getHomeTransition(shouldReduceMotion)}
       />
       <p className="text-center text-xs font-semibold tracking-[0.18em] uppercase sm:text-sm">
         {children}
@@ -59,7 +56,7 @@ function EditorialRule({ children }: { children: string }) {
         className="h-px origin-left bg-ink"
         initial={{ scaleX: shouldReduceMotion ? 1 : 0 }}
         animate={{ scaleX: lineScale }}
-        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        transition={getHomeTransition(shouldReduceMotion)}
       />
     </div>
   );
@@ -79,19 +76,19 @@ function MobileFavicon() {
       className="mx-auto justify-center object-center align-middle hue-rotate-180 invert-100 dark:hue-rotate-0 dark:invert-0"
       initial={{ opacity: shouldReduceMotion ? 1 : 0 }}
       animate={{ opacity: imageOpacity }}
-      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+      transition={getHomeTransition(shouldReduceMotion)}
     />
   );
 }
 
-function ContactLinkRow({
+function HomeLinkRow({
   label,
   href,
   value,
 }: {
   label: string;
   href: string;
-  value: string;
+  value?: string;
 }) {
   const shouldReduceMotion = useReducedMotion();
   const contactTransition = getHomeTransition(shouldReduceMotion);
@@ -100,37 +97,41 @@ function ContactLinkRow({
     <li className="flex min-h-12 items-center border-b border-ink last:border-b-0">
       <motion.a
         href={href}
-        className="group relative isolate flex h-full w-full items-center justify-between overflow-hidden bg-canvas px-3 text-xs transition-opacity sm:text-sm"
+        className="group relative isolate flex size-full min-h-12 items-center justify-between gap-3 overflow-hidden bg-canvas px-3 text-xs transition-opacity focus-visible:-outline-offset-2 sm:text-sm"
         initial="rest"
         whileHover="active"
         whileFocus="active"
       >
         <motion.span
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 z-20 w-full origin-left bg-white mix-blend-difference"
+          className="pointer-events-none absolute inset-y-0 left-0 z-20 w-full origin-left bg-white mix-blend-difference dark:bg-ink"
           variants={{
             rest: { scaleX: 0 },
             active: { scaleX: 1 },
           }}
           transition={contactTransition}
         />
-        <span className="relative z-10 text-xs font-semibold tracking-[0.18em] uppercase sm:text-sm">
+        <span className="relative z-10 min-w-0 truncate text-xs font-semibold tracking-[0.18em] uppercase sm:text-sm">
           {label}
         </span>
-        <span className="relative z-10 ml-auto truncate text-xs sm:text-sm">
-          {value}
-        </span>
+        {value ? (
+          <span className="relative z-10 ml-auto truncate text-xs sm:text-sm">
+            {value}
+          </span>
+        ) : null}
       </motion.a>
     </li>
   );
 }
+
+const writeUpProjects = projectCatalog.filter((project) => project.writeUpHref);
 
 function getFocusedDirectorySegments(
   projectId: ProjectId,
 ): HeaderDirectorySegment[] {
   const project = getProject(projectId);
   const projectHref =
-    project.caseStudyHref ??
+    project.writeUpHref ??
     project.experienceHref ??
     project.liveHref ??
     PROJECT_ROUTES.portfolioProjects;
@@ -158,6 +159,12 @@ export default function HomePageContent() {
           ) : undefined
         }
       >
+        <a
+          href="#about"
+          className="flex min-h-7 items-center transition-opacity hover:opacity-55"
+        >
+          About
+        </a>
         <a
           href="#contact"
           className="flex min-h-7 items-center transition-opacity hover:opacity-55"
@@ -188,6 +195,42 @@ export default function HomePageContent() {
       </section>
       <ProjectBrowser onFocusChange={setFocusedProjectId} />
 
+      <section
+        id="about"
+        aria-label="About"
+        className="scroll-mt-12 py-12 sm:pt-20 sm:pb-0 lg:pt-24"
+      >
+        <EditorialRuleHeading>About</EditorialRuleHeading>
+        <div className="px-5 py-4 sm:px-8 sm:pt-10 lg:px-12">
+          <div className="mx-auto grid max-w-228.25 gap-8 md:grid-cols-2 md:gap-12">
+            <p className="text-base leading-[1.8]">
+              I&apos;m Dexter, studying Artificial Intelligence and Computer
+              Science at McGill, with a minor in Music Technology. I design and
+              build websites, browser tools and visual archives, working across
+              interfaces, interactive graphics and the systems behind them.
+            </p>
+            <div className="flex min-w-0 flex-col gap-3 md:h-0 md:min-h-full">
+              <EditorialRule>Write ups</EditorialRule>
+              <nav
+                aria-label="Project write-ups"
+                tabIndex={0}
+                className="h-36 min-h-0 min-w-0 [scrollbar-width:thin] [scrollbar-color:var(--color-ink)_var(--color-canvas)] overflow-y-auto overscroll-y-contain border border-ink focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink md:h-auto md:flex-1"
+              >
+                <ul className="grid">
+                  {writeUpProjects.map((project) => (
+                    <HomeLinkRow
+                      key={project.id}
+                      label={project.title}
+                      href={project.writeUpHref!}
+                    />
+                  ))}
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <footer id="contact" className="scroll-mt-12 sm:py-20 lg:py-24">
         <EditorialRuleHeading>Contact</EditorialRuleHeading>
         <div className="flex justify-center px-5 py-4 sm:px-8 sm:pt-10 lg:px-12">
@@ -207,7 +250,7 @@ export default function HomePageContent() {
                 ],
                 ["Resume", "/Dexter_Young_CV.pdf", "Download PDF"],
               ].map(([label, href, value]) => (
-                <ContactLinkRow
+                <HomeLinkRow
                   key={label}
                   label={label}
                   href={href}

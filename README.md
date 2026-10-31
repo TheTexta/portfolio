@@ -39,7 +39,7 @@ pull requests and pushes to `main`.
 ## Search metadata
 
 `lib/site-config.ts` holds the portfolio identity and official profile links.
-`lib/seo.ts` defines metadata for the three indexable public pages, their preview
+`lib/seo.ts` defines metadata for the indexable public pages, their preview
 images, and their content-update dates. Update a page's `lastModified` date after
 significant changes to its content, links, or structured data; sitemap generation
 does not change these dates automatically.
@@ -93,6 +93,137 @@ problems. Search appearance and indexing remain Google's decision. The existing
 preserved; Google's site-name documentation specifies domain-root placement for
 `WebSite` markup, so site-name eligibility should be checked against that routing
 if the homepage is moved in a future change.
+
+## Project write-ups
+
+The homepage's About section pairs a short introduction with a scrollable write-up
+list. Its links come from catalogue entries with `writeUpHref`, in catalogue order,
+and share the contact rows' theme-aware hover/focus treatment. Edit the introduction
+in `app/components/home-page-content.tsx`; the columns stack below 768px.
+Homepage and shared editorial motion use `app/hooks/use-reduced-motion.ts` so the
+server and first client render agree, then follow live browser preference changes.
+`tests/e2e/page-hydration.spec.ts` checks the homepage and all three write-ups with
+both motion settings on desktop and mobile, plus live preference changes without
+a page reload.
+
+Project write-ups use the shared `app/components/projects/project-write-up.tsx`
+shell: a centred column using two-thirds of the desktop viewport, capped at 672px
+for reading. Prose, figures, captions, and interactive previews share its width and
+horizontal inset. Mobile uses the available width with gutters.
+Edit prose in the route's `write-up.mdx` file:
+
+- `app/projects/photo-graph/write-up.mdx`
+- `app/projects/elliot-mairet/write-up.mdx`
+- `app/projects/bur1alrites/write-up.mdx`
+
+The adjacent `page.tsx` owns the shared shell, metadata, and any data passed into
+the article. MDX owns the title, introduction, project links, preview placement,
+and body. Use one `#` heading followed by `##` sections, paragraphs, links, and
+lists. Shared components
+are available without imports through the root `mdx-components.tsx`:
+
+```mdx
+# {props.project.title}
+
+<Lead>{props.project.summary}</Lead>
+
+<nav aria-label={`${props.project.title} project links`}>
+  <a href={props.project.liveHref}>Visit site</a>
+  <a href={props.project.sourceHref}>View source</a>
+</nav>
+
+<ProjectPreview projectId="elliotmairet" />
+
+## A design decision
+
+Explain the decision here, with **emphasis** or [a reference](/portfolio).
+
+<Figure
+  src="/projects/example/detail.webp"
+  alt="Describe what the image shows"
+  width={1440}
+  height={900}
+  caption="Explain what this figure demonstrates."
+/>
+
+<MediaPlaceholder caption="Add an early sketch here." />
+```
+
+`Gallery` displays individual photographs in a responsive grid; `Comparison`
+shows a starting photograph and labelled rows of ranked results. Both are server
+components, use local image files with real dimensions, and keep captions and
+labels as HTML rather than baking them into a contact sheet.
+
+`Figure` uses the existing responsive image/caption component; supply the image's
+real dimensions to reserve its space. Captions are props so MDX does not insert
+extra paragraph spacing inside them. Page-provided values are available through
+`props`, as in Photo Graph's benchmark figures. Only trusted, repository-owned MDX
+is compiled at build time; there is no remote MDX execution or CMS.
+
+For another project, create its `write-up.mdx` and import it from a `page.tsx`
+using `ProjectWriteUp`, passing `project` into the MDX component. The shell does
+not generate a second title or introduction. Keep shared identity/URLs sourced
+from `props.project`; a custom introduction can also be authored inside `Lead`.
+Add a route to `project-routes.ts` and `writeUpHref` to its entry in
+`project-catalog.ts` to expose the **write up** link in the project overview.
+
+`ProjectPreview` renders inside the shared column. Photo Graph uses its existing
+interactive canvas with embedded navigation hidden. Other projects use an iframe
+in native-interaction mode: controls, internal links, scrolling, and keyboard
+navigation stay inside the preview. That mode disables the click-to-launch hook
+and sets `referrerPolicy="no-referrer"` so the hosted site's portfolio-navigation
+bridge stays inactive. Other sandbox restrictions remain. Overview
+previews retain their previous click-to-launch behaviour.
+Elliot's overview and write-up previews share the catalog's `previewScale: 0.85`
+on desktop and mobile. Scaling changes the iframe's rendering size, not its native
+interaction, sandbox, or navigation validation. In the overview, **View source**
+precedes **write up**, followed by **Launch experience**.
+
+`/projects/photo-graph` remains a statically rendered article, separate from
+`/projects/photo-graph/experience`. Its prose uses the saved August 2026 benchmark
+and local figures; only the client-side preview loads the live graph API. Benchmark
+counts describe that experiment, not the current live archive. The figure
+provenance is recorded in `public/projects/photo-graph/write-up/sources.json`.
+The review and comparison use 13 individual local photographs, with image order
+in `public/projects/photo-graph/write-up/gallery.json`. To deliberately rebuild
+these assets from published, public R2 image URLs:
+
+```bash
+node scripts/photo-graph/prepare-write-up-media.mjs
+```
+
+This command reads public images and writes local assets and gallery data only;
+it does not modify the database or remote storage. The source manifest records
+both downloaded and prepared-image checksums. Legacy composite files are retained
+but no longer displayed. Commit the prepared assets so ordinary
+builds and static article content do not require the media service. Interactive
+previews still load their projects' public services separately.
+
+`/projects/elliot-mairet` is a completed, indexable write-up with canonical/share
+metadata, project structured data, and a sitemap entry from `PUBLIC_PAGES`.
+Its three WebP screenshots show the public archive, a photograph, and selected-colour
+navigation. Source URLs, viewport, capture date, and interaction state are recorded
+in `public/projects/elliot-mairet/write-up/sources.json`. No private admin screen or
+account data is included. Existing public pages and redirects keep their URLs.
+
+`/projects/bur1alrites` is an indexable write-up about Allie's reactive lighting,
+the Three.js gallery, and the projector room's grain and bloom. Its rationale was
+supplied by Dexter. The interactive preview remains separate from the article's
+three public-site screenshots and an off-axis local scene inspection; capture provenance is recorded in
+`public/projects/bur1alrites/write-up/sources.json`.
+The inspection uses the real Three.js objects, with bloom bypassed and explicit
+wireframe/grid/camera guides added in a disposable copy. It is not a Blender
+screenshot or a claim about the production presentation.
+Its desktop write-up preview uses 80% scale so the article width does not activate
+the hosted site's mobile-only tap-to-play layout. On mobile, it retains the site's
+native mobile behavior. Only this write-up iframe opts into autoplay and the
+`allow-pointer-lock` sandbox permission for the projector room's mouse-look/WASD
+controls. Top-level navigation remains sandboxed, and other previews gain neither
+permission. No change to the hosted bur1alrites site is required.
+Responsive preview scaling uses a hydration-safe media-query subscription, so
+resizing switches between desktop room navigation and mobile tap playback.
+`tests/e2e/write-up-room.spec.ts` runs headed to exercise real pointer-lock;
+display-less Linux CI needs `xvfb-run` for that spec.
 
 ## Embedded project previews
 

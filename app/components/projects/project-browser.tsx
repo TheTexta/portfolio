@@ -1,12 +1,7 @@
 "use client";
 
 import { ArrowLeft, ArrowRight, ArrowUpRight, X } from "lucide-react";
-import {
-  AnimatePresence,
-  motion,
-  type Transition,
-  useReducedMotion,
-} from "framer-motion";
+import { AnimatePresence, motion, type Transition } from "framer-motion";
 import Image from "next/image";
 import {
   type KeyboardEvent,
@@ -30,6 +25,7 @@ import {
 import ProjectLivePreview from "@/app/components/projects/project-live-preview";
 import ProjectTitle from "@/app/components/projects/project-title";
 import { useElementSize } from "@/app/hooks/use-element-size";
+import { useReducedMotion } from "@/app/hooks/use-reduced-motion";
 import { cn } from "@/lib/cn";
 
 import {
@@ -559,20 +555,20 @@ function FocusCarousel({
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
-              {current.caseStudyHref ? (
-                <ActionLink
-                  href={current.caseStudyHref}
-                  className="w-full sm:w-auto"
-                >
-                  Open case study
-                </ActionLink>
-              ) : null}
               {current.sourceHref ? (
                 <ActionLink
                   href={current.sourceHref}
                   className="w-full sm:w-auto"
                 >
                   View source
+                </ActionLink>
+              ) : null}
+              {current.writeUpHref ? (
+                <ActionLink
+                  href={current.writeUpHref}
+                  className="w-full sm:w-auto"
+                >
+                  write up
                 </ActionLink>
               ) : null}
               {current.experienceHref || current.liveHref ? (

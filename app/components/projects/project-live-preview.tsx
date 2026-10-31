@@ -3,9 +3,10 @@
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
 
-import type {
-  ProjectDefinition,
-  ProjectId,
+import {
+  getProject,
+  type ProjectDefinition,
+  type ProjectId,
 } from "@/app/components/projects/project-catalog";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import { cn } from "@/lib/cn";
@@ -36,6 +37,8 @@ type ProjectPreviewRendererProps = {
 
 type ProjectPreviewRenderer = (props: ProjectPreviewRendererProps) => ReactNode;
 
+const elliotMairet = getProject("elliotmairet");
+
 const PROJECT_PREVIEW_RENDERERS: Record<ProjectId, ProjectPreviewRenderer> = {
   bur1alrites: () => (
     <HtmlProjectPreview
@@ -63,10 +66,11 @@ const PROJECT_PREVIEW_RENDERERS: Record<ProjectId, ProjectPreviewRenderer> = {
   ),
   elliotmairet: () => (
     <HtmlProjectPreview
-      title="Elliot Mairet"
-      previewSrc={PROJECT_ROUTES.elliotMairetLive}
-      projectHref={PROJECT_ROUTES.elliotMairetLive}
-      mobilePreviewScale={0.75}
+      title={elliotMairet.title}
+      previewSrc={elliotMairet.liveHref!}
+      projectHref={elliotMairet.liveHref!}
+      desktopPreviewScale={elliotMairet.previewScale}
+      mobilePreviewScale={elliotMairet.previewScale}
       showNavigation={false}
     />
   ),

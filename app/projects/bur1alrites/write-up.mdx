@@ -1,0 +1,84 @@
+# {props.project.title}
+
+<Lead>
+  {
+    "A portfolio for Allie's live lighting work, with video-reactive visuals and a 3D projector room."
+  }
+</Lead>
+
+<nav aria-label={`${props.project.title} project links`}>
+  <a href={props.project.liveHref}>Visit site</a>
+</nav>
+
+<ProjectPreview projectId="bur1alrites" />
+
+## A site that reacts
+
+My friend Allie creates real-time, audio-reactive lighting for events. She wanted
+a site that responded like her shows.
+
+I built a background that reacts to the video and the cursor, with splashes on
+click. Allie chose the typeface and shared sites she liked; those references gave
+us a starting point.
+
+<Figure
+  src="/projects/bur1alrites/write-up/hero.webp"
+  alt="The bur1alrites wordmark glowing over a grainy, black-and-white video background."
+  width={1440}
+  height={1000}
+  caption="The video-driven background and glowing wordmark."
+/>
+
+<Figure
+  src="/projects/bur1alrites/write-up/scene-inspection.webp"
+  alt="An off-angle inspection of the actual home scene: a wireframe video plane, floating wordmark, floor artwork, grid, and camera guides."
+  width={1600}
+  height={1000}
+  caption="The home scene from the side. A local inspection capture with a wireframe overlay and camera guides; bloom is disabled."
+/>
+
+## Moving through the work
+
+This was my first experiment with Three.js. I wanted the whole site to feel
+three-dimensional, including a slight parallax in the gallery. Inverted previews
+reveal their colour on hover.
+
+The viewer is the conductor: moving the cursor, clicking the background, and
+choosing a clip all change the scene. I wanted that navigation to feel intuitive
+and satisfying.
+
+<Figure
+  src="/projects/bur1alrites/write-up/gallery.webp"
+  alt="Inverted video thumbnails arranged in columns over the reactive background."
+  width={1440}
+  height={1000}
+  caption="The gallery sits within the 3D scene."
+/>
+
+## The projector room
+
+Opening a clip takes you into a room built around a projected image. Bloom lets
+the light spill beyond the screen.
+
+The supplied footage was heavily compressed. I used animated grain to help mask
+the artifacts and give the projection its texture.
+
+<Figure
+  src="/projects/bur1alrites/write-up/projector.webp"
+  alt="A video projected inside a dark 3D room, with grain, glowing highlights, and reflections."
+  width={1440}
+  height={1000}
+  caption="The projector room, showing a clip from Allie's archive."
+/>
+
+## Keeping video light
+
+An automated encoding pipeline prepares smaller playback versions while preserving
+the masters. Previews load around the visible part of the gallery and play on
+hover; video starts automatically where the browser permits it.
+
+Three.js, through React Three Fiber, gives the gallery and projector room real
+depth and camera movement. React connects the scenes to navigation and playback
+state; Next.js keeps the public pages and admin routes in one app. HLS.js switches
+between compressed video renditions, keeping playback practical alongside the 3D
+rendering.

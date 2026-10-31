@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import createMDX from "@next/mdx";
 import {
   CANVAS_IMAGE_DEVICE_SIZES,
   CANVAS_IMAGE_SIZES,
@@ -30,6 +31,7 @@ function supabaseImageRemotePattern() {
 const supabasePatterns = supabaseImageRemotePattern();
 
 const nextConfig: NextConfig = {
+  pageExtensions: ["js", "jsx", "ts", "tsx", "mdx"],
   async headers() {
     return [
       {
@@ -108,4 +110,6 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const withMDX = createMDX();
+
+export default withMDX(nextConfig);

@@ -6,8 +6,9 @@ import {
   type ReactNode,
   useRef,
 } from "react";
-import { motion, useInView, useReducedMotion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 
+import { useReducedMotion } from "@/app/hooks/use-reduced-motion";
 import { cn } from "@/lib/cn";
 
 const borderLineTransition = {
@@ -64,7 +65,7 @@ function AnimatedBorderCorner({
         )}
         initial={{ scaleX: initialScale }}
         animate={{ scaleX: lineScale }}
-        transition={borderLineTransition}
+        transition={initialScale === 1 ? { duration: 0 } : borderLineTransition}
       />
       <motion.span
         className={cn(
@@ -73,7 +74,7 @@ function AnimatedBorderCorner({
         )}
         initial={{ scaleY: initialScale }}
         animate={{ scaleY: lineScale }}
-        transition={borderLineTransition}
+        transition={initialScale === 1 ? { duration: 0 } : borderLineTransition}
       />
     </span>
   );
@@ -101,7 +102,7 @@ export function AnimatedBorderContainer({
     <div
       ref={containerRef}
       className={cn(
-        "grid h-full w-full grid-cols-[minmax(0,1fr)_var(--border-center-width)_minmax(0,1fr)] grid-rows-[minmax(0,1fr)_fit-content(100%)_minmax(0,1fr)]",
+        "grid size-full grid-cols-[minmax(0,1fr)_var(--border-center-width)_minmax(0,1fr)] grid-rows-[minmax(0,1fr)_fit-content(100%)_minmax(0,1fr)]",
         className,
       )}
       style={

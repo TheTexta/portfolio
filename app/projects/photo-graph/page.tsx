@@ -1,109 +1,46 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-
-import ProjectCaseStudyShell from "@/app/components/projects/project-case-study-shell";
+import ProjectWriteUp from "@/app/components/projects/project-write-up";
 import { getProject } from "@/app/components/projects/project-catalog";
-import { loadGraphWithFallback } from "@/lib/photo-graph/graph-store";
-import type { GraphNode } from "@/lib/photo-graph/types";
 import StructuredData from "@/app/components/structured-data";
 import {
   createPageMetadata,
   createPageStructuredData,
   PUBLIC_PAGES,
 } from "@/lib/seo";
-import { photoGraphMediaUrl } from "@/lib/photo-graph/media-url";
+import benchmark from "@/public/projects/photo-graph/color-model-benchmark-v1.json";
+import gallery from "@/public/projects/photo-graph/write-up/gallery.json";
 
-import PhotoGraphModelComparison from "./model-comparison/photo-graph-model-comparison";
+import WriteUpContent from "./write-up.mdx";
 
 const project = getProject("photo-graph");
-
-export const dynamic = "force-dynamic";
+const selectedModel = benchmark.models.find(
+  (model) => model.id === "mean-lab-ciede2000",
+)!;
+const originalModel = benchmark.models.find(
+  (model) => model.id === "mean-lab-cie76",
+)!;
+const percent = (value: number) => `${(value * 100).toFixed(1)}%`;
 
 export const metadata = createPageMetadata(PUBLIC_PAGES.photoGraph);
 
-type BenchmarkReport = {
-  version: 1;
-  generatedAt: string;
-  nodeCount: number;
-  neighborsPerNode: number;
-  judgmentScope: string;
-  models: Array<{
-    id: string;
-    label: string;
-    metrics: {
-      precisionAtK: number;
-      pairwiseAgreement: number;
-      pairwiseDurationMs: number;
-      graphDurationMs: number;
-      pairCount: number;
-      edgeCount: number;
-      density: number;
-      components: number;
-      isolates: number;
-    };
-    queries: Array<{
-      id: string;
-      label: string;
-      precisionAtK: number;
-      pairwiseAgreement: number;
-      neighbors: Array<{
-        id: string;
-        distance: number;
-        judgedRelevant: boolean;
-      }>;
-    }>;
-  }>;
-};
-
-function imageUrl(node: GraphNode) {
-  if (node.storagePath) {
-    return (
-      photoGraphMediaUrl(
-        {
-          storagePath: node.storagePath,
-          storageProvider: node.storageProvider,
-        },
-        { width: 560, quality: 86, resize: "cover" },
-      ) ?? ""
-    );
-  }
-
-  return node.url ?? "";
-}
-
-export default async function Page() {
-  const reportPath = path.join(
-    process.cwd(),
-    "public",
-    "projects",
-    "photo-graph",
-    "color-model-benchmark-v1.json",
-  );
-  const [{ nodes }, reportRaw] = await Promise.all([
-    loadGraphWithFallback(),
-    readFile(reportPath, "utf8"),
-  ]);
-  const report = JSON.parse(reportRaw) as BenchmarkReport;
-  const imageUrls = Object.fromEntries(
-    nodes.map((node) => [node.id, imageUrl(node)]),
-  );
-  const queries =
-    report.models[0]?.queries.map((query) => ({
-      id: query.id,
-      label: query.label,
-      imageUrl: imageUrls[query.id] ?? "",
-    })) ?? [];
-
+export default function Page() {
   return (
-    <ProjectCaseStudyShell project={project}>
+    <ProjectWriteUp project={project}>
       <StructuredData
         data={createPageStructuredData(PUBLIC_PAGES.photoGraph)}
       />
-      <PhotoGraphModelComparison
-        report={report}
-        queries={queries}
-        imageUrls={imageUrls}
+      <WriteUpContent
+        project={project}
+        gallery={gallery}
+        benchmark={{
+          nodeCount: benchmark.nodeCount,
+          queryCount: benchmark.queryIds.length,
+          selectedPrecision: percent(selectedModel.metrics.precisionAtK),
+          originalPrecision: percent(originalModel.metrics.precisionAtK),
+          selectedComponents: selectedModel.metrics.components,
+          originalComponents: originalModel.metrics.components,
+          originalIsolates: originalModel.metrics.isolates,
+        }}
       />
-    </ProjectCaseStudyShell>
+    </ProjectWriteUp>
   );
 }

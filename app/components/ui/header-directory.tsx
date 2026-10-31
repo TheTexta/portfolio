@@ -1,15 +1,11 @@
 "use client";
 
-import {
-  AnimatePresence,
-  motion,
-  type Transition,
-  useReducedMotion,
-} from "framer-motion";
+import { AnimatePresence, motion, type Transition } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
+import { useReducedMotion } from "@/app/hooks/use-reduced-motion";
 
 export type HeaderDirectorySegment = {
   label: string;

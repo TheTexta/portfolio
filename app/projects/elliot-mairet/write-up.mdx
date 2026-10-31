@@ -1,0 +1,68 @@
+# {props.project.title}
+
+<Lead>
+  {
+    "A minimal photography archive for Elliot Mairet, with colour-based navigation."
+  }
+</Lead>
+
+<nav aria-label={`${props.project.title} project links`}>
+  <a href={props.project.liveHref}>Visit site</a>
+  <a href={props.project.sourceHref}>View source</a>
+</nav>
+
+<ProjectPreview projectId="elliotmairet" />
+
+## Keeping it minimal
+
+I wanted the site to do exactly what it needed to do, and still be memorable. I
+kept the layout minimal and put its character into the navigation controls.
+
+A dense index lets you scan the collection.
+
+<Figure
+  src="/projects/elliot-mairet/write-up/archive.webp"
+  alt="Elliot Mairet's archive: a three-column index of colour and black-and-white photographs on a white page."
+  width={1440}
+  height={1000}
+  caption="The image index."
+/>
+
+On an individual page, the photograph takes up most of the screen, with its
+five-colour palette below.
+
+<Figure
+  src="/projects/elliot-mairet/write-up/photograph.webp"
+  alt="A photograph of golden leaves against a blue sky, displayed above five colour swatches."
+  width={1440}
+  height={1000}
+  caption="A photograph and its palette."
+/>
+
+## Navigating by colour
+
+I used the palette as a navigation control. Each page starts with related
+photographs; select a swatch to narrow them to that colour. It gives you another
+way through the archive without a separate search interface.
+
+Colour features are extracted on upload. Matching runs in the browser from cached
+palette data, so changing the selected colour does not need another server request.
+
+<Figure
+  src="/projects/elliot-mairet/write-up/colour-navigation.webp"
+  alt="The ochre palette swatch selected above a grid of photographs with warm brown and gold tones."
+  width={1440}
+  height={1000}
+  caption="Selecting the ochre swatch brings up photographs with similar colours."
+/>
+
+## Adding new work
+
+A private admin area handles uploads, photograph details, and site text. Images are
+checked before publication, with colour analysis built into the upload workflow.
+
+I used Next.js for the archive and photo routes, with React handling palette
+selection. The pages can be cached while colour matching runs in the browser.
+Supabase keeps photograph metadata and admin authentication together; Cloudflare
+R2 stores the originals separately from the application, so publishing the site
+does not mean redeploying its image collection.

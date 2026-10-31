@@ -1,0 +1,85 @@
+# {props.project.title}
+
+<Lead>
+  {
+    "A photo archive you browse by colour, following links between images with similar tones."
+  }
+</Lead>
+
+<nav aria-label={`${props.project.title} project links`}>
+  <a href={props.project.experienceHref}>Launch experience</a>
+</nav>
+
+<ProjectPreview projectId="photo-graph" />
+
+## Following colour
+
+Two photographs can have little in common as subjects and still look right beside
+each other. I built Photo Node-Gallery to follow those connections.
+
+Each photograph is a node. Colour similarity creates the links; a force-directed
+layout arranges the graph. Drag, zoom, or open an image for a closer look.
+
+<Figure
+  src={props.project.posterSrc}
+  alt={props.project.posterAlt}
+  width={props.project.posterWidth}
+  height={props.project.posterHeight}
+  caption="The archive linked by colour similarity."
+/>
+
+## Testing the links
+
+The original model compared average colours using CIE76, a distance measure in LAB
+colour space. Reducing a whole image to one colour is crude, so I tested it against
+four alternatives, including models that compare colour distributions and palettes.
+
+Colour features are calculated ahead of time, so browsing does not require
+reprocessing the originals.
+
+Next.js provides the pages and API routes. react-force-graph draws the canvas,
+while D3 handles the force simulation, keeping the moving photographs out of the
+HTML layout. Supabase stores the precomputed graph and colour features, so the
+browser can load those relationships without analysing the images again.
+
+The benchmark from 26 August 2026 covers
+{props.benchmark.nodeCount} photographs and {props.benchmark.queryCount} reviewed
+query images, ranging from snow to coloured stage lighting.
+
+<Gallery
+  images={props.gallery.reviewImages}
+  label="Seven review photographs"
+  caption="The seven review images, read left to right, top to bottom."
+/>
+
+I measured how many of the first four matches were judged relevant, how closely
+their order agreed with the review, and whether the graph left photographs
+disconnected.
+
+## The result
+
+With CIEDE2000, still using mean LAB colour,
+{props.benchmark.selectedPrecision} of the top four matches were judged relevant,
+compared with {props.benchmark.originalPrecision} for CIE76. All photographs were
+connected; the original graph split into {props.benchmark.originalComponents}
+groups, including {props.benchmark.originalIsolates} isolated photographs.
+
+<Comparison
+  query={props.gallery.comparison.query}
+  rows={props.gallery.comparison.rows}
+  caption="The starting image and each model's top four matches, in ranked order. Saved benchmark results."
+/>
+
+I chose CIEDE2000 for its higher top-four precision and connected graph. CIE76
+agreed slightly more closely with the reviewed rankings.
+
+These results describe the saved August benchmark, not the current live archive.
+
+## Where it falls short
+
+Colour matching ignores the subject. It can link unrelated scenes or separate two
+views of the same place because their lighting differs.
+
+The review covers seven starting images and my judgments of colour and tone, not a
+complete set of correct matches. Unmarked results are unjudged, not automatically
+wrong.

@@ -22,6 +22,7 @@ export function useIframeOpenOnClick(
   iframeRef: RefObject<HTMLIFrameElement | null>,
   fallbackHref: string,
   previewSrc: string,
+  enabled = true,
 ) {
   const pointerInsideRef = useRef(false);
   const bridgeReadyRef = useRef(false);
@@ -67,6 +68,10 @@ export function useIframeOpenOnClick(
   );
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     bridgeReadyRef.current = false;
     const previewOrigin = new URL(previewSrc, window.location.href).origin;
 
@@ -129,10 +134,14 @@ export function useIframeOpenOnClick(
       removeFrameClickRef.current?.();
       clearFallback();
     };
-  }, [clearFallback, iframeRef, openFallback, openPage, previewSrc]);
+  }, [clearFallback, enabled, iframeRef, openFallback, openPage, previewSrc]);
 
   return {
     onLoad: () => {
+      if (!enabled) {
+        return;
+      }
+
       removeFrameClickRef.current?.();
       removeFrameClickRef.current = null;
 

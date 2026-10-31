@@ -67,6 +67,7 @@ const fixture = await mkdtemp(join(root, ".tmp", "browser-tests-"));
 for (const path of [
   "app",
   "lib",
+  "mdx-components.tsx",
   "next.config.ts",
   "proxy.ts",
   "tsconfig.json",

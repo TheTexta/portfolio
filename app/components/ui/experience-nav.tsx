@@ -8,7 +8,7 @@ import { cn } from "@/lib/cn";
 import { ControlLink } from "./control";
 
 type ExperienceNavProps = {
-  caseStudyHref?: string;
+  writeUpHref?: string;
   experienceHref?: string;
   className?: string;
   showTheme?: boolean;
@@ -16,7 +16,7 @@ type ExperienceNavProps = {
 };
 
 export default function ExperienceNav({
-  caseStudyHref,
+  writeUpHref,
   experienceHref,
   className,
   showTheme = false,
@@ -53,12 +53,12 @@ export default function ExperienceNav({
           <Maximize2 aria-hidden className="size-4" />
         </ActionLink>
       ) : null}
-      {caseStudyHref ? (
+      {writeUpHref ? (
         <ControlLink
-          href={caseStudyHref}
+          href={writeUpHref}
           size="sm"
 
-          aria-label="Return to project case study"
+          aria-label="Return to project write up"
         >
           <Minimize aria-hidden className="size-4" />
         </ControlLink>

@@ -57,6 +57,10 @@ html.dark {
 }
 
 @layer base {
+  ::selection {
+    @apply bg-ink text-canvas;
+  }
+
   html {
     color-scheme: light;
   }

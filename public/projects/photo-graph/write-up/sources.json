@@ -1,0 +1,135 @@
+{
+  "benchmark": "public/projects/photo-graph/color-model-benchmark-v1.json",
+  "benchmarkGeneratedAt": "2026-08-26T17:22:32.381Z",
+  "preparationScript": "scripts/photo-graph/prepare-write-up-media.mjs",
+  "note": "Individual published photographs for responsive article galleries, not generated imagery. Article rendering uses local files only. Legacy composite files are retained but no longer displayed.",
+  "galleries": {
+    "review": {
+      "queryIds": [
+        "14",
+        "46",
+        "49",
+        "57",
+        "65",
+        "69",
+        "112"
+      ]
+    },
+    "comparison": {
+      "queryId": "112",
+      "rows": [
+        {
+          "model": "mean-oklab",
+          "neighbourIds": [
+            "75",
+            "27",
+            "105",
+            "13"
+          ]
+        },
+        {
+          "model": "mean-lab-ciede2000",
+          "neighbourIds": [
+            "75",
+            "27",
+            "24",
+            "32"
+          ]
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "14",
+      "url": "https://images.dextery.dev/photo-graph/photography-images/14.png?width=560&quality=86&format=auto",
+      "sha256": "a41862ef91d0afe9310a7b3b30e3d1c351981d5925e4e58b03e7efdd1d36bfa7",
+      "asset": "photographs/14.webp",
+      "assetSha256": "a01ca935fc2087970261485ba835d6fb8a5fd35211b78abe40d4edff303d1d99"
+    },
+    {
+      "id": "46",
+      "url": "https://images.dextery.dev/photo-graph/photography-images/46.png?width=560&quality=86&format=auto",
+      "sha256": "2afa9b7752fbcf9bc2f12c0eac33c2696042fb35d2f11babab46e512648906d1",
+      "asset": "photographs/46.webp",
+      "assetSha256": "4ce8c8ab25fe076eda30e024c07e42fb0899ce3f031731f64f0aa1549049d6f3"
+    },
+    {
+      "id": "49",
+      "url": "https://images.dextery.dev/photo-graph/photography-images/49.png?width=560&quality=86&format=auto",
+      "sha256": "373406d29143696cc25dd72fc214a7ed0377499f18d7ae1b75939ac6eef8f133",
+      "asset": "photographs/49.webp",
+      "assetSha256": "7ed3d3099aefa8994278e8958485e30bd8befdcb757a3c1e7f370ce4c0c6c157"
+    },
+    {
+      "id": "57",
+      "url": "https://images.dextery.dev/photo-graph/photography-images/57.png?width=560&quality=86&format=auto",
+      "sha256": "1b3eb98753e5ccf8f9f98bc9b56c2bf33b4915142bd14a4ee238d3d38969fa2e",
+      "asset": "photographs/57.webp",
+      "assetSha256": "c3dc1f93162b2fb6dfe770c1657bf6ab8ba50fe484c44cac1326bc2f4ac6d544"
+    },
+    {
+      "id": "65",
+      "url": "https://images.dextery.dev/photo-graph/photography-images/65.png?width=560&quality=86&format=auto",
+      "sha256": "9d9ff450aa5959f461295b5afc14b4388a67ec560f019a4eb582f663a8f0304f",
+      "asset": "photographs/65.webp",
+      "assetSha256": "d9ea980aedbac8bd5f78b8c2d13408b76b413a5f60d94502f34b514403d0f16f"
+    },
+    {
+      "id": "69",
+      "url": "https://images.dextery.dev/photo-graph/photography-images/69.png?width=560&quality=86&format=auto",
+      "sha256": "46616b50c7be7a3286c2a879452f13f5fac08379fda1122bf593ac3ac633c7db",
+      "asset": "photographs/69.webp",
+      "assetSha256": "f10baf376d04bc10a4b9555e3c1279a0f2effdd61700788140a99bb0a0c74c60"
+    },
+    {
+      "id": "112",
+      "url": "https://images.dextery.dev/photo-graph/photography-images/112.png?width=560&quality=86&format=auto",
+      "sha256": "c466f9ea3f8fd54d6628a586818a1760a10e601e191a0b61989b2dc287ec5b4c",
+      "asset": "photographs/112.webp",
+      "assetSha256": "515553abe5db6b22a385e5c3e93ae819142c71c7928cc540efcb49f09942dcef"
+    },
+    {
+      "id": "75",
+      "url": "https://images.dextery.dev/photo-graph/photography-images/75.png?width=560&quality=86&format=auto",
+      "sha256": "92314daf58c823b09b08e4f4ccb11979e1a9f9f2e53144170694df4407654c1a",
+      "asset": "photographs/75.webp",
+      "assetSha256": "59c45a4ddbdb9ff787ea87c38014ecd4aa02e7b7a27bf1136ce3fc553f3ce901"
+    },
+    {
+      "id": "27",
+      "url": "https://images.dextery.dev/photo-graph/photography-images/27.png?width=560&quality=86&format=auto",
+      "sha256": "705d7ac1c5aa096d57383353e186459ad270bd17d9d790842fe365730fe147ad",
+      "asset": "photographs/27.webp",
+      "assetSha256": "2a7500c452e4396b570fc6841e0d09d54c501c9759c299ebb1e2528992137cb1"
+    },
+    {
+      "id": "105",
+      "url": "https://images.dextery.dev/photo-graph/photography-images/105.png?width=560&quality=86&format=auto",
+      "sha256": "78e3fa3ce8367d2865d3dc334b78593b8ce4ca0359169d8adec8bd1bb076e870",
+      "asset": "photographs/105.webp",
+      "assetSha256": "6ed2331a14b98f4ebc3dade9d834ae31204bc7bf3665df06e8c1ead905a44abc"
+    },
+    {
+      "id": "13",
+      "url": "https://images.dextery.dev/photo-graph/photography-images/13.png?width=560&quality=86&format=auto",
+      "sha256": "a5876ddb366dbf5b470a3eddce4451b68a6dda0fffdbf24860066ce684da16a9",
+      "asset": "photographs/13.webp",
+      "assetSha256": "b206cc04c555828b57d906b0dfab8bbeac42290a61491ef3d98e64372919d6b5"
+    },
+    {
+      "id": "24",
+      "url": "https://images.dextery.dev/photo-graph/photography-images/24.png?width=560&quality=86&format=auto",
+      "sha256": "b244b2befd3e31efc19280d2140e819324a256ab6ab17861ce9e5882a83e2faf",
+      "asset": "photographs/24.webp",
+      "assetSha256": "bb2e8a279dde66b4028a2dc0895f24e329ceb421a0392acac41bf82f340cf5be"
+    },
+    {
+      "id": "32",
+      "url": "https://images.dextery.dev/photo-graph/photography-images/32.png?width=560&quality=86&format=auto",
+      "sha256": "65286f417a2a3e539c081271778cc89f1aa4d22103266f09bdbf77340663499c",
+      "asset": "photographs/32.webp",
+      "assetSha256": "d2e6b209468dca2f3f18ac5671b0b8b1a665eb444f4c2c3a7b324411fe1fd38d"
+    }
+  ]
+}

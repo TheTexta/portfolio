@@ -1,0 +1,26 @@
+{
+  "capturedOn": "2026-10-30",
+  "method": "Chrome viewport screenshots of the public website, converted to WebP at quality 88. No page content was altered.",
+  "credit": "Photography: Elliot Mairet. Website design and development: Dexter Young.",
+  "viewport": { "width": 1440, "height": 1000, "deviceScaleFactor": 1 },
+  "assets": [
+    {
+      "file": "archive.webp",
+      "sourceUrl": "https://elliotmairet.com/",
+      "state": "Archive index, top of page.",
+      "scrollY": 0
+    },
+    {
+      "file": "photograph.webp",
+      "sourceUrl": "https://elliotmairet.com/gallery/20261025-DSCF7395.jpg",
+      "state": "Individual photograph with the full five-colour palette, no swatch selected.",
+      "scrollY": 0
+    },
+    {
+      "file": "colour-navigation.webp",
+      "sourceUrl": "https://elliotmairet.com/gallery/20261025-DSCF7395.jpg",
+      "state": "Swatch #b09050 selected, scrolled to show the palette and related photographs.",
+      "scrollY": 824
+    }
+  ]
+}

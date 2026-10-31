@@ -572,7 +572,7 @@ export default function PhotoGraphCanvas({
 
         {showNavigation && (
           <ExperienceNav
-            caseStudyHref={
+            writeUpHref={
               isFullPageRoute ? PROJECT_ROUTES.photoGraph : undefined
             }
             experienceHref={

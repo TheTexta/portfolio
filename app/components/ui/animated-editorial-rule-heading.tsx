@@ -1,8 +1,9 @@
 "use client";
 
 import { type ReactNode, useRef } from "react";
-import { motion, useInView, useReducedMotion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 
+import { useReducedMotion } from "@/app/hooks/use-reduced-motion";
 import { cn } from "@/lib/cn";
 
 const editorialLineTransition = {
@@ -38,7 +39,9 @@ export function AnimatedEditorialRuleHeading({
         className="h-px origin-right bg-ink"
         initial={{ scaleX: shouldReduceMotion ? 1 : 0 }}
         animate={{ scaleX: lineScale }}
-        transition={editorialLineTransition}
+        transition={
+          shouldReduceMotion ? { duration: 0 } : editorialLineTransition
+        }
       />
       <h2 className="font-display text-[length:var(--medium-text-size)] leading-[1.10075] font-semibold tracking-[-0.0963125rem]">
         {children}
@@ -48,7 +51,9 @@ export function AnimatedEditorialRuleHeading({
         className="h-px origin-left bg-ink"
         initial={{ scaleX: shouldReduceMotion ? 1 : 0 }}
         animate={{ scaleX: lineScale }}
-        transition={editorialLineTransition}
+        transition={
+          shouldReduceMotion ? { duration: 0 } : editorialLineTransition
+        }
       />
     </div>
   );
