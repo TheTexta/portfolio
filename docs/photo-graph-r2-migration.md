@@ -1,29 +1,80 @@
 # Photo Graph media migration to Cloudflare R2
 
-Status: 2026-10-15 production cutover of the 102 referenced photos to R2
-delivery; the server-side R2 upload flag is enabled in the follow-up app
-deployment. **This document does not authorize deletion of existing Supabase
-objects or pending recovery uploads.** Read
-`AGENTS.md` and the current Photo Graph sections of `README.md` before editing.
+## Current verification — 2026-11-02
 
-The published R2 bucket contains 102 checksum-verified copies. The six
-Supabase pending objects remain untouched. Additive SQL is live; 102/102
-database rows have provider `r2`, and live Worker original HEAD matches the
-manifest for all 102. The new image route, original bytes, transformations
-(including the 76 MB source), nested `_pending` denial, and Elliot/bur1alrites
-regressions passed. The canonical local doctor passes when supplied with the
-current shared Supabase service-role credential in process memory; the stale
-key in the local portfolio environment was not overwritten. This document
-does not authorize removal of legacy objects.
+Read-only checks against the public graph API, Cloudflare inventory and Coolify:
+
+- All 103 graph nodes explicitly use `r2`, matching exactly 103 published objects
+  in `dextery-photo-graph`, with no missing or unreferenced keys. Every original
+  HEAD returned HTTP 200 with image content type, size and ETag matching inventory.
+  This is fresh delivery/metadata evidence, not a repeat of the historical
+  full-byte SHA-256 comparison against the now-deleted Supabase sources.
+- Private `dextery-photo-graph-staging` is empty and has no Worker binding. Both
+  buckets have r2.dev disabled and no custom domains; the shared Worker binds
+  only the published Photo Graph bucket.
+- Sample transforms at 96px/quality 75, 560px/quality 86 (the 76.6 MB original),
+  and 1280px/quality 60 returned HTTP 200 WebP. Root, nested and encoded `_pending`
+  probes returned 404 on both shared image/media origins.
+- Coolify's current estate contains no `supabase-image-cache` service. The
+  separately approved October 30 retirement evidence remains in
+  `dextery-infrastructure/docs/supabase-image-cache-retirement.md`.
+
+Local follow-up corrections: the static snapshot's 45 available nodes now resolve
+through R2, while preserving node IDs, retained relationships and legacy
+provider-less database/upload semantics. This snapshot is not the full 103-node
+catalogue; all 45 expected keys match current published graph references. The
+legacy Firebase importer explicitly keeps its Supabase destination. The doctor
+checks provider-qualified original/transform delivery, with
+no retired-cache TTL/header assumptions; RPC discovery uses GET OpenAPI inspection
+instead of invoking the mutating function. These local corrections require an
+approved app deployment before they affect the hosted fallback. No production
+configuration or data was changed for this verification.
+
+The local doctor was rerun after correction and still returned HTTP 401 while
+reading the sample graph row with the existing local credential. No credential
+was printed or changed. Public delivery/inventory checks above passed independently;
+this does not claim a fresh authenticated production upload or rollback rehearsal.
+
+Local verification passed: `npm run check`, 105 unit tests, both algorithm
+validators, 12 focused desktop/mobile Photo Graph and R2 upload-recovery browser
+tests, and an isolated production build without environment files. Independent
+source review found no actionable issues. The normal port-3000 development server
+was left untouched; nothing was committed, pushed or deployed.
+
+## Owner-approved source retirement — 2026-10-15
+
+The owner explicitly authorized deleting the Photo Graph Supabase rollback
+copies and six pending uploads after successful R2 cutover. A new streamed
+SHA-256 comparison verified all 102 source originals against R2 before removal.
+The Storage API deleted exactly 108 manifest-qualified paths from bucket
+`dextery.dev`; read-back found zero remaining objects. Other Supabase bucket
+object counts were unchanged. All 103 R2 objects remained accessible and the
+103 graph records were preserved; private R2 staging remained empty.
+
+No original or pending recovery copy remains in Supabase Storage. Rollback to Supabase-only delivery
+requires reverse-copying every required R2 original, not just node 128. The static
+fallback was not corrected by that scoped cleanup; see the local follow-up above.
+The old cache was left unchanged at that time, then retired separately on
+October 30. No other project's originals were deleted.
+
+## Historical cutover acceptance — 2026-10-15
+
+The initial production cutover migrated 102 referenced originals with full
+SHA-256 read-back verification. Additive SQL and all 102 R2 provider references
+were verified, alongside image routes, large-original transforms, private-path
+denial and Elliot/bur1alrites regressions. A follow-up authenticated R2 upload
+added node 128. The legacy doctor's credential workaround was a dated acceptance
+observation, not permission to change credentials or restore retired services.
+Read `AGENTS.md` and `README.md` before editing. This record authorizes no new
+deletion, SQL, deployment or infrastructure change.
 
 ## Current state and target
 
 Photo Graph now serves referenced originals from published R2 through the shared
-Worker. The original Supabase Storage objects remain in bucket `dextery.dev`;
-the standalone cache in `deploy/supabase-image-cache/` remains for legacy and
-rollback image requests. Graph nodes persist `storage_path` and provider. Admin
-uploads retain `_pending/` sources until journaled registration commits. Existing
-objects and upload journals must remain usable during a mixed-provider rollout.
+Worker. Supabase retains graph metadata/Auth, not Photo Graph original copies.
+Graph nodes persist `storage_path` and provider. Uploads retain temporary sources
+until journaled registration commits. Existing upload journals must remain usable
+during a mixed-provider rollout; their absence of provider still means Supabase.
 
 The chosen target uses published R2 bucket `dextery-photo-graph`, private staging
 bucket `dextery-photo-graph-staging`, and published paths under
@@ -31,8 +82,8 @@ bucket `dextery-photo-graph-staging`, and published paths under
 `https://media.dextery.dev/photo-graph/` (original bytes). The shared Worker is
 published from the private `TheTexta/dextery-infrastructure` repository;
 its Photo Graph published-only route/binding is live. The published R2 bucket
-contains 102 checksum-verified originals, while the private staging bucket
-remains empty and has restricted PUT CORS. Public r2.dev access is disabled
+contains 102 checksum-verified migrated originals plus R2-only node 128, while
+the private staging bucket remains empty and has restricted PUT CORS. Public r2.dev access is disabled
 for both buckets; staging has no Worker binding. Production R2 app credentials
 are server-only and scoped to the two Photo Graph buckets.
 The browser PUT must send the signed `Content-Type`, `x-amz-checksum-sha256`,
@@ -43,7 +94,8 @@ test passed and both synthetic objects were removed with absence verified.
 After correcting the site-scoped Production credential, a real authenticated
 upload committed node 128. The new published object matched its journal SHA-256
 and expected size on read-back, its 560px transform returned HTTP 200, and
-private staging was empty. The six pre-existing Supabase pending objects remain.
+private staging was empty. The six pre-existing Supabase pending objects were
+subsequently deleted under the source-retirement approval recorded above.
 
 ## Media locator seam
 
@@ -75,7 +127,7 @@ Media consumers to inventory and update together:
   `lib/photo-graph/graph-store.ts`, `lib/photo-graph/force-graph.ts`,
   `lib/photo-graph/types.ts`, and `public/portfolioTable.json`.
 - Canvas/preview/image metadata: `app/components/projects/photo-graph/`,
-  `app/projects/photo-graph/page.tsx`, `app/api/admin/photo-graph/graph/route.ts`,
+  `app/write-ups/photo-graph/page.tsx`, `app/api/admin/photo-graph/graph/route.ts`,
   and the admin upload UI.
 - Maintenance: `scripts/photo-graph/doctor.ts`, feature extraction, dimensions,
   cache-control repair, and deletion. The existing Supabase bucket-rename script
@@ -85,7 +137,7 @@ The Worker has a separate Photo Graph width/quality allowlist, including the
 560px quality-86 editorial cover. Elliot and bur1alrites transform allowances
 remain unchanged. Original and 560px cover delivery were verified live.
 
-The proposed R2 route serves only canonical
+The live R2 route serves only canonical
 `photography-images/<numeric-id>.(png|jpg|webp)` keys; it does not expose
 arbitrary files under the bucket prefix. The existing
 `PHOTO_GRAPH_IMAGE_BASE_PATH` override can generate different paths, so R2
@@ -93,11 +145,10 @@ cutover code **must call** `assertPhotoGraphR2ImageBasePath()` before enabling
 new writes or R2 URL generation and fail closed if the configured prefix is
 different. This guard does not change legacy Supabase behavior until invoked.
 Read-only inventory on 2026-10-14 showed all 102 graph-node paths use this
-canonical shape. Of 108 Storage objects, 102 match; the other six are nested
-`photography-images/_pending/*.png` recovery objects. Preserve those pending
-sources until their owning upload batches are reconciled or independently
-reviewed, even if their browser recovery state is no longer available. Do not
-put them in the published R2 bucket as public objects. Re-run this inventory and inspect the
+canonical shape. Of the then-present 108 Storage objects, 102 matched; the other
+six were nested `photography-images/_pending/*.png` recovery objects. They were
+not published and were deleted only after separate owner review. Any future
+pending sources require their own reconciliation/review before deletion. Inspect the
 deployed prefix configuration immediately before cutover; a dated snapshot
 does not prove future upload paths will still match.
 
@@ -155,11 +206,11 @@ not accidentally be checked or deleted using the Supabase bucket. Recoveries
 after reload or a lost response must reuse the original destination and the
 same committed result. Retain Supabase `_pending/` objects until their own
 registration has completed and cleanup is verified.
-The six pending PNG objects found in the live Supabase bucket on 2026-10-14
-have **no database upload-journal rows**. Do not infer ownership from their
-per-object UUID: it differs from the batch ID. They may rely on a browser's
-local recovery state, so leave them in Supabase for separate review and never
-copy them to the public R2 bucket as a migration shortcut.
+The six pending PNG objects found in Supabase on 2026-10-14 had **no database
+upload-journal rows** and were later deleted under separate owner approval.
+For future pending objects, do not infer ownership from a per-object UUID: it
+differs from the batch ID. Browser recovery state may be their only record;
+never publish them as a migration shortcut or delete them without review.
 
 Signed R2 uploads that never reach registration will not have a Postgres
 reservation under the current ordering; browser recovery intent is their only
@@ -181,13 +232,13 @@ canonical key in `photo_graph_media_cleanup_jobs` in the same Postgres
 transaction that deletes the node. Object deletion follows only after checking
 that no R2 node still references the key; failures remain queued and the admin
 UI displays a warning with a **Retry R2 Cleanup** action. Legacy Supabase node
-deletion remains on its existing path. No cleanup command deletes the retained
-Supabase originals or the six pending recovery objects during this migration.
+deletion remains on its existing path. The later 108-path source retirement was
+a separately approved operation, not a side effect of migration or node cleanup.
 
 ## Migration and cutover sequence (historical checklist)
 
-The approved read-side phases 1–6 completed on 2026-10-15. The flagged
-production R2 upload deployment follows; post-cutover writes require ongoing
+The approved read-side phases 1–6 and the subsequent flagged R2 upload deployment
+completed on 2026-10-15; post-cutover writes require ongoing
 rollback reconciliation. Steps below describe the safe ordering, not a request
 to rerun copies, SQL, or Worker publishing.
 
@@ -211,21 +262,21 @@ to rerun copies, SQL, or Worker publishing.
    not media contents or credentials, in operational records.
 6. With explicit cutover approval: reconcile in-flight uploads, verify every
    referenced destination, switch graph locators and write routing in a staged
-   rollout, then test public and admin flows. Preserve original Supabase objects,
-   pending recovery state, and the old render cache through a defined rollback
-   window. Rolling back to an older Supabase-only Vercel deployment requires an
+   rollout, then test public and admin flows. Supabase originals and pending
+   recovery state were retained during the initial rollback window, then retired
+   under separate approval. Rolling back to Supabase-only Vercel code requires an
    ordered **data-and-code** rollback: copy and verify _every_ R2-backed graph
    object required by old readers into Supabase (including post-cutover writes),
    restore Supabase-compatible provider/path references, verify old URL reads,
    then promote the previous deployment or write routing. Track writes that
-   occur during rollback separately so none are stranded. A previous deployment
-   still reads the 102 retained originals by their unchanged Supabase paths,
-   but cannot read new R2-only uploads until those sources are copied back.
+   occur during rollback separately so none are stranded. No previous deployment
+   can rely on retained Supabase originals now: every required source needs a
+   verified reverse copy before a Supabase-only rollback.
 7. Seek separate approval for retiring Supabase storage/cache after URL,
    retention, backup, and recovery checks. Never delete data as a diagnostic.
 
-The currently observed Supabase catalogue holds 108 Photo Graph objects and
-about 1.32 GB of metadata-reported bytes (2026-10-14). This is not a checksum
+The pre-migration Supabase catalogue held 108 Photo Graph objects and
+about 1.32 GB of metadata-reported bytes on 2026-10-14. This is not a current checksum
 manifest, full orphan inventory, or the future cutover total; refresh it before
 planning costs and the final reconciliation.
 
@@ -244,7 +295,8 @@ is needed. Preserve full-resolution originals either way.
 
 - Mixed-provider URLs: originals, widths/qualities/formats, legacy URLs,
   canvases, previews, metadata, static fallback, mobile rendering, and cache
-  separation. The Supabase NGINX render cache remains valid for old objects.
+  separation. Legacy Supabase transforms use Kong/Storage/imgproxy directly;
+  current published Photo Graph images use the R2 Worker.
 - Security: anon/non-admin/wrong-project cannot sign an upload, register a
   batch, mutate graph data, or fetch staging/private objects; service-role
   credentials never enter browser bundles.
@@ -252,15 +304,15 @@ is needed. Preserve full-resolution originals either way.
   missing or ambiguous status, lost copy/commit response, stale graph revision,
   partial batch, cleanup failure, and reload recovery on **both** providers.
 - Migration: count and SHA-256 parity for in-scope objects, verified metadata,
-  untouched originals, repeatable dry-run/resume, mixed-state reads, and a
+  preserved R2 originals, repeatable dry-run/resume, mixed-state reads, and a
   rollback that handles new writes.
 - Existing local suites: `npm run check`, `npm test`, `npm run test:e2e`,
   `npm run admin:validate-auth`, and `npm run build` as appropriate. Extend the
   current isolated PGlite/Vitest/Playwright upload fixtures; do not use production
   credentials in CI or run mutating maintenance scripts as health checks.
 
-Remaining operational work: establish a retention period for the retained
-Supabase originals and six pending objects, and exercise the post-new-upload
-rollback copy. Node 128 is R2-only; a Supabase-only rollback now needs its
-bytes copied and verified back to the original bucket before reverting code.
-The existing originals must not be retired as part of this deployment.
+The media cutover and separately approved source/cache retirement are complete.
+The local fallback/doctor corrections above remain undeployed. A future
+Supabase-only rollback still requires an independently approved and verified
+reverse-copy of every required original; that rollback exercise was not run as
+part of this read-only verification. No additional deletion is authorized.

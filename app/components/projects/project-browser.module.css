@@ -1,3 +1,28 @@
+.root :global(.project-focus-details) {
+  container-type: inline-size;
+}
+
+@container (min-width: 48rem) {
+  .root :global(.project-focus-detail-layout) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+
+  .root :global(.project-focus-actions) {
+    justify-content: end;
+  }
+}
+
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  .embedded :global(.project-focus-preview--current) {
+    width: 70%;
+  }
+
+  .embedded :global(.project-focus-preview--side) {
+    width: 44%;
+  }
+}
+
 @media (hover: none), (pointer: coarse) {
   .root :global(.project-focus-stage) {
     display: block;

@@ -18,7 +18,7 @@ import {
   getAdjacentProjects,
   getProject,
   getProjectHref,
-  projectCatalog,
+  browserProjects as projectCatalog,
   type ProjectDefinition,
   type ProjectId,
 } from "@/app/components/projects/project-catalog";
@@ -39,13 +39,13 @@ import {
 } from "@/app/components/ui/editorial";
 import { useProjectRailMotion } from "@/app/components/projects/use-project-rail-motion";
 import styles from "@/app/components/projects/project-browser.module.css";
+import { getProjectHoverTransition } from "./project-hover-motion";
 
 const PROJECT_HASH_PREFIX = "#project-";
 const RAIL_ONE = projectCatalog;
 const VALID_PROJECT_IDS = new Set(projectCatalog.map((project) => project.id));
 const MOTION_EASE = [0.22, 1, 0.36, 1] as const;
 const MOTION_DURATION = 0.65;
-const HOVER_MOTION_DURATION = 0.28;
 const SIDE_PREVIEW_VIEWPORT_WIDTH = 1024;
 const FOCUS_HEADER_CONTROL_CLASS = cn(
   EDITORIAL_HEADER_CONTROL_CLASS,
@@ -106,10 +106,7 @@ function ProjectCard({
   onFocusProject,
 }: ProjectCardProps) {
   const shouldReduceMotion = useReducedMotion();
-  const infoTransition = getStandardTransition(
-    shouldReduceMotion,
-    HOVER_MOTION_DURATION,
-  );
+  const infoTransition = getProjectHoverTransition(shouldReduceMotion);
 
   return (
     <motion.article
@@ -242,7 +239,7 @@ function ProjectRail({
 }: RailProps) {
   return (
     <div
-      className="project-rail relative scrollbar-hide w-full overflow-hidden bg-canvas motion-reduce:overflow-x-auto"
+      className="project-rail relative w-full overflow-hidden bg-canvas motion-reduce:overflow-x-auto"
       data-direction={direction}
       aria-label={railLabel}
     >
@@ -376,6 +373,12 @@ function MobileProjectTable({
                         className="object-cover"
                       />
                     </a>
+                    <p className="mt-3 text-xs leading-5">
+                      {project.technologies.join(" · ")}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-muted">
+                      {project.summary}
+                    </p>
                   </div>
                 </motion.div>
               ) : null}
@@ -521,12 +524,12 @@ function FocusCarousel({
         })}
       </div>
 
-      <EditorialGutter className="relative border-b border-ink py-4">
+      <EditorialGutter className="project-focus-details relative border-b border-ink py-4">
         <AnimatedHorizontalRule edge="top" />
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={current.id}
-            className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end"
+            className="project-focus-detail-layout grid gap-4"
             initial={{ opacity: shouldReduceMotion ? 1 : 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: shouldReduceMotion ? 1 : 0 }}
@@ -554,7 +557,7 @@ function FocusCarousel({
               </p>
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
+            <div className="project-focus-actions flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               {current.sourceHref ? (
                 <ActionLink
                   href={current.sourceHref}
@@ -710,9 +713,13 @@ function readProjectHash(): ProjectId | null {
 
 type ProjectBrowserProps = {
   onFocusChange?: (projectId: ProjectId | null) => void;
+  embedded?: boolean;
 };
 
-export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
+export default function ProjectBrowser({
+  onFocusChange,
+  embedded = false,
+}: ProjectBrowserProps) {
   const [focusedProjectId, setFocusedProjectId] = useState<ProjectId | null>(
     null,
   );
@@ -759,7 +766,11 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
         "(prefers-reduced-motion: reduce)",
       ).matches;
 
-      if (!documentWithTransition.startViewTransition || reducedMotion) {
+      if (
+        embedded ||
+        !documentWithTransition.startViewTransition ||
+        reducedMotion
+      ) {
         callback();
         onFinished?.();
         return;
@@ -785,10 +796,11 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
           onFinished?.();
         });
     },
-    [],
+    [embedded],
   );
 
   useEffect(() => {
+    if (embedded) return;
     const syncFromHash = () => {
       const projectId = readProjectHash();
       if (focusedProjectRef.current === projectId) {
@@ -816,12 +828,12 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
       window.removeEventListener("hashchange", syncFromHash);
       window.removeEventListener("popstate", syncFromHash);
     };
-  }, [updateWithTransition]);
+  }, [embedded, updateWithTransition]);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
       if (focusedProjectId) {
-        galleryRef.current?.scrollIntoView({ block: "start" });
+        if (!embedded) galleryRef.current?.scrollIntoView({ block: "start" });
         galleryRef.current
           ?.querySelector<HTMLElement>(".project-focus-view")
           ?.focus({ preventScroll: true });
@@ -833,7 +845,18 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
       }
 
       restoreRailRef.current = false;
-      window.scrollTo({ top: railScrollYRef.current });
+      const sectionTarget = embedded
+        ? null
+        : document.getElementById(window.location.hash.slice(1));
+      if (sectionTarget) {
+        restoreRailFocusRef.current = false;
+        sectionTarget.scrollIntoView({ block: "start" });
+        if (!sectionTarget.contains(document.activeElement))
+          sectionTarget.focus({ preventScroll: true });
+        return;
+      }
+
+      if (!embedded) window.scrollTo({ top: railScrollYRef.current });
 
       if (!restoreRailFocusRef.current) {
         return;
@@ -847,11 +870,13 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
           )
         : null;
       if (trigger && trigger.getClientRects().length > 0) {
-        trigger.scrollIntoView({
-          block: "nearest",
-          inline: "nearest",
-          behavior: "instant",
-        });
+        if (!embedded) {
+          trigger.scrollIntoView({
+            block: "nearest",
+            inline: "nearest",
+            behavior: "instant",
+          });
+        }
         trigger.focus({ preventScroll: true });
       } else {
         galleryRef.current?.focus({ preventScroll: true });
@@ -859,7 +884,7 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [focusedProjectId]);
+  }, [embedded, focusedProjectId]);
 
   useEffect(() => {
     onFocusChange?.(focusedProjectId);
@@ -888,17 +913,19 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
   const setProjectHash = useCallback(
     (projectId: ProjectId, mode: "push" | "replace" = "push") => {
       const nextUrl = `${getLocationUrl()}${PROJECT_HASH_PREFIX}${projectId}`;
-      window.history[mode === "push" ? "pushState" : "replaceState"](
-        { projectId, projectFocus: true },
-        "",
-        nextUrl,
-      );
+      if (!embedded) {
+        window.history[mode === "push" ? "pushState" : "replaceState"](
+          { projectId, projectFocus: true },
+          "",
+          nextUrl,
+        );
+      }
       updateWithTransition(() => {
         focusedProjectRef.current = projectId;
         setFocusedProjectId(projectId);
       });
     },
-    [getLocationUrl, updateWithTransition],
+    [embedded, getLocationUrl, updateWithTransition],
   );
 
   const openFocus = useCallback(
@@ -910,12 +937,12 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
       const sourceCard = galleryRef.current?.querySelector<HTMLElement>(
         `[data-card-key="${cardKey}"]`,
       );
-      if (sourceCard) {
+      if (sourceCard && !embedded) {
         sourceCard.style.viewTransitionName = `project-poster-${projectId}`;
       }
       setProjectHash(projectId);
     },
-    [setProjectHash],
+    [embedded, setProjectHash],
   );
 
   const closeFocus = useCallback(
@@ -928,7 +955,7 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
       restoreRailRef.current = true;
       restoreRailFocusRef.current = restoreFocus;
 
-      window.history.replaceState({}, "", nextUrl);
+      if (!embedded) window.history.replaceState({}, "", nextUrl);
       updateWithTransition(
         () => {
           if (projectId && projectIndex !== -1) {
@@ -942,12 +969,12 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
           }
           focusedProjectRef.current = null;
           setFocusedProjectId(null);
-          window.scrollTo({ top: railScrollYRef.current });
+          if (!embedded) window.scrollTo({ top: railScrollYRef.current });
         },
         () => setReturnProjectId(null),
       );
     },
-    [getLocationUrl, updateWithTransition],
+    [embedded, getLocationUrl, updateWithTransition],
   );
 
   const changeFocusedProject = useCallback(
@@ -979,11 +1006,15 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
   return (
     <div
       ref={galleryRef}
-      id="projects"
+      id={embedded ? undefined : "projects"}
       role="region"
-      aria-label="Projects"
+      aria-label={embedded ? "Portfolio project browser example" : "Projects"}
       tabIndex={-1}
-      className={cn("scroll-mt-12 pb-36 sm:py-15", styles.root)}
+      className={cn(
+        embedded ? "min-w-0" : "scroll-mt-12 pb-36 sm:py-15",
+        styles.root,
+        embedded && styles.embedded,
+      )}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) {
           setTouchInfoKey(null);
@@ -997,7 +1028,7 @@ export default function ProjectBrowser({ onFocusChange }: ProjectBrowserProps) {
       {focusedProjectId ? (
         <FocusCarousel
           projectId={focusedProjectId}
-          transitionProjectId={focusedProjectId}
+          transitionProjectId={embedded ? null : focusedProjectId}
           onChange={changeFocusedProject}
           onClose={closeFocus}
         />

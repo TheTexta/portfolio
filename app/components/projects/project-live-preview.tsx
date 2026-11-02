@@ -1,15 +1,18 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import type { ReactNode } from "react";
 
 import {
   getProject,
+  getProjectHref,
   type ProjectDefinition,
   type ProjectId,
 } from "@/app/components/projects/project-catalog";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import { cn } from "@/lib/cn";
+import ProjectPreviewControls from "./project-preview-controls";
 
 const GrailedPlusPreview = dynamic(
   () => import("@/app/components/projects/grailed-plus/grailed-plus-preview"),
@@ -28,6 +31,7 @@ type ProjectLivePreviewProps = {
   className?: string;
   compact?: boolean;
   keepMounted?: boolean;
+  showControls?: boolean;
 };
 
 type ProjectPreviewRendererProps = {
@@ -39,7 +43,26 @@ type ProjectPreviewRenderer = (props: ProjectPreviewRendererProps) => ReactNode;
 
 const elliotMairet = getProject("elliotmairet");
 
+function StaticProjectPreview({ projectId }: { projectId: ProjectId }) {
+  const project = getProject(projectId);
+
+  return (
+    <Image
+      src={project.posterSrc}
+      alt={project.posterAlt}
+      fill
+      sizes="(min-width: 1024px) 75vw, 100vw"
+      className="object-contain"
+    />
+  );
+}
+
 const PROJECT_PREVIEW_RENDERERS: Record<ProjectId, ProjectPreviewRenderer> = {
+  "portfolio-design": () => (
+    <StaticProjectPreview projectId="portfolio-design" />
+  ),
+  "tvm-discord-bot": () => <StaticProjectPreview projectId="tvm-discord-bot" />,
+  "bot-or-not": () => <StaticProjectPreview projectId="bot-or-not" />,
   bur1alrites: () => (
     <HtmlProjectPreview
       title="bur1alrites"
@@ -47,7 +70,6 @@ const PROJECT_PREVIEW_RENDERERS: Record<ProjectId, ProjectPreviewRenderer> = {
       projectHref={PROJECT_ROUTES.bur1alritesLive}
       desktopPreviewScale={0.8}
       mobilePreviewScale={0.75}
-      showNavigation={false}
     />
   ),
   "grailed-plus": ({ keepMounted }) => (
@@ -61,7 +83,6 @@ const PROJECT_PREVIEW_RENDERERS: Record<ProjectId, ProjectPreviewRenderer> = {
       title="nepobabiesruntheunderground"
       previewSrc={PROJECT_ROUTES.nepobabiesPreview}
       projectHref={PROJECT_ROUTES.nepobabiesLive}
-      showNavigation={false}
     />
   ),
   elliotmairet: () => (
@@ -71,7 +92,6 @@ const PROJECT_PREVIEW_RENDERERS: Record<ProjectId, ProjectPreviewRenderer> = {
       projectHref={elliotMairet.liveHref!}
       desktopPreviewScale={elliotMairet.previewScale}
       mobilePreviewScale={elliotMairet.previewScale}
-      showNavigation={false}
     />
   ),
 };
@@ -81,17 +101,30 @@ export default function ProjectLivePreview({
   className,
   compact = false,
   keepMounted = false,
+  showControls = false,
 }: ProjectLivePreviewProps) {
   return (
     <div
       className={cn(
-        "relative size-full min-h-0 overflow-hidden bg-surface",
+        "relative flex size-full min-h-0 flex-col overflow-hidden bg-surface",
         className,
       )}
     >
       {/* Photo Graph handles dragging, zooming, and inspection in the preview.
           Other previews keep their own click-to-open navigation. */}
-      {renderProjectPreview(project.id, compact, keepMounted)}
+      <div className="relative min-h-0 flex-1 overflow-hidden">
+        {renderProjectPreview(project.id, compact, keepMounted)}
+      </div>
+      {showControls && !compact ? (
+        <ProjectPreviewControls
+          title={project.title}
+          href={
+            project.experienceHref ??
+            project.liveHref ??
+            getProjectHref(project)
+          }
+        />
+      ) : null}
     </div>
   );
 }

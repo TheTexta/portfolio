@@ -23,8 +23,14 @@ and formatting checks in that order.
 
 ## Automated tests
 
+Use Node.js **22.12 or later** (verified on 22.18). The compatible dependency
+refresh, security audit scope and TypeScript/ESLint/Node-typing holds are documented
+in [`docs/dependency-updates.md`](docs/dependency-updates.md).
+
 - `npm test`: upload recovery/storage tests and transactional SQL tests using an
-  isolated in-memory PGlite database. No production services are contacted.
+  isolated in-memory PGlite database, benchmark-scope tests, and offline colour/edge
+  validators (numerical CIEDE2000 references and incremental/full equivalence). No
+  production services are contacted.
 - `npx playwright install chromium` (once), then `npm run test:e2e`: desktop and
   mobile Chromium tests for project navigation, keyboard focus, history, preview
   links, and retrying uploads after a reload.
@@ -33,8 +39,12 @@ and formatting checks in that order.
 Browser tests copy the application into a disposable `.tmp/` fixture and run on
 port 3107 with test-only Supabase settings, a local Auth stub, and intercepted
 Storage requests. They do not load `.env.local` or use production credentials.
+If port 3107 is already occupied, use `PORTFOLIO_TEST_PORT=3157 npm run test:e2e`
+instead of stopping another session's server. The fixture and browser use the same
+override; the suite never reuses an unknown existing server.
 GitHub Actions runs checks, tests, Auth validation, and a production build on
-pull requests and pushes to `main`.
+pull requests and pushes to `main`. Linux CI wraps the browser suite in
+`xvfb-run -a` to retain headed native pointer-lock coverage.
 
 ## Search metadata
 
@@ -94,15 +104,41 @@ preserved; Google's site-name documentation specifies domain-root placement for
 `WebSite` markup, so site-name eligibility should be checked against that routing
 if the homepage is moved in a future change.
 
+## Navigation
+
+The header identity, portfolio directory link, and Grailed Plus footer return to
+a reset `/portfolio` at the top. These home links intentionally use document
+navigation so an already-mounted project focus cannot survive a homepage reset.
+About, Contact, and Projects anchors close project focus and keep the requested
+section in view rather than restoring the old project-rail scroll position.
+
+Write-up **Index** links return to the project list; **Back to projects** returns
+to that article's focused project. Both standalone experiences have a return link
+to their article or product page. `tests/e2e/navigation.spec.ts` checks these
+round trips, browser history, and rendered internal link/section destinations on
+desktop and mobile using local fixtures, not production services.
+Grailed Plus install links retain the product page in browser history and reset
+their busy state when the browser restores a cached page; tracking is unchanged.
+
 ## Project write-ups
 
-The homepage's About section pairs a short introduction with a scrollable write-up
-list. Its links come from catalogue entries with `writeUpHref`, in catalogue order,
-and share the contact rows' theme-aware hover/focus treatment. Edit the introduction
-in `app/components/home-page-content.tsx`; the columns stack below 768px.
+The homepage's About section pairs a three-paragraph introduction with a scrollable
+write-up disclosure list. Links and short synopses come from catalogue entries with
+`writeUpHref`, in catalogue order. Hovering a row or focusing its title reveals the
+synopsis without chevron icons. Space toggles the focused synopsis; Enter opens
+the article. On touch screens, the first tap reveals the synopsis and a second
+tap opens the article. Only one
+row expands at a time. The list and project-card popups share the same 280ms easing
+through `project-hover-motion.ts`, with no travel under reduced motion. The old
+contact-style sweep and animated heading banner are not used by this list.
+Edit the introduction
+in `app/components/home-page-content.tsx`; the columns stack below 768px. The
+stacked write-up list is 256px tall, and mobile Contact spacing separates it from
+the next section. Expanded mobile project previews show the stack and short
+description from the catalogue beneath their image.
 Homepage and shared editorial motion use `app/hooks/use-reduced-motion.ts` so the
 server and first client render agree, then follow live browser preference changes.
-`tests/e2e/page-hydration.spec.ts` checks the homepage and all three write-ups with
+`tests/e2e/page-hydration.spec.ts` checks the homepage and the original interactive write-ups with
 both motion settings on desktop and mobile, plus live preference changes without
 a page reload.
 
@@ -112,9 +148,30 @@ for reading. Prose, figures, captions, and interactive previews share its width 
 horizontal inset. Mobile uses the available width with gutters.
 Edit prose in the route's `write-up.mdx` file:
 
-- `app/projects/photo-graph/write-up.mdx`
-- `app/projects/elliot-mairet/write-up.mdx`
-- `app/projects/bur1alrites/write-up.mdx`
+- `app/write-ups/photo-graph/write-up.mdx`
+- `app/write-ups/elliot-mairet/write-up.mdx`
+- `app/write-ups/bur1alrites/write-up.mdx`
+- `app/write-ups/grailed-plus/write-up.mdx`
+- `app/write-ups/tvm-discord-bot/write-up.mdx`
+- `app/write-ups/bot-or-not/write-up.mdx`
+- `app/write-ups/portfolio-design/write-up.mdx`
+
+Article URLs are `/write-ups/<project>`. The seven former `/projects/<project>`
+article URLs permanently redirect, preserving queries; experience and public-media
+paths stay unchanged. Canonicals, structured data, sitemap entries and catalogue
+links use the new URLs. The header's `/write-ups/` trail links to the existing About
+write-up list through the `/write-ups` redirect. CV source/downloads use the new
+canonical article links too.
+
+The catalogue is also the source for write-up-only projects. Entries with
+`showInBrowser: false` remain in the About article list, metadata and sitemap, but
+are excluded from cards, focus hashes and previous/next preview navigation.
+TVM, Bot or Not and the portfolio-design article use that path; their return links
+go to the About write-up list. The homepage category line follows the owner's
+latest “Multimedia webworks, browser extensions and interactive image systems”
+wording without an added student/availability paragraph beneath it. About uses
+the owner's three-paragraph introduction, covering visual-media work, TVM and
+Grailed Plus.
 
 The adjacent `page.tsx` owns the shared shell, metadata, and any data passed into
 the article. MDX owns the title, introduction, project links, preview placement,
@@ -123,14 +180,20 @@ lists. Shared components
 are available without imports through the root `mdx-components.tsx`:
 
 ```mdx
-# {props.project.title}
+<header data-write-up-header>
 
-<Lead>{props.project.summary}</Lead>
+# {props.project.title}
 
 <nav aria-label={`${props.project.title} project links`}>
   <a href={props.project.liveHref}>Visit site</a>
   <a href={props.project.sourceHref}>View source</a>
 </nav>
+
+<Lead>{props.project.summary}</Lead>
+
+<ProjectDetails project={props.project} />
+
+</header>
 
 <ProjectPreview projectId="elliotmairet" />
 
@@ -160,6 +223,19 @@ extra paragraph spacing inside them. Page-provided values are available through
 `props`, as in Photo Graph's benchmark figures. Only trusted, repository-owned MDX
 is compiled at build time; there is no remote MDX execution or CMS.
 
+`ProjectDetails` uses a compact, wrapping metadata line with screen-reader labels,
+not a bordered card. Every write-up title reuses the homepage's animated
+`BorderContainer`, with a centred heading and a centred project-link row directly
+below it. The introduction and metadata retain the article's reading alignment.
+The portfolio-design article imports the actual animated
+`BorderContainer`, `ThemeToggle` and `ProjectBrowser` through its example
+components. `ProjectBrowser embedded` keeps focus/navigation interactions local:
+it does not change article history, scroll the document or start document-wide
+view transitions. The old screenshots remain available for poster/share metadata,
+but are not article figures.
+The browser's detail layout follows its container width, not the page viewport,
+so action links do not squeeze descriptions inside the article.
+
 For another project, create its `write-up.mdx` and import it from a `page.tsx`
 using `ProjectWriteUp`, passing `project` into the MDX component. The shell does
 not generate a second title or introduction. Keep shared identity/URLs sourced
@@ -179,7 +255,7 @@ on desktop and mobile. Scaling changes the iframe's rendering size, not its nati
 interaction, sandbox, or navigation validation. In the overview, **View source**
 precedes **write up**, followed by **Launch experience**.
 
-`/projects/photo-graph` remains a statically rendered article, separate from
+`/write-ups/photo-graph` remains a statically rendered article, separate from
 `/projects/photo-graph/experience`. Its prose uses the saved August 2026 benchmark
 and local figures; only the client-side preview loads the live graph API. Benchmark
 counts describe that experiment, not the current live archive. The figure
@@ -199,14 +275,14 @@ but no longer displayed. Commit the prepared assets so ordinary
 builds and static article content do not require the media service. Interactive
 previews still load their projects' public services separately.
 
-`/projects/elliot-mairet` is a completed, indexable write-up with canonical/share
+`/write-ups/elliot-mairet` is a completed, indexable write-up with canonical/share
 metadata, project structured data, and a sitemap entry from `PUBLIC_PAGES`.
 Its three WebP screenshots show the public archive, a photograph, and selected-colour
 navigation. Source URLs, viewport, capture date, and interaction state are recorded
 in `public/projects/elliot-mairet/write-up/sources.json`. No private admin screen or
 account data is included. Existing public pages and redirects keep their URLs.
 
-`/projects/bur1alrites` is an indexable write-up about Allie's reactive lighting,
+`/write-ups/bur1alrites` is an indexable write-up about Allie's reactive lighting,
 the Three.js gallery, and the projector room's grain and bloom. Its rationale was
 supplied by Dexter. The interactive preview remains separate from the article's
 three public-site screenshots and an off-axis local scene inspection; capture provenance is recorded in
@@ -249,6 +325,50 @@ video room on the full site.
 Deploy matching preview-navigation changes in `bur1alrites`, `elliotmairet`,
 and `nepobabiesruntheunderground` to enable destination links in their previews.
 Until each site is updated, its preview still opens the project's main site.
+
+External previews do not infer failure from a timeout or separate HEAD request:
+a frame can remain usable while images/subresources are still loading, and
+cross-origin errors cannot be reliably diagnosed by the parent. Native error
+events can show a short status, but never unmount the iframe. A single expand/open
+icon always opens the project directly in a new tab, with an accessible action label.
+There is no preview options panel, reload or retry control. The optional
+`ProjectPreviewControls` strip sits below the media, with a boxed preview name on
+the left and a 44px expand/open icon on the right; controls no longer cover the
+iframe. Write-up `ProjectPreview` accepts `showControls={false}` to omit it.
+Project-browser previews omit the strip by default, including the article's live
+browser example; their launch actions stay in the project details. Native interaction
+inside case-study previews is preserved.
+
+The full Photo Graph experience has a keyboard photograph selector, an open
+control and connected-photo buttons synchronized with canvas selection. Closing
+inspection restores its trigger. Labels currently identify archive IDs and image
+orientation; subject descriptions and a real screen-reader assessment remain
+follow-up work.
+
+## Portfolio evidence and résumé
+
+The visual project browser leads with Grailed Plus. TVM and Bot or Not remain
+directly accessible in the About write-up list rather than appearing as cards.
+Contribution, period and status are shared case-study metadata. The Grailed
+engineering article lives at `/write-ups/grailed-plus`; `/grailed-plus` remains the
+installation/product page. Sample listings are disclosed beside every demo and
+in frame descriptions. The demo frame stays inert until its readiness handshake.
+
+The Photo Graph benchmark export separates judged-subset precision from full
+archive neighbours. Each neighbour has `judgment: positive | negative | unjudged`
+and nullable `judgedRelevant`. Numerators/denominators and pair-ordering semantics
+are explicit. To annotate the saved historical report without recomputing its
+original experiment, run `npm run photo-graph:annotate-benchmark`; this preserves
+scores, timings, rankings and the original generation date. A new experiment uses
+`npm run photo-graph:benchmark-colors` and retains its own provenance.
+
+The résumé PDF has editable content and a generator under `docs/resume/`.
+Confirmed availability is Summer 2027, with expected graduation June 2028.
+See `docs/portfolio-review-implementation.md` for the cross-repository findings
+and `docs/portfolio-review-delivery.md` for local verification and the remaining
+publication, independent-evidence and owner-action gates. Prepared procedures are
+in `docs/application-evidence.md`, `docs/relevance-evaluation-protocol.md` and
+`docs/browser-performance-baseline.md`.
 
 ## Photo Graph admin
 
@@ -346,8 +466,9 @@ documentation caches and browser-test artifacts from CLI uploads. Inspect upload
 inputs with `vercel deploy --dry --json` before deploying. Build with
 `vercel deploy --prod --skip-domain`, validate the resulting deployment, then use
 `vercel promote <deployment-url> --yes` to switch the live domain. Retain the
-previous deployment URL for rollback. This release uses patch updates Next.js
-16.3.8 and Sharp 0.35.5 to resolve the production dependency audit advisories.
+previous deployment URL for rollback. The reviewed release uses Next.js 16.4.3,
+React 19.3.1 and Sharp 0.35.5; compatibility holds and audit scope are documented
+in `docs/dependency-updates.md`.
 
 Run `npm run admin:validate-auth` to verify authorization, login, refresh, and
 sign-out against a local Auth stub. It copies the application into a temporary
@@ -357,14 +478,21 @@ does not interrupt the regular development server.
 
 ## Photo Graph storage and migration
 
+**Retention update — 2026-10-15:** after explicit owner approval and a fresh
+SHA-256 comparison of all 102 migrated originals against R2, the 102 redundant
+Supabase originals and six unjournaled pending uploads were deleted via the
+Storage API, using an exact 108-path manifest. Bucket `dextery.dev` is empty;
+all 103 R2 originals and graph nodes remain. Other buckets were untouched.
+A Supabase-only rollback now requires copying and verifying **all** needed R2
+originals back first. The six deleted pending uploads are no longer recoverable.
+The standalone legacy render-cache service was separately retired on 2026-10-30.
+
 Photo Graph metadata/Auth remain in Supabase. On 2026-10-15 all 102 referenced
 originals (1,250,719,633 source bytes) were copied and SHA-256 read-back
 verified in private published R2 bucket `dextery-photo-graph`. Those 102 graph
 rows use the R2 provider and the shared image/media Worker's `/photo-graph/`
-routes; the first live R2 upload subsequently added node 128. **The 102
-migrated Supabase originals and six unregistered `_pending/` objects remain
-untouched** for rollback and browser recovery. The Supabase render cache stays
-available for legacy uploads and rollback. See
+routes; the first live R2 upload subsequently added node 128, bringing the current
+catalogue to 103 originals. See
 [`docs/photo-graph-r2-migration.md`](./docs/photo-graph-r2-migration.md).
 
 The 2026-10-15 additive migration
@@ -390,21 +518,18 @@ source-metadata headers; it is not bound to the public Worker. A synthetic
 signed PUT, published copy, SHA-256 read-back, and cleanup passed.
 The first authenticated Production R2 upload then committed node 128; its
 published bytes matched the journal's SHA-256 and size, its image transform
-returned HTTP 200, and private staging remained empty. The previously copied
-102 originals still have their Supabase source copies. Node 128 and subsequent
-R2 uploads do **not** have Supabase source copies; include them in any rollback.
-To reconcile originals without deleting Supabase data, run
+returned HTTP 200, and private staging remained empty. No current originals have
+Supabase source copies. The historical migration copier remains available via
 `npm run photo-graph:copy:r2 -- --manifest <file>` for a dry run; add `--copy`
 only after confirming the target and manifest. The copier requires a Cloudflare
 token in its process environment and refuses differing R2 objects.
 
-For rollback **before any new R2 uploads**, verify all 102 retained Supabase
-originals and switch just those matching graph rows back to provider `supabase`
-in a guarded transaction, then disable R2 writes and restore the previous app
-deployment if needed. **After new R2 uploads**, first copy and verify every
-R2-only original back to Supabase and reconcile pending batches; only then
-switch providers or restore Supabase-only code. Never delete the six existing
-pending uploads or retained originals as part of rollback.
+For a separately approved Supabase-only rollback, first reverse-copy and verify
+every required R2 original and reconcile in-flight batches; only then switch
+provider references or restore Supabase-only code. Retain R2 originals throughout.
+The static fallback is an older 45-photo subset, not a full-catalogue backup. It
+resolves its available originals through R2 without changing relationships or
+reinterpreting provider-less legacy database rows and upload journals.
 
 | Command                                   | Purpose                                                         | Mutates data |
 | ----------------------------------------- | --------------------------------------------------------------- | ------------ |
@@ -422,43 +547,19 @@ database connection variables. `photo-graph:doctor` is the safe first check.
 Legacy Supabase-backed Photo Graph images generate transformed public URLs through `storage.from(bucket).getPublicUrl(path, { transform })`. Supabase Storage handles WebP negotiation for those legacy requests; R2-backed images instead use the shared image Worker. Neither path depends on Vercel/Next image transformations.
 
 `photo-graph:apply-schema` accepts either a full `postgres://` connection string in `SUPABASE_DB_URL` (or `DATABASE_URL` / `POSTGRES_URL`) or a split self-hosted setup using `SUPABASE_DB_URL=<host>:<port>`, `SUPABASE_DB_USER`, `SUPABASE_DB_PASSWORD`, and optional `SUPABASE_DB_NAME`.
-If your Coolify Postgres container is internal-only, `photo-graph:doctor` will warn about the DB socket instead of failing, as long as the Storage bucket, graph tables, and cached image render route are already in place.
+If your Coolify Postgres container is internal-only, `photo-graph:doctor` warns about the DB socket rather than treating that socket check as a failure.
 
-## Self-hosted render cache
+The doctor checks backend availability and a provider-qualified original plus
+WebP transform. It uses only HTTP GET/HEAD and a database TCP reachability probe;
+RPC discovery reads PostgREST's OpenAPI schema without invoking a mutating
+function. No retired-cache header or one-week TTL is required. It is a sample
+health check, not a full object/checksum inventory. A local credential failure
+does not justify changing production credentials or restoring old services.
 
-Self-hosted Supabase image transforms need a real edge cache in front of `/storage/v1/render/image/public/` if you want hard refreshes to reuse generated images. The repo includes a deployment bundle in [deploy/supabase-image-cache](./deploy/supabase-image-cache) for a standalone NGINX cache plus a higher-priority Traefik router.
-
-The cache uses a bounded 10 GB named Docker volume. Hot files are also served from the host's Linux page cache, keeping large image bodies out of application memory.
-
-Files:
-
-- [docker-compose.yml](./deploy/supabase-image-cache/docker-compose.yml) defines the standalone `supabase-image-cache` service, persistent volume, external networks, and higher-priority Traefik route.
-- [nginx.conf.template](./deploy/supabase-image-cache/nginx.conf.template) proxies to internal Kong and caches successful transforms by full request URI plus a normalized output-format bucket from `Accept`.
-
-Deployment notes:
-
-1. Set `SUPABASE_PUBLIC_HOST` to the existing public Supabase hostname, `SUPABASE_KONG_UPSTREAM` to the internal Kong URL, and `SUPABASE_INTERNAL_NETWORK` to the Docker network shared by the Supabase stack.
-2. If you need to discover the internal network name on the server, use `docker network ls` and find the network attached to the Supabase containers.
-3. Deploy the cache as its own Compose stack instead of patching the managed Supabase service directly. The named `supabase-image-cache-data` volume preserves cached transforms across container replacements and restarts.
-4. Keep the router priority above the normal Supabase router so only `/storage/v1/render/image/public/` is intercepted. All other Supabase traffic should continue to hit the existing service directly.
-5. Coolify may rewrite the live `traefik.docker.network` label to the stack network during deployment. That live rewrite is expected and does not mean the stack is misconfigured.
-
-Verification:
-
-1. Request the same render URL twice and inspect `X-Image-Cache-Status`. A cold path should move from `MISS` to `HIT`, while an already-warm path may return `HIT` on both requests.
-2. Request the same image at two different widths and confirm both variants render correctly. The NGINX cache key includes the full request URI, so width and quality variants stay independent.
-3. Run `npm run photo-graph:doctor`. The doctor now fails unless the render endpoint returns WebP, a one-week-plus cache TTL, and a warm-cache signal through `X-Image-Cache-Status`.
-4. Repeat the same render request with and without `image/webp` support in `Accept` and confirm the cache keeps those variants isolated.
-5. Restart the service and confirm the same request still returns `HIT`, proving the cache survived on the named volume.
-
-NGINX caches successful public transformed-image responses for seven days even when an older Storage deployment returns `no-cache`. The cache is limited to the transformed public route, so raw objects and video requests continue to use Supabase directly.
-
-Troubleshooting:
-
-- If the doctor reports a missing `X-Image-Cache-Status`, Traefik is still sending render requests to Supabase directly instead of the cache sidecar.
-- If the second request stays `MISS`, inspect the NGINX logs and confirm `/var/cache/nginx` is writable and backed by the named volume.
-- If the sidecar returns `502`, `SUPABASE_KONG_UPSTREAM` or `SUPABASE_INTERNAL_NETWORK` is wrong.
-- Raw object URLs should still revalidate normally with `304 Not Modified`; only transformed render URLs are being cached at the edge.
+Recovery-only source under `deploy/supabase-image-cache/` is not part of current
+delivery. Historical retirement evidence and separately approved recovery
+procedures remain in
+`dextery-infrastructure/docs/supabase-image-cache-retirement.md`.
 
 ## Development notes
 

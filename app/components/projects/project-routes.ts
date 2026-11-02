@@ -1,10 +1,18 @@
 export const PROJECT_ROUTES = {
   home: "/portfolio",
   portfolioProjects: "/portfolio#projects",
-  photoGraph: "/projects/photo-graph",
+  portfolioWriteUps: "/portfolio#about",
+  writeUps: "/write-ups",
+  photoGraph: "/write-ups/photo-graph",
   photoGraphExperience: "/projects/photo-graph/experience",
   admin: "/admin",
   grailedPlus: "/grailed-plus",
+  grailedPlusWriteUp: "/write-ups/grailed-plus",
+  tvmDiscordBot: "/write-ups/tvm-discord-bot",
+  tvmDiscordBotGithub: "https://github.com/TheTexta/tvm-discord-bot",
+  botOrNot: "/write-ups/bot-or-not",
+  botOrNotGithub: "https://github.com/TheTexta/bot-or-not-mcgill",
+  portfolioDesign: "/write-ups/portfolio-design",
   grailedPlusExperience: "/grailed-plus/experience",
   grailedPlusChromeWebStore:
     "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd",
@@ -13,8 +21,18 @@ export const PROJECT_ROUTES = {
   nepobabiesPreview: "https://thetexta.github.io/nepobabiesruntheunderground/",
   nepobabiesGithub: "https://github.com/TheTexta/nepobabiesruntheunderground",
   bur1alritesLive: "https://bur1alrites.vercel.app/",
-  bur1alritesWriteUp: "/projects/bur1alrites",
+  bur1alritesWriteUp: "/write-ups/bur1alrites",
   elliotMairetLive: "https://elliotmairet.com/",
-  elliotMairetWriteUp: "/projects/elliot-mairet",
+  elliotMairetWriteUp: "/write-ups/elliot-mairet",
   elliotMairetGithub: "https://github.com/TheTexta/elliotmairet",
 } as const;
+
+export const LEGACY_WRITE_UP_REDIRECTS = [
+  ["/projects/photo-graph", PROJECT_ROUTES.photoGraph],
+  ["/projects/grailed-plus", PROJECT_ROUTES.grailedPlusWriteUp],
+  ["/projects/tvm-discord-bot", PROJECT_ROUTES.tvmDiscordBot],
+  ["/projects/bot-or-not", PROJECT_ROUTES.botOrNot],
+  ["/projects/portfolio-design", PROJECT_ROUTES.portfolioDesign],
+  ["/projects/bur1alrites", PROJECT_ROUTES.bur1alritesWriteUp],
+  ["/projects/elliot-mairet", PROJECT_ROUTES.elliotMairetWriteUp],
+] as const;

@@ -7,6 +7,9 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
+const port = Number(process.env.PORTFOLIO_TEST_PORT ?? "3107");
+if (!Number.isInteger(port) || port < 1 || port > 65535)
+  throw new Error("PORTFOLIO_TEST_PORT must be a valid TCP port");
 const adminId = "11111111-1111-4111-8111-111111111111";
 const user = {
   id: adminId,
@@ -86,7 +89,7 @@ const child = spawn(
     "dev",
     "--webpack",
     "--port",
-    "3107",
+    String(port),
   ],
   {
     cwd: fixture,

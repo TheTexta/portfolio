@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import { ControlAnchor, ControlButton } from "@/app/components/ui/control";
+import { getPhotographDescription } from "@/lib/photo-graph/descriptions";
 
 import {
   photoGraphControlRowClass,
@@ -86,11 +87,12 @@ export default function PhotoGraphInspectOverlay({
       }
 
       const previousFocus = previousFocusRef.current;
-      const focusTarget = returnFocusElement?.isConnected
-        ? returnFocusElement
-        : previousFocus?.isConnected && previousFocus !== document.body
+      const focusTarget =
+        previousFocus?.isConnected && previousFocus !== document.body
           ? previousFocus
-          : null;
+          : returnFocusElement?.isConnected
+            ? returnFocusElement
+            : null;
       focusTarget?.focus({ preventScroll: true });
       previousFocusRef.current = null;
     };
@@ -265,7 +267,10 @@ export default function PhotoGraphInspectOverlay({
           {/* eslint-disable-next-line @next/next/no-img-element -- This inspect overlay needs the raw image element for natural-size reads and unrestricted sizing. */}
           <img
             src={displayUrl ?? target.previewUrl}
-            alt={`Photograph ${target.id}`}
+            alt={
+              getPhotographDescription(target) ??
+              `Photograph ${target.id}; subject description unavailable`
+            }
             className={`size-full object-contain transition-opacity duration-200 ease-out motion-reduce:transition-none ${
               inspectOverlayOpen ? "opacity-100" : "opacity-0"
             }`}

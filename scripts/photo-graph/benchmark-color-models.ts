@@ -2,6 +2,10 @@ import { loadEnvConfig } from "@next/env";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import {
+  BENCHMARK_METRIC_DEFINITIONS,
+  evaluateBenchmarkRanking,
+} from "../../lib/photo-graph/benchmark-metrics";
 import { countGraphEdges } from "../../lib/photo-graph/edge-generation";
 import {
   cloneGraphNodes,
@@ -195,44 +199,27 @@ async function run() {
     const queryResults = judgments.queries.map((judgment) => {
       const query = nodeById.get(judgment.id)!;
       const fullRanking = rankedDistances(query, nodes, definition.id);
-      const positiveIds = new Set(judgment.positiveIds);
-      const judgedIds = new Set([
-        ...judgment.positiveIds,
-        ...judgment.negativeIds,
-      ]);
-      const judgedRanking = fullRanking.filter((entry) =>
-        judgedIds.has(entry.id),
+      const evaluation = evaluateBenchmarkRanking(
+        fullRanking,
+        judgment,
+        NEIGHBORS_PER_NODE,
+        DISPLAY_NEIGHBOR_COUNT,
       );
-      const topJudged = judgedRanking.slice(0, NEIGHBORS_PER_NODE);
-      const precisionAtK =
-        topJudged.filter((entry) => positiveIds.has(entry.id)).length /
-        NEIGHBORS_PER_NODE;
-      const distanceById = new Map(
-        fullRanking.map((entry) => [entry.id, entry.distance]),
-      );
-      let correctPairs = 0;
-      let comparisonCount = 0;
-      for (const positiveId of judgment.positiveIds) {
-        for (const negativeId of judgment.negativeIds) {
-          if (distanceById.get(positiveId)! < distanceById.get(negativeId)!) {
-            correctPairs += 1;
-          }
-          comparisonCount += 1;
-        }
-      }
 
       return {
         id: judgment.id,
         label: judgment.label,
-        precisionAtK: round(precisionAtK, 4),
-        pairwiseAgreement: round(correctPairs / comparisonCount, 4),
-        neighbors: fullRanking
-          .slice(0, DISPLAY_NEIGHBOR_COUNT)
-          .map((entry) => ({
-            id: entry.id,
-            distance: round(entry.distance),
-            judgedRelevant: positiveIds.has(entry.id),
-          })),
+        ...evaluation,
+        precisionAtK: round(evaluation.precisionAtK, 4),
+        pairwiseAgreement: round(evaluation.pairwiseAgreement, 4),
+        neighbors: evaluation.neighbors.map((entry) => ({
+          ...entry,
+          distance: round(entry.distance),
+        })),
+        judgedNeighbors: evaluation.judgedNeighbors.map((entry) => ({
+          ...entry,
+          distance: round(entry.distance),
+        })),
       };
     });
     const averagePrecisionAtK =
@@ -248,6 +235,14 @@ async function run() {
       config,
       metrics: {
         precisionAtK: round(averagePrecisionAtK, 4),
+        judgedPositiveCountAtK: queryResults.reduce(
+          (sum, query) => sum + query.judgedPositiveCountAtK,
+          0,
+        ),
+        judgedSlotCount: queryResults.reduce(
+          (sum, query) => sum + query.judgedSlotCount,
+          0,
+        ),
         pairwiseAgreement: round(averagePairwiseAgreement, 4),
         pairwiseDurationMs: round(pairwiseDurationMs, 3),
         graphDurationMs: round(graphDurationMs, 3),
@@ -266,6 +261,8 @@ async function run() {
 
   const report = {
     version: 1,
+    reportingSchemaVersion: 2,
+    metricDefinitions: BENCHMARK_METRIC_DEFINITIONS,
     generatedAt: new Date().toISOString(),
     featureCatalogGeneratedAt: catalog.generatedAt,
     source: loaded.source,
@@ -280,7 +277,8 @@ async function run() {
   console.table(
     models.map((model) => ({
       model: model.id,
-      precisionAt4: model.metrics.precisionAtK,
+      judgedSubsetPrecisionAt4: model.metrics.precisionAtK,
+      positiveSlots: `${model.metrics.judgedPositiveCountAtK}/${model.metrics.judgedSlotCount}`,
       agreement: model.metrics.pairwiseAgreement,
       edges: model.metrics.edgeCount,
       components: model.metrics.components,

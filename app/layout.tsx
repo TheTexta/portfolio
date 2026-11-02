@@ -7,7 +7,6 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "@/app/components/theme/theme-provider";
-import SmoothScrollProvider from "@/app/components/ui/smooth-scroll-provider";
 import StructuredData from "@/app/components/structured-data";
 import { createSiteStructuredData, PUBLIC_PAGES } from "@/lib/seo";
 import { SITE_ORIGIN, SITE_PROFILE } from "@/lib/site-config";
@@ -79,18 +78,15 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${redHatText.variable} ${redHatDisplay.variable} ${newsreader.variable} ${instrumentSerif.variable}`}
+      className={`${redHatText.variable} ${redHatDisplay.variable} ${newsreader.variable} ${instrumentSerif.variable} scrollbar-none **:scrollbar-none`}
     >
       <body className="bg-canvas font-sans text-ink">
         <StructuredData data={createSiteStructuredData()} />
         <Script id="theme-preference" strategy="beforeInteractive">
           {getThemeInitScript()}
         </Script>
-        <Script id="windows-scrollbar-preference" strategy="beforeInteractive">
-          {`document.documentElement.classList.toggle("windows", navigator.platform.startsWith("Win") || navigator.userAgent.includes("Windows"));`}
-        </Script>
         <ThemeProvider>
-          <SmoothScrollProvider>{children}</SmoothScrollProvider>
+          {children}
           <Analytics />
           <SpeedInsights />
         </ThemeProvider>

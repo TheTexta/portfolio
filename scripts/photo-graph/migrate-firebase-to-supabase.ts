@@ -124,7 +124,8 @@ async function readSourceNodes(): Promise<{
     );
   }
 
-  const staticNodes = await readStaticGraph();
+  // This legacy importer writes Supabase objects, unlike the public R2 fallback.
+  const staticNodes = await readStaticGraph("supabase");
   const nodes = cloneGraphNodes(staticNodes);
   ensureGraphStoragePaths(nodes);
   ensureProcessingFeatures(nodes);

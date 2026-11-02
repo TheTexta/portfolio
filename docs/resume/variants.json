@@ -1,0 +1,38 @@
+{
+  "software": {
+    "title": "Software Development",
+    "profile": "McGill Artificial Intelligence and Computer Science undergraduate with a Music Technology minor, focused on software development and interactive media. I build browser tools and publishing systems. Available for Summer 2027 internships.",
+    "projects": [
+      "Grailed Plus",
+      "TVM Discord Bot",
+      "Photo Node-Gallery",
+      "Bot or Not",
+      "bur1alrites",
+      "Elliot Mairet photography archive"
+    ]
+  },
+  "ml": {
+    "title": "Applied ML and Software",
+    "profile": "McGill Artificial Intelligence and Computer Science undergraduate with a Music Technology minor. My projects span local model inference, classifier evaluation and interactive image systems. Available for Summer 2027 internships.",
+    "projects": [
+      "Grailed Plus",
+      "Bot or Not",
+      "Photo Node-Gallery",
+      "TVM Discord Bot",
+      "Elliot Mairet photography archive",
+      "bur1alrites"
+    ]
+  },
+  "interactive": {
+    "title": "Interactive Media and Software",
+    "profile": "McGill Artificial Intelligence and Computer Science undergraduate with a Music Technology minor. I build video-led interfaces, interactive image systems and browser tools. Available for Summer 2027 internships.",
+    "projects": [
+      "bur1alrites",
+      "Photo Node-Gallery",
+      "Elliot Mairet photography archive",
+      "Grailed Plus",
+      "TVM Discord Bot",
+      "Bot or Not"
+    ]
+  }
+}

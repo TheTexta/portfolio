@@ -1,0 +1,98 @@
+<header data-write-up-header>
+
+# {props.project.title}
+
+<nav aria-label={`${props.project.title} project links`}>
+  <a href={props.project.sourceHref}>Source and setup</a>
+  <a href="https://github.com/TheTexta/tvm-discord-bot/blob/045de1ed714677147e6a8b74efe57f8619a70dee/test/roster-preview.test.js">
+    Roster recovery tests
+  </a>
+  <a href="https://github.com/TheTexta/tvm-discord-bot/actions/runs/40571855904">
+    Reviewed revision's CI run
+  </a>
+</nav>
+
+<Lead>
+  {
+    "Membership and production workflows with explicit recovery when a saved change loses its confirmation."
+  }
+</Lead>
+
+<ProjectDetails project={props.project} />
+
+</header>
+
+TVM needs to connect its membership roster with Discord access and give production
+teams private spaces to organize shoots. I adapted
+[EmailVerify](https://github.com/lkaesberg/EmailVerify), an open-source verification
+bot, for those workflows. My TVM-specific work extends that foundation with roster
+administration, role reconciliation, and persistent production workspaces, using
+Node.js, discord.js, and SQLite.
+
+## Reviewing a roster before replacing it
+
+An administrator uploads a complete CSV roster and receives a private preview of
+additions, omissions, and tier changes. Replacement requires confirmation by the
+same administrator in the same channel. A preview expires and cannot overwrite a
+roster changed since it was prepared.
+
+An accepted replacement commits in a SQLite transaction and advances the roster
+version. Discord role synchronization follows. The bot records which roles it
+manages so that obsolete bot-owned roles can be removed while independently
+assigned privileges remain protected. Membership state and Discord state can
+therefore disagree temporarily without losing the intended final state.
+
+## When the write succeeds but the reply fails
+
+A missing confirmation does not establish that the operation failed. Discord may
+be unavailable after a roster has already been saved. Repeating the replacement
+merely to receive a reply could apply an unintended second operation.
+
+<Figure
+  src="/projects/posters/tvm-discord-bot.png"
+  alt="Synthetic recovery example: a roster is saved in SQLite, Discord synchronization is pending, and the confirmation is unavailable. The operator inspects status and reconciles roles."
+  width={1600}
+  height={1000}
+  caption="Synthetic state diagram, with no member data. Database acceptance, Discord synchronization, and confirmation delivery are separate outcomes."
+/>
+
+The [administrative-operation wrapper](https://github.com/TheTexta/tvm-discord-bot/blob/045de1ed714677147e6a8b74efe57f8619a70dee/src/shared/AdminOperation.js)
+tracks a saved action separately from its reply. Operator feedback identifies a
+saved change awaiting synchronization or a completed action whose confirmation
+could not be delivered. Status, audit, and reconciliation commands support
+investigation and recovery.
+
+The [lost-confirmation regression](https://github.com/TheTexta/tvm-discord-bot/blob/045de1ed714677147e6a8b74efe57f8619a70dee/test/roster-preview.test.js#L167)
+makes confirmation delivery throw after accepting a replacement. It asserts that
+the saved roster remains at version two, reconciliation was scheduled once, and
+the consumed confirmation token cannot apply again. A neighboring test proves
+that stale and concurrent confirmations cannot overwrite an intervening snapshot.
+These assertions exercise state, rather than treating a displayed success message
+as proof of a committed change.
+
+## Access and private production spaces
+
+Verification links one roster email to one Discord account using expiring,
+attempt-limited codes. The member-facing acknowledgement is sent before eligibility
+lookup or mail delivery, avoiding a different reply for an unlisted address.
+Delivery errors go to private operator reporting; an acknowledgement does not
+promise inbox delivery.
+
+The production workflow creates private shoot chats, supports joining and direct
+invitations, and closes finished shoots into readable archives. Administrative
+management authority is separate from broad production visibility. Persisted state
+and resource markers support recovery after interrupted Discord operations.
+
+## Operating within a clear boundary
+
+Tests use temporary SQLite databases and Discord and mail adapters. The linked CI
+run passed the test and container jobs for the reviewed revision
+`045de1ed714677147e6a8b74efe57f8619a70dee`; it is historical revision evidence,
+not a claim about every subsequent deployment. The
+[operations guide](https://github.com/TheTexta/tvm-discord-bot/blob/045de1ed714677147e6a8b74efe57f8619a70dee/docs/operations.md)
+documents migrations, health reporting, shutdown, and backups.
+
+The application deliberately runs as one replica. Coordination stays within one
+process, so deployments must avoid overlapping instances. The delivered software
+makes membership and production-access changes inspectable and recoverable; this
+case study does not infer active-user counts or time saved from TVM's membership.

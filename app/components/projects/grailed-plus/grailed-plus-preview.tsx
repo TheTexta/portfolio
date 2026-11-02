@@ -57,7 +57,8 @@ export default function GrailedPlusPreview({
               Desktop experience.
             </h2>
             <p className="mt-5 max-w-sm text-sm leading-6 text-muted">
-              This interactive preview is designed for a wider screen.
+              This preview uses sample listings and is designed for a wider
+              screen.
             </p>
           </div>
           <span

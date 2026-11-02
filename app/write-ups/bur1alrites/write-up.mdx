@@ -1,0 +1,122 @@
+<header data-write-up-header>
+
+# {props.project.title}
+
+<nav aria-label={`${props.project.title} project links`}>
+  <a href={props.project.liveHref}>Visit site</a>
+</nav>
+
+<Lead>
+  {
+    "A video-led portfolio for Allie's live lighting work, combining an interactive gallery, a 3D projector room, and an automated playback pipeline."
+  }
+</Lead>
+
+<ProjectDetails project={props.project} />
+
+</header>
+
+<ProjectPreview projectId="bur1alrites" />
+
+## A site that reacts
+
+My friend Allie creates real-time, audio-reactive lighting for events. She wanted
+a site that responded like her shows.
+
+I designed and developed the interface, scenes, and media pipeline. The background
+responds to video brightness and pointer input, with splashes on click. Allie chose
+the typeface and supplied visual references, giving us a starting point. Her
+lighting is audio-reactive; the site's visual response uses video and pointer
+input.
+
+<Figure
+  src="/projects/bur1alrites/write-up/hero.webp"
+  alt="The bur1alrites wordmark glowing over a grainy, black-and-white video background."
+  width={1440}
+  height={1000}
+  caption="The video-driven background and glowing wordmark."
+/>
+
+<Figure
+  src="/projects/bur1alrites/write-up/scene-inspection.webp"
+  alt="An off-angle inspection of the actual home scene: a wireframe video plane, floating wordmark, floor artwork, grid, and camera guides."
+  width={1600}
+  height={1000}
+  caption="The home scene from the side. A local inspection capture with a wireframe overlay and camera guides; bloom is disabled."
+/>
+
+## Moving through the work
+
+The gallery introduces spatial depth before a visitor enters the projector room.
+Three.js, through React Three Fiber, places video previews in the scene with slight
+parallax. Inverted previews reveal their colour on hover; choosing a clip changes
+the scene and opens that video in the room.
+
+<Figure
+  src="/projects/bur1alrites/write-up/gallery.webp"
+  alt="Inverted video thumbnails arranged in columns over the reactive background."
+  width={1440}
+  height={1000}
+  caption="Gallery previews reveal colour on hover; selecting a clip takes it from the gallery into the projector room."
+/>
+
+## The projector room
+
+Opening a clip takes you into a room built around a projected image. Bloom lets
+the light spill beyond the screen.
+
+The supplied footage was heavily compressed. I used animated grain to make the
+artifacts less conspicuous and give the projection its texture. Grain changes how
+the footage is presented; it does not restore lost image detail.
+
+<Figure
+  src="/projects/bur1alrites/write-up/projector.webp"
+  alt="A video projected inside a dark 3D room, with grain, glowing highlights, and reflections."
+  width={1440}
+  height={1000}
+  caption="Bloom extends the projected light beyond the screen, while animated grain works with the compressed source footage."
+/>
+
+## Balancing video and 3D rendering
+
+Video decoding and the 3D scene compete for browser resources. An automated encoding
+worker prepares HLS playback renditions while preserving the masters. A viewport
+pool preloads visible previews at the lowest rendition, stops idle buffering, and
+lets only the active preview upload frames into the scene. Offscreen streams are
+released.
+
+Rapid scrolling creates an ownership problem: a stream can finish attaching after
+its card has left and returned with a new player. The [viewport video pool](https://github.com/TheTexta/bur1alrites/blob/33591fd36f586567a7d7ac058bf8bac9047d73a5/src/lib/viewport-video-pool.ts)
+checks instance identity before accepting that completion and destroys stale
+controllers. Its [lifecycle regression test](https://github.com/TheTexta/bur1alrites/blob/33591fd36f586567a7d7ac058bf8bac9047d73a5/src/lib/viewport-video-pool.test.ts)
+recreates that sequence and asserts that the old controller is destroyed while
+the replacement remains alive. Another case protects rapid leave and re-entry
+while a play promise is pending.
+
+Recovery is bounded: an active preview gets at most two delayed automatic retries,
+and leaving the viewport or hiding the page cancels recovery work. Autoplay denial
+does not start a retry loop; the poster remains until playback produces a frame.
+HTML/mobile previews and the WebKit-safe rendering path retain the same viewport
+loading policy. These are implementation provisions; the mocked player tests do
+not establish real-device codec support or frame rate.
+
+A separate [quality controller](https://github.com/TheTexta/bur1alrites/blob/33591fd36f586567a7d7ac058bf8bac9047d73a5/src/app/scene-quality-controller.ts)
+responds to sustained frame times. Lower presets reduce pixel ratio, reflections,
+geometry detail, and bloom work. Upgrades require a longer stable interval than
+downgrades, trading some visual detail for less frequent quality switching.
+[Synthetic-frame tests](https://github.com/TheTexta/bur1alrites/blob/33591fd36f586567a7d7ac058bf8bac9047d73a5/src/app/scene-quality-controller.test.ts)
+check that policy; they are not measurements of GPU performance.
+
+## Maintaining the archive
+
+Next.js keeps public pages and admin routes in one app. Allie can upload MOV or MP4
+masters through multipart transfers to R2, then a separate worker creates playback
+versions. Failed parts and finalization can be retried while the page stays open;
+upload sessions are not restored after a reload.
+
+The result is a maintainable clip archive with two connected viewing modes: a
+gallery for choosing work and a projector room for watching it. This was my first
+Three.js project, and coordinating browser video lifecycles with the spatial scene
+became as important as building the scene itself. The source examples here are
+pinned to the October implementation; browser and device measurements would be
+needed before making a broader performance claim.

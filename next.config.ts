@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 import createMDX from "@next/mdx";
 import {
+  LEGACY_WRITE_UP_REDIRECTS,
+  PROJECT_ROUTES,
+} from "./app/components/projects/project-routes";
+import {
   CANVAS_IMAGE_DEVICE_SIZES,
   CANVAS_IMAGE_SIZES,
 } from "./lib/image-optimization";
@@ -51,6 +55,16 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      ...LEGACY_WRITE_UP_REDIRECTS.map(([source, destination]) => ({
+        source,
+        destination,
+        permanent: true,
+      })),
+      {
+        source: PROJECT_ROUTES.writeUps,
+        destination: PROJECT_ROUTES.portfolioWriteUps,
+        permanent: true,
+      },
       {
         source: "/projects/spotify-nodify/:path*",
         destination: "/portfolio#projects",
@@ -78,11 +92,6 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/go/grailed-plus",
-        destination: "/grailed-plus",
-        permanent: true,
-      },
-      {
-        source: "/projects/grailed-plus",
         destination: "/grailed-plus",
         permanent: true,
       },

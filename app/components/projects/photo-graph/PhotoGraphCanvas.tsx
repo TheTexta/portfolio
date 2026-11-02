@@ -23,6 +23,7 @@ import {
 } from "@/lib/photo-graph/force-graph";
 import { photoGraphMediaUrl } from "@/lib/photo-graph/media-url";
 
+import PhotoGraphBrowser from "./PhotoGraphBrowser";
 import PhotoGraphControls from "./PhotoGraphControls";
 import PhotoGraphInspectOverlay from "./PhotoGraphInspectOverlay";
 import {
@@ -197,6 +198,7 @@ export default function PhotoGraphCanvas({
   const [preparedGraphData, setPreparedGraphData] = useState<PhotoGraphData>(
     EMPTY_PHOTO_GRAPH_DATA,
   );
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [uncontrolledControls, setUncontrolledControls] =
     useState<GraphControls>({
@@ -428,6 +430,7 @@ export default function PhotoGraphCanvas({
   );
 
   const inspectNode = useCallback((node: PhotoGraphNode) => {
+    setSelectedPhotoId(node.id);
     setInspectTarget({
       id: node.id,
       originalUrl: node.sourceUrl,
@@ -562,7 +565,8 @@ export default function PhotoGraphCanvas({
           <PhotoGraphControls
             menuOpen={menuOpen}
             controls={activeControls}
-            reserveNavigationSpace={showNavigation}
+            reserveNavigationSpace={showNavigation && !isFullPageRoute}
+            navigationAbove={showNavigation && isFullPageRoute}
             showTheme={isFullPageRoute && forcedDarkMode === undefined}
             onMenuOpen={() => setMenuOpen(true)}
             onMenuClose={() => setMenuOpen(false)}
@@ -579,7 +583,7 @@ export default function PhotoGraphCanvas({
               isFullPageRoute ? undefined : PROJECT_ROUTES.photoGraphExperience
             }
             ariaLabel="Photo graph controls"
-            className="[&>*]:size-8 [&>*]:min-h-8"
+            className="[&>*]:min-h-8"
           />
         )}
 
@@ -629,6 +633,23 @@ export default function PhotoGraphCanvas({
                 onZoomEnd={handleZoomEnd}
               />
             )}
+          {showControls && loadStatus === "ready" && (
+            <PhotoGraphBrowser
+              graph={graphData}
+              selectedId={selectedPhotoId}
+              onSelect={(node) => {
+                setSelectedPhotoId(node.id);
+                if (Number.isFinite(node.x) && Number.isFinite(node.y)) {
+                  fgRef.current?.centerAt(
+                    node.x,
+                    node.y,
+                    reducedMotion ? 0 : 250,
+                  );
+                }
+              }}
+              onOpen={inspectNode}
+            />
+          )}
           {loadStatus !== "ready" && (
             <div
               className="absolute inset-0 z-4 flex items-center justify-center bg-canvas/90 px-6 text-center"

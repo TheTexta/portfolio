@@ -57,9 +57,9 @@ test.beforeEach(async ({ context }) => {
 });
 
 const writeUps = [
-  { path: "/projects/photo-graph", title: "Photo Node-Gallery", figures: 3 },
-  { path: "/projects/elliot-mairet", title: "Elliot Mairet", figures: 3 },
-  { path: "/projects/bur1alrites", title: "bur1alrites", figures: 4 },
+  { path: "/write-ups/photo-graph", title: "Photo Node-Gallery", figures: 3 },
+  { path: "/write-ups/elliot-mairet", title: "Elliot Mairet", figures: 3 },
+  { path: "/write-ups/bur1alrites", title: "bur1alrites", figures: 4 },
 ];
 
 for (const { path, title, figures } of writeUps) {
@@ -103,7 +103,7 @@ for (const { path, title, figures } of writeUps) {
     });
     await expect(preview).toBeVisible();
     await expect(preview).toHaveCSS("margin-top", "40px");
-    if (path === "/projects/photo-graph") {
+    if (path === "/write-ups/photo-graph") {
       await expect(preview.locator("canvas").first()).toBeVisible();
     } else {
       await expect(preview.locator("iframe")).toHaveAttribute(
@@ -141,7 +141,7 @@ for (const { path, title, figures } of writeUps) {
         0,
       );
     else expect(dimensions.width).toBeGreaterThan(dimensions.viewport * 0.8);
-    if (path === "/projects/photo-graph")
+    if (path === "/write-ups/photo-graph")
       expect(
         backendRequests.some((url) => url.endsWith("/api/photo-graph/graph")),
       ).toBe(true);
@@ -158,8 +158,8 @@ for (const { path, title, figures } of writeUps) {
 
 test("Elliot's preview keeps controls, keyboard input, scrolling, and links in the frame", async ({
   page,
-}) => {
-  await page.goto("/projects/elliot-mairet");
+}, info) => {
+  await page.goto("/write-ups/elliot-mairet");
   const preview = page.getByRole("region", {
     name: "Elliot Mairet interactive preview",
     exact: true,
@@ -181,10 +181,16 @@ test("Elliot's preview keeps controls, keyboard input, scrolling, and links in t
   await expect(counter).toHaveText("Count: 2");
   await frame.getByRole("textbox", { name: "Preview search" }).fill("colour");
   await expect(frame.getByRole("textbox")).toHaveValue("colour");
+  await iframe.scrollIntoViewIfNeeded();
   const box = await iframe.boundingBox();
   expect(box).not.toBeNull();
-  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
-  await page.mouse.wheel(0, 400);
+  if (info.project.name === "mobile") {
+    await counter.focus();
+    await counter.press("PageDown");
+  } else {
+    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+    await page.mouse.wheel(0, 400);
+  }
   await expect
     .poll(() => frame.locator("body").evaluate(() => window.scrollY))
     .toBeGreaterThan(0);
@@ -192,16 +198,16 @@ test("Elliot's preview keeps controls, keyboard input, scrolling, and links in t
   await expect(
     frame.getByRole("heading", { name: "Selected photograph" }),
   ).toBeVisible();
-  await expect(page).toHaveURL(/\/projects\/elliot-mairet$/);
+  await expect(page).toHaveURL(/\/write-ups\/elliot-mairet$/);
   await frame.getByRole("link", { name: "Back to index" }).click();
   await expect(frame.getByRole("button", { name: "Count: 0" })).toBeVisible();
-  await expect(page).toHaveURL(/\/projects\/elliot-mairet$/);
+  await expect(page).toHaveURL(/\/write-ups\/elliot-mairet$/);
 });
 
 test("Photo Graph's write-up preview opens and closes photograph inspection in place", async ({
   page,
 }) => {
-  await page.goto("/projects/photo-graph");
+  await page.goto("/write-ups/photo-graph");
   const preview = page.getByRole("region", {
     name: "Photo Node-Gallery interactive preview",
     exact: true,
@@ -226,13 +232,13 @@ test("Photo Graph's write-up preview opens and closes photograph inspection in p
   );
   await page.getByRole("button", { name: "Close inspect overlay" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(page).toHaveURL(/\/projects\/photo-graph$/);
+  await expect(page).toHaveURL(/\/write-ups\/photo-graph$/);
 });
 
 test("Photo Graph preserves the benchmark context and separate experience", async ({
   page,
 }) => {
-  await page.goto("/projects/photo-graph");
+  await page.goto("/write-ups/photo-graph");
   const article = page.getByRole("article");
   await expect(article).toContainText("26 August 2026");
   await expect(article).toContainText(
@@ -247,7 +253,7 @@ test("Photo Graph preserves the benchmark context and separate experience", asyn
   await article.getByRole("link", { name: "Launch experience" }).click();
   await expect(page).toHaveURL(/\/projects\/photo-graph\/experience$/);
   await page.getByRole("link", { name: "Return to project write up" }).click();
-  await expect(page).toHaveURL(/\/projects\/photo-graph$/);
+  await expect(page).toHaveURL(/\/write-ups\/photo-graph$/);
   await expect(article.getByRole("heading", { level: 1 })).toHaveText(
     "Photo Node-Gallery",
   );
@@ -256,7 +262,7 @@ test("Photo Graph preserves the benchmark context and separate experience", asyn
 test("write-up media and text share the same width and horizontal inset", async ({
   page,
 }) => {
-  await page.goto("/projects/elliot-mairet");
+  await page.goto("/write-ups/elliot-mairet");
   for (const width of [768, 1024, 1440, 1920, 2560]) {
     await page.setViewportSize({ width, height: 1000 });
     const dimensions = await page.getByRole("article").evaluate((article) => ({
@@ -286,7 +292,7 @@ test("write-up media and text share the same width and horizontal inset", async 
 test("Photo Graph renders individual review images and ranked comparison rows", async ({
   page,
 }) => {
-  await page.goto("/projects/photo-graph");
+  await page.goto("/write-ups/photo-graph");
   const review = page.locator("[data-write-up-gallery]");
   await expect(review.getByRole("listitem")).toHaveCount(7);
   await expect(review.getByRole("img")).toHaveCount(7);
@@ -318,11 +324,11 @@ test("bur1alrites has a completed, indexable write-up grounded in its design bri
   page,
   request,
 }) => {
-  await page.goto("/projects/bur1alrites");
+  await page.goto("/write-ups/bur1alrites");
   const article = page.getByRole("article");
   await expect(article).toContainText("My friend Allie");
   await expect(article).toContainText("audio-reactive lighting");
-  await expect(article).toContainText("first experiment with Three.js");
+  await expect(article).toContainText("first Three.js project");
   await expect(article).toContainText("animated grain");
   await expect(article).not.toContainText(/in progress|placeholder/i);
   const robots = await page
@@ -336,7 +342,7 @@ test("bur1alrites has a completed, indexable write-up grounded in its design bri
   expect(structuredData).toContain('"@type":"CreativeWork"');
   const sitemap = await request.get("/sitemap.xml");
   expect(await sitemap.text()).toContain(
-    "<loc>https://dextery.dev/projects/bur1alrites</loc>",
+    "<loc>https://dextery.dev/write-ups/bur1alrites</loc>",
   );
 });
 
@@ -347,7 +353,7 @@ test("Elliot's completed write-up is linked, illustrated, and indexable", async 
   await page.goto("/portfolio#project-elliotmairet");
   const focus = page.getByRole("region", { name: "Elliot Mairet focus view" });
   await focus.getByRole("link", { name: "write up", exact: true }).click();
-  await expect(page).toHaveURL(/\/projects\/elliot-mairet$/);
+  await expect(page).toHaveURL(/\/write-ups\/elliot-mairet$/);
   const article = page.getByRole("article");
   await expect(article).not.toContainText(/in progress|placeholder/i);
   await expect(article).not.toContainText("Mairêt");
@@ -367,6 +373,6 @@ test("Elliot's completed write-up is linked, illustrated, and indexable", async 
   );
   const sitemap = await request.get("/sitemap.xml");
   expect(await sitemap.text()).toContain(
-    "<loc>https://dextery.dev/projects/elliot-mairet</loc>",
+    "<loc>https://dextery.dev/write-ups/elliot-mairet</loc>",
   );
 });

@@ -1,0 +1,131 @@
+{
+  "name": "DEXTER YOUNG",
+  "contact": [
+    {
+      "label": "+1 (441) 518-2768"
+    },
+    {
+      "label": "dextery777@gmail.com",
+      "href": "mailto:dextery777@gmail.com"
+    },
+    {
+      "label": "Montreal, QC"
+    },
+    {
+      "label": "dextery.dev",
+      "href": "https://dextery.dev/portfolio"
+    },
+    {
+      "label": "GitHub",
+      "href": "https://github.com/TheTexta"
+    },
+    {
+      "label": "LinkedIn",
+      "href": "https://www.linkedin.com/in/dexter-y/"
+    }
+  ],
+  "profile": "McGill Artificial Intelligence and Computer Science undergraduate with a Music Technology minor, focused on software development and interactive media. I build browser tools and publishing systems. Available for Summer 2027 internships.",
+  "education": {
+    "title": "McGill University",
+    "date": "2024 to June 2028 (expected)",
+    "subtitle": "BSc, Major in Artificial Intelligence & Computer Science | Minor in Music Technology"
+  },
+  "experience": {
+    "title": "TVM: Student Television at McGill",
+    "date": "Feb 2026 to Present",
+    "subtitle": "Technical Director | Montreal, QC",
+    "bullets": [
+      "Manage a $15,000 camera and equipment budget and maintain inventory for a 150-member student television service supporting campus events and productions.",
+      "Lead student workshops and advise on camera and audio workflows, equipment and production solutions.",
+      "Diagnosed server noise with IPMICFG and power-supply A/B tests; identified a 1 Gb/s NAS bottleneck."
+    ]
+  },
+  "projects": [
+    {
+      "title": "Grailed Plus",
+      "href": "https://dextery.dev/write-ups/grailed-plus",
+      "date": "2026",
+      "subtitle": "Published Chrome extension; Firefox build support | TypeScript, ONNX Runtime, Node.js",
+      "bullets": [
+        "Extended an open-source extension with Grailed, Depop and eBay comparisons, local MobileCLIP-S1 inference in a Web Worker, and confidence-aware ranking.",
+        "Built an eBay gateway with OAuth token caching, category resolution and parallel text/image search; added pricing insights and currency conversion."
+      ]
+    },
+    {
+      "title": "TVM Discord Bot",
+      "href": "https://dextery.dev/write-ups/tvm-discord-bot",
+      "date": "2026",
+      "subtitle": "Membership and production workflows | Node.js, discord.js, SQLite",
+      "bullets": [
+        "Adapted EmailVerify with roster previews, transactional replacement, role reconciliation and private shoot workspaces.",
+        "Tested stale and concurrent confirmations and saved changes whose Discord replies fail, using temporary databases and service adapters."
+      ]
+    },
+    {
+      "title": "Photo Node-Gallery",
+      "href": "https://dextery.dev/write-ups/photo-graph",
+      "date": "2026",
+      "subtitle": "Interactive image discovery | Next.js, TypeScript, D3.js, Supabase, Cloudflare R2",
+      "bullets": [
+        "Built a force-directed photo graph and compared five colour-similarity configurations on a saved 100-photo archive with seven editorially judged query subsets.",
+        "Added atomic graph registration and replay-safe upload recovery; deliver published images from R2 through a shared image/media Worker."
+      ]
+    },
+    {
+      "title": "Bot or Not",
+      "href": "https://dextery.dev/write-ups/bot-or-not",
+      "date": "2026",
+      "subtitle": "Bilingual bot detection | Python, scikit-learn, NumPy",
+      "bullets": [
+        "Compared five classifier families for English and French using shard-grouped validation, language-specific thresholds and reproducible selection/prediction reports."
+      ]
+    },
+    {
+      "title": "bur1alrites",
+      "href": "https://dextery.dev/write-ups/bur1alrites",
+      "date": "2026",
+      "subtitle": "Moving-image portfolio | Next.js, React Three Fiber, Three.js, HLS",
+      "bullets": [
+        "Built reflective 3D scenes with frame-time quality adaptation and viewport-owned HLS previews with stale-player cleanup and bounded retries.",
+        "Implemented HLS processing and authenticated multipart uploads up to 5 GiB, with part and finalization retries while the page stays open."
+      ]
+    },
+    {
+      "title": "Elliot Mairet photography archive",
+      "href": "https://dextery.dev/write-ups/elliot-mairet",
+      "date": "2026",
+      "subtitle": "Design and development | Next.js, TypeScript, Supabase, Cloudflare R2",
+      "bullets": [
+        "Built an image archive with palette navigation and authenticated publishing; retained publication identity on retries and tested identical retry payloads after lost responses."
+      ]
+    }
+  ],
+  "additional": [
+    {
+      "label": "Retail Associate, Flying Colours Bermuda",
+      "text": "Handled sales, customer enquiries and stock (May to Jul 2025)."
+    },
+    {
+      "label": "Founder, F1 in Schools Club",
+      "text": "Founded a school STEM club and trained members in CAD, marketing and teamwork."
+    }
+  ],
+  "skills": [
+    {
+      "label": "Programming",
+      "text": "Python, Java, C/C++, JavaScript, TypeScript, SQL, HTML/CSS"
+    },
+    {
+      "label": "ML and web",
+      "text": "scikit-learn, ONNX Runtime, React, Next.js, Node.js, D3.js, Three.js, Tailwind CSS"
+    },
+    {
+      "label": "Infrastructure",
+      "text": "Supabase, PostgreSQL, Cloudflare R2, Docker, Coolify, Vercel, Git; HLS streaming"
+    },
+    {
+      "label": "Media",
+      "text": "OBS, Adobe Creative Suite, DaVinci Resolve, Ableton Live, Blender; AV troubleshooting"
+    }
+  ]
+}

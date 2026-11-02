@@ -9,6 +9,7 @@ import { ControlLink } from "./control";
 
 type ExperienceNavProps = {
   writeUpHref?: string;
+  writeUpLabel?: string;
   experienceHref?: string;
   className?: string;
   showTheme?: boolean;
@@ -17,6 +18,7 @@ type ExperienceNavProps = {
 
 export default function ExperienceNav({
   writeUpHref,
+  writeUpLabel = "Return to project write up",
   experienceHref,
   className,
   showTheme = false,
@@ -57,10 +59,11 @@ export default function ExperienceNav({
         <ControlLink
           href={writeUpHref}
           size="sm"
-
-          aria-label="Return to project write up"
+          layout="action"
+          aria-label={writeUpLabel}
         >
           <Minimize aria-hidden className="size-4" />
+          <span className="max-w-44 truncate">{writeUpLabel}</span>
         </ControlLink>
       ) : null}
     </nav>

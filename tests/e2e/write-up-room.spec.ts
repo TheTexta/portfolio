@@ -33,7 +33,7 @@ test("bur1alrites' write-up preview preserves native desktop room controls and m
         </script></body></html>`,
     });
   });
-  await page.goto("/projects/bur1alrites");
+  await page.goto("/write-ups/bur1alrites");
   const preview = page.getByRole("region", {
     name: "bur1alrites interactive preview",
     exact: true,
@@ -84,5 +84,5 @@ test("bur1alrites' write-up preview preserves native desktop room controls and m
       frame.getByText("Mobile preview playing", { exact: true }),
     ).toBeVisible();
   }
-  await expect(page).toHaveURL(/\/projects\/bur1alrites$/);
+  await expect(page).toHaveURL(/\/write-ups\/bur1alrites$/);
 });

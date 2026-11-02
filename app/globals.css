@@ -2,7 +2,6 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/preflight.css" layer(base);
 @import "tailwindcss/utilities.css" layer(utilities);
-@import "tailwind-scrollbar-hide/v4";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -130,13 +129,11 @@ html.dark {
 }
 
 html:has(.product-landing) {
-  scroll-behavior: smooth;
   scroll-snap-type: y proximity;
 }
 
 @media (prefers-reduced-motion: reduce) {
   html:has(.product-landing) {
-    scroll-behavior: auto;
     scroll-snap-type: none;
   }
 

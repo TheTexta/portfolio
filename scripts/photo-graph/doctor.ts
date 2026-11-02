@@ -1,9 +1,12 @@
 import { loadEnvConfig } from "@next/env";
 import net from "node:net";
+import { pathToFileURL } from "node:url";
 
-import { MIN_RENDER_CACHE_TTL_SECONDS } from "../../lib/image-optimization";
 import { readDatabaseSocket } from "./database-config";
-import { buildSupabaseStorageRenderUrl } from "../../lib/supabase/config";
+import {
+  photoGraphMediaUrl,
+  photoGraphStorageProvider,
+} from "../../lib/photo-graph/media-url";
 
 type CheckResult = {
   name: string;
@@ -12,35 +15,6 @@ type CheckResult = {
 };
 
 const WEBP_ACCEPT_HEADER = "image/webp,image/*;q=0.8,*/*;q=0.5";
-const EDGE_CACHE_HEADER_NAME = "X-Image-Cache-Status";
-const WARM_CACHE_STATUS_VALUES = new Set([
-  "HIT",
-  "STALE",
-  "UPDATING",
-  "REVALIDATED",
-]);
-
-type RenderCheckResponse = {
-  response: Response;
-  cacheControl: string | null;
-  cacheStatus: string | null;
-  contentType: string;
-  maxAge: number | null;
-};
-
-function parseMaxAge(cacheControl: string | null) {
-  if (!cacheControl) {
-    return null;
-  }
-
-  const match = cacheControl.match(/(?:^|,)\s*max-age=(\d+)/i);
-  if (!match) {
-    return null;
-  }
-
-  const value = Number(match[1]);
-  return Number.isFinite(value) ? value : null;
-}
 
 function readRequiredEnv(name: string) {
   const value = process.env[name];
@@ -59,45 +33,6 @@ function getAuthHeaders() {
     apikey: key,
     Authorization: `Bearer ${key}`,
   };
-}
-
-function normalizeHeaderValue(value: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  const normalized = value.trim().toUpperCase();
-  return normalized || null;
-}
-
-function describeCacheStatus(value: string | null) {
-  return value ?? `missing ${EDGE_CACHE_HEADER_NAME}`;
-}
-
-function hasWarmCacheStatus(value: string | null) {
-  return value !== null && WARM_CACHE_STATUS_VALUES.has(value);
-}
-
-async function fetchRenderCheckResponse(url: string) {
-  const response = await fetch(url, {
-    headers: {
-      Accept: WEBP_ACCEPT_HEADER,
-    },
-  });
-
-  await response.arrayBuffer();
-
-  const cacheControl = response.headers.get("cache-control");
-
-  return {
-    response,
-    cacheControl,
-    cacheStatus: normalizeHeaderValue(
-      response.headers.get(EDGE_CACHE_HEADER_NAME),
-    ),
-    contentType: response.headers.get("content-type") ?? "unknown",
-    maxAge: parseMaxAge(cacheControl),
-  } satisfies RenderCheckResponse;
 }
 
 async function checkBucket() {
@@ -165,47 +100,34 @@ async function checkTable(tableName: string, selectColumn: string) {
   } satisfies CheckResult;
 }
 
-async function checkNeighborSnapshotRpc() {
+export async function checkNeighborSnapshotRpc() {
   const baseUrl = readRequiredEnv("NEXT_PUBLIC_SUPABASE_URL");
-  const response = await fetch(
-    `${baseUrl}/rest/v1/rpc/replace_photo_graph_neighbor_snapshot`,
-    {
-      method: "POST",
-      headers: {
-        ...getAuthHeaders(),
-        "content-type": "application/json",
-      },
-      // The invalid bigint is rejected before the database function runs, so
-      // this verifies PostgREST's schema cache without changing graph data.
-      body: JSON.stringify({
-        source_ids: ["not-a-number"],
-        neighbor_rows: [],
-        generation_config: {},
-      }),
-      cache: "no-store",
+  const response = await fetch(`${baseUrl}/rest/v1/`, {
+    headers: {
+      ...getAuthHeaders(),
+      Accept: "application/openapi+json",
     },
-  );
+    cache: "no-store",
+  });
 
-  const body = (await response.json().catch(() => null)) as {
-    code?: string;
-    message?: string;
+  const schema = (await response.json().catch(() => null)) as {
+    paths?: Record<string, { post?: unknown }>;
   } | null;
 
-  if (body?.code === "PGRST202") {
+  if (!response.ok) {
     return {
       name: "Neighbor snapshot RPC",
       level: "fail",
-      detail:
-        "replace_photo_graph_neighbor_snapshot is missing from the PostgREST schema cache. Apply supabase/photo-graph-schema.sql and reload the schema.",
+      detail: `PostgREST schema inspection failed (${response.status} ${response.statusText}); no RPC was invoked.`,
     } satisfies CheckResult;
   }
 
-  if (response.status === 400) {
+  if (schema?.paths?.["/rpc/replace_photo_graph_neighbor_snapshot"]?.post) {
     return {
       name: "Neighbor snapshot RPC",
       level: "pass",
       detail:
-        "replace_photo_graph_neighbor_snapshot is available through PostgREST.",
+        "replace_photo_graph_neighbor_snapshot is advertised by PostgREST; the mutating RPC was not invoked.",
     } satisfies CheckResult;
   }
 
@@ -213,15 +135,14 @@ async function checkNeighborSnapshotRpc() {
     name: "Neighbor snapshot RPC",
     level: "fail",
     detail:
-      body?.message ??
-      `Request failed (${response.status} ${response.statusText}).`,
+      "replace_photo_graph_neighbor_snapshot is absent from the PostgREST schema. Inspect schema visibility and applied migrations before making changes.",
   } satisfies CheckResult;
 }
 
-async function readSampleStoragePath() {
+async function readSampleMediaReference() {
   const baseUrl = readRequiredEnv("NEXT_PUBLIC_SUPABASE_URL");
   const response = await fetch(
-    `${baseUrl}/rest/v1/photo_graph_nodes?select=storage_path&storage_path=not.is.null&limit=1`,
+    `${baseUrl}/rest/v1/photo_graph_nodes?select=storage_path,storage_provider&storage_path=not.is.null&order=id.asc&limit=1`,
     {
       headers: getAuthHeaders(),
       cache: "no-store",
@@ -236,94 +157,54 @@ async function readSampleStoragePath() {
 
   const rows = (await response.json()) as Array<{
     storage_path?: string | null;
+    storage_provider?: string | null;
   }>;
 
-  return rows[0]?.storage_path ?? null;
+  const row = rows[0];
+  return row?.storage_path
+    ? {
+        storagePath: row.storage_path,
+        storageProvider: photoGraphStorageProvider(row.storage_provider),
+      }
+    : null;
 }
 
-async function checkImageRender() {
-  const storagePath = await readSampleStoragePath();
+export async function checkImageRender() {
+  const reference = await readSampleMediaReference();
 
-  if (!storagePath) {
+  if (!reference) {
     return {
-      name: "Image render endpoint",
+      name: "Published image delivery",
       level: "warn",
       detail:
         "No storage-backed photo graph node was found to test image rendering.",
     } satisfies CheckResult;
   }
 
-  const renderUrl = buildSupabaseStorageRenderUrl(storagePath, {
+  const originalUrl = photoGraphMediaUrl(reference)!;
+  const renderUrl = photoGraphMediaUrl(reference, {
     width: 96,
     quality: 75,
-  });
-  const firstResponse = await fetchRenderCheckResponse(renderUrl);
-
-  if (!firstResponse.response.ok) {
-    return {
-      name: "Image render endpoint",
-      level: "fail",
-      detail: `Supabase image render failed for ${storagePath} (${firstResponse.response.status} ${firstResponse.response.statusText}).`,
-    } satisfies CheckResult;
-  }
-
-  if (!firstResponse.contentType.startsWith("image/")) {
-    return {
-      name: "Image render endpoint",
-      level: "fail",
-      detail: `Supabase image render returned non-image content type '${firstResponse.contentType}'.`,
-    } satisfies CheckResult;
-  }
-
-  if (!firstResponse.contentType.startsWith("image/webp")) {
-    return {
-      name: "Image render endpoint",
-      level: "fail",
-      detail: `Supabase image render did not negotiate WebP for ${storagePath} (received '${firstResponse.contentType}').`,
-    } satisfies CheckResult;
-  }
-
-  if (
-    firstResponse.maxAge === null ||
-    firstResponse.maxAge < MIN_RENDER_CACHE_TTL_SECONDS
-  ) {
-    return {
-      name: "Image render endpoint",
-      level: "fail",
-      detail: `Supabase image render cache TTL is below one week (${firstResponse.cacheControl ?? "missing cache-control"}).`,
-    } satisfies CheckResult;
-  }
-
-  const secondResponse = await fetchRenderCheckResponse(renderUrl);
-
-  if (!secondResponse.response.ok) {
-    return {
-      name: "Image render endpoint",
-      level: "fail",
-      detail: `Supabase image render cache warm-up retry failed for ${storagePath} (${secondResponse.response.status} ${secondResponse.response.statusText}).`,
-    } satisfies CheckResult;
-  }
-
-  if (!firstResponse.cacheStatus || !secondResponse.cacheStatus) {
-    return {
-      name: "Image render endpoint",
-      level: "fail",
-      detail: `Supabase image render is missing ${EDGE_CACHE_HEADER_NAME}. First response: ${describeCacheStatus(firstResponse.cacheStatus)}. Second response: ${describeCacheStatus(secondResponse.cacheStatus)}.`,
-    } satisfies CheckResult;
-  }
-
-  if (!hasWarmCacheStatus(secondResponse.cacheStatus)) {
-    return {
-      name: "Image render endpoint",
-      level: "fail",
-      detail: `Supabase image render edge cache did not warm for ${storagePath}. First response was ${firstResponse.cacheStatus}; second response was ${secondResponse.cacheStatus}.`,
-    } satisfies CheckResult;
-  }
+  })!;
+  // Public media requests deliberately carry no Supabase credentials.
+  const [original, rendered] = await Promise.all([
+    fetch(originalUrl, { method: "HEAD" }),
+    fetch(renderUrl, { headers: { Accept: WEBP_ACCEPT_HEADER } }),
+  ]);
+  const bytes = await rendered.arrayBuffer();
+  const originalType = original.headers.get("content-type") ?? "unknown";
+  const renderedType = rendered.headers.get("content-type") ?? "unknown";
+  const healthy =
+    original.ok &&
+    originalType.startsWith("image/") &&
+    rendered.ok &&
+    renderedType.startsWith("image/webp") &&
+    bytes.byteLength > 0;
 
   return {
-    name: "Image render endpoint",
-    level: "pass",
-    detail: `Supabase image render returned ${firstResponse.contentType} for ${storagePath} with cache-control '${firstResponse.cacheControl}' and ${EDGE_CACHE_HEADER_NAME} ${firstResponse.cacheStatus} -> ${secondResponse.cacheStatus}.`,
+    name: "Published image delivery",
+    level: healthy ? "pass" : "fail",
+    detail: `${reference.storageProvider} ${reference.storagePath}: original HTTP ${original.status} (${originalType}); transform HTTP ${rendered.status} (${renderedType}, ${bytes.byteLength} bytes).`,
   } satisfies CheckResult;
 }
 
@@ -399,11 +280,16 @@ async function run() {
     return;
   }
 
-  console.log("Photo Graph Supabase setup is ready.");
+  console.log("Photo Graph backend and provider-aware media checks passed.");
 }
 
-run().catch((error) => {
-  console.error("Photo Graph Supabase doctor failed.");
-  console.error(error);
-  process.exit(1);
-});
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  run().catch((error) => {
+    console.error("Photo Graph doctor failed.");
+    console.error(error);
+    process.exitCode = 1;
+  });
+}

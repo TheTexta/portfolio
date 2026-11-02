@@ -1,5 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const port = Number(process.env.PORTFOLIO_TEST_PORT ?? "3107");
+if (!Number.isInteger(port) || port < 1 || port > 65535) {
+  throw new Error("PORTFOLIO_TEST_PORT must be a valid TCP port");
+}
+
 export default defineConfig({
   testDir: "./tests/e2e",
   outputDir: ".tmp/playwright-results",
@@ -8,7 +13,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   timeout: 60_000,
   use: {
-    baseURL: "http://localhost:3107",
+    baseURL: `http://localhost:${port}`,
     trace: "retain-on-failure",
     reducedMotion: "reduce",
   },
@@ -21,7 +26,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "npx tsx scripts/tests/start-browser-fixture.mts",
-    url: "http://localhost:3107/portfolio",
+    url: `http://localhost:${port}/portfolio`,
     reuseExistingServer: false,
     timeout: 180_000,
   },

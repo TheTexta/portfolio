@@ -1,0 +1,96 @@
+<header data-write-up-header>
+
+# {props.project.title}
+
+<nav aria-label={`${props.project.title} project links`}>
+  <a href={props.project.liveHref}>Visit site</a>
+  <a href={props.project.sourceHref}>View source</a>
+</nav>
+
+<Lead>
+  {
+    "A photography archive for Elliot Mairet, with an image index, large photograph views, colour-based discovery, and a private publishing workflow. I designed and developed the site; the photographs are Elliot's."
+  }
+</Lead>
+
+<ProjectDetails project={props.project} />
+
+</header>
+
+<ProjectPreview projectId="elliotmairet" />
+
+## Giving photographs the space
+
+The archive supports three ways of browsing: scanning the collection, viewing a
+photograph at scale, and following colour relationships. I kept persistent controls
+to a minimum so each view could give most of its space to the photographs. A dense
+index lets you scan the collection before choosing an image.
+
+<Figure
+  src="/projects/elliot-mairet/write-up/archive.webp"
+  alt="Elliot Mairet's archive: a three-column index of colour and black-and-white photographs on a white page."
+  width={1440}
+  height={1000}
+  caption="The dense index supports scanning many photographs before opening one at scale."
+/>
+
+On an individual page, the photograph takes up most of the screen, with its
+five-colour palette below.
+
+<Figure
+  src="/projects/elliot-mairet/write-up/photograph.webp"
+  alt="A photograph of golden leaves against a blue sky, displayed above five colour swatches."
+  width={1440}
+  height={1000}
+  caption="A large photograph view with five palette swatches that also serve as navigation controls."
+/>
+
+## Navigating by colour
+
+Each photograph starts with suggestions based on its overall palette. Selecting a
+swatch changes the suggestions to photographs with a nearby colour. This gives
+visitors another route through the archive without a separate search interface.
+
+A five-colour palette is extracted during upload and stored with the photograph.
+Matching runs in the browser from cached palette data, so changing the selected
+colour does not need another server request. These are approximate colour
+relationships: they do not identify the same subject or location. When few close
+matches exist, the matcher relaxes its threshold to offer up to five candidates.
+
+<Figure
+  src="/projects/elliot-mairet/write-up/colour-navigation.webp"
+  alt="The ochre palette swatch selected above a grid of photographs with warm brown and gold tones."
+  width={1440}
+  height={1000}
+  caption="Selecting the ochre swatch brings up photographs with similar colours."
+/>
+
+## Adding new work
+
+A private admin area handles uploads, photograph details, and site text. The server
+validates uploaded image content before publication, with colour analysis built
+into that workflow.
+
+An image can be accepted even if its publication response never reaches the
+browser. Restarting the entire upload could then create a second photograph. I
+separated preparation, file transfer, and publication in the [upload controller](https://github.com/TheTexta/elliotmairet/blob/68de57f5da69d535f3479db4ee20952f6f2f6123/lib/photographs/upload.ts).
+After transfer, the controller retains the original paths and metadata so a retry
+resends the same publication request instead of uploading another object.
+
+The [retry regression tests](https://github.com/TheTexta/elliotmairet/blob/68de57f5da69d535f3479db4ee20952f6f2f6123/lib/photographs/upload.test.mjs)
+simulate a lost or malformed response and assert that the next request has exactly
+the original publication payload, even if form values have changed. A separate
+case checks that a failed transfer restarts preparation rather than publishing an
+incomplete object. These tests isolate the client controller with request adapters;
+they do not exercise the storage and database services together.
+
+I used Next.js for the archive and photo routes, with React handling palette
+selection. The pages can be cached while colour matching runs in the browser.
+Supabase keeps photograph metadata and admin authentication together; Cloudflare
+R2 stores the originals. Elliot can manage photographs through the admin, while
+catalogue updates invalidate cached pages without a site deployment.
+
+The delivered archive connects a broad index, individual photographs, and palette
+navigation to one publishing workflow. The next question is how useful those
+approximate colour suggestions are to visitors; the implementation alone does not
+answer that.

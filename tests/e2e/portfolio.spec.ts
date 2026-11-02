@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
-import { projectCatalog } from "../../app/components/projects/project-catalog";
+import {
+  browserProjects,
+  projectCatalog,
+} from "../../app/components/projects/project-catalog";
 
 test.beforeEach(async ({ context }) => {
   await context.route("**/api/photo-graph/graph", (route) =>
@@ -36,7 +39,7 @@ for (const colorScheme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme });
     for (const path of [
       "/portfolio",
-      "/projects/elliot-mairet",
+      "/write-ups/elliot-mairet",
       "/grailed-plus",
     ]) {
       await page.goto(path);
@@ -69,8 +72,42 @@ test("project browsing omits per-project number labels", async ({
     info.project.name === "mobile"
       ? page.locator('button[aria-controls$="-preview"]')
       : page.locator(".project-mini-view-info");
-  await expect(labels).toHaveCount(5);
+  await expect(labels).toHaveCount(browserProjects.length);
   await expect(labels.getByText(/^\d{2}$/)).toHaveCount(0);
+});
+
+test("mobile project previews include their stack and short description", async ({
+  page,
+}) => {
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto("/portfolio");
+    for (const project of browserProjects) {
+      const toggle = page.getByRole("button", {
+        name: project.title,
+        exact: true,
+      });
+      if ((await toggle.getAttribute("aria-expanded")) !== "true") {
+        await toggle.click();
+      }
+      const panel = page.locator(
+        `#${await toggle.getAttribute("aria-controls")}`,
+      );
+      await expect(panel.locator("p")).toHaveText([
+        project.technologies.join(" · "),
+        project.summary,
+      ]);
+      for (const paragraph of await panel.locator("p").all()) {
+        await expect(paragraph).toBeVisible();
+        expect(
+          await paragraph.evaluate(
+            (element) => element.scrollWidth <= element.clientWidth,
+          ),
+        ).toBe(true);
+      }
+    }
+    expect(await page.evaluate(() => document.body.scrollWidth)).toBe(width);
+  }
 });
 
 test("launch experience is primary and owns the outgoing arrow", async ({
@@ -90,7 +127,12 @@ test("launch experience is primary and owns the outgoing arrow", async ({
 
   await expect(writeUp).toHaveClass(/\bbg-transparent\b/);
   await expect(writeUp.locator("svg")).toHaveCount(0);
-  await expect(writeUp).toHaveAttribute("href", "/projects/photo-graph");
+  await expect(writeUp).toHaveAttribute("href", "/write-ups/photo-graph");
+  await expect(
+    focusView.getByRole("group", {
+      name: "Photo Node-Gallery preview controls",
+    }),
+  ).toHaveCount(0);
   await expect(experience).toHaveClass(/\bbg-ink\b/);
   await expect(experience.locator("svg")).toHaveCount(1);
   await expect(experience).toHaveAttribute(
@@ -142,22 +184,22 @@ test("the contact hover sweep uses the panel's white in dark mode", async ({
   );
 });
 
-test("About pairs the introduction with every write-up in a scrollable contact-style list", async ({
+test("About pairs the introduction with every write-up in a scrollable disclosure list", async ({
   page,
 }, info) => {
   await page.goto("/portfolio#about");
   const about = page.getByRole("region", { name: "About", exact: true });
   await expect(about.getByRole("heading", { name: "About" })).toBeVisible();
-  await expect(about.locator("p").first()).toContainText("McGill");
-  const writeUpsHeading = about.getByText("Write ups", { exact: true });
+  const introduction = about.locator("[data-about-introduction]");
+  await expect(introduction.locator("p")).toHaveCount(3);
+  await expect(introduction).toContainText("McGill");
+  await expect(introduction).toContainText("As Technical Director");
+  const writeUpsHeading = about.getByRole("heading", {
+    name: "Write ups",
+    level: 3,
+  });
   await expect(writeUpsHeading).toBeVisible();
   await expect(writeUpsHeading).toHaveCSS("text-transform", "uppercase");
-  const writeUpsRules = writeUpsHeading
-    .locator("..")
-    .locator("span[aria-hidden]");
-  await expect(writeUpsRules).toHaveCount(2);
-  for (const rule of await writeUpsRules.all())
-    await expect(rule).toHaveCSS("height", "1px");
   const navigation = about.getByRole("navigation", {
     name: "Project write-ups",
   });
@@ -172,7 +214,7 @@ test("About pairs the introduction with every write-up in a scrollable contact-s
     );
     await expect(links.nth(index)).toContainText(project.title);
   }
-  const paragraph = await about.locator("p").first().boundingBox();
+  const paragraph = await introduction.boundingBox();
   const list = await navigation.locator("..").boundingBox();
   if (info.project.name === "desktop") {
     expect(paragraph!.x + paragraph!.width).toBeLessThan(list!.x);
@@ -181,34 +223,125 @@ test("About pairs the introduction with every write-up in a scrollable contact-s
     expect(Math.abs(paragraph!.height - list!.height)).toBeLessThan(2);
   } else {
     expect(paragraph!.y + paragraph!.height).toBeLessThan(list!.y);
+    await expect(navigation).toHaveCSS("height", "256px");
+    const listBounds = (await navigation.boundingBox())!;
+    const contactHeading = (await page
+      .getByRole("heading", { name: "Contact", exact: true })
+      .boundingBox())!;
+    expect(
+      contactHeading.y - listBounds.y - listBounds.height,
+    ).toBeGreaterThanOrEqual(96);
   }
   const writeUpRow = await links.first().boundingBox();
   const contactRow = await page.locator("#contact a").first().boundingBox();
   expect(writeUpRow!.height).toBeCloseTo(contactRow!.height, 0);
   await expect(links.first()).toHaveCSS("padding-top", "0px");
   await expect(links.first()).toHaveCSS("padding-bottom", "0px");
-  expect(
-    await navigation.evaluate(
-      (element) => element.scrollHeight > element.clientHeight,
-    ),
-  ).toBe(true);
+  await expect(navigation).toHaveCSS("overflow-y", "auto");
+  const hasOverflow = await navigation.evaluate(
+    (element) => element.scrollHeight > element.clientHeight,
+  );
   await navigation.focus();
-  await page.keyboard.press("End");
-  await expect
-    .poll(() => navigation.evaluate((element) => element.scrollTop))
-    .toBeGreaterThan(0);
+  await expect(navigation).toBeFocused();
+  if (hasOverflow) {
+    await page.keyboard.press("End");
+    await expect
+      .poll(() => navigation.evaluate((element) => element.scrollTop))
+      .toBeGreaterThan(0);
+  }
   await links.last().focus();
   await expect(links.last()).toBeInViewport();
-  const contactSweep = page.locator("#contact a span[aria-hidden]").first();
-  const writeUpSweep = links.last().locator("span[aria-hidden]");
-  await expect(writeUpSweep).toHaveCSS(
-    "background-color",
-    await contactSweep.evaluate(
-      (element) => getComputedStyle(element).backgroundColor,
-    ),
+  const lastRow = navigation.locator(
+    `[data-write-up-id="${projects.at(-1)!.id}"]`,
   );
+  await expect(lastRow.getByRole("link")).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  await expect(
+    lastRow.getByText(projects.at(-1)!.summary, { exact: true }),
+  ).toBeVisible();
+  await expect(navigation.locator('[class*="mix-blend"]')).toHaveCount(0);
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(new RegExp(`${projects.at(-1)!.writeUpHref}$`));
+});
+
+test("write-up synopses expand on hover, keyboard focus and touch without losing title links", async ({
+  page,
+}, info) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/portfolio#about");
+  const navigation = page.getByRole("navigation", {
+    name: "Project write-ups",
+  });
+  const projects = projectCatalog.filter((project) => project.writeUpHref);
+  const first = navigation.locator(`[data-write-up-id="${projects[0].id}"]`);
+  const second = navigation.locator(`[data-write-up-id="${projects[1].id}"]`);
+  await expect(navigation.locator("svg, button")).toHaveCount(0);
+  if (info.project.name === "mobile") {
+    await first.getByRole("link").tap();
+  } else {
+    await first.getByRole("link").hover();
+  }
+  await expect(first.getByRole("link")).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  await expect(
+    first.getByText(projects[0].summary, { exact: true }),
+  ).toBeVisible();
+  await expect(first.getByRole("link")).toHaveAttribute(
+    "href",
+    projects[0].writeUpHref!,
+  );
+  if (info.project.name === "mobile") {
+    await second.getByRole("link").tap();
+  } else {
+    await second.getByRole("link").hover();
+  }
+  await expect(first.getByRole("link")).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  await expect(second.getByRole("link")).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  await expect
+    .poll(() =>
+      second
+        .locator('[id^="write-up-synopsis-"]')
+        .evaluate(
+          (element) =>
+            Math.abs(element.clientHeight - element.scrollHeight) < 1,
+        ),
+    )
+    .toBe(true);
+  await expect(navigation.locator('a[aria-expanded="true"]')).toHaveCount(1);
+  await navigation.focus();
+  await page.keyboard.press("Tab");
+  await expect(first.getByRole("link")).toBeFocused();
+  await expect(first.getByRole("link")).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  await first.getByRole("link").press("Space");
+  await expect(first.getByRole("link")).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  if (info.project.name === "mobile") {
+    await first.getByRole("link").tap();
+    await expect(page).toHaveURL(/\/portfolio#about$/);
+    await expect(first.getByRole("link")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    await first.getByRole("link").tap();
+  } else {
+    await first.getByRole("link").press("Enter");
+  }
+  await expect(page).toHaveURL(new RegExp(`${projects[0].writeUpHref}$`));
 });
 
 test("keyboard close restores the originating project after changing projects", async ({
@@ -216,6 +349,10 @@ test("keyboard close restores the originating project after changing projects", 
 }, info) => {
   await page.goto("/portfolio");
   const mobile = info.project.name === "mobile";
+  if (mobile)
+    await page
+      .getByRole("button", { name: "Photo Node-Gallery", exact: true })
+      .click();
   const trigger = page.getByRole("button", {
     name: mobile
       ? "Open Photo Node-Gallery focus view"
@@ -229,9 +366,15 @@ test("keyboard close restores the originating project after changing projects", 
   });
   await expect(focusView).toBeFocused();
   await focusView.press("ArrowRight");
-  await expect(page).toHaveURL(/#project-elliotmairet$/);
+  const nextProject =
+    browserProjects[
+      (browserProjects.findIndex((project) => project.id === "photo-graph") +
+        1) %
+        browserProjects.length
+    ];
+  await expect(page).toHaveURL(new RegExp(`#project-${nextProject.id}$`));
   await page
-    .getByRole("region", { name: "Elliot Mairet focus view" })
+    .getByRole("region", { name: `${nextProject.title} focus view` })
     .press("Escape");
   await expect(trigger).toBeFocused();
 });
@@ -240,6 +383,10 @@ test("back and forward synchronize the focus view and restore focus", async ({
   page,
 }, info) => {
   await page.goto("/portfolio");
+  if (info.project.name === "mobile")
+    await page
+      .getByRole("button", { name: "Photo Node-Gallery", exact: true })
+      .click();
   const trigger = page.getByRole("button", {
     name:
       info.project.name === "mobile"

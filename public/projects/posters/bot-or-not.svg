@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <rect width="1600" height="1000" fill="#f5f5f5"/>
+  <g fill="#151515" font-family="Arial, sans-serif">
+    <text x="100" y="135" font-size="64" font-weight="700">Bot or Not</text>
+    <text x="100" y="200" font-size="30" fill="#595959">Model selection and evaluation have different jobs.</text>
+    <path d="M100 260H1500" fill="none" stroke="#151515" stroke-width="2"/>
+    <g font-size="36" font-weight="700">
+      <text x="100" y="360">Official shards</text>
+      <text x="100" y="520">Grouped validation</text>
+      <text x="100" y="680">Refit on official data</text>
+    </g>
+    <g font-size="30">
+      <text x="790" y="360">English and French separately</text>
+      <text x="790" y="520">Select model and threshold</text>
+      <text x="790" y="680">Report overlapping practice results</text>
+    </g>
+    <g fill="none" stroke="#151515" stroke-width="2">
+      <path d="M100 410H1500M100 570H1500M100 730H1500"/>
+      <path d="M630 347H710l-15-10m15 10-15 10M630 507H710l-15-10m15 10-15 10M630 667H710l-15-10m15 10-15 10"/>
+    </g>
+    <text x="100" y="830" font-size="32">Practice scores do not establish unseen-content performance.</text>
+    <text x="100" y="910" font-size="26" fill="#595959">Saved workflow · independent final assessment remains future work</text>
+  </g>
+</svg>

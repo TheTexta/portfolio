@@ -19,6 +19,7 @@ const projectTitleStyles = cva("font-display [font-synthesis:none]", {
         "font-editorial leading-[0.98] font-medium tracking-[-0.025em]",
       nepo: "font-experimental leading-[0.9] font-normal tracking-[-0.045em] italic",
       "elliot-mairet": null,
+      software: "leading-[1.05] font-semibold tracking-[-0.025em]",
     } satisfies Record<ProjectTitleTreatment, string | null>,
   },
   compoundVariants: [

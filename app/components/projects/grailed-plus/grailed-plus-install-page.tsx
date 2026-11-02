@@ -7,7 +7,6 @@ import {
   useRef,
   useState,
 } from "react";
-import Link from "next/link";
 import { ArrowDown, ArrowUpRight, LoaderCircle } from "lucide-react";
 
 import GrailedPlusLiveDemo from "@/app/components/projects/grailed-plus/grailed-plus-live-demo";
@@ -77,7 +76,7 @@ const FEATURES = [
     eyebrow: "Buy with context",
     title: "Pricing insights",
     description:
-      "Track price drops, estimate the next change, and see seller context without leaving the item page.",
+      "See recorded price drops and seller context alongside the item. Historical chart dates and change timing are estimates, not price predictions.",
   },
   {
     id: "currency",
@@ -93,7 +92,7 @@ const FEATURES = [
     eyebrow: "Browse after dark",
     title: "Native-feeling dark mode",
     description:
-      "Match your device, keep dark mode always on, and tune the interface with a custom primary color—without white flashes between pages.",
+      "Match your device or keep dark mode on, and tune the interface with a custom primary color for a consistent theme while browsing.",
   },
 ] as const;
 
@@ -217,6 +216,7 @@ export default function GrailedPlusInstallPage({
   const demoDarkMode = darkMode;
   const redirectStartedRef = useRef(false);
   const redirectCompletedRef = useRef(false);
+  const redirectAttemptRef = useRef(0);
   const timeoutIdsRef = useRef<Set<number>>(new Set());
 
   const schedule = useCallback((callback: () => void, delay: number) => {
@@ -235,23 +235,39 @@ export default function GrailedPlusInstallPage({
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, []);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    const cancelPendingRedirects = () => {
+      redirectAttemptRef.current++;
       for (const timeoutId of timeoutIdsRef.current) {
         window.clearTimeout(timeoutId);
       }
       timeoutIdsRef.current.clear();
-    },
-    [],
-  );
+    };
+    const restoreFromHistory = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+      cancelPendingRedirects();
+      redirectStartedRef.current = false;
+      redirectCompletedRef.current = false;
+      setIsRedirecting(false);
+    };
 
-  const redirectToStore = useCallback(() => {
-    if (redirectCompletedRef.current) {
+    window.addEventListener("pageshow", restoreFromHistory);
+    return () => {
+      window.removeEventListener("pageshow", restoreFromHistory);
+      cancelPendingRedirects();
+    };
+  }, []);
+
+  const redirectToStore = useCallback((attempt: number) => {
+    if (
+      attempt !== redirectAttemptRef.current ||
+      redirectCompletedRef.current
+    ) {
       return;
     }
 
     redirectCompletedRef.current = true;
-    window.location.replace(PROJECT_ROUTES.grailedPlusChromeWebStore);
+    window.location.assign(PROJECT_ROUTES.grailedPlusChromeWebStore);
   }, []);
 
   const beginRedirect = useCallback(() => {
@@ -260,6 +276,7 @@ export default function GrailedPlusInstallPage({
     }
 
     redirectStartedRef.current = true;
+    const attempt = ++redirectAttemptRef.current;
     setIsRedirecting(true);
 
     const searchParams = new URLSearchParams(window.location.search);
@@ -268,12 +285,13 @@ export default function GrailedPlusInstallPage({
     queueTrackingRequest(trackingPayload);
 
     if (!googleAdsSendTo) {
-      schedule(redirectToStore, CLICK_REDIRECT_DELAY_MS);
+      schedule(() => redirectToStore(attempt), CLICK_REDIRECT_DELAY_MS);
       return;
     }
 
     const deadline = Date.now() + GOOGLE_ADS_READY_WAIT_MS;
     const dispatchGoogleAdsConversion = () => {
+      if (attempt !== redirectAttemptRef.current) return;
       if (typeof window.gtag === "function") {
         let settled = false;
 
@@ -283,7 +301,7 @@ export default function GrailedPlusInstallPage({
           }
 
           settled = true;
-          redirectToStore();
+          redirectToStore(attempt);
         };
 
         window.gtag("event", "conversion", {
@@ -299,7 +317,7 @@ export default function GrailedPlusInstallPage({
         return;
       }
 
-      schedule(redirectToStore, CLICK_REDIRECT_DELAY_MS);
+      schedule(() => redirectToStore(attempt), CLICK_REDIRECT_DELAY_MS);
     };
 
     dispatchGoogleAdsConversion();
@@ -440,6 +458,12 @@ export default function GrailedPlusInstallPage({
                 "mt-4 text-sm leading-6 text-muted [animation-delay:350ms]",
               )}
             >
+              <a
+                href={PROJECT_ROUTES.grailedPlusWriteUp}
+                className="mr-3 underline underline-offset-4"
+              >
+                Engineering case study
+              </a>
               <span className="hidden sm:inline">
                 Installs from the official Chrome Web Store.
               </span>
@@ -467,7 +491,7 @@ export default function GrailedPlusInstallPage({
                   darkModeEnabled={demoDarkMode}
                   parentDarkMode={darkMode}
                   feature="overview"
-                  title="Live overview of the current Grailed Plus extension interface"
+                  title="Grailed Plus extension interface using sample listings"
                 />
               </div>
             </div>
@@ -489,12 +513,13 @@ export default function GrailedPlusInstallPage({
                 <h2 className="text-[clamp(2.8rem,6vw,6rem)] leading-[0.92] font-bold tracking-[-0.045em]">
                   Four upgrades.
                   <br />
-                  Zero workflow change.
+                  Built into Grailed.
                 </h2>
               </div>
               <p className="max-w-md text-base leading-7 text-muted lg:col-span-3 lg:pt-2">
-                Grailed Plus works where the decision happens—inside listings,
-                search results, and messages—not in another tab.
+                Comparisons and pricing context appear alongside listings,
+                search results, and messages. Optional marketplace retrieval may
+                use an inactive tab.
               </p>
             </EditorialContainer>
 
@@ -545,7 +570,7 @@ export default function GrailedPlusInstallPage({
                           darkModeEnabled={demoDarkMode}
                           parentDarkMode={darkMode}
                           feature={feature.id}
-                          title={`Live Grailed Plus ${feature.title} demo`}
+                          title={`Grailed Plus ${feature.title} demo using sample listings`}
                         />
                       </div>
                     </div>
@@ -584,12 +609,12 @@ export default function GrailedPlusInstallPage({
             className="flex min-h-8 flex-col gap-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between"
           >
             <p className="text-muted">Grailed Plus for Chrome</p>
-            <Link
+            <a
               href={PROJECT_ROUTES.home}
               className="decoration-rule w-fit font-medium underline underline-offset-4 transition-colors hover:text-action-hover"
             >
               dextery.dev
-            </Link>
+            </a>
           </EditorialContainer>
         </>
       ) : null}

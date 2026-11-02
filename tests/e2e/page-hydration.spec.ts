@@ -26,9 +26,13 @@ for (const reducedMotion of ["reduce", "no-preference"] as const) {
 
     for (const path of [
       "/portfolio#about",
-      "/projects/photo-graph",
-      "/projects/elliot-mairet",
-      "/projects/bur1alrites",
+      "/write-ups/photo-graph",
+      "/write-ups/elliot-mairet",
+      "/write-ups/bur1alrites",
+      "/write-ups/grailed-plus",
+      "/write-ups/tvm-discord-bot",
+      "/write-ups/bot-or-not",
+      "/write-ups/portfolio-design",
     ]) {
       await page.goto(path);
       await page.evaluate(() => window.scrollTo(0, 0));

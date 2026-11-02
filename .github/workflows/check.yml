@@ -19,7 +19,7 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      - run: xvfb-run -a npm run test:e2e
       - run: npm run admin:validate-auth
       - run: npm run build
       - uses: actions/upload-artifact@v4

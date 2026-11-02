@@ -22,6 +22,9 @@ const photoGraph = getProject("photo-graph");
 const elliotMairet = getProject("elliotmairet");
 const bur1alrites = getProject("bur1alrites");
 const grailedPlus = getProject("grailed-plus");
+const tvmDiscordBot = getProject("tvm-discord-bot");
+const botOrNot = getProject("bot-or-not");
+const portfolioDesign = getProject("portfolio-design");
 
 // Update these dates when the corresponding public content changes significantly.
 export const PUBLIC_PAGES = {
@@ -29,14 +32,14 @@ export const PUBLIC_PAGES = {
     path: PROJECT_ROUTES.home,
     title: `${SITE_PROFILE.name} — Software Developer & Creative Technologist`,
     description: SITE_PROFILE.description,
-    lastModified: "2026-10-30",
+    lastModified: "2026-11-02",
     image: photoGraph,
   },
   photoGraph: {
     path: PROJECT_ROUTES.photoGraph,
     title: `${photoGraph.title} — ${SITE_PROFILE.name}`,
     description: photoGraph.summary,
-    lastModified: "2026-10-30",
+    lastModified: "2026-11-02",
     image: photoGraph,
     project: photoGraph,
   },
@@ -44,7 +47,7 @@ export const PUBLIC_PAGES = {
     path: PROJECT_ROUTES.elliotMairetWriteUp,
     title: `${elliotMairet.title} — ${SITE_PROFILE.name}`,
     description: elliotMairet.summary,
-    lastModified: "2026-10-30",
+    lastModified: "2026-11-02",
     image: elliotMairet,
     project: elliotMairet,
   },
@@ -52,16 +55,48 @@ export const PUBLIC_PAGES = {
     path: PROJECT_ROUTES.bur1alritesWriteUp,
     title: `${bur1alrites.title} — ${SITE_PROFILE.name}`,
     description: bur1alrites.summary,
-    lastModified: "2026-10-30",
+    lastModified: "2026-11-02",
     image: bur1alrites,
     project: bur1alrites,
+  },
+  grailedPlusEngineering: {
+    path: PROJECT_ROUTES.grailedPlusWriteUp,
+    title: `${grailedPlus.title} — Engineering case study — ${SITE_PROFILE.name}`,
+    description: grailedPlus.summary,
+    lastModified: "2026-11-02",
+    image: grailedPlus,
+    project: grailedPlus,
+  },
+  tvmDiscordBot: {
+    path: PROJECT_ROUTES.tvmDiscordBot,
+    title: `${tvmDiscordBot.title} — ${SITE_PROFILE.name}`,
+    description: tvmDiscordBot.summary,
+    lastModified: "2026-11-02",
+    image: tvmDiscordBot,
+    project: tvmDiscordBot,
+  },
+  botOrNot: {
+    path: PROJECT_ROUTES.botOrNot,
+    title: `${botOrNot.title} — ${SITE_PROFILE.name}`,
+    description: botOrNot.summary,
+    lastModified: "2026-11-02",
+    image: botOrNot,
+    project: botOrNot,
+  },
+  portfolioDesign: {
+    path: PROJECT_ROUTES.portfolioDesign,
+    title: `${portfolioDesign.title} — ${SITE_PROFILE.name}`,
+    description: portfolioDesign.summary,
+    lastModified: "2026-11-02",
+    image: portfolioDesign,
+    project: portfolioDesign,
   },
   grailedPlus: {
     path: PROJECT_ROUTES.grailedPlus,
     title: `${grailedPlus.title} — Price Insights, Market Compare, Currency, and Dark Mode`,
     description:
-      "Explore live Grailed Plus demos for price insights, market comparison, custom currency conversion, seller context, and dark mode.",
-    lastModified: "2026-10-06",
+      "Explore sample-data Grailed Plus demos for price insights, market comparison, custom currency conversion, seller context, and dark mode.",
+    lastModified: "2026-10-31",
     image: grailedPlus,
     project: grailedPlus,
   },

@@ -22,7 +22,7 @@ const R2_KEY = /^photography-images\/[0-9]+\.(?:png|jpg|webp)$/;
 const R2_ORIGINAL_ORIGIN = "https://media.dextery.dev/photo-graph/";
 const R2_IMAGE_ORIGIN = "https://images.dextery.dev/photo-graph/";
 
-/** Legacy rows and static graph snapshots have no provider and remain Supabase. */
+/** Provider-less legacy rows and upload journals must continue to mean Supabase. */
 export function photoGraphStorageProvider(
   value: unknown,
 ): PhotoGraphStorageProvider {

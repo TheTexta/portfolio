@@ -17,7 +17,7 @@ import HeaderDirectory from "@/app/components/ui/header-directory";
 export { AnimatedHorizontalRule } from "@/app/components/ui/animated-horizontal-rule";
 
 export const actionStyles = cva(
-  "inline-flex min-h-11 cursor-pointer appearance-none items-center justify-center gap-2 border border-ink px-4 py-2 text-center text-xs font-semibold tracking-[0.12em] uppercase no-underline transition-[background-color,color,border-color,opacity,transform] duration-150 ease-[var(--ease-out-quint)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink active:translate-y-px disabled:pointer-events-none disabled:opacity-45",
+  "inline-flex min-h-11 cursor-pointer appearance-none items-center justify-center gap-2 border border-ink px-4 py-2 text-center text-xs font-semibold tracking-[0.12em] uppercase no-underline transition-[background-color,color,border-color,opacity,transform] duration-150 ease-[var(--ease-out-quint)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink focus-visible:outline-solid active:translate-y-px disabled:pointer-events-none disabled:opacity-45",
   {
     variants: {
       variant: {
@@ -234,7 +234,7 @@ export function EditorialPanel({
 }
 
 export const EDITORIAL_HEADER_CONTROL_CLASS =
-  "flex min-h-7 items-center outline-none transition-opacity hover:underline hover:opacity-55 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80";
+  "flex min-h-7 items-center outline-none transition-opacity hover:underline hover:opacity-55 hover:cursor-pointer focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80";
 
 type EditorialHeaderBarProps = {
   leading: ReactNode;
@@ -297,13 +297,14 @@ export function SiteHeader({
   sticky = true,
   ariaLabel = "Site navigation",
 }: SiteHeaderProps) {
+  // A document navigation resets home even when its route is already active.
   return (
     <EditorialHeaderBar
       sticky={sticky}
       className={className}
       ariaLabel={ariaLabel}
       leading={
-        <Link
+        <a
           href={brandHref}
           className={cn(
             EDITORIAL_HEADER_CONTROL_CLASS,
@@ -311,7 +312,7 @@ export function SiteHeader({
           )}
         >
           {brand}
-        </Link>
+        </a>
       }
       directory={directory ?? <HeaderDirectory />}
     >
@@ -321,7 +322,7 @@ export function SiteHeader({
 }
 
 export const EDITORIAL_INPUT_CLASS =
-  "border-ink min-h-11 w-full border bg-canvas px-3 py-2 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
+  "border-ink min-h-11 w-full border bg-canvas px-3 py-2 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
 
 export const EDITORIAL_LABEL_CLASS =
   "text-xs font-semibold tracking-[0.12em] uppercase";

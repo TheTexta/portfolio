@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useSyncExternalStore } from "react";
-import ExperienceNav from "@/app/components/ui/experience-nav";
 import { useElementSize } from "@/app/hooks/use-element-size";
 import { useIframeOpenOnClick } from "@/app/hooks/use-iframe-open-on-click";
 import { cn } from "@/lib/cn";
@@ -12,15 +11,9 @@ type HtmlProjectPreviewProps = {
   projectHref: string;
   desktopPreviewScale?: number;
   mobilePreviewScale?: number;
-  showNavigation?: boolean;
   interaction?: "launch" | "native";
   allowPointerLock?: boolean;
   allowAutoplay?: boolean;
-};
-
-type PreviewState = {
-  src: string;
-  status: "loading" | "loaded" | "error";
 };
 
 const htmlPreviewShell = "relative size-full overflow-hidden";
@@ -50,7 +43,6 @@ export default function HtmlProjectPreview({
   projectHref,
   desktopPreviewScale = 1,
   mobilePreviewScale = 1,
-  showNavigation = true,
   interaction = "launch",
   allowPointerLock = false,
   allowAutoplay = false,
@@ -64,12 +56,7 @@ export default function HtmlProjectPreview({
     interaction === "launch",
   );
   const shellSize = useElementSize(shellRef);
-  const [previewState, setPreviewState] = useState<PreviewState>({
-    src: previewSrc,
-    status: "loading",
-  });
-  const currentStatus =
-    previewState.src === previewSrc ? previewState.status : "loading";
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const isMeasured = shellSize.width > 0 && shellSize.height > 0;
   const isCompact = useSyncExternalStore(
     subscribeToCompactPreview,
@@ -82,56 +69,41 @@ export default function HtmlProjectPreview({
 
   return (
     <div ref={shellRef} className={cn(htmlPreviewShell, htmlPreviewShellTone)}>
-      {currentStatus === "error" ? (
-        <div
-          role="alert"
-          className="relative flex h-full flex-col items-center justify-center gap-3 px-6 text-center"
+      <iframe
+        key={previewSrc}
+        ref={iframeRef}
+        title={`${title} preview`}
+        src={previewSrc}
+        loading="lazy"
+        scrolling="auto"
+        // With no portfolio referrer, the hosted site's click-to-launch
+        // bridge stays inactive and its native controls/navigation work.
+        referrerPolicy={interaction === "native" ? "no-referrer" : undefined}
+        sandbox={`allow-forms allow-popups allow-same-origin allow-scripts${allowPointerLock ? " allow-pointer-lock" : ""}`}
+        allow={allowAutoplay ? "autoplay" : undefined}
+        onPointerEnter={iframeClick.onPointerEnter}
+        onPointerLeave={iframeClick.onPointerLeave}
+        onMouseEnter={iframeClick.onMouseEnter}
+        onMouseLeave={iframeClick.onMouseLeave}
+        className={cn(htmlPreviewFrame, !isMeasured && "invisible")}
+        style={{
+          width: previewWidth,
+          height: previewHeight,
+          transform: `scale(${previewScale})`,
+        }}
+        onLoad={() => {
+          iframeClick.onLoad();
+          setFailedSrc(null);
+        }}
+        onError={() => setFailedSrc(previewSrc)}
+      />
+      {failedSrc === previewSrc ? (
+        <p
+          role="status"
+          className="absolute bottom-2 left-2 z-10 max-w-[calc(100%-1rem)] bg-canvas px-2 py-1 text-sm text-ink"
         >
-          <p className="text-sm">This preview is unavailable right now.</p>
-          <span className="border border-ink bg-canvas px-3 py-2 text-xs font-semibold tracking-[0.08em] text-ink uppercase">
-            Open {title}
-          </span>
-          <a
-            href={projectHref}
-            aria-label={`Open the full ${title} site`}
-            className="absolute inset-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
-          />
-        </div>
-      ) : (
-        <iframe
-          ref={iframeRef}
-          title={`${title} preview`}
-          src={previewSrc}
-          loading="lazy"
-          scrolling="auto"
-          // With no portfolio referrer, the hosted site's click-to-launch
-          // bridge stays inactive and its native controls/navigation work.
-          referrerPolicy={interaction === "native" ? "no-referrer" : undefined}
-          sandbox={`allow-forms allow-popups allow-same-origin allow-scripts${allowPointerLock ? " allow-pointer-lock" : ""}`}
-          allow={allowAutoplay ? "autoplay" : undefined}
-          onPointerEnter={iframeClick.onPointerEnter}
-          onPointerLeave={iframeClick.onPointerLeave}
-          onMouseEnter={iframeClick.onMouseEnter}
-          onMouseLeave={iframeClick.onMouseLeave}
-          className={cn(htmlPreviewFrame, !isMeasured && "invisible")}
-          style={{
-            width: previewWidth,
-            height: previewHeight,
-            transform: `scale(${previewScale})`,
-          }}
-          onLoad={() => {
-            iframeClick.onLoad();
-            setPreviewState({ src: previewSrc, status: "loaded" });
-          }}
-          onError={() => setPreviewState({ src: previewSrc, status: "error" })}
-        />
-      )}
-
-      {showNavigation ? (
-        <ExperienceNav
-          experienceHref={projectHref}
-          ariaLabel={`${title} controls`}
-        />
+          Preview unavailable.
+        </p>
       ) : null}
     </div>
   );

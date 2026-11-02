@@ -1,0 +1,22 @@
+{
+  "type": "local-browser-captures",
+  "implementationDate": "2026-11-01",
+  "productionDeployment": false,
+  "note": "Local production build, no production credentials. Chromium screenshots illustrate layout, not physical-device performance or usability outcomes.",
+  "captures": [
+    {
+      "asset": "desktop.png",
+      "path": "/portfolio",
+      "width": 1366,
+      "height": 900,
+      "sha256": "46b45f632e4996e2094f343864b4ebfe41defdfc12ab85933577a9333cbcebb6"
+    },
+    {
+      "asset": "mobile.png",
+      "path": "/portfolio#projects",
+      "width": 390,
+      "height": 844,
+      "sha256": "3bd82798b351103e7d363c80a3fd4c341d514909e09c4a3d3da0b0f4a768041e"
+    }
+  ]
+}

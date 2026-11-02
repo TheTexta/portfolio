@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { parseArgs } from "node:util";
 
 import { projectCatalog } from "@/app/components/projects/project-catalog";
-import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
+import {
+  LEGACY_WRITE_UP_REDIRECTS,
+  PROJECT_ROUTES,
+} from "@/app/components/projects/project-routes";
 import { absoluteUrl, PUBLIC_PAGES } from "@/lib/seo";
 import { SITE_ORIGIN } from "@/lib/site-config";
 
@@ -18,6 +21,8 @@ const EXPERIENCE_PATHS = [
 const REMOVED_PREVIEW =
   "/components/projects/nepobabiesruntheunderground/preview";
 const REDIRECTS = [
+  ...LEGACY_WRITE_UP_REDIRECTS,
+  [PROJECT_ROUTES.writeUps, PROJECT_ROUTES.portfolioWriteUps],
   ["/", PROJECT_ROUTES.home],
   ["/projects/spotify-nodify", PROJECT_ROUTES.portfolioProjects],
   ["/projects/spotify-nodify/experience", PROJECT_ROUTES.portfolioProjects],
@@ -33,7 +38,6 @@ const REDIRECTS = [
   ["/admin/photo-graph/login", PROJECT_ROUTES.admin],
   ["/admin/photo-graph/upload", PROJECT_ROUTES.admin],
   ["/go/grailed-plus", PROJECT_ROUTES.grailedPlus],
-  ["/projects/grailed-plus", PROJECT_ROUTES.grailedPlus],
   ["/projects/grailed-plus/experience", PROJECT_ROUTES.grailedPlusExperience],
 ] as const;
 
@@ -337,19 +341,25 @@ async function main() {
         titles.add(html.titles[0]);
         descriptions.add(html.descriptions[0]);
         if (page.path === PUBLIC_PAGES.portfolio.path) {
-          for (const projectPage of [
-            PUBLIC_PAGES.photoGraph,
-            PUBLIC_PAGES.elliotMairet,
-            PUBLIC_PAGES.bur1alrites,
-            PUBLIC_PAGES.grailedPlus,
-          ]) {
+          for (const articlePath of projectCatalog.flatMap((project) =>
+            project.writeUpHref ? [project.writeUpHref] : [],
+          )) {
             assert.ok(
               html.links.some(
-                (href) => new URL(href, base).pathname === projectPage.path,
+                (href) => new URL(href, base).pathname === articlePath,
               ),
-              `Missing crawlable link to ${projectPage.path}`,
+              `Missing crawlable link to ${articlePath}`,
             );
           }
+        }
+        if (page.path === PUBLIC_PAGES.grailedPlusEngineering.path) {
+          assert.ok(
+            html.links.some(
+              (href) =>
+                new URL(href, base).pathname === PROJECT_ROUTES.grailedPlus,
+            ),
+            "The engineering article must link to the Grailed product page",
+          );
         }
       });
     }

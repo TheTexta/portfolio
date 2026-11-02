@@ -1,0 +1,97 @@
+<header data-write-up-header>
+
+# {props.project.title}
+
+<nav aria-label={`${props.project.title} project links`}>
+  <a href="/grailed-plus">Product page and sample-data demos</a>
+  <a href="https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd">
+    Chrome Web Store
+  </a>
+</nav>
+
+<Lead>
+  {
+    "Pricing context and cross-market comparison inside the Grailed pages people already browse."
+  }
+</Lead>
+
+<ProjectDetails project={props.project} />
+
+</header>
+
+A listing rarely gives a buyer enough context to judge its price. Similar items
+appear on other marketplaces under different titles, and price history helps only
+when its limits are clear. I extended the price-history foundation from
+[RVRX/grailed-plus](https://github.com/RVRX/grailed-plus), adding marketplace
+comparison, local image matching, currency conversion, and interface customization.
+The current application source is private; this article and the product demos
+provide a public explanation of the architecture and its tradeoffs.
+
+## Useful results before inference finishes
+
+Comparison starts with listing metadata: title, product type, brand, and the
+available marketplace details. Results are partitioned by confidence. A photograph
+of the wrong product type should not outrank a credible match just because it
+looks similar.
+
+A second pass uses MobileCLIP-S1 image embeddings to refine a bounded shortlist.
+ONNX Runtime runs in an extension worker, keeping inference off the page renderer.
+Preliminary results stay visible while scores arrive, and the ranking updates
+progressively. If inference fails or reaches its budget, the metadata results
+remain usable. Navigation invalidates work that belongs to an earlier listing.
+
+For the implementation reviewed in October 2026, optional refinement has a
+30-second maximum budget starting when preliminary results render. Visual
+similarity contributes up to 20 points, while confidence groups remain intact.
+These are source parameters, not measured latency or evidence of better relevance.
+They should be checked against a particular store release before treating that
+package as identical to the reviewed implementation.
+
+## Where the work runs
+
+The browser extracts the active listing and displays comparison results. The
+worker computes embeddings locally. Depop retrieval still makes remote requests;
+eBay retrieval goes through a separate Node.js gateway that keeps API credentials
+out of the distributed extension. The gateway handles OAuth token reuse, category
+resolution, and text and image searches.
+
+Category resolution and image search are optional improvements. Their failure
+falls back to text results. Local inference therefore describes one part of the
+system: eBay image search can send listing-image data through the gateway, and
+marketplace retrieval is not offline.
+
+## A regression worth protecting
+
+A late score from a previous listing must not replace the current listing's
+results. The controller invalidates obsolete requests and applies refinements to
+the active request. Its regression suite also exercises streamed scores before
+final completion, exhaustion of the refinement budget, and preservation of
+confidence groups when visual scores change the order within a group.
+
+The relevant private-source modules are `marketCompareController.ts` and
+`imageSimilarity.ts`; `marketCompareController.test.js` asserts that streamed
+scores affect the visible results before the refinement promise resolves. This
+explains the tested contract without advertising an inaccessible source link or
+presenting the client suite as validation of the separate gateway.
+
+The gateway follow-up has its own offline tests. Outbound images are restricted
+to explicit marketplace hosts, resolved to public addresses and fetched through
+a pinned HTTPS connection; redirects are rejected and a streaming byte ceiling
+applies before accumulating the complete image. Cache administration defaults to
+denial without a separate credential. Controlled tests cover these boundaries,
+not live marketplace compatibility or a deployed proxy's access rules. Those
+deployment checks remain a separate release gate.
+
+## Showing the interface honestly
+
+The product page imports the extension's renderer, styles, currency helpers, and
+theme engine. **Its interactive demos use deterministic sample listings and
+simulated state transitions.** They do not query live marketplaces or measure
+matching accuracy. The store link is the route to the installable extension.
+Firefox build support is distinct from a verified Firefox store release.
+
+Price history has a separate limit: ordered historical prices do not include an
+exact timestamp for every change. The chart labels interpolated dates as estimates.
+The same principle applies to matching: confidence and usable fallbacks are
+implemented behavior; relevance gains and time saved still need a separate,
+representative evaluation.

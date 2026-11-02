@@ -69,7 +69,7 @@ async function commit(expected: string, neighbors: unknown[] = []) {
   );
 }
 
-describe.sequential("atomic upload registration", () => {
+describe("atomic upload registration", { concurrent: false }, () => {
   it("reserves stable IDs and rejects key reuse with different data or admins", async () => {
     expect(nodeId).toBeGreaterThan(60);
     expect((await begin()).nodeIds).toEqual([nodeId]);

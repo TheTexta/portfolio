@@ -15,6 +15,7 @@ import { isRecoverablePhotoGraphDatabaseError } from "@/lib/photo-graph/database
 import {
   photoGraphMediaUrl,
   photoGraphStorageProvider,
+  type PhotoGraphStorageProvider,
 } from "@/lib/photo-graph/media-url";
 import type {
   GraphImageDimensions,
@@ -34,7 +35,7 @@ type GraphLoadResult = NormalizedGraphResult & {
   databaseAvailable: boolean;
 };
 
-// The source objects for these legacy nodes are no longer present in Storage.
+// The source objects for these legacy nodes were unavailable before R2 migration.
 // Keep them out of every runtime representation until their originals are restored.
 const REMOVED_PHOTO_GRAPH_NODE_IDS = new Set([
   "2",
@@ -241,7 +242,9 @@ function normalizeGraphData(
 
 export { imagePathForLegacyId, photoGraphImageBasePath };
 
-export async function readStaticGraph() {
+export async function readStaticGraph(
+  storageProvider: PhotoGraphStorageProvider = "r2",
+) {
   const staticGraphPath = path.join(
     process.cwd(),
     "public",
@@ -254,6 +257,13 @@ export async function readStaticGraph() {
     "static",
     photoGraphImageBasePath(),
   ).nodes;
+  // This checked-in snapshot predates provider metadata. Its available originals
+  // were migrated under unchanged keys; scope the R2 default to this snapshot,
+  // never to provider-less database rows or recoverable upload journals.
+  for (const node of nodes) {
+    node.storageProvider = storageProvider === "r2" ? "r2" : undefined;
+    node.storagePath ??= imagePathForLegacyId(node.id);
+  }
   ensureGraphStoragePaths(nodes);
   return nodes;
 }

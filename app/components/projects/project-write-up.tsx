@@ -1,10 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
-import type { ProjectDefinition } from "./project-catalog";
+import {
+  getProjectReturnHref,
+  type ProjectDefinition,
+} from "./project-catalog";
 import { PROJECT_ROUTES } from "./project-routes";
-import { SiteHeader } from "@/app/components/ui/editorial";
+import { BorderContainer, SiteHeader } from "@/app/components/ui/editorial";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
 import { cn } from "@/lib/cn";
 
@@ -34,10 +37,9 @@ export default function ProjectWriteUp({
         <div
           className={cn(
             "[&>:first-child]:mt-0",
-            "[&>h1]:mt-0 [&>h1]:mb-4 [&>h1]:text-3xl [&>h1]:leading-tight [&>h1]:font-semibold [&>h1]:tracking-[-0.025em] [&>h1]:text-balance sm:[&>h1]:text-4xl",
             "[&>h2]:mt-12 [&>h2]:mb-4 [&>h2]:text-2xl [&>h2]:leading-tight [&>h2]:font-semibold [&>h2]:text-balance",
             "[&>h3]:mt-8 [&>h3]:mb-3 [&>h3]:text-lg [&>h3]:leading-[1.4] [&>h3]:font-semibold",
-            "[&>nav]:mt-5 [&>nav]:flex [&>nav]:flex-wrap [&>nav]:gap-x-5 [&>nav]:gap-y-2 [&>nav]:text-sm [&>nav]:leading-[1.8]",
+            "[&>header>nav]:mt-5 [&>header>nav]:flex [&>header>nav]:flex-wrap [&>header>nav]:justify-center [&>header>nav]:gap-x-5 [&>header>nav]:gap-y-2 [&>header>nav]:text-center [&>header>nav]:text-sm [&>header>nav]:leading-[1.8]",
             "[&_li+li]:mt-2 [&_ol]:list-decimal [&_ol]:ps-5 [&_ul]:list-disc [&_ul]:ps-5 [&>ol]:my-5 [&>p:not([data-write-up-lead])]:my-5 [&>ul]:my-5",
             "[&>:not([data-write-up-preview])_a]:underline [&>:not([data-write-up-preview])_a]:underline-offset-[0.2em]",
           )}
@@ -47,7 +49,7 @@ export default function ProjectWriteUp({
 
         <footer className="mx-auto mt-16 max-w-2xl border-t border-ink pt-5 text-sm">
           <Link
-            href={`${PROJECT_ROUTES.home}#project-${project.id}`}
+            href={getProjectReturnHref(project)}
             className="underline underline-offset-4"
           >
             Back to projects
@@ -55,6 +57,21 @@ export default function ProjectWriteUp({
         </footer>
       </article>
     </main>
+  );
+}
+
+export function WriteUpTitle({ className, ...props }: ComponentProps<"h1">) {
+  return (
+    <BorderContainer data-write-up-title className="h-44 sm:h-56">
+      <h1
+        {...props}
+        id="write-up-title"
+        className={cn(
+          "m-0 px-3 py-4 text-center font-display text-3xl leading-tight font-semibold tracking-[-0.025em] text-balance sm:px-4 sm:py-5 sm:text-4xl",
+          className,
+        )}
+      />
+    </BorderContainer>
   );
 }
 
@@ -98,5 +115,36 @@ export function WriteUpMediaPlaceholder({ children }: { children: ReactNode }) {
         {children}
       </figcaption>
     </figure>
+  );
+}
+
+export function WriteUpProjectDetails({
+  project,
+}: {
+  project: ProjectDefinition;
+}) {
+  return (
+    <dl
+      aria-label="Project details"
+      className="mt-5 flex flex-wrap gap-x-3 gap-y-1 text-sm leading-5 text-muted"
+    >
+      {[
+        ["Period", project.date],
+        ["Contribution", project.role],
+        ["Status", project.status],
+      ].map(([label, value], index) => (
+        <div key={label}>
+          <dt className="sr-only">{label}</dt>
+          <dd>
+            {index > 0 ? (
+              <span aria-hidden className="mr-3">
+                ·
+              </span>
+            ) : null}
+            {value}
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }

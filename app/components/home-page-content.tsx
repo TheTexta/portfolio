@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, type Transition, useInView } from "framer-motion";
 
 import ProjectBrowser from "@/app/components/projects/project-browser";
+import WriteUpList from "@/app/components/projects/write-up-list";
 import {
   getProject,
   projectCatalog,
@@ -148,6 +149,24 @@ export default function HomePageContent() {
     null,
   );
 
+  useEffect(() => {
+    const focusSection = () => {
+      const id = window.location.hash.slice(1);
+      if (id === "about" || id === "contact") {
+        const target = document.getElementById(id);
+        if (target && !target.contains(document.activeElement))
+          target.focus({ preventScroll: true });
+      }
+    };
+    focusSection();
+    window.addEventListener("hashchange", focusSection);
+    window.addEventListener("popstate", focusSection);
+    return () => {
+      window.removeEventListener("hashchange", focusSection);
+      window.removeEventListener("popstate", focusSection);
+    };
+  }, []);
+
   return (
     <main className="min-h-dvh overflow-x-clip bg-canvas text-ink">
       <SiteHeader
@@ -176,7 +195,9 @@ export default function HomePageContent() {
 
       <section className="py-30 sm:py-20 lg:py-24">
         <div className="space-y-2 sm:space-y-5">
-          <EditorialRule>Software + multimedia</EditorialRule>
+          <EditorialRule>
+            Software development + interactive media
+          </EditorialRule>
           <div className="mx-auto max-w-200 pt-5 sm:hidden">
             <MobileFavicon />
           </div>
@@ -197,41 +218,54 @@ export default function HomePageContent() {
 
       <section
         id="about"
+        tabIndex={-1}
         aria-label="About"
         className="scroll-mt-12 py-12 sm:pt-20 sm:pb-0 lg:pt-24"
       >
         <EditorialRuleHeading>About</EditorialRuleHeading>
         <div className="px-5 py-4 sm:px-8 sm:pt-10 lg:px-12">
           <div className="mx-auto grid max-w-228.25 gap-8 md:grid-cols-2 md:gap-12">
-            <p className="text-base leading-[1.8]">
-              I&apos;m Dexter, studying Artificial Intelligence and Computer
-              Science at McGill, with a minor in Music Technology. I design and
-              build websites, browser tools and visual archives, working across
-              interfaces, interactive graphics and the systems behind them.
-            </p>
+            <div
+              data-about-introduction
+              className="space-y-5 text-base leading-[1.8]"
+            >
+              <p>
+                I’m a software developer studying computer science at McGill,
+                with a minor in music technology. I’m interested in how software
+                shapes the way people present and explore visual media. My
+                projects include photography galleries organised around colour
+                and node graphs, alongside interactive 3D portfolios.
+              </p>
+              <p>
+                At TVM, McGill’s student television service, I develop a Discord
+                bot that supports membership and production workflows. As
+                Technical Director, I also manage a CAD $15,000 equipment
+                budget, maintain servers and lead workshops for a community of
+                150 members.
+              </p>
+              <p>
+                I’m also interested in making second-hand shopping easier
+                through better discovery and comparison tools. My browser
+                extension, Grailed Plus, builds on an open-source tool with
+                resale comparisons and on-device image matching to help people
+                find similar items across platforms.
+              </p>
+            </div>
             <div className="flex min-w-0 flex-col gap-3 md:h-0 md:min-h-full">
-              <EditorialRule>Write ups</EditorialRule>
-              <nav
-                aria-label="Project write-ups"
-                tabIndex={0}
-                className="h-36 min-h-0 min-w-0 [scrollbar-width:thin] [scrollbar-color:var(--color-ink)_var(--color-canvas)] overflow-y-auto overscroll-y-contain border border-ink focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink md:h-auto md:flex-1"
-              >
-                <ul className="grid">
-                  {writeUpProjects.map((project) => (
-                    <HomeLinkRow
-                      key={project.id}
-                      label={project.title}
-                      href={project.writeUpHref!}
-                    />
-                  ))}
-                </ul>
-              </nav>
+              <h3 className="text-xs font-semibold tracking-[0.18em] uppercase sm:text-sm">
+                Write ups
+              </h3>
+              <WriteUpList projects={writeUpProjects} />
             </div>
           </div>
         </div>
       </section>
 
-      <footer id="contact" className="scroll-mt-12 sm:py-20 lg:py-24">
+      <footer
+        tabIndex={-1}
+        id="contact"
+        className="scroll-mt-12 py-12 sm:py-20 lg:py-24"
+      >
         <EditorialRuleHeading>Contact</EditorialRuleHeading>
         <div className="flex justify-center px-5 py-4 sm:px-8 sm:pt-10 lg:px-12">
           <BorderContainer className="h-60 w-full max-w-228.25 sm:h-68.25">

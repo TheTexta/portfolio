@@ -23,7 +23,7 @@ The application uses:
 - Framer Motion
 - D3.js
 - `react-force-graph-2d`
-- Supabase Postgres/Auth and retained Storage originals
+- Supabase Postgres/Auth and legacy upload compatibility
 - Cloudflare R2 and the shared image/media Worker for published Photo Graph media
 - Spotify Web API
 - Sharp
@@ -130,9 +130,10 @@ Treat public project URLs as persistent unless the task explicitly involves chan
 
 ## Supabase
 
-Supabase is used for Photo Graph data, Auth, retained original images, and
-in-flight legacy upload recovery. Published Photo Graph media are delivered
-from Cloudflare R2; the old Storage bucket must remain available for rollback.
+Supabase is used for Photo Graph data, Auth, and in-flight legacy upload recovery.
+Published Photo Graph media are delivered from Cloudflare R2. The old Storage
+bucket remains for compatibility but contains no retained Photo Graph originals;
+a Supabase-only rollback requires reverse-copying and verifying required R2 bytes.
 
 The production Photo Graph Storage bucket is:
 
@@ -161,6 +162,17 @@ Keep privileged Supabase credentials server-side.
 Never expose a service-role key, database password, or other privileged credential through a `NEXT_PUBLIC_*` environment variable.
 
 ## Photo Graph
+
+### Source-retirement update — 2026-10-15
+
+The owner subsequently authorized deletion of the 102 redundant Photo Graph
+Supabase originals and six unjournaled `_pending/` uploads. The exact 108 paths
+were removed via Storage API after fresh R2 checksum verification; bucket
+`dextery.dev` is empty. All 103 R2 originals and graph nodes remain. This
+supersedes retained-original/pending-object statements elsewhere in this file.
+Do not assume Supabase rollback copies exist. The static fallback now resolves its
+45 available legacy snapshot nodes through R2; it is not a complete catalogue
+backup. The standalone render cache was separately retired on 2026-10-30.
 
 Photo Graph is both an interactive user-facing feature and a data-processing pipeline. Changes to it should account for both.
 
@@ -195,7 +207,10 @@ Before performing Photo Graph infrastructure or data work, prefer:
 npm run photo-graph:doctor
 ```
 
-The doctor command is intended to inspect the current configuration and should be the first step before reaching for mutating maintenance commands.
+The doctor uses GET/HEAD requests and a database TCP reachability probe. It checks
+a provider-qualified original/transform and discovers the neighbor RPC through
+PostgREST's OpenAPI schema without invoking it. It does not inventory every object
+or verify all checksums. Inspect failures before reaching for mutating commands.
 
 ### Mutating commands
 
@@ -250,44 +265,33 @@ When introducing a new model or feature representation, prefer versioning it rat
 
 ## Image Delivery
 
-The 102 referenced Photo Graph originals are served from published R2 under
-`/photo-graph/` on the shared image/media Worker domains. The six unregistered
-Supabase `_pending/` objects remain untouched. Mixed-provider reads and
-recoverable in-flight Supabase uploads still need their legacy Storage path.
+All 103 Photo Graph originals are served from published R2 under `/photo-graph/`
+on the shared image/media Worker domains. The 102 migrated Supabase originals
+and six historical pending objects were deleted with separate owner approval.
+Mixed-provider reads and recoverable in-flight Supabase uploads still need their
+legacy Storage path; absent providers must continue to mean Supabase outside the
+explicitly migrated static snapshot.
 
 R2-backed transforms use the shared Worker; Supabase-backed legacy transforms
 use Supabase's image-render endpoint. Neither uses Vercel image transformations
 for Photo Graph media.
 
-The self-hosted Supabase image-transform path is fronted by a dedicated NGINX cache defined under:
+### Render-cache retirement — 2026-10-30
 
-`deploy/supabase-image-cache/`
+With explicit owner approval, the standalone Coolify NGINX image-cache service,
+its dedicated network, and its derived-cache volume were removed after verifying
+direct Kong delivery of identical legacy image bytes. Supabase database/Auth,
+Storage originals and imgproxy were preserved. Legacy render URLs now bypass the
+sidecar; the seven-day cache override and `X-Image-Cache-Status` header are no
+longer production requirements. R2-backed delivery is unchanged.
 
-The cache is intentionally limited to:
+The retained `deploy/supabase-image-cache/` source is recovery-only. Do not restore
+it or alter production credentials to satisfy an old diagnostic. The doctor now
+checks provider-aware public delivery, not the retired service's headers or TTL.
 
-`/storage/v1/render/image/public/`
-
-Do not route unrelated Supabase traffic through the image-cache service.
-
-Preserve cache variation by the complete transform request and negotiated image format. Different widths, qualities, and output formats must not collide in cache.
-
-The cache uses persistent storage and is expected to survive container replacement or restart.
-
-When modifying the image-cache deployment, preserve the distinction between:
-
-- raw Storage objects
-- transformed image requests
-- non-image Supabase traffic
-
-Use:
-
-```bash
-npm run photo-graph:doctor
-```
-
-after relevant infrastructure changes to verify rendering, caching, image format negotiation, Storage access, and graph infrastructure.
-
-Do not modify the managed Supabase/Coolify stack directly when the standalone cache service can implement the change cleanly.
+Do not modify or retire the managed Supabase stack as a consequence of removing
+this standalone cache. Detailed retirement evidence and recovery notes live in
+the shared infrastructure repository at `docs/supabase-image-cache-retirement.md`.
 
 ## Admin
 

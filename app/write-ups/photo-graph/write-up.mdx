@@ -1,0 +1,178 @@
+<header data-write-up-header>
+
+# {props.project.title}
+
+<nav aria-label={`${props.project.title} project links`}>
+  <a href={props.project.experienceHref}>Launch experience</a>
+</nav>
+
+<Lead>
+  {
+    "An interactive photography archive that links images by colour rather than subject. I built the graph interface, colour-processing pipeline, and comparison of five similarity configurations."
+  }
+</Lead>
+
+<ProjectDetails project={props.project} />
+
+</header>
+
+<ProjectPreview projectId="photo-graph" />
+
+## Following colour
+
+Two photographs can have little in common as subjects and still look right beside
+each other. I built Photo Node-Gallery to follow those connections.
+
+Each photograph is a node. Colour similarity creates the links; a force-directed
+layout arranges the graph. Drag, zoom, or open an image for a closer look. Following
+a chain of links takes you across different subjects through shared tones.
+
+<Figure
+  src={props.project.posterSrc}
+  alt={props.project.posterAlt}
+  width={props.project.posterWidth}
+  height={props.project.posterHeight}
+  caption="Links let you follow colour relationships across photographs of different subjects. Their positions come from the force simulation."
+/>
+
+## Building the archive
+
+Colour features are calculated ahead of time, so browsing does not require
+reprocessing the originals.
+
+Next.js provides the pages and API routes. react-force-graph draws the canvas,
+while D3 handles the force simulation, keeping the moving photographs out of the
+HTML layout. Supabase stores the precomputed graph and colour features; published
+images are delivered from Cloudflare R2 through a shared media Worker.
+
+Publishing a photograph must keep its node and generated relationships consistent.
+The database registration operation commits them together and rejects a generation
+based on a stale graph revision. A lost response can then be retried with the same
+upload identity. The [database regression tests](https://github.com/TheTexta/portfolio/blob/af8f1cc4c6bd66bce39c1b7ced7902341731a02a/tests/unit/upload-database.test.ts)
+check rollback after a failed neighbour insert, rejection of stale work, and replay
+that returns the accepted result while leaving exactly one node.
+
+## Testing the links
+
+The original model compared average colours using CIE76, a distance measure in LAB
+colour space. A mean loses the distribution of colours within an image, so I
+compared it with palette and distribution approaches, as well as other distances
+between mean colours.
+
+The benchmark from 26 August 2026 covers
+{props.benchmark.nodeCount} photographs and {props.benchmark.queryCount} reviewed
+query images, ranging from snow to coloured stage lighting.
+
+<Gallery
+  images={props.gallery.reviewImages}
+  label="Seven review photographs"
+  caption="The seven review images, read left to right, top to bottom."
+/>
+
+For each query I selected eight positive and eight negative examples based on
+colour and tone. I filtered each model's ranking to those sixteen judged
+candidates, then counted positives in its first four slots. Across seven queries,
+that gives 28 evaluated slots. A separate measure counts how often a judged
+positive ranks ahead of a judged negative; it does not compare a complete human
+ranking. I also checked whether each generated graph left photographs disconnected.
+
+## The result
+
+With CIEDE2000, still using mean LAB colour, 25 of 28 top-four slots within the
+judged candidate sets were positive ({props.benchmark.selectedPrecision}), compared
+with 24 of 28 for CIE76 ({props.benchmark.originalPrecision}). The 3.6 percentage-point
+difference represents one additional positive slot in this small comparison.
+
+<div className="my-8 overflow-x-auto">
+  <table className="w-full border-collapse text-left text-sm leading-relaxed">
+    <caption className="mb-3 text-left text-muted">
+      Saved August comparison: first four judged candidates per query, seven
+      queries. Components describe the graph over all 100 photographs.
+    </caption>
+    <thead>
+      <tr className="border-b border-ink">
+        <th scope="col" className="py-3 pr-3 font-semibold">
+          Configuration
+        </th>
+        <th scope="col" className="py-3 pr-3 font-semibold">
+          Positive slots
+        </th>
+        <th scope="col" className="py-3 font-semibold">
+          Components
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr className="border-b border-muted/30">
+        <th scope="row" className="py-3 pr-3 font-normal">
+          Mean LAB / CIE76
+        </th>
+        <td className="py-3 pr-3">24/28 (85.7%)</td>
+        <td className="py-3">7</td>
+      </tr>
+      <tr className="border-b border-muted/30">
+        <th scope="row" className="py-3 pr-3 font-normal">
+          Mean LAB / CIEDE2000
+        </th>
+        <td className="py-3 pr-3">25/28 (89.3%)</td>
+        <td className="py-3">1</td>
+      </tr>
+      <tr className="border-b border-muted/30">
+        <th scope="row" className="py-3 pr-3 font-normal">
+          Mean Oklab
+        </th>
+        <td className="py-3 pr-3">21/28 (75.0%)</td>
+        <td className="py-3">2</td>
+      </tr>
+      <tr className="border-b border-muted/30">
+        <th scope="row" className="py-3 pr-3 font-normal">
+          Oklab distribution
+        </th>
+        <td className="py-3 pr-3">23/28 (82.1%)</td>
+        <td className="py-3">1</td>
+      </tr>
+      <tr className="border-b border-muted/30">
+        <th scope="row" className="py-3 pr-3 font-normal">
+          Oklab palette
+        </th>
+        <td className="py-3 pr-3">20/28 (71.4%)</td>
+        <td className="py-3">2</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+The image comparison below shows actual nearest neighbours from the full saved
+archive ranking. It includes unjudged photographs, so these pictures are not the
+candidate sets used to calculate the percentages above.
+
+<Comparison
+  query={props.gallery.comparison.query}
+  rows={props.gallery.comparison.rows}
+  caption="Actual nearest neighbours from the full saved archive ranking, in order. This illustration is separate from evaluation within the manually judged candidate sets."
+/>
+
+I retained mean colour because the richer representations did not outperform the
+selected configuration on this criterion. Its graph formed one connected component
+with no isolated photographs, allowing traversal through the archive. The original
+configuration split into {props.benchmark.originalComponents} groups, including
+{props.benchmark.originalIsolates} photographs with no links. The distance thresholds
+also differ between configurations, so connectivity cannot be attributed to the
+distance formula alone. CIE76 placed judged positives ahead of negatives slightly
+more often: 82.15%, compared with 81.92% for CIEDE2000.
+
+These results describe the saved August benchmark, not the current live archive.
+
+## Where it falls short
+
+Colour matching ignores the subject. It can link unrelated scenes or separate two
+views of the same place because their lighting differs.
+
+The review covers seven hand-picked starting images and my judgments of colour and
+tone, not a complete set of correct matches or an independent evaluation. The same
+queries informed model selection. Unmarked results are unjudged, not automatically
+wrong. The [saved benchmark](https://github.com/TheTexta/portfolio/blob/af8f1cc4c6bd66bce39c1b7ced7902341731a02a/public/projects/photo-graph/color-model-benchmark-v1.json),
+[judgment sets](https://github.com/TheTexta/portfolio/blob/af8f1cc4c6bd66bce39c1b7ced7902341731a02a/scripts/photo-graph/color-benchmark-judgments-v1.json),
+and [evaluation code](https://github.com/TheTexta/portfolio/blob/af8f1cc4c6bd66bce39c1b7ced7902341731a02a/scripts/photo-graph/benchmark-color-models.ts)
+make that scope inspectable. A broader relevance claim would need new assessment
+queries and separately collected judgments.

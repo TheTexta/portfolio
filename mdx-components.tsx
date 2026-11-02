@@ -3,17 +3,15 @@ import type { ComponentProps, ReactNode } from "react";
 
 import {
   WriteUpFigure,
+  WriteUpProjectDetails,
   WriteUpMediaPlaceholder,
+  WriteUpTitle,
 } from "@/app/components/projects/project-write-up";
 import WriteUpProjectPreview from "@/app/components/projects/project-write-up-preview";
 import {
   WriteUpComparison,
   WriteUpGallery,
 } from "@/app/components/projects/project-write-up-gallery";
-
-function Heading(props: ComponentProps<"h1">) {
-  return <h1 {...props} id="write-up-title" />;
-}
 
 function Lead({ children }: { children: ReactNode }) {
   return (
@@ -37,10 +35,11 @@ function MediaPlaceholder({ caption }: { caption: ReactNode }) {
 }
 
 const components = {
-  h1: Heading,
+  h1: WriteUpTitle,
   Lead,
   Figure,
   MediaPlaceholder,
+  ProjectDetails: WriteUpProjectDetails,
   ProjectPreview: WriteUpProjectPreview,
   Gallery: WriteUpGallery,
   Comparison: WriteUpComparison,

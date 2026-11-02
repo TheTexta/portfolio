@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { RotateCw } from "lucide-react";
 
 import { cn } from "@/lib/cn";
@@ -103,6 +110,7 @@ export default function GrailedPlusLiveDemo({
   resetToken,
   title,
 }: GrailedPlusLiveDemoProps) {
+  const descriptionId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const readyTimeoutRef = useRef<number | null>(null);
@@ -336,63 +344,75 @@ export default function GrailedPlusLiveDemo({
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      className={cn("relative overflow-hidden bg-transparent", className)}
-      style={{ minHeight: frameBounds.min }}
-    >
-      {!isReady ? (
-        <div
-          className="absolute inset-x-0 top-0 z-0 flex items-center justify-center px-6 text-center text-xs tracking-[0.12em] text-muted uppercase"
-          style={{ minHeight: frameBounds.min }}
-          role="status"
-        >
-          {hasTimedOut ? (
-            <span className="flex flex-col items-center gap-3">
-              <span>Live demo is temporarily unavailable</span>
-              <button
-                type="button"
-                onClick={retryDemo}
-                className="inline-flex size-8 items-center justify-center border transition-opacity hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
-                aria-label="Retry loading live demo"
-                title="Retry loading live demo"
-              >
-                <RotateCw aria-hidden className="size-4" strokeWidth={1.75} />
-              </button>
-            </span>
-          ) : shouldLoad ? (
-            "Connecting to the current extension build"
-          ) : (
-            "Live demo loads as it approaches"
-          )}
-        </div>
-      ) : null}
+    <div>
+      <p
+        id={descriptionId}
+        className="border-b border-ink px-3 py-2 text-xs leading-5 text-muted"
+      >
+        Interactive demo using sample listings. Scores, timestamps and state
+        changes are illustrative; no live marketplace query is performed.
+      </p>
+      <div
+        ref={containerRef}
+        className={cn("relative overflow-hidden bg-transparent", className)}
+        style={{ minHeight: frameBounds.min }}
+      >
+        {!isReady ? (
+          <div
+            className="absolute inset-x-0 top-0 z-0 flex items-center justify-center px-6 text-center text-xs tracking-[0.12em] text-muted uppercase"
+            style={{ minHeight: frameBounds.min }}
+            role="status"
+          >
+            {hasTimedOut ? (
+              <span className="flex flex-col items-center gap-3">
+                <span>Sample-data demo is temporarily unavailable</span>
+                <button
+                  type="button"
+                  onClick={retryDemo}
+                  className="inline-flex size-8 items-center justify-center border transition-opacity hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+                  aria-label="Retry loading live demo"
+                  title="Retry loading live demo"
+                >
+                  <RotateCw aria-hidden className="size-4" strokeWidth={1.75} />
+                </button>
+              </span>
+            ) : shouldLoad ? (
+              "Loading the sample-data demo"
+            ) : (
+              "Sample-data demo loads as it approaches"
+            )}
+          </div>
+        ) : null}
 
-      {shouldLoad ? (
-        <iframe
-          key={`${feature}-${attempt}`}
-          ref={iframeRef}
-          src={demoUrl}
-          title={title}
-          loading={eager ? "eager" : "lazy"}
-          referrerPolicy="strict-origin"
-          sandbox="allow-scripts allow-same-origin"
-          onLoad={requestReady}
-          scrolling="auto"
-          className={cn(
-            "relative z-10 block size-full border-0 bg-transparent transition-opacity duration-300",
-            isReady ? "opacity-100" : "opacity-0",
-          )}
-          style={{
-            height: frameHeight,
-            width: "100%",
-            colorScheme: "light",
-            overflow: "hidden",
-          }}
-        />
-      ) : (
-        <div style={{ height: frameBounds.min }} aria-hidden />
-      )}
+        {shouldLoad ? (
+          <iframe
+            key={`${feature}-${attempt}`}
+            ref={iframeRef}
+            src={demoUrl}
+            title={title}
+            aria-describedby={descriptionId}
+            loading={eager ? "eager" : "lazy"}
+            referrerPolicy="strict-origin"
+            sandbox="allow-scripts allow-same-origin"
+            onLoad={requestReady}
+            scrolling="auto"
+            inert={!isReady}
+            tabIndex={isReady ? undefined : -1}
+            className={cn(
+              "relative z-10 block size-full border-0 bg-transparent transition-opacity duration-300",
+              isReady ? "opacity-100" : "pointer-events-none opacity-0",
+            )}
+            style={{
+              height: frameHeight,
+              width: "100%",
+              colorScheme: "light",
+              overflow: "hidden",
+            }}
+          />
+        ) : (
+          <div style={{ height: frameBounds.min }} aria-hidden />
+        )}
+      </div>
     </div>
   );
 }

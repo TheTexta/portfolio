@@ -13,7 +13,7 @@ export type HeaderDirectorySegment = {
 };
 
 const DIRECTORY_SEGMENT_CLASS =
-  "transition-opacity outline-none hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80";
+  "transition-opacity outline-none hover:underline hover:opacity-55 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80";
 const DIRECTORY_TRANSITION_EASE = [0.22, 1, 0.36, 1] as const;
 
 function getDirectoryTransition(
@@ -35,6 +35,10 @@ function getPathDirectorySegments(pathname: string): HeaderDirectorySegment[] {
 
     if (label === "projects") {
       return { label, href: PROJECT_ROUTES.portfolioProjects };
+    }
+
+    if (label === "write-ups") {
+      return { label, href: PROJECT_ROUTES.writeUps };
     }
 
     return {
@@ -74,7 +78,9 @@ export default function HeaderDirectory({
         <span aria-hidden>/</span>
         {directorySegments.map((segment) => (
           <span key={`${segment.label}-${segment.href}`}>
-            {segment.href.includes("#") ? (
+            {segment.href === PROJECT_ROUTES.home ||
+            segment.href === PROJECT_ROUTES.writeUps ||
+            segment.href.includes("#") ? (
               <a href={segment.href} className={DIRECTORY_SEGMENT_CLASS}>
                 {segment.label}
               </a>
