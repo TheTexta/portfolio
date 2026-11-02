@@ -59,6 +59,49 @@ The finding-by-finding record is
 
 ## Verification
 
+### Approved production release — 2 November
+
+- Release commits: `0eb2406` (portfolio review, write-ups/UI and R2 fallback), then
+  `bd3ec8e` (bound the Node engine range to preserve Vercel's configured Node 24).
+  Commits are local; no Git push or hosted CI run was performed.
+- Deployed a clean archive of `bd3ec8e` to the existing
+  `thetextas-projects/portfolio` project, without local environment files or the
+  pre-existing untracked SEO audit. The upload dry run covered 285 files and
+  matched the committed tree. Production environment variables were not changed.
+- Accepted deployment: `dpl_CXWMm6L5TDPZYvpH2eGxETnQvigK`,
+  `https://portfolio-ihjgc95l8-thetextas-projects.vercel.app`, promoted to
+  `https://dextery.dev`. CLI inspection of the custom domain resolved to this
+  READY deployment. Hosted logs confirmed Node 24 and Next.js 16.4.3.
+- The first candidate selected Node 26 from the unbounded engine minimum. It was
+  never promoted. The replacement was built and checked before promotion; no
+  deployment-protection bypass was created or protection setting changed.
+- Previous production retained for rollback:
+  `https://portfolio-9ne5xr5a1-thetextas-projects.vercel.app`
+  (`dpl_F713Z9eMEXUGgf2Um2mYNmxEXFGw`, source `af8f1cc`).
+- Release checks: lint/types/format, 105 unit tests, both algorithm validators,
+  all seven local Auth scenario groups, and production dependency audit (zero
+  findings) passed. The fresh full browser run returned **128 passed, 3 intentional
+  skips and 1 native pointer-lock failure**. A retry hit another project's occupied
+  port; the unchanged headed test then passed from the committed release on an
+  isolated ephemeral port. No assertion was removed or relaxed. The earlier full
+  129-pass run below remains historical, not a claim about this later rerun.
+- Hosted acceptance: all 72 browser/Googlebot route, redirect, canonical, robots
+  and sitemap checks passed. The public graph returned 103 R2 nodes; sample image
+  transforms returned non-empty WebP. `/admin` returned its public sign-in page,
+  while anonymous `/api/admin/photo-graph/graph` returned 401. No live signed-in
+  upload, mutation or rollback rehearsal was performed.
+- Live Chromium checks covered all seven centred article titles and icon-free
+  About navigation: desktop hover, mobile first-tap preview/second-tap navigation,
+  the 256px mobile list and no horizontal overflow. No page errors were captured;
+  Vercel's checked 10-minute runtime-error window returned no clusters. These are
+  smoke observations, not an ongoing monitoring guarantee or physical-device test.
+- A concurrent title-size edit in
+  `app/components/projects/project-write-up.tsx` appeared after the release was
+  frozen. It was preserved, not committed or deployed. Other repositories and
+  the old untracked SEO audit were also left untouched.
+
+### Original local review checks
+
 | Check                                     | Local result                                                                                             |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | Portfolio clean lockfile install          | Passed, scripts disabled; separate native Sharp smoke passed                                             |
@@ -125,9 +168,9 @@ execution passed. No forced override or broad cleanup was used.
 
 ## Explicit remaining gates
 
-- **Publication:** approved commits/pushes, actual hosted green/failing-contract
-  CI evidence, deployed route/auth checks and package/source parity. Local-only
-  approval deliberately leaves these pending.
+- **Publication:** the portfolio commits and deployment are recorded above.
+  Git pushes, actual hosted green/failing-contract CI evidence, other-repository
+  releases and a real signed-in production admin-flow check remain pending.
 - **Service operations:** actual gateway proxy/egress policy and intended host
   coverage, separately provisioned admin credential, and isolated rollout. Docker
   daemon was unavailable for the local container smoke. No production endpoint

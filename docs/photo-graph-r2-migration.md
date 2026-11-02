@@ -19,16 +19,20 @@ Read-only checks against the public graph API, Cloudflare inventory and Coolify:
   separately approved October 30 retirement evidence remains in
   `dextery-infrastructure/docs/supabase-image-cache-retirement.md`.
 
-Local follow-up corrections: the static snapshot's 45 available nodes now resolve
+Follow-up corrections (deployed 2026-11-02): the static snapshot's 45 available nodes now resolve
 through R2, while preserving node IDs, retained relationships and legacy
 provider-less database/upload semantics. This snapshot is not the full 103-node
 catalogue; all 45 expected keys match current published graph references. The
 legacy Firebase importer explicitly keeps its Supabase destination. The doctor
 checks provider-qualified original/transform delivery, with
 no retired-cache TTL/header assumptions; RPC discovery uses GET OpenAPI inspection
-instead of invoking the mutating function. These local corrections require an
-approved app deployment before they affect the hosted fallback. No production
-configuration or data was changed for this verification.
+instead of invoking the mutating function. Release `bd3ec8e` was subsequently
+deployed with owner approval as `dpl_CXWMm6L5TDPZYvpH2eGxETnQvigK` and promoted
+to `dextery.dev`, making the R2 fallback correction live. Hosted acceptance returned
+103 R2 graph nodes, non-empty WebP transforms, and anonymous admin denial; all
+72 route/metadata checks passed. See `portfolio-review-delivery.md` for the source,
+runtime, deployment and rollback record. No Storage, database, Worker or credential
+changes were made for verification or this frontend release.
 
 The local doctor was rerun after correction and still returned HTTP 401 while
 reading the sample graph row with the existing local credential. No credential
@@ -39,7 +43,8 @@ Local verification passed: `npm run check`, 105 unit tests, both algorithm
 validators, 12 focused desktop/mobile Photo Graph and R2 upload-recovery browser
 tests, and an isolated production build without environment files. Independent
 source review found no actionable issues. The normal port-3000 development server
-was left untouched; nothing was committed, pushed or deployed.
+was left untouched. At that verification cutoff nothing had been committed,
+pushed or deployed; the later authorized app release is recorded above.
 
 ## Owner-approved source retirement — 2026-10-15
 
@@ -312,7 +317,8 @@ is needed. Preserve full-resolution originals either way.
   credentials in CI or run mutating maintenance scripts as health checks.
 
 The media cutover and separately approved source/cache retirement are complete.
-The local fallback/doctor corrections above remain undeployed. A future
+The fallback correction is now live and the provider-aware doctor source is
+committed. Its existing local credential-related 401 remains unresolved. A future
 Supabase-only rollback still requires an independently approved and verified
 reverse-copy of every required original; that rollback exercise was not run as
 part of this read-only verification. No additional deletion is authorized.
