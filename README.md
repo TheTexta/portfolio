@@ -18,8 +18,21 @@
 - `public/`: static project assets and Photo Graph snapshots.
 - `docs/`: compatibility audits, design notes, and Photo Graph research.
 
-Run `npm run check` before opening a pull request. It runs lint, TypeScript,
-and formatting checks in that order.
+Run `npm run check` before opening a pull request. It checks tracked repository
+paths, then runs lint, TypeScript, and formatting checks in that order.
+
+## Repository safety
+
+Never commit deployment environment files or temporary infrastructure snapshots.
+`.gitignore` excludes `.env*`, `*.env`, `*.env.*`, and `.tmp`; ignore rules do not
+remove files that Git already tracks. `npm run check:repository` rejects tracked
+temporary paths and environment filenames, including forced additions. It runs
+as part of `npm run check`, including in CI. The guard reads paths from the Git
+index and never prints file contents. It is not a secret-content or history scan;
+credentials embedded in otherwise permitted files require separate review.
+
+See [`docs/security/credential-exposure.md`](docs/security/credential-exposure.md)
+for the deployment-snapshot exposure, containment limits and recovery gates.
 
 ## Automated tests
 
