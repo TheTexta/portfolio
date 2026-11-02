@@ -29,7 +29,10 @@ Zod security patch. No forced peers, broad incompatible override or
 
 - **Node 22.12+** is the minimum supported runtime for current Vite/Vitest. Node
   22.18 satisfies the checked engines. Node typings follow the supported 22 line,
-  not the latest Node 26 APIs.
+  not the latest Node 26 APIs. The release range is bounded below Node 25 to keep
+  Vercel on its configured Node 24. The initial November 2 candidate selected
+  Node 26 from the unbounded minimum; it was not promoted and was replaced by
+  a bounded-range build before switching production traffic.
 - **TypeScript 6.0.3** remains below the lint parser's `<6.1.0` peer ceiling.
   TypeScript 7 is not forced. Next itself supports its newer CLI checker, but
   that does not make the entire lint stack compatible.

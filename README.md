@@ -23,7 +23,9 @@ and formatting checks in that order.
 
 ## Automated tests
 
-Use Node.js **22.12 or later** (verified on 22.18). The compatible dependency
+Use Node.js **22.12+ or 24.x, below 25** (local verification on 22.x). The engine
+upper bound keeps Vercel on its configured Node 24 rather than auto-upgrading to
+the latest major. The compatible dependency
 refresh, security audit scope and TypeScript/ESLint/Node-typing holds are documented
 in [`docs/dependency-updates.md`](docs/dependency-updates.md).
 
