@@ -77,11 +77,15 @@ for (const { path, title, figures } of writeUps) {
       article.getByRole("heading", { name: title, level: 1 }),
     ).toBeVisible();
     await expect(article.getByRole("heading", { level: 1 })).toHaveCount(1);
-    await expect(article.locator("h1")).toHaveCSS(
+    const typography = await article.locator("h1").evaluate((title) => ({
+      size: parseFloat(getComputedStyle(title).fontSize),
+      lineHeight: parseFloat(getComputedStyle(title).lineHeight),
+    }));
+    expect(typography.lineHeight).toBeCloseTo(typography.size * 0.7705, 1);
+    await expect(article.locator("[data-write-up-meta] nav")).toHaveCSS(
       "line-height",
-      page.viewportSize()!.width >= 640 ? "45px" : "37.5px",
+      "25.2px",
     );
-    await expect(article.locator("nav")).toHaveCSS("line-height", "25.2px");
     await expect(article.locator("[data-write-up-lead]")).toHaveCSS(
       "margin-top",
       "16px",

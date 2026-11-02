@@ -2,17 +2,18 @@
 
 # {props.project.title}
 
-<nav aria-label={`${props.project.title} project links`}>
-  <a href={props.project.liveHref}>Visit site</a>
-</nav>
+<ProjectMeta>
+  <ProjectDetails project={props.project} />
+  <nav aria-label={`${props.project.title} project links`}>
+    <a href={props.project.liveHref}>Visit site</a>
+  </nav>
+</ProjectMeta>
 
 <Lead>
   {
     "A video-led portfolio for Allie's live lighting work, combining an interactive gallery, a 3D projector room, and an automated playback pipeline."
   }
 </Lead>
-
-<ProjectDetails project={props.project} />
 
 </header>
 

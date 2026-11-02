@@ -2,20 +2,21 @@
 
 # {props.project.title}
 
-<nav aria-label={`${props.project.title} project links`}>
-  <a href={props.project.sourceHref}>Source and reproduction instructions</a>
-  <a href="https://github.com/TheTexta/bot-or-not-mcgill/blob/5539649f4757570eab0c1bdc8d304597492d7aa4/tests/test_modeling.py">
-    Split-contract tests
-  </a>
-</nav>
+<ProjectMeta>
+  <ProjectDetails project={props.project} />
+  <nav aria-label={`${props.project.title} project links`}>
+    <a href={props.project.sourceHref}>Source and reproduction instructions</a>
+    <a href="https://github.com/TheTexta/bot-or-not-mcgill/blob/5539649f4757570eab0c1bdc8d304597492d7aa4/tests/test_modeling.py">
+      Split-contract tests
+    </a>
+  </nav>
+</ProjectMeta>
 
 <Lead>
   {
     "Comparing English and French bot classifiers, with reproducible selection reports and explicit evaluation boundaries."
   }
 </Lead>
-
-<ProjectDetails project={props.project} />
 
 </header>
 

@@ -2,12 +2,15 @@
 
 # {props.project.title}
 
-<nav aria-label={`${props.project.title} project links`}>
-  <a href="/grailed-plus">Product page and sample-data demos</a>
-  <a href="https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd">
-    Chrome Web Store
-  </a>
-</nav>
+<ProjectMeta>
+  <ProjectDetails project={props.project} />
+  <nav aria-label={`${props.project.title} project links`}>
+    <a href="/grailed-plus">Product page and sample-data demos</a>
+    <a href="https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd">
+      Chrome Web Store
+    </a>
+  </nav>
+</ProjectMeta>
 
 <Lead>
   {
@@ -15,15 +18,13 @@
   }
 </Lead>
 
-<ProjectDetails project={props.project} />
-
 </header>
 
 A listing rarely gives a buyer enough context to judge its price. Similar items
 appear on other marketplaces under different titles, and price history helps only
-when its limits are clear. I extended the price-history foundation from
-[RVRX/grailed-plus](https://github.com/RVRX/grailed-plus), adding marketplace
-comparison, local image matching, currency conversion, and interface customization.
+when its limits are clear. I built Grailed Plus to bring marketplace comparison,
+local image matching, price history, currency conversion, and interface
+customization into the pages people already browse.
 The current application source is private; this article and the product demos
 provide a public explanation of the architecture and its tradeoffs.
 

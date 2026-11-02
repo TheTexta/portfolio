@@ -32,9 +32,9 @@ export default function WriteUpProjectPreview({
       role="region"
       aria-label={`${project.title} interactive preview`}
       data-write-up-preview
-      className="relative my-10 flex h-[clamp(20rem,50svh,32rem)] flex-col overflow-hidden border border-ink bg-canvas [&_p]:m-0"
+      className="relative my-10 flex flex-col bg-canvas [&_p]:m-0"
     >
-      <div className="relative min-h-0 flex-1 overflow-hidden">
+      <div className="relative aspect-[672/371.5] min-h-64 overflow-hidden border border-ink sm:min-h-0">
         {project.previewKind === "photo-graph" ? (
           <PhotoGraphCanvas
             fitToCanvas
@@ -57,7 +57,13 @@ export default function WriteUpProjectPreview({
         ) : null}
       </div>
       {showControls && href ? (
-        <ProjectPreviewControls title={project.title} href={href} />
+        <ProjectPreviewControls
+          title={project.title}
+          href={href}
+          viewLabel={
+            project.previewKind === "photo-graph" ? "Graph" : "Homepage"
+          }
+        />
       ) : null}
     </div>
   );

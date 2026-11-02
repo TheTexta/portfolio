@@ -33,6 +33,7 @@ async function expectHome(page: Page) {
 async function expectSection(page: Page, id: string) {
   await expect(page).toHaveURL(new RegExp(`#${id}$`));
   await expect(page.locator(".project-focus-view")).toHaveCount(0);
+  await expect(page.locator(`#${id}`)).toHaveCSS("outline-style", "none");
   await expect
     .poll(() =>
       page.locator(`#${id}`).evaluate((element) => {
@@ -46,6 +47,34 @@ async function expectSection(page: Page, id: string) {
     )
     .toBeLessThan(2);
 }
+
+test("article return links do not highlight section targets", async ({
+  page,
+}) => {
+  for (const colorScheme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme });
+    for (const [article, label, target] of [
+      ["tvm-discord-bot", "Back to projects", "about"],
+      ["elliot-mairet", "Index", "projects"],
+    ]) {
+      await page.goto(`/write-ups/${article}`);
+      const link = page.getByRole("link", { name: label, exact: true });
+      await link.focus();
+      await link.press("Enter");
+      await expectSection(page, target);
+      const section = page.locator(`#${target}`);
+      await section.focus();
+      await expect(section).toBeFocused();
+      await expect(section).toHaveCSS("outline-style", "none");
+    }
+    const about = page
+      .getByRole("navigation", { name: "Site navigation" })
+      .getByRole("link", { name: "About", exact: true });
+    await about.focus();
+    await expect(about).toHaveCSS("outline-style", "solid");
+    await expect(about).toHaveCSS("outline-width", "2px");
+  }
+});
 
 test("the home brand resets project focus, section scroll, and history", async ({
   page,

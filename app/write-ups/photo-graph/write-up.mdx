@@ -2,17 +2,18 @@
 
 # {props.project.title}
 
-<nav aria-label={`${props.project.title} project links`}>
-  <a href={props.project.experienceHref}>Launch experience</a>
-</nav>
+<ProjectMeta>
+  <ProjectDetails project={props.project} />
+  <nav aria-label={`${props.project.title} project links`}>
+    <a href={props.project.experienceHref}>Launch experience</a>
+  </nav>
+</ProjectMeta>
 
 <Lead>
   {
     "An interactive photography archive that links images by colour rather than subject. I built the graph interface, colour-processing pipeline, and comparison of five similarity configurations."
   }
 </Lead>
-
-<ProjectDetails project={props.project} />
 
 </header>
 

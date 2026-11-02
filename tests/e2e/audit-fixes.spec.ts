@@ -153,7 +153,7 @@ test("portfolio design uses live shared components without changing the article 
   ).toHaveAttribute("href", "/portfolio#about");
 });
 
-test("write-up metadata is a compact wrapping line rather than a card", async ({
+test("Figma write-up metadata and links share a wrapping row above the lead", async ({
   page,
 }) => {
   for (const project of projectCatalog.filter(
@@ -174,8 +174,12 @@ test("write-up metadata is a compact wrapping line rather than a card", async ({
     const leadBounds = (await header
       .locator("[data-write-up-lead]")
       .boundingBox())!;
+    const meta = header.locator("[data-write-up-meta]");
+    const metaBounds = (await meta.boundingBox())!;
+    const detailsBounds = (await details.boundingBox())!;
+    await expect(meta).toHaveCSS("display", "flex");
+    await expect(meta).toHaveCSS("flex-wrap", "wrap");
     await expect(header.locator("h1")).toHaveCSS("text-align", "center");
-    await expect(header.locator("nav")).toHaveCSS("justify-content", "center");
     expect(
       Math.abs(
         titleBounds.x +
@@ -187,9 +191,28 @@ test("write-up metadata is a compact wrapping line rather than a card", async ({
     expect(linksBounds.y).toBeGreaterThanOrEqual(
       frameBounds.y + frameBounds.height,
     );
-    expect(leadBounds.y).toBeGreaterThanOrEqual(
-      linksBounds.y + linksBounds.height,
+    expect(detailsBounds.y).toBeGreaterThanOrEqual(metaBounds.y);
+    expect(linksBounds.y + linksBounds.height).toBeLessThanOrEqual(
+      metaBounds.y + metaBounds.height,
     );
+    expect(leadBounds.y).toBeGreaterThanOrEqual(
+      metaBounds.y + metaBounds.height + 16,
+    );
+    if (project.id === "elliotmairet" && page.viewportSize()!.width >= 1024) {
+      expect(
+        Math.abs(
+          detailsBounds.y +
+            detailsBounds.height / 2 -
+            (linksBounds.y + linksBounds.height / 2),
+        ),
+      ).toBeLessThan(1);
+      expect(linksBounds.x).toBeGreaterThan(
+        detailsBounds.x + detailsBounds.width,
+      );
+    }
+    await expect(
+      details.locator('img[src$="detail-separator.svg"]'),
+    ).toHaveCount(2);
     await expect(details.locator("dd").nth(0)).toHaveText(project.date);
     await expect(details.locator("dd").nth(1)).toContainText(project.role);
     await expect(details.locator("dd").nth(2)).toContainText(project.status);
@@ -201,14 +224,31 @@ test("write-up metadata is a compact wrapping line rather than a card", async ({
   }
 });
 
-test("framed write-up titles fit narrow and wide reading columns", async ({
+test("framed write-up titles and live example share homepage scaling without overflow", async ({
   page,
 }) => {
+  const widths = [320, 390, 640, 768, 1024, 1440];
+  const homepageSizes = new Map<number, string>();
+  await page.goto("/portfolio");
+  for (const width of widths) {
+    await page.setViewportSize({ width, height: 1000 });
+    const homeType = await page.locator("h1").evaluate((title) => ({
+      fontSize: getComputedStyle(title).fontSize,
+      lineHeight: getComputedStyle(title).lineHeight,
+    }));
+    homepageSizes.set(width, homeType.fontSize);
+    expect(
+      Math.abs(
+        parseFloat(homeType.lineHeight) -
+          parseFloat(homeType.fontSize) * 0.7705,
+      ),
+    ).toBeLessThan(0.02);
+  }
   for (const project of projectCatalog.filter(
     (project) => project.writeUpHref,
   )) {
     await page.goto(project.writeUpHref!);
-    for (const width of [320, 390, 1440]) {
+    for (const width of widths) {
       await page.setViewportSize({ width, height: 1000 });
       const dimensions = await page
         .locator("[data-write-up-title]")
@@ -217,6 +257,8 @@ test("framed write-up titles fit narrow and wide reading columns", async ({
           const frameBounds = frame.getBoundingClientRect();
           const titleBounds = title.getBoundingClientRect();
           return {
+            fontSize: getComputedStyle(title).fontSize,
+            lineHeight: getComputedStyle(title).lineHeight,
             fitsText: title.scrollWidth <= title.clientWidth,
             fitsFrame:
               titleBounds.top >= frameBounds.top &&
@@ -231,11 +273,24 @@ test("framed write-up titles fit narrow and wide reading columns", async ({
           };
         });
       expect(dimensions, `${project.title} at ${width}px`).toMatchObject({
+        fontSize: homepageSizes.get(width),
         fitsText: true,
         fitsFrame: true,
         pageOverflows: false,
       });
       expect(dimensions.centreOffset).toBeLessThan(1);
+      expect(parseFloat(dimensions.lineHeight)).toBeCloseTo(
+        parseFloat(dimensions.fontSize) * 0.7705,
+        1,
+      );
+      if (project.id === "portfolio-design") {
+        const example = page.getByRole("figure", {
+          name: "Portfolio frame example",
+        });
+        await expect(
+          example.getByText("Dexter Young", { exact: true }),
+        ).toHaveCSS("font-size", homepageSizes.get(width)!);
+      }
     }
   }
 });
@@ -312,7 +367,7 @@ test("blocked article preview keeps only an accessible direct-open icon", async 
   });
   await expect(open).toHaveAttribute("href", "https://elliotmairet.com/");
   await expect(open).toHaveAttribute("target", "_blank");
-  await expect(open.locator("svg")).toHaveCount(1);
+  await expect(open.locator('img[src$="open-preview.svg"]')).toHaveCount(1);
   await expect(open).toHaveText("");
   await expect(preview.getByRole("button")).toHaveCount(0);
   await expect(preview.locator("details")).toHaveCount(0);
@@ -496,8 +551,8 @@ test("embedding refusal retains a direct-open recovery path", async ({
   await expect(open).toBeVisible();
   await open.focus();
   await expect(open).toBeFocused();
-  await expect(open).toHaveCSS("width", "44px");
-  await expect(open).toHaveCSS("height", "44px");
+  await expect(open).toHaveCSS("width", "48px");
+  await expect(open).toHaveCSS("height", "48px");
   const controls = preview.getByRole("group", {
     name: "Elliot Mairet preview controls",
   });

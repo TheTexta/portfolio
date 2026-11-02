@@ -2,18 +2,19 @@
 
 # {props.project.title}
 
-<nav aria-label={`${props.project.title} project links`}>
-  <a href={props.project.liveHref}>Visit site</a>
-  <a href={props.project.sourceHref}>View source</a>
-</nav>
+<ProjectMeta>
+  <ProjectDetails project={props.project} />
+  <nav aria-label={`${props.project.title} project links`}>
+    <a href={props.project.liveHref}>Visit site</a>
+    <a href={props.project.sourceHref}>View source</a>
+  </nav>
+</ProjectMeta>
 
 <Lead>
   {
     "A photography archive for Elliot Mairet, with an image index, large photograph views, colour-based discovery, and a private publishing workflow. I designed and developed the site; the photographs are Elliot's."
   }
 </Lead>
-
-<ProjectDetails project={props.project} />
 
 </header>
 
@@ -27,7 +28,7 @@ to a minimum so each view could give most of its space to the photographs. A den
 index lets you scan the collection before choosing an image.
 
 <Figure
-  src="/projects/elliot-mairet/write-up/archive.webp"
+  src="/projects/elliot-mairet/write-up/archive-figma.png"
   alt="Elliot Mairet's archive: a three-column index of colour and black-and-white photographs on a white page."
   width={1440}
   height={1000}
@@ -38,7 +39,7 @@ On an individual page, the photograph takes up most of the screen, with its
 five-colour palette below.
 
 <Figure
-  src="/projects/elliot-mairet/write-up/photograph.webp"
+  src="/projects/elliot-mairet/write-up/photograph-figma.png"
   alt="A photograph of golden leaves against a blue sky, displayed above five colour swatches."
   width={1440}
   height={1000}
@@ -58,7 +59,7 @@ relationships: they do not identify the same subject or location. When few close
 matches exist, the matcher relaxes its threshold to offer up to five candidates.
 
 <Figure
-  src="/projects/elliot-mairet/write-up/colour-navigation.webp"
+  src="/projects/elliot-mairet/write-up/colour-navigation-figma.png"
   alt="The ochre palette swatch selected above a grid of photographs with warm brown and gold tones."
   width={1440}
   height={1000}

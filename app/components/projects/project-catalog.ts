@@ -101,7 +101,7 @@ const projectCatalogDefinition = [
       "Grailed listing with Grailed Plus pricing insights and market comparison",
     posterAspectRatio: 1.75,
     previewKind: "grailed-plus",
-    role: "Product development, extending RVRX/grailed-plus",
+    role: "Design and product development",
     date: "2026",
     status: "Published Chrome extension; Firefox build support",
     outcome: "Pricing context and cross-market comparison inside Grailed",

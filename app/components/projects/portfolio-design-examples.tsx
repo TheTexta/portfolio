@@ -1,7 +1,11 @@
 import ProjectBrowser from "@/app/components/projects/project-browser";
-import { BorderContainer } from "@/app/components/ui/editorial";
+import {
+  BorderContainer,
+  BORDER_CONTAINER_TEXT_SCALE_CLASS,
+} from "@/app/components/ui/editorial";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
 import { SITE_PROFILE } from "@/lib/site-config";
+import { cn } from "@/lib/cn";
 
 export function PortfolioFrameExample() {
   return (
@@ -13,8 +17,13 @@ export function PortfolioFrameExample() {
       <div className="mb-4 hidden justify-end text-xs font-semibold tracking-[0.12em] sm:flex">
         <ThemeToggle />
       </div>
-      <BorderContainer className="h-44">
-        <span className="block py-6 text-center font-display text-[clamp(1.5rem,4vw,3rem)] leading-none font-semibold tracking-tighter">
+      <BorderContainer className="h-auto min-h-44 grid-rows-[minmax(1.5rem,1fr)_auto_minmax(1.5rem,1fr)] sm:min-h-56">
+        <span
+          className={cn(
+            BORDER_CONTAINER_TEXT_SCALE_CLASS,
+            "block px-3 py-4 text-center font-display leading-tight font-semibold tracking-[-0.025em] text-balance sm:px-4 sm:py-5",
+          )}
+        >
           {SITE_PROFILE.name}
         </span>
       </BorderContainer>

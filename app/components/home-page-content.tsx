@@ -13,6 +13,7 @@ import {
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import {
   BorderContainer,
+  BORDER_CONTAINER_TEXT_SCALE_CLASS,
   EditorialRuleHeading,
   SiteHeader,
 } from "@/app/components/ui/editorial";
@@ -21,6 +22,7 @@ import HeaderDirectory, {
 } from "@/app/components/ui/header-directory";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
 import { useReducedMotion } from "@/app/hooks/use-reduced-motion";
+import { cn } from "@/lib/cn";
 
 const HOME_MOTION_EASE = [0.22, 1, 0.36, 1] as const;
 const HOME_MOTION_DURATION = 0.65;
@@ -203,7 +205,12 @@ export default function HomePageContent() {
           </div>
           <div className="mx-auto h-60 w-[calc(100%-2.5rem)] max-w-200 py-12 sm:h-82.5 sm:w-[calc(100%-4rem)] lg:w-[calc(100%-6rem)] lg:max-w-225">
             <BorderContainer>
-              <h1 className="object-center px-4 py-5 text-center font-display text-4xl leading-[0.7705] font-semibold tracking-tighter whitespace-nowrap sm:text-6xl lg:py-8 lg:text-8xl">
+              <h1
+                className={cn(
+                  BORDER_CONTAINER_TEXT_SCALE_CLASS,
+                  "object-center px-4 py-5 text-center font-display leading-[0.7705] font-semibold tracking-tighter whitespace-nowrap lg:py-8",
+                )}
+              >
                 Dexter Young
               </h1>
             </BorderContainer>
@@ -220,7 +227,7 @@ export default function HomePageContent() {
         id="about"
         tabIndex={-1}
         aria-label="About"
-        className="scroll-mt-12 py-12 sm:pt-20 sm:pb-0 lg:pt-24"
+        className="scroll-mt-12 py-12 outline-none sm:pt-20 sm:pb-0 lg:pt-24"
       >
         <EditorialRuleHeading>About</EditorialRuleHeading>
         <div className="px-5 py-4 sm:px-8 sm:pt-10 lg:px-12">
@@ -264,7 +271,7 @@ export default function HomePageContent() {
       <footer
         tabIndex={-1}
         id="contact"
-        className="scroll-mt-12 py-12 sm:py-20 lg:py-24"
+        className="scroll-mt-12 py-12 outline-none sm:py-20 lg:py-24"
       >
         <EditorialRuleHeading>Contact</EditorialRuleHeading>
         <div className="flex justify-center px-5 py-4 sm:px-8 sm:pt-10 lg:px-12">

@@ -9,7 +9,7 @@ export const PROJECT_ROUTES = {
   grailedPlus: "/grailed-plus",
   grailedPlusWriteUp: "/write-ups/grailed-plus",
   tvmDiscordBot: "/write-ups/tvm-discord-bot",
-  tvmDiscordBotGithub: "https://github.com/TheTexta/tvm-discord-bot",
+  tvmDiscordBotGithub: "https://github.com/TheTexta/discord-shoot-manager",
   botOrNot: "/write-ups/bot-or-not",
   botOrNotGithub: "https://github.com/TheTexta/bot-or-not-mcgill",
   portfolioDesign: "/write-ups/portfolio-design",

@@ -2,15 +2,18 @@
 
 # {props.project.title}
 
-<nav aria-label={`${props.project.title} project links`}>
-  <a href={props.project.sourceHref}>Source and setup</a>
-  <a href="https://github.com/TheTexta/tvm-discord-bot/blob/045de1ed714677147e6a8b74efe57f8619a70dee/test/roster-preview.test.js">
-    Roster recovery tests
-  </a>
-  <a href="https://github.com/TheTexta/tvm-discord-bot/actions/runs/40571855904">
-    Reviewed revision's CI run
-  </a>
-</nav>
+<ProjectMeta>
+  <ProjectDetails project={props.project} />
+  <nav aria-label={`${props.project.title} project links`}>
+    <a href={props.project.sourceHref}>Source and setup</a>
+    <a href="https://github.com/TheTexta/discord-shoot-manager/blob/045de1ed714677147e6a8b74efe57f8619a70dee/test/roster-preview.test.js">
+      Roster recovery tests
+    </a>
+    <a href="https://github.com/TheTexta/discord-shoot-manager/actions/runs/40571855904">
+      Reviewed revision's CI run
+    </a>
+  </nav>
+</ProjectMeta>
 
 <Lead>
   {
@@ -18,9 +21,11 @@
   }
 </Lead>
 
-<ProjectDetails project={props.project} />
-
 </header>
+
+The source project is now named **Discord Shoot Manager**. TVM's installation
+remains TVM Bot; the repository rename does not change its Discord identity or
+existing production workspaces.
 
 TVM needs to connect its membership roster with Discord access and give production
 teams private spaces to organize shoots. I adapted
@@ -56,13 +61,13 @@ merely to receive a reply could apply an unintended second operation.
   caption="Synthetic state diagram, with no member data. Database acceptance, Discord synchronization, and confirmation delivery are separate outcomes."
 />
 
-The [administrative-operation wrapper](https://github.com/TheTexta/tvm-discord-bot/blob/045de1ed714677147e6a8b74efe57f8619a70dee/src/shared/AdminOperation.js)
+The [administrative-operation wrapper](https://github.com/TheTexta/discord-shoot-manager/blob/045de1ed714677147e6a8b74efe57f8619a70dee/src/shared/AdminOperation.js)
 tracks a saved action separately from its reply. Operator feedback identifies a
 saved change awaiting synchronization or a completed action whose confirmation
 could not be delivered. Status, audit, and reconciliation commands support
 investigation and recovery.
 
-The [lost-confirmation regression](https://github.com/TheTexta/tvm-discord-bot/blob/045de1ed714677147e6a8b74efe57f8619a70dee/test/roster-preview.test.js#L167)
+The [lost-confirmation regression](https://github.com/TheTexta/discord-shoot-manager/blob/045de1ed714677147e6a8b74efe57f8619a70dee/test/roster-preview.test.js#L167)
 makes confirmation delivery throw after accepting a replacement. It asserts that
 the saved roster remains at version two, reconciliation was scheduled once, and
 the consumed confirmation token cannot apply again. A neighboring test proves
@@ -89,7 +94,7 @@ Tests use temporary SQLite databases and Discord and mail adapters. The linked C
 run passed the test and container jobs for the reviewed revision
 `045de1ed714677147e6a8b74efe57f8619a70dee`; it is historical revision evidence,
 not a claim about every subsequent deployment. The
-[operations guide](https://github.com/TheTexta/tvm-discord-bot/blob/045de1ed714677147e6a8b74efe57f8619a70dee/docs/operations.md)
+[operations guide](https://github.com/TheTexta/discord-shoot-manager/blob/045de1ed714677147e6a8b74efe57f8619a70dee/docs/operations.md)
 documents migrations, health reporting, shutdown, and backups.
 
 The application deliberately runs as one replica. Coordination stays within one

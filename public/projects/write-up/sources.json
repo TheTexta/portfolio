@@ -1,0 +1,22 @@
+{
+  "fileKey": "QccgILPVCw0Uofge2n2i3e",
+  "nodeId": "36:149",
+  "downloadedOn": "2026-11-02",
+  "method": "Unmodified SVG assets downloaded through the official Figma MCP using curl -L. Theme inversion is applied by the component, not by editing the files.",
+  "assets": [
+    {
+      "file": "detail-separator.svg",
+      "nodeId": "36:160",
+      "width": 20,
+      "height": 1,
+      "usage": "Rotated 90 degrees between project metadata values."
+    },
+    {
+      "file": "open-preview.svg",
+      "nodeId": "36:87",
+      "width": 24,
+      "height": 24,
+      "usage": "Direct-open link in article preview controls."
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 import {
   WriteUpFigure,
   WriteUpProjectDetails,
+  WriteUpProjectMeta,
   WriteUpMediaPlaceholder,
   WriteUpTitle,
 } from "@/app/components/projects/project-write-up";
@@ -40,6 +41,7 @@ const components = {
   Figure,
   MediaPlaceholder,
   ProjectDetails: WriteUpProjectDetails,
+  ProjectMeta: WriteUpProjectMeta,
   ProjectPreview: WriteUpProjectPreview,
   Gallery: WriteUpGallery,
   Comparison: WriteUpComparison,

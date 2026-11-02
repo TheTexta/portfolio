@@ -113,9 +113,13 @@ a reset `/portfolio` at the top. These home links intentionally use document
 navigation so an already-mounted project focus cannot survive a homepage reset.
 About, Contact, and Projects anchors close project focus and keep the requested
 section in view rather than restoring the old project-rail scroll position.
+Section targets do not draw a focus outline on arrival; keyboard focus and the
+visible focus indicators on individual links and controls are preserved.
 
 Write-up **Index** links return to the project list; **Back to projects** returns
-to that article's focused project. Both standalone experiences have a return link
+to that article's focused project. Closing previous/next links cycle through all
+seven articles in catalogue order, including write-up-only projects, skipping
+projects without an article. Both standalone experiences have a return link
 to their article or product page. `tests/e2e/navigation.spec.ts` checks these
 round trips, browser history, and rendered internal link/section destinations on
 desktop and mobile using local fixtures, not production services.
@@ -186,14 +190,15 @@ are available without imports through the root `mdx-components.tsx`:
 
 # {props.project.title}
 
-<nav aria-label={`${props.project.title} project links`}>
-  <a href={props.project.liveHref}>Visit site</a>
-  <a href={props.project.sourceHref}>View source</a>
-</nav>
+<ProjectMeta>
+  <ProjectDetails project={props.project} />
+  <nav aria-label={`${props.project.title} project links`}>
+    <a href={props.project.liveHref}>Visit site</a>
+    <a href={props.project.sourceHref}>View source</a>
+  </nav>
+</ProjectMeta>
 
 <Lead>{props.project.summary}</Lead>
-
-<ProjectDetails project={props.project} />
 
 </header>
 
@@ -225,10 +230,18 @@ extra paragraph spacing inside them. Page-provided values are available through
 `props`, as in Photo Graph's benchmark figures. Only trusted, repository-owned MDX
 is compiled at build time; there is no remote MDX execution or CMS.
 
-`ProjectDetails` uses a compact, wrapping metadata line with screen-reader labels,
-not a bordered card. Every write-up title reuses the homepage's animated
-`BorderContainer`, with a centred heading and a centred project-link row directly
-below it. The introduction and metadata retain the article's reading alignment.
+All seven articles follow the owner's Figma frame `36:149` in file
+`QccgILPVCw0Uofge2n2i3e`. Every title reuses the homepage's animated
+`BorderContainer` and its 36/60/96px responsive scale. At desktop width a one-line
+title has a 330px frame with a 584px centre; longer titles grow rather than clip.
+`ProjectMeta` places `ProjectDetails` and the project links in a wrapping row
+above the introduction. Metadata has screen-reader labels and vertical separators
+on larger screens, not a bordered card. On mobile it wraps without separators.
+Native article previews retain their interactions and permissions; their footer
+shows the project, the view (Homepage or Graph), and a direct-open icon. Downloaded
+Figma assets and provenance are local under `public/projects/write-up/` and
+`public/projects/elliot-mairet/write-up/`. See `docs/design/project-write-ups.md`
+for responsive adaptations and verification.
 The portfolio-design article imports the actual animated
 `BorderContainer`, `ThemeToggle` and `ProjectBrowser` through its example
 components. `ProjectBrowser embedded` keeps focus/navigation interactions local:

@@ -2,6 +2,17 @@
   "capturedOn": "2026-10-30",
   "method": "Chrome viewport screenshots of the public website, converted to WebP at quality 88. No page content was altered.",
   "credit": "Photography: Elliot Mairet. Website design and development: Dexter Young.",
+  "figmaReference": {
+    "fileKey": "QccgILPVCw0Uofge2n2i3e",
+    "nodeId": "36:149",
+    "downloadedOn": "2026-11-02",
+    "method": "Unmodified PNG assets from the owner-provided Figma article reference, downloaded with the official Figma MCP. These match the public-view subjects and 1440 × 1000 geometry of the existing WebP captures, but preserve the reference's exact raster bytes.",
+    "articleAssets": [
+      "archive-figma.png",
+      "photograph-figma.png",
+      "colour-navigation-figma.png"
+    ]
+  },
   "viewport": { "width": 1440, "height": 1000, "deviceScaleFactor": 1 },
   "assets": [
     {

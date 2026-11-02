@@ -7,16 +7,17 @@ import {
 
 # {props.project.title}
 
-<nav aria-label="Portfolio design project links">
-  <a href="/portfolio">Browse the portfolio</a>
-  <a href={props.project.sourceHref}>Source and tests</a>
-</nav>
+<ProjectMeta>
+  <ProjectDetails project={props.project} />
+  <nav aria-label="Portfolio design project links">
+    <a href="/portfolio">Browse the portfolio</a>
+    <a href={props.project.sourceHref}>Source and tests</a>
+  </nav>
+</ProjectMeta>
 
 <Lead>
   {"A common frame for projects that need different ways of being explored."}
 </Lead>
-
-<ProjectDetails project={props.project} />
 
 </header>
 

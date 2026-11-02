@@ -1011,6 +1011,7 @@ export default function ProjectBrowser({
       aria-label={embedded ? "Portfolio project browser example" : "Projects"}
       tabIndex={-1}
       className={cn(
+        "outline-none",
         embedded ? "min-w-0" : "scroll-mt-12 pb-36 sm:py-15",
         styles.root,
         embedded && styles.embedded,
