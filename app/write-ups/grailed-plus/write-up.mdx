@@ -1,10 +1,12 @@
+import RecordedComparison from "@/app/components/projects/grailed-plus/grailed-plus-recorded-comparison";
+
 <header data-write-up-header>
 
 # {props.project.title}
 
 <ProjectMeta>
   <ProjectDetails project={props.project} />
-  <nav aria-label={`${props.project.title} project links`}>
+  <nav aria-label={props.project.title + " project links"}>
     <a href="/grailed-plus">Product page and sample-data demos</a>
     <a href="https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd">
       Chrome Web Store
@@ -14,85 +16,136 @@
 
 <Lead>
   {
-    "Pricing context and cross-market comparison inside the Grailed pages people already browse."
+    "Cross-market comparison inside Grailed, combining listing metadata with on-device image matching while keeping preliminary results available."
   }
 </Lead>
 
 </header>
 
-A listing rarely gives a buyer enough context to judge its price. Similar items
-appear on other marketplaces under different titles, and price history helps only
-when its limits are clear. I built Grailed Plus to bring marketplace comparison,
-local image matching, price history, currency conversion, and interface
-customization into the pages people already browse.
-The current application source is private; this article and the product demos
-provide a public explanation of the architecture and its tradeoffs.
+Comparing resale listings means working with inconsistent information. The same
+item can appear under different titles, photographed against different backgrounds.
+Conversely, two items can look alike while differing in product type or brand.
+A useful comparison needs both the listing's description and its appearance.
 
-## Useful results before inference finishes
+I extended Grailed Plus with cross-market comparison and local image matching,
+alongside price history, currency conversion and interface customization. Its
+price-history functionality originated in
+[RVRX/grailed-plus](https://github.com/RVRX/grailed-plus). My comparison work
+centres on finding plausible candidates, refining their order and keeping the
+results usable when a slower stage fails.
 
-Comparison starts with listing metadata: title, product type, brand, and the
-available marketplace details. Results are partitioned by confidence. A photograph
-of the wrong product type should not outrank a credible match just because it
-looks similar.
+## Combining metadata and image similarity
 
-A second pass uses MobileCLIP-S1 image embeddings to refine a bounded shortlist.
-ONNX Runtime runs in an extension worker, keeping inference off the page renderer.
-Preliminary results stay visible while scores arrive, and the ranking updates
-progressively. If inference fails or reaches its budget, the metadata results
-remain usable. Navigation invalidates work that belongs to an earlier listing.
+The first pass uses the active listing's title, product type, brand and available
+marketplace details to retrieve and rank candidates. Results are divided into
+confidence groups so stronger product evidence takes precedence over a merely
+similar photograph.
 
-For the implementation reviewed in October 2026, optional refinement has a
-30-second maximum budget starting when preliminary results render. Visual
-similarity contributes up to 20 points, while confidence groups remain intact.
-These are source parameters, not measured latency or evidence of better relevance.
-They should be checked against a particular store release before treating that
-package as identical to the reviewed implementation.
+The second pass uses **MobileCLIP-S1** to represent images as numerical vectors.
+Comparing these embeddings provides an additional signal about visual similarity.
+I apply that signal to a bounded shortlist rather than running image inference
+across every possible result.
 
-## Where the work runs
+Visual scores refine the order **within confidence groups**. They cannot move a
+candidate from a weaker group ahead of a stronger one. This preserves the
+metadata ranking's structure while allowing appearance to distinguish candidates
+with comparable product evidence.
 
-The browser extracts the active listing and displays comparison results. The
-worker computes embeddings locally. Depop retrieval still makes remote requests;
-eBay retrieval goes through a separate Node.js gateway that keeps API credentials
-out of the distributed extension. The gateway handles OAuth token reuse, category
-resolution, and text and image searches.
+<RecordedComparison />
 
-Category resolution and image search are optional improvements. Their failure
-falls back to text results. Local inference therefore describes one part of the
-system: eBay image search can send listing-image data through the gateway, and
-marketplace retrieval is not offline.
+These groups express the application's ranking rules. Whether they correspond
+well to the items a buyer considers comparable needs evaluation against human
+judgments.
 
-## A regression worth protecting
+## Returning results before refinement finishes
 
-A late score from a previous listing must not replace the current listing's
-results. The controller invalidates obsolete requests and applies refinements to
-the active request. Its regression suite also exercises streamed scores before
-final completion, exhaustion of the refinement budget, and preservation of
-confidence groups when visual scores change the order within a group.
+Image inference introduces another model to load and another stage that can
+take time or fail. I keep it outside the critical path for displaying the first
+results.
 
-The relevant private-source modules are `marketCompareController.ts` and
-`imageSimilarity.ts`; `marketCompareController.test.js` asserts that streamed
-scores affect the visible results before the refinement promise resolves. This
-explains the tested contract without advertising an inaccessible source link or
-presenting the client suite as validation of the separate gateway.
+Metadata matches render first. **ONNX Runtime runs image inference in an extension
+worker**, and the visible ranking updates as scores arrive. Refinement has a
+time budget; if it fails or runs out of time, the metadata results remain
+available.
 
-The gateway follow-up has its own offline tests. Outbound images are restricted
-to explicit marketplace hosts, resolved to public addresses and fetched through
-a pinned HTTPS connection; redirects are rejected and a streaming byte ceiling
-applies before accumulating the complete image. Cache administration defaults to
-denial without a separate credential. Controlled tests cover these boundaries,
-not live marketplace compatibility or a deployed proxy's access rules. Those
-deployment checks remain a separate release gate.
+This makes the image stage an optional refinement of an existing result set.
+It also avoids making one slow or unavailable stage determine whether the
+comparison panel can show anything useful.
 
-## Showing the interface honestly
+## Dividing work between the extension and gateway
 
-The product page imports the extension's renderer, styles, currency helpers, and
-theme engine. **Its interactive demos use deterministic sample listings and
-simulated state transitions.** They do not query live marketplaces or measure
-matching accuracy. The store link is the route to the installable extension.
-Firefox build support is distinct from a verified Firefox store release.
+The extension reads the active Grailed listing, presents results and computes
+image embeddings locally. Marketplace retrieval still uses network requests.
+Depop retrieval runs from the browser; eBay requests pass through a separate
+Node.js gateway.
 
-Price history has a separate limit: ordered historical prices do not include an
-exact timestamp for every change. The chart labels interpolated dates as estimates.
-The same principle applies to matching: confidence and usable fallbacks are
-implemented behavior; relevance gains and time saved still need a separate,
-representative evaluation.
+The gateway keeps eBay API credentials out of the distributed extension and
+handles OAuth token reuse, category resolution, and text and image searches.
+Category resolution and image search supplement the text search. If either
+fails, text results remain available.
+
+Local embedding inference and remote image search are separate operations.
+An eBay image query can send listing-image data through the gateway. Keeping
+inference on-device therefore does not make the complete comparison workflow
+local.
+
+Because the gateway can fetch images, its network boundary needs its own
+controls. Image retrieval is restricted to approved marketplace hosts, rejects
+redirects and enforces a download-size limit. Gateway tests exercise those
+restrictions separately from the extension's ranking and interaction tests.
+
+## Keeping results attached to the active listing
+
+A buyer can navigate to another listing while a comparison is still running.
+If listing A's image scores arrive after listing B has opened, they must not
+reorder B's results.
+
+The comparison controller invalidates obsolete requests and applies refinements
+only to the active request. Its regression tests cover late results from an
+earlier listing, scores arriving before refinement completes, exhaustion of the
+time budget, and preservation of confidence groups during reordering.
+
+The streaming case matters because a final-state assertion alone could pass
+even if the interface waited for the entire refinement step. The test checks
+that scores affect visible results before the refinement promise resolves,
+protecting the progressive behaviour the interface depends on.
+
+## Presenting price context
+
+The extension also brings price history and currency conversion into the
+listing page. Price history requires care because the available data establishes
+the order of historical prices without providing an exact timestamp for every
+change. The chart labels interpolated dates as estimates.
+
+That distinction affects how someone reads a price change. An estimated date
+should not appear to establish precisely when a seller changed the price.
+
+## Demonstrating the product and evaluating the ranking
+
+The [product page](/grailed-plus) reuses the extension's renderer, styles,
+currency helpers and theme engine. Its interactive examples use deterministic
+sample listings and simulated transitions, so visitors can inspect the
+interface without installing the extension. The examples do not retrieve live
+marketplace results.
+
+The photo-only comparison above replays real MobileCLIP-S1 scores recorded with
+the production ONNX worker, using descriptive sample metadata and licensed
+photographs. It demonstrates the ranking change, not measured inference latency
+or evidence of improved relevance across a representative catalogue.
+
+The next evaluation should compare metadata-only ranking with image refinement
+on a representative set of listings and independently judged matches. It should
+also measure time to preliminary results and refinement behaviour across devices.
+That would establish whether the additional image stage produces better
+comparisons, and what it costs the browsing experience.
+
+### Implementation scope
+
+The architecture and tests described here refer to the implementation reviewed
+in October 2026. The application source is private, and a particular Chrome Web
+Store package needs separate version verification. Firefox build support does
+not establish a Firefox store release.
+
+Gateway tests use controlled inputs. Live marketplace compatibility and deployed
+access controls require their own checks; the sample-data demos and offline
+tests do not establish those properties.

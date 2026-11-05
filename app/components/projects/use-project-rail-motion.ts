@@ -2,6 +2,8 @@
 
 import { type RefObject, useLayoutEffect } from "react";
 
+import { getRailAutoplayWeight } from "./project-rail-scroll";
+
 type RailDirection = "forward" | "reverse";
 
 type RailMotionConfig = {
@@ -12,6 +14,7 @@ type RailMotionConfig = {
 };
 
 type ProjectRailMotionOptions = {
+  allowManualScroll: boolean;
   containerRef: RefObject<HTMLDivElement | null>;
   enabled: boolean;
   rails: readonly RailMotionConfig[];
@@ -26,6 +29,9 @@ const MAX_SLOW_SPEED_PX_PER_SECOND = 8;
 const DECELERATION_TIME_SECONDS = 0.22;
 const ACCELERATION_TIME_SECONDS = 0.36;
 const MAX_FRAME_DELTA_SECONDS = 0.05;
+const WHEEL_EVENT_GAP_SECONDS = 0.08;
+const HANDOFF_EASING_SECONDS = 0.12;
+const MANUAL_RECLAIM_SPEED_RATIO = 2;
 const FINE_POINTER_QUERY = "(hover: hover) and (pointer: fine)";
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
@@ -50,6 +56,7 @@ function getSlowSpeed(baseSpeed: number) {
 }
 
 export function useProjectRailMotion({
+  allowManualScroll,
   containerRef,
   enabled,
   rails,
@@ -83,6 +90,10 @@ export function useProjectRailMotion({
     let targetSpeed = 0;
     let frameId: number | null = null;
     let lastTimestamp: number | null = null;
+    let lastWheelTimestamp: number | null = null;
+    let wheelIntervalSeconds = 1 / 60;
+    let autoplayWeight = 1;
+    let targetAutoplayWeight = 1;
     let pointerInside = false;
     let focusInside = false;
 
@@ -95,13 +106,26 @@ export function useProjectRailMotion({
       }
     });
 
-    const recycleLeadingCards = (index: number) => {
+    const recycleCards = (index: number) => {
       const group = configs[index]?.groupRef.current;
       if (!group) {
         return;
       }
 
       const gap = Number.parseFloat(getComputedStyle(group).columnGap) || 0;
+      railOffsets[index] %= travelWidths[index];
+
+      while (railOffsets[index] < 0) {
+        const lastCard = group.lastElementChild as HTMLElement | null;
+        const cardSpan = (lastCard?.getBoundingClientRect().width ?? 0) + gap;
+        if (!lastCard || cardSpan <= 0) {
+          break;
+        }
+
+        railOffsets[index] += cardSpan;
+        group.prepend(lastCard);
+      }
+
       let firstCard = group.firstElementChild as HTMLElement | null;
 
       while (firstCard) {
@@ -123,7 +147,7 @@ export function useProjectRailMotion({
           return;
         }
 
-        recycleLeadingCards(index);
+        recycleCards(index);
         track.style.transform = `translate3d(${-railOffsets[index].toFixed(3)}px, 0, 0)`;
       });
     };
@@ -187,6 +211,8 @@ export function useProjectRailMotion({
 
       if (focusInside) {
         currentSpeed = 0;
+        autoplayWeight = 1;
+        targetAutoplayWeight = 1;
       } else {
         const responseTime =
           targetSpeed < currentSpeed
@@ -200,8 +226,21 @@ export function useProjectRailMotion({
         }
       }
 
+      // Recover after a missed wheel sample, not a fixed pause. Trackpad events
+      // already contain momentum; only autoplay is integrated between events.
+      const missedWheelSample =
+        lastWheelTimestamp == null ||
+        timestamp - lastWheelTimestamp >=
+          Math.min(1 / 30, wheelIntervalSeconds * 1.5) * 1000;
+      const frameAutoplayWeight = missedWheelSample ? 1 : targetAutoplayWeight;
+      autoplayWeight +=
+        (frameAutoplayWeight - autoplayWeight) *
+        (1 - Math.exp(-deltaSeconds / HANDOFF_EASING_SECONDS));
+      if (autoplayWeight > 0.999) autoplayWeight = 1;
+
       railOffsets.forEach((offset, index) => {
-        railOffsets[index] = offset + currentSpeed * deltaSeconds;
+        railOffsets[index] =
+          offset + currentSpeed * autoplayWeight * deltaSeconds;
       });
       applyTransforms();
       frameId = window.requestAnimationFrame(tick);
@@ -237,11 +276,73 @@ export function useProjectRailMotion({
 
     const handlePointerLeave = () => {
       pointerInside = false;
+      lastWheelTimestamp = null;
       updateTargetSpeed();
+    };
+
+    const handleWheel = (event: WheelEvent) => {
+      if (
+        !shouldAnimate() ||
+        focusInside ||
+        referenceTravelWidth <= 0 ||
+        event.defaultPrevented ||
+        event.ctrlKey ||
+        Math.abs(event.deltaX) <= Math.abs(event.deltaY)
+      ) {
+        return;
+      }
+
+      if (event.cancelable) event.preventDefault();
+
+      const now = performance.now();
+      const elapsedSeconds =
+        lastWheelTimestamp == null
+          ? Infinity
+          : (now - lastWheelTimestamp) / 1000;
+      const deltaSeconds =
+        elapsedSeconds > WHEEL_EVENT_GAP_SECONDS
+          ? 1 / 60
+          : Math.max(elapsedSeconds, 1 / 240);
+      const unit =
+        event.deltaMode === WheelEvent.DOM_DELTA_LINE
+          ? Number.parseFloat(getComputedStyle(container).lineHeight) || 16
+          : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+            ? container.clientWidth
+            : 1;
+      const deltaPixels = event.deltaX * unit;
+      const nextAutoplayWeight = getRailAutoplayWeight(
+        deltaPixels,
+        deltaSeconds,
+        currentSpeed,
+      );
+
+      if (
+        elapsedSeconds > WHEEL_EVENT_GAP_SECONDS ||
+        Math.abs(deltaPixels) / deltaSeconds >=
+          currentSpeed * MANUAL_RECLAIM_SPEED_RATIO
+      ) {
+        // A fresh gesture takes control immediately. Small fluctuations in an
+        // existing momentum tail must not repeatedly interrupt the handoff.
+        autoplayWeight = nextAutoplayWeight === 1 ? 1 : 0;
+        targetAutoplayWeight = nextAutoplayWeight;
+      } else {
+        targetAutoplayWeight = Math.max(
+          targetAutoplayWeight,
+          nextAutoplayWeight,
+        );
+        if (targetAutoplayWeight === 0) autoplayWeight = 0;
+      }
+      lastWheelTimestamp = now;
+      wheelIntervalSeconds = deltaSeconds;
+      railOffsets.forEach((offset, index) => {
+        railOffsets[index] = offset + deltaPixels * (1 - autoplayWeight);
+      });
+      applyTransforms();
     };
 
     const handleFocusIn = () => {
       focusInside = true;
+      lastWheelTimestamp = null;
       currentSpeed = 0;
       updateTargetSpeed();
     };
@@ -260,6 +361,9 @@ export function useProjectRailMotion({
 
     const handleMediaChange = () => {
       stop();
+      lastWheelTimestamp = null;
+      autoplayWeight = 1;
+      targetAutoplayWeight = 1;
       pointerInside = finePointerQuery.matches && container.matches(":hover");
       focusInside = container.contains(document.activeElement);
       measure();
@@ -280,6 +384,7 @@ export function useProjectRailMotion({
 
     const handleVisibilityChange = () => {
       lastTimestamp = null;
+      lastWheelTimestamp = null;
     };
 
     const resizeObserver = new ResizeObserver(measure);
@@ -294,6 +399,9 @@ export function useProjectRailMotion({
     container.addEventListener("pointerleave", handlePointerLeave);
     container.addEventListener("focusin", handleFocusIn);
     container.addEventListener("focusout", handleFocusOut);
+    if (allowManualScroll) {
+      container.addEventListener("wheel", handleWheel, { passive: false });
+    }
     finePointerQuery.addEventListener("change", handleMediaChange);
     reducedMotionQuery.addEventListener("change", handleMediaChange);
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -317,6 +425,7 @@ export function useProjectRailMotion({
       container.removeEventListener("pointerleave", handlePointerLeave);
       container.removeEventListener("focusin", handleFocusIn);
       container.removeEventListener("focusout", handleFocusOut);
+      container.removeEventListener("wheel", handleWheel);
       finePointerQuery.removeEventListener("change", handleMediaChange);
       reducedMotionQuery.removeEventListener("change", handleMediaChange);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
@@ -329,5 +438,5 @@ export function useProjectRailMotion({
         initialChildren[index].forEach((child) => group.append(child));
       });
     };
-  }, [containerRef, enabled, rails]);
+  }, [allowManualScroll, containerRef, enabled, rails]);
 }

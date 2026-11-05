@@ -456,7 +456,7 @@ for (const failure of ["failed HEAD", "delayed frame load"] as const) {
   });
 }
 
-test("photographs and their neighbors can be explored with the keyboard", async ({
+test("full graph uses an icon-only return link without a photograph browser", async ({
   page,
   context,
 }) => {
@@ -481,47 +481,29 @@ test("photographs and their neighbors can be explored with the keyboard", async 
     }),
   );
   await page.goto("/projects/photo-graph/experience");
-  const browser = page.getByText("Browse photographs", { exact: true });
-  await browser.focus();
-  await browser.press("Enter");
-  await page.keyboard.press("Tab");
-  await expect(
-    page.getByLabel("Select a photograph", { exact: true }),
-  ).toBeFocused();
-  await page.keyboard.press("Tab");
-  const open = page.getByRole("button", { name: "Open selected photograph" });
-  await expect(open).toBeFocused();
-  await open.press("Enter");
-  await expect(
-    page.getByRole("dialog", { name: "Inspect photograph first" }),
-  ).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(open).toBeFocused();
-  await page.keyboard.press("Tab");
-  const related = page.getByRole("button", {
-    name: "Select photograph related",
+  const graph = page.getByRole("region", {
+    name: "Interactive photograph graph",
   });
-  await expect(related).toBeFocused();
-  await related.press("Enter");
+  await expect(graph.locator("canvas").first()).toBeVisible();
+  await expect(page.getByRole("status")).toHaveCount(0);
   await expect(
-    page.getByLabel("Select a photograph", { exact: true }),
-  ).toHaveValue("related");
-  await expect(
-    page.getByLabel("Select a photograph", { exact: true }),
-  ).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(open).toBeFocused();
-  await page.keyboard.press("Enter");
-  await expect(
-    page.getByRole("dialog", { name: "Inspect photograph related" }),
-  ).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(open).toBeFocused();
-  await page
-    .getByRole("link", { name: "Return to project write up", exact: true })
-    .focus();
-  await page.keyboard.press("Enter");
+    page.getByText("Browse photographs", { exact: true }),
+  ).toHaveCount(0);
+  await expect(graph.locator("details")).toHaveCount(0);
+  await expect(page.getByLabel("Select a photograph")).toHaveCount(0);
+  const returnLink = page.getByRole("link", {
+    name: "Return to project write up",
+    exact: true,
+  });
+  await expect(returnLink).toBeVisible();
+  await expect(returnLink).toHaveText("");
+  await expect(returnLink.locator("svg")).toBeVisible();
+  const bounds = (await returnLink.boundingBox())!;
+  expect(bounds.width).toBe(bounds.height);
+  await returnLink.focus();
+  await expect(returnLink).toBeFocused();
+  await expect(returnLink).toHaveCSS("outline-style", "solid");
+  await returnLink.press("Enter");
   await expect(page).toHaveURL(/\/write-ups\/photo-graph$/);
 });
 
@@ -568,11 +550,16 @@ test("embedding refusal retains a direct-open recovery path", async ({
   await expect(preview.getByRole("button")).toHaveCount(0);
 });
 
-test("graph navigation and controls remain separate on narrow screens", async ({
+test("graph controls stay at the top-left beside the return icon", async ({
   page,
 }) => {
-  for (const width of [320, 390]) {
-    await page.setViewportSize({ width, height: 844 });
+  for (const [width, height] of [
+    [320, 844],
+    [390, 844],
+    [844, 390],
+    [1440, 900],
+  ]) {
+    await page.setViewportSize({ width, height });
     await page.goto("/projects/photo-graph/experience");
     const returnLink = page.getByRole("link", {
       name: "Return to project write up",
@@ -585,13 +572,24 @@ test("graph navigation and controls remain separate on narrow screens", async ({
     await expect(returnLink).toBeVisible();
     await expect(controls).toBeVisible();
     const nav = (await returnLink.boundingBox())!;
-    const panel = (await controls.boundingBox())!;
+    const panel = page
+      .getByRole("checkbox", { name: "Show connecting lines", exact: true })
+      .locator("../..");
+    const row = (await panel.boundingBox())!;
     expect(nav.x).toBeGreaterThanOrEqual(0);
     expect(nav.x + nav.width).toBeLessThanOrEqual(width);
-    expect(panel.y).toBeGreaterThanOrEqual(nav.y + nav.height);
+    expect(row.x).toBeGreaterThanOrEqual(8);
+    expect(row.x).toBeLessThanOrEqual(9);
+    expect(row.y).toBeGreaterThanOrEqual(8);
+    expect(row.y).toBeLessThanOrEqual(9);
+    expect(Math.abs(row.y - nav.y)).toBeLessThanOrEqual(1);
+    expect(row.x + row.width + 8).toBeLessThanOrEqual(nav.x);
     await controls.click();
     await expect(
       page.getByRole("button", { name: "Close graph controls", exact: true }),
     ).toBeVisible();
+    expect((await panel.boundingBox())!.y).toBe(row.y);
+    await returnLink.click();
+    await expect(page).toHaveURL(/\/write-ups\/photo-graph$/);
   }
 });

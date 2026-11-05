@@ -82,6 +82,7 @@ function AnimatedBorderCorner({
 
 type AnimatedBorderContainerProps = HTMLAttributes<HTMLDivElement> & {
   centerWidth?: string;
+  topLabel?: ReactNode;
   children: ReactNode;
 };
 
@@ -89,6 +90,7 @@ export function AnimatedBorderContainer({
   className,
   children,
   centerWidth = "70%",
+  topLabel,
   style,
   ...props
 }: AnimatedBorderContainerProps) {
@@ -123,7 +125,20 @@ export function AnimatedBorderContainer({
         initialScale={initialScale}
         lineScale={lineScale}
       />
-      <div className="col-start-2 row-start-2 min-w-0 outline-1 outline-ink outline-solid">
+      <div
+        className={cn(
+          "col-start-2 row-start-2 min-w-0 outline-1 outline-ink outline-solid",
+          topLabel != null && "relative flex min-h-0 flex-col pt-3",
+        )}
+      >
+        {topLabel != null ? (
+          <div
+            data-border-label
+            className="absolute top-0 left-1/2 z-10 w-max max-w-[calc(100%-1.5rem)] -translate-1/2 bg-canvas px-3 text-center"
+          >
+            {topLabel}
+          </div>
+        ) : null}
         {children}
       </div>
       <AnimatedBorderCorner

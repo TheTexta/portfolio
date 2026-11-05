@@ -1,0 +1,31 @@
+{
+  "listing": {
+    "id": "source",
+    "title": "Levi's vintage straight leg jeans",
+    "brand": "Levi's",
+    "imageUrl": "/photos/source.webp"
+  },
+  "candidates": [
+    {
+      "id": "501xx",
+      "title": "Levi's 501XX vintage jeans",
+      "brand": "Levi's",
+      "imageUrl": "/photos/501xx.webp"
+    },
+    { "id": "jeans", "title": "Vintage straight leg blue jeans", "imageUrl": "/photos/jeans.webp" },
+    {
+      "id": "overzeas",
+      "title": "Overzeas longpocket jeans",
+      "brand": "Overzeas",
+      "imageUrl": "/photos/overzeas.webp"
+    },
+    { "id": "met", "title": "Vintage brown jeans", "imageUrl": "/photos/met.webp" },
+    {
+      "id": "akings",
+      "title": "AKINGS stretch jeans",
+      "brand": "AKINGS",
+      "imageUrl": "/photos/akings.webp"
+    }
+  ],
+  "metadataNote": "Synthetic descriptive listing metadata for licensed photographs; not marketplace listings or verified sale information. Image scores are recorded from the exact shipped WebP bytes."
+}

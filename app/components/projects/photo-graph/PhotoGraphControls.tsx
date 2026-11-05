@@ -22,7 +22,6 @@ type PhotoGraphControlsProps = {
   menuOpen: boolean;
   controls: GraphControls;
   reserveNavigationSpace?: boolean;
-  navigationAbove?: boolean;
   showTheme?: boolean;
   onMenuOpen: () => void;
   onMenuClose: () => void;
@@ -33,7 +32,6 @@ export default function PhotoGraphControls({
   menuOpen,
   controls,
   reserveNavigationSpace = false,
-  navigationAbove = false,
   showTheme = false,
   onMenuOpen,
   onMenuClose,
@@ -43,8 +41,7 @@ export default function PhotoGraphControls({
 
   return (
     <div
-      className={`w-[min(18rem,calc(100%-1rem))] border select-none data-[navigation-above=true]:top-15 data-[reserve-navigation=true]:w-[min(18rem,calc(100%-4.25rem))] ${photoGraphControlsPositionClass} ${photoGraphPanelClass}`}
-      data-navigation-above={navigationAbove || undefined}
+      className={`w-[min(18rem,calc(100%-1rem))] border select-none data-[reserve-navigation=true]:w-[min(18rem,calc(100%-4.25rem))] ${photoGraphControlsPositionClass} ${photoGraphPanelClass}`}
       data-reserve-navigation={reserveNavigationSpace || undefined}
     >
       <div

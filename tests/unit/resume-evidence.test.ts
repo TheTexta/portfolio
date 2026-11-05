@@ -40,7 +40,7 @@ describe("application evidence destinations", () => {
     }
     expect(variants.software.projects.slice(0, 2)).toEqual([
       "Grailed Plus",
-      "TVM Discord Bot",
+      "Discord Shoot Manager",
     ]);
     expect(variants.ml.projects.slice(0, 3)).toEqual([
       "Grailed Plus",

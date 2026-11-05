@@ -61,6 +61,12 @@ GitHub Actions runs checks, tests, Auth validation, and a production build on
 pull requests and pushes to `main`. Linux CI wraps the browser suite in
 `xvfb-run -a` to retain headed native pointer-lock coverage.
 
+Elliot's write-up reuses the shared animation player for a three-stage
+photograph-to-palette example, recorded with the real OKLab extractor. Its
+snapshot is local and ordinary builds do not need Elliot's checkout or services.
+See [palette animation](docs/design/elliot-palette-animation.md) for provenance,
+regeneration and verification commands.
+
 ## Search metadata
 
 `lib/site-config.ts` holds the portfolio identity and official profile links.
@@ -73,6 +79,10 @@ Project imagery and dimensions come from the shared project catalog. Public page
 include Open Graph and Twitter previews, JSON-LD, and permission for large Google
 image previews. `/sitemap.xml` lists all project posters on the portfolio and each
 project page's own poster on its entry.
+Page entries come only from the canonical `PUBLIC_PAGES` list. External project
+destinations, including the Nepobabies GitHub Pages site, remain ordinary links
+and are not sitemap page entries. Regression tests and the HTTP validator check
+that every sitemap page URL belongs to `https://dextery.dev`.
 Existing project cards expose permanent links while retaining the interactive
 browser. Public experience routes are crawlable but retain `noindex, nofollow`
 metadata so Google can read their indexing restrictions. Admin and API paths
@@ -106,11 +116,17 @@ for example `https://www.dextery.dev/grailed-plus?view=hero` should point to
 permanently to HTTPS. Hosting changes are separate from the repository changes.
 
 After deployment, submit `/sitemap.xml` in Google Search Console and use URL
-Inspection to check `/portfolio`, `/projects/photo-graph`, and `/grailed-plus`,
+Inspection to check `/portfolio`, `/write-ups/photo-graph`, and `/grailed-plus`,
 confirm their Google-selected canonicals and rendered content, and request
 indexing. Inspect the affected URLs behind any duplicate, unauthorized (401), or
 crawled-but-unindexed entries before deciding whether further fixes are needed;
 redirect sources and protected endpoints may be intentional exclusions. The
+four HTTP/HTTPS and www/non-www homepage variants intentionally redirect to
+`https://dextery.dev/portfolio`; “Page with redirect” is expected for those
+sources, not a reason to remove their redirects. Inspect/request indexing for
+the final canonical page instead. If Search Console reports an old malformed
+sitemap URL, compare its last-read date with the live XML and resubmit
+`https://dextery.dev/sitemap.xml` so Google can fetch the current version. The
 October 6, 2026 coverage export contains aggregate counts without affected URLs,
 and its chart ends on September 20, so it cannot identify current URL-level
 problems. Search appearance and indexing remain Google's decision. The existing
@@ -128,6 +144,17 @@ About, Contact, and Projects anchors close project focus and keep the requested
 section in view rather than restoring the old project-rail scroll position.
 Section targets do not draw a focus outline on arrival; keyboard focus and the
 visible focus indicators on individual links and controls are preserved.
+
+On desktop, horizontal trackpad gestures over the homepage project cards move
+the rail directly in either direction, including the trackpad's own momentum.
+Autoplay blends back in as scrolling slows from 1.25 times its current animation
+speed to that speed, without adding momentum or resetting the card position.
+The takeover eases across animation frames so uneven momentum tails do not
+repeatedly interrupt it; a fresh swipe still takes control immediately.
+Vertical page scrolling stays native. Hover slowdown, keyboard focus pause,
+reduced-motion scrolling and the mobile project accordion remain unchanged.
+The embedded browser example in the portfolio-design article does not capture
+these gestures.
 
 Write-up **Index** links return to the project list; **Back to projects** returns
 to that article's focused project. Closing previous/next links cycle through all
@@ -165,6 +192,23 @@ Project write-ups use the shared `app/components/projects/project-write-up.tsx`
 shell: a centred column using two-thirds of the desktop viewport, capped at 672px
 for reading. Prose, figures, captions, and interactive previews share its width and
 horizontal inset. Mobile uses the available width with gutters.
+At 1024px and above, a sticky left-hand reading rail follows the current section
+without changing the centred column. Following ForumMagnum's full-height contents
+design, markers are spaced by section length; hovering the margin or focusing a
+link reveals the labels. A moving line grows and shrinks to map the visible part
+of the article across sections of different lengths.
+When that highlighted window overlaps a dot, the dot morphs into a horizontal tick
+extending 5px on either side, matching the active line's thickness and colour. It
+returns to a dot when the window leaves.
+The rail fills the viewport below the live site header. Its title is a fixed row;
+section spacing and any introductory spacer are measured from article content,
+excluding the title frame, project metadata and lead. The MDX pipeline creates
+that separate content container automatically, without changing article authoring.
+Clicked sections scroll with Framer Motion, or jump instantly under reduced motion.
+Smaller screens keep the existing layout.
+The list and shareable section anchors are generated automatically from `##` and
+`###` MDX headings; no separate outline needs maintaining. Contents links also
+work without JavaScript.
 Edit prose in the route's `write-up.mdx` file:
 
 - `app/write-ups/photo-graph/write-up.mdx`
@@ -185,7 +229,7 @@ canonical article links too.
 The catalogue is also the source for write-up-only projects. Entries with
 `showInBrowser: false` remain in the About article list, metadata and sitemap, but
 are excluded from cards, focus hashes and previous/next preview navigation.
-TVM, Bot or Not and the portfolio-design article use that path; their return links
+Discord Shoot Manager, Bot or Not and the portfolio-design article use that path; their return links
 go to the About write-up list. The homepage category line follows the owner's
 latest “Multimedia webworks, browser extensions and interactive image systems”
 wording without an added student/availability paragraph beneath it. About uses
@@ -243,6 +287,20 @@ extra paragraph spacing inside them. Page-provided values are available through
 `props`, as in Photo Graph's benchmark figures. Only trusted, repository-owned MDX
 is compiled at build time; there is no remote MDX execution or CMS.
 
+Write-ups support LaTeX-style mathematics with `remark-math` and `rehype-katex`:
+use `$\Delta E_{00}$` inline, or `$$` on separate lines around a display equation.
+Escape literal currency dollars as `\$`. Existing contents/body transforms remain
+in the remark pipeline; formula headings retain their LaTeX source as plain text
+in the contents outline. The `/write-ups` layout imports local KaTeX CSS/fonts,
+with horizontally scrollable display equations on narrow screens. Rendering
+happens during MDX compilation and includes MathML; no client math runtime or CDN
+is needed. The installed `katex` stylesheet version must match the renderer used
+by `rehype-katex` (`npm ls katex` should show one deduplicated version). The
+`katex` npm override aligns the plugins' transitive versions with the patched
+direct dependency; recheck compilation/rendering when updating this override.
+This syntax applies to authored MDX, not JavaScript expressions or `.tsx` strings
+inside interactive inspectors.
+
 All seven articles follow the owner's Figma frame `36:149` in file
 `QccgILPVCw0Uofge2n2i3e`. Every title reuses the homepage's animated
 `BorderContainer` and its 36/60/96px responsive scale. At desktop width a one-line
@@ -283,14 +341,39 @@ on desktop and mobile. Scaling changes the iframe's rendering size, not its nati
 interaction, sandbox, or navigation validation. In the overview, **View source**
 precedes **write up**, followed by **Launch experience**.
 
-`/write-ups/photo-graph` remains a statically rendered article, separate from
-`/projects/photo-graph/experience`. Its prose uses the saved August 2026 benchmark
-and local figures; only the client-side preview loads the live graph API. Benchmark
-counts describe that experiment, not the current live archive. The figure
-provenance is recorded in `public/projects/photo-graph/write-up/sources.json`.
-The review and comparison use 13 individual local photographs, with image order
-in `public/projects/photo-graph/write-up/gallery.json`. To deliberately rebuild
-these assets from published, public R2 image URLs:
+`/write-ups/photo-graph` is a five-section engineering case study, separate from
+`/projects/photo-graph/experience`. It opens with the existing live graph preview,
+then explains descriptor/model choices, sparse links, browsing/layout and reliable
+archive updates. Two page-local inspectors share a photograph/candidate selection
+and neighbour configuration: colour comparison (with optional arithmetic) and
+graph rules. Defaults are server-rendered from a frozen example; the rule map
+keeps positions fixed while links change. Neither inspector runs a looping
+simulation or requires live data. Only the opening graph preview requests the
+public graph API. See `docs/design/photo-graph-walkthrough.md`.
+
+The 4 November 2026 worked example freezes the same 100 IDs as the saved feature
+catalogue, but re-extracts mean RGB/LAB from original bytes using the upload
+Canvas2D policy. All 4,950 pair outputs, sources, settings and checksums are in
+`public/projects/photo-graph/worked-example/fixture.json`; the audit matrix stays
+out of the client hydration payload. Harbour ranks third in this extraction,
+not second as in the separately labelled August benchmark. Deliberately regenerate:
+
+```bash
+node --import tsx scripts/photo-graph/freeze-worked-example.ts
+```
+
+This reads only public originals and writes local generated assets. It is not a
+build step or a production mutation. Keep the ignored original cache for exact
+replay; the generated directory's README documents browser/version policy,
+source mappings, checksums and explicit refresh behaviour. No Oklab inversion or
+article thumbnail supplies the baseline descriptor.
+
+The optional August methodology retains its historical review gallery and modest
+25/28 versus 24/28 judged-slot finding. Those counts describe seven reviewed
+queries, not current full-archive accuracy. Historical figure provenance remains
+in `public/projects/photo-graph/write-up/sources.json` and `gallery.json`. The
+legacy comparison assets remain available. To deliberately rebuild those older
+presentation assets (not baseline descriptors):
 
 ```bash
 node scripts/photo-graph/prepare-write-up-media.mjs
@@ -350,6 +433,24 @@ without a reported link opens the project's main site.
 Bur1alrites video clicks use the selected video's direct link and open its
 video room on the full site.
 
+On `/grailed-plus` and `/write-ups/grailed-plus`, the borderless comparison example
+replays recorded real MobileCLIP-S1 results using five photographs and no visible
+panel chrome. A shared seekable animation player supplies the horizontal progress
+rail, three-stage snapping, smooth selection/reset transitions and pause/resume;
+its [interface and reuse guide](docs/design/animation-player.md)
+apply to future SVG, canvas and iframe animations. The wrapper separates preloading from visible-only playback and links
+the demo's photo credits. The recording is bundled locally; refresh its generated
+snapshot from the adjacent extension repository with `npm run grailed-plus:sync-demo`.
+See [recorded comparison integration](docs/design/grailed-plus-recorded-demo.md)
+for the matching demo build, local origin override and verification commands.
+
+Discord Shoot Manager's article uses the same player for an illustrated
+Create / Join / Archive workflow, not a live Discord recording. Its native DOM
+scene has no child clock or external requests. The former recovery chart is no
+longer used by the article or sharing metadata. A scene capture supplies the new
+poster; see [shoot lifecycle animation](docs/design/discord-shoot-lifecycle.md)
+for the implementation, capture command and checks.
+
 Deploy matching preview-navigation changes in `bur1alrites`, `elliotmairet`,
 and `nepobabiesruntheunderground` to enable destination links in their previews.
 Until each site is updated, its preview still opens the project's main site.
@@ -366,6 +467,11 @@ iframe. Write-up `ProjectPreview` accepts `showControls={false}` to omit it.
 Project-browser previews omit the strip by default, including the article's live
 browser example; their launch actions stay in the project details. Native interaction
 inside case-study previews is preserved.
+HTML project previews draw a 24px unscaled gutter beyond their clipped right and
+bottom edges, hiding iframe scrollbars without disabling native wheel, touch or
+keyboard scrolling. This works for cross-origin sites without changing or
+deploying them. The Grailed Plus hero keeps its fixed 1280px iframe viewport;
+canvas previews and the narrow-screen static launch panel are unchanged.
 
 The full Photo Graph experience has a keyboard photograph selector, an open
 control and connected-photo buttons synchronized with canvas selection. Closing
@@ -375,7 +481,7 @@ follow-up work.
 
 ## Portfolio evidence and résumé
 
-The visual project browser leads with Grailed Plus. TVM and Bot or Not remain
+The visual project browser leads with Grailed Plus. Discord Shoot Manager and Bot or Not remain
 directly accessible in the About write-up list rather than appearing as cards.
 Contribution, period and status are shared case-study metadata. The Grailed
 engineering article lives at `/write-ups/grailed-plus`; `/grailed-plus` remains the

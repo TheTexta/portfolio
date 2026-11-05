@@ -1,0 +1,17 @@
+[
+  {
+    "url": "https://dextery.dev/portfolio",
+    "title": "Dexter Young — Software Developer & Creative Technologist",
+    "description": "Dexter Young’s portfolio of software, creative technology, photography, and design, including browser extensions and interactive image archives."
+  },
+  {
+    "url": "https://dextery.dev/projects/photo-graph",
+    "title": "Photo Node-Gallery — Dexter Young",
+    "description": "A force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review."
+  },
+  {
+    "url": "https://dextery.dev/grailed-plus",
+    "title": "Grailed Plus — Price Insights, Market Compare, Currency, and Dark Mode",
+    "description": "Explore live Grailed Plus demos for price insights, market comparison, custom currency conversion, seller context, and dark mode."
+  }
+]

@@ -1,0 +1,135 @@
+{
+  "model": {
+    "name": "MobileCLIP-S1",
+    "path": "src/vendor/mobileclip-s1/vision_model_uint8.onnx",
+    "sha256": "6ec6b349e08a9258e41e45f1d143a9c3ffb6d6dcafa8249d88f3c618efda8b00"
+  },
+  "preprocessing": "Production imageSimilarityWorker: createImageBitmap; centered cover-crop 256x256; planar RGB /255; one-thread WASM; L2-normalized 512-dimensional embedding; cosine dot product.",
+  "workerSha256": "523610dacfe37504c497649373d25fb0ac31d500bc80a9bfb7cfd89f596b81cf",
+  "runtimeSha256": "c6bc9f8e1d0ecc3983a57910e6a30b2230a512bcd2e0207cd64306459c3de7b4",
+  "browser": "145.0.7632.6",
+  "images": [
+    {
+      "id": "source",
+      "path": "/photos/source.webp",
+      "sha256": "dc6fc1c64330a8313c2b72de5d3f9af20b82fede1c27fb2412d5394760383cb9",
+      "bytes": 17572
+    },
+    {
+      "id": "501xx",
+      "path": "/photos/501xx.webp",
+      "sha256": "f1c9eb506f140df060e98ea5a676e3f0138b4c352f7aeb7ecaf894255e7beaa9",
+      "bytes": 67462
+    },
+    {
+      "id": "jeans",
+      "path": "/photos/jeans.webp",
+      "sha256": "66ed0fa0b6a65a2fa73d796a78b00ef4acfd07b4c53bd40e612d138adb967349",
+      "bytes": 72012
+    },
+    {
+      "id": "overzeas",
+      "path": "/photos/overzeas.webp",
+      "sha256": "8355b732e210af9a3a21df16f88caef36d8f7ac80fd8791b7890c00930792239",
+      "bytes": 46988
+    },
+    {
+      "id": "met",
+      "path": "/photos/met.webp",
+      "sha256": "b34150f31cd3abe5334ee4897fd3e0bc27f442e4a3ae0a23e2e79d1af136e8d2",
+      "bytes": 14634
+    },
+    {
+      "id": "akings",
+      "path": "/photos/akings.webp",
+      "sha256": "074abf001b156ceccc0c6e53425a9d0fd744f7a7dbaec25cdc0665becf62d5ac",
+      "bytes": 15938
+    }
+  ],
+  "scores": [
+    {
+      "id": "501xx",
+      "cosine": 0.8546252373094861,
+      "hashScore": 58,
+      "signalType": "ml_embedding"
+    },
+    {
+      "id": "jeans",
+      "cosine": 0.8654075093229914,
+      "hashScore": 59,
+      "signalType": "ml_embedding"
+    },
+    {
+      "id": "overzeas",
+      "cosine": 0.9032525006821575,
+      "hashScore": 64,
+      "signalType": "ml_embedding"
+    },
+    {
+      "id": "met",
+      "cosine": 0.5656940615990249,
+      "hashScore": 53,
+      "signalType": "ml_embedding"
+    },
+    {
+      "id": "akings",
+      "cosine": 0.7741624915774947,
+      "hashScore": 48,
+      "signalType": "ml_embedding"
+    }
+  ],
+  "preliminary": [
+    {
+      "id": "501xx",
+      "score": 82,
+      "confidence": "strong"
+    },
+    {
+      "id": "jeans",
+      "score": 79,
+      "confidence": "strong"
+    },
+    {
+      "id": "met",
+      "score": 57,
+      "confidence": "weak"
+    },
+    {
+      "id": "akings",
+      "score": 38,
+      "confidence": "weak"
+    },
+    {
+      "id": "overzeas",
+      "score": 38,
+      "confidence": "weak"
+    }
+  ],
+  "refined": [
+    {
+      "id": "jeans",
+      "score": 78,
+      "confidence": "strong"
+    },
+    {
+      "id": "501xx",
+      "score": 76,
+      "confidence": "strong"
+    },
+    {
+      "id": "overzeas",
+      "score": 50,
+      "confidence": "weak"
+    },
+    {
+      "id": "met",
+      "score": 46,
+      "confidence": "weak"
+    },
+    {
+      "id": "akings",
+      "score": 35,
+      "confidence": "weak"
+    }
+  ]
+}

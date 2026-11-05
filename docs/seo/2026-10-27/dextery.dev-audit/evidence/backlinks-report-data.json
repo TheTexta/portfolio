@@ -1,0 +1,132 @@
+{
+  "target": "https://dextery.dev",
+  "audit_date": "2026-10-27",
+  "completion": "complete_bounded_sample",
+  "captured_at_utc": "2026-10-28T01:54:25Z",
+  "credential_tier": "Tier 0, supplied by parent; no credentials inspected",
+  "cc_data": {
+    "status": "unavailable_within_bounds",
+    "data": null,
+    "error": "Installed script scans broad compressed ranking and vertices tables (up to 500 MiB each), without a bounded per-domain endpoint. Full lookup intentionally not started.",
+    "metadata": {
+      "source": "commoncrawl_graph.py source inspection",
+      "confidence": 0.5
+    }
+  },
+  "moz_data": null,
+  "bing_data": null,
+  "dataforseo_data": null,
+  "scoring_factors": {
+    "total_factors": 7,
+    "factors_with_data": 0,
+    "score": null
+  },
+  "sample": {
+    "external_pages_checked": 5,
+    "verified_inbound_linking_pages": 2,
+    "verified_source_hosts": ["github.com", "elliotmairet.com"],
+    "is_population_estimate": false,
+    "public_search_queries": 2
+  },
+  "parsed_data": {
+    "url": "https://dextery.dev/portfolio",
+    "links": {
+      "external": [
+        { "href": "https://elliotmairet.com/" },
+        { "href": "https://bur1alrites.vercel.app/" },
+        { "href": "https://thetexta.github.io/nepobabiesruntheunderground/" },
+        { "href": "https://github.com/TheTexta" },
+        { "href": "https://www.linkedin.com/in/dexter-y" }
+      ]
+    }
+  },
+  "verify_data": {
+    "status": "success",
+    "metadata": {
+      "source": "managed render_page.py raw HTML + stdlib HTMLParser anchor verification",
+      "confidence": 0.95
+    },
+    "data": {
+      "target_url": "https://dextery.dev",
+      "summary": {
+        "total": 5,
+        "verified": 2,
+        "not_observed_raw": 2,
+        "unverifiable_access": 1
+      },
+      "results": [
+        {
+          "source_url": "https://github.com/TheTexta",
+          "status": "verified",
+          "http_status": 200,
+          "target_found": true,
+          "href": "https://dextery.dev",
+          "anchor_text": "dextery.dev",
+          "rel_attributes": ["nofollow", "me"],
+          "evidence": "backlinks-github-raw.json"
+        },
+        {
+          "source_url": "https://elliotmairet.com/",
+          "status": "verified",
+          "http_status": 200,
+          "target_found": true,
+          "href": "https://dextery.dev",
+          "anchor_text": "Developed by Dexter",
+          "rel_attributes": [],
+          "evidence": "backlinks-elliot-raw.json"
+        },
+        {
+          "source_url": "https://www.linkedin.com/in/dexter-y",
+          "status": "unverifiable_access",
+          "http_status": 999,
+          "target_found": null,
+          "evidence": "backlinks-linkedin-raw.json"
+        },
+        {
+          "source_url": "https://bur1alrites.vercel.app/",
+          "status": "not_observed_raw",
+          "http_status": 200,
+          "target_found": null,
+          "note": "No target anchor observed in raw HTML only; no prior backlink assumed and no rendered-page absence claim.",
+          "evidence": "backlinks-bur1alrites-raw.json"
+        },
+        {
+          "source_url": "https://thetexta.github.io/nepobabiesruntheunderground/",
+          "status": "not_observed_raw",
+          "http_status": 200,
+          "target_found": null,
+          "note": "No target anchor observed in raw HTML only; no prior backlink assumed and no rendered-page absence claim.",
+          "evidence": "backlinks-nepobabies-raw.json"
+        }
+      ]
+    }
+  },
+  "findings": [
+    {
+      "category": "Backlink Profile",
+      "title": "Backlink profile and authority metrics unavailable",
+      "source": "not-assessed",
+      "status": "Not Assessed",
+      "score": null,
+      "evidence": "No credentialed backlink sources; installed Common Crawl lookup exceeds bounded table-download scope. This is not evidence of zero backlinks or low authority."
+    },
+    {
+      "category": "Backlink Profile",
+      "title": "Two genuine inbound anchors verified in five-page selected sample",
+      "source": "public-html-verification",
+      "confidence": 0.95,
+      "status": "info",
+      "evidence": "backlinks-public-links.json; backlinks-github-raw.json; backlinks-elliot-raw.json",
+      "interpretation": "Sample count only, not a backlink inventory, independent-editorial endorsement count, authority metric or guaranteed ranking benefit."
+    },
+    {
+      "category": "Backlink Profile",
+      "title": "Reciprocal relationships observed with GitHub and Elliot Mairêt",
+      "source": "public-html-verification",
+      "confidence": 0.95,
+      "status": "info",
+      "evidence": "backlinks-public-links.json",
+      "interpretation": "Identity/profile and portfolio/project-credit relationships; reciprocity alone is not evidence of a manipulative exchange. No toxicity or disavow recommendation."
+    }
+  ]
+}

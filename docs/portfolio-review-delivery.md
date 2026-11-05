@@ -25,7 +25,7 @@ The finding-by-finding record is
   without options, reload or retry controls. These controls appear on dedicated
   write-up previews, not project-browser focus previews. Iframes stay mounted on
   native errors; unreliable timeout/HEAD checks no longer flag working frames.
-- Per owner steering, TVM and Bot or Not have write-ups but **no project cards**.
+- Per owner steering, Discord Shoot Manager and Bot or Not have write-ups but **no project cards**.
   The extra student/availability paragraph is removed. The owner retained the newer
   category **Multimedia webworks, browser extensions and interactive image systems**
   and supplied the About introduction verbatim as three paragraphs. Mobile write-up

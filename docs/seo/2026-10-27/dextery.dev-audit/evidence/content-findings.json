@@ -1,0 +1,189 @@
+{
+  "date": "2026-10-27",
+  "category": "Content Quality",
+  "status": "complete",
+  "scores": {
+    "contentQuality": 76,
+    "onPageSEO": 87,
+    "aiCitationReadiness": 73,
+    "eeat": {
+      "experience": 17,
+      "experienceMax": 20,
+      "expertise": 20,
+      "expertiseMax": 25,
+      "authoritativeness": 16,
+      "authoritativenessMax": 25,
+      "trustworthiness": 23,
+      "trustworthinessMax": 30
+    },
+    "method": "Editorial heuristics, not Google scores. Content/on-page site scores are rounded equal-page means. On-page scope excludes technical SEO and performance."
+  },
+  "pages": [
+    {
+      "url": "https://dextery.dev/portfolio",
+      "contentQuality": 74,
+      "onPageSEO": 89,
+      "status": 200,
+      "meaningfulSSR": true
+    },
+    {
+      "url": "https://dextery.dev/projects/photo-graph",
+      "contentQuality": 82,
+      "onPageSEO": 88,
+      "status": 200,
+      "meaningfulSSR": true
+    },
+    {
+      "url": "https://dextery.dev/grailed-plus",
+      "contentQuality": 72,
+      "onPageSEO": 84,
+      "status": 200,
+      "meaningfulSSR": true
+    }
+  ],
+  "metadataTemplate": {
+    "site_risk": "low",
+    "templated_ratio": 0.0,
+    "shared_cta_phrases": {},
+    "pagesChecked": 3
+  },
+  "findings": [
+    {
+      "id": "CONTENT-01",
+      "category": "Content Quality",
+      "severity": "medium",
+      "confidence": "high",
+      "urls": ["https://dextery.dev/projects/photo-graph"],
+      "title": "Benchmark labels omit judged-candidate filtering and aggregate-query scope",
+      "observed": "P@4 prose says first four results; calculation takes first four after judged-only filtering. Cards beneath the active query show seven-query aggregate percentages while images show unrestricted neighbors. Values are explainable; fabrication is not alleged.",
+      "sources": [
+        "scripts/photo-graph/benchmark-color-models.ts:195-243",
+        "app/projects/photo-graph/model-comparison/photo-graph-model-comparison.tsx:206-210",
+        "app/projects/photo-graph/model-comparison/photo-graph-model-comparison.tsx:284-299",
+        "public/projects/photo-graph/color-model-benchmark-v1.json:1"
+      ],
+      "evidence": [
+        "content-photo-graph-visible-desktop.json",
+        "content-photo-graph-raw.html"
+      ],
+      "smallestChange": "Qualify first four judged candidates and averages across seven queries, or use clearly labeled query-specific metrics. Distinguish the dated benchmark snapshot from live archive size.",
+      "dependency": "Owner confirmation of intended evaluation definition; no model change needed to correct wording.",
+      "verification": "Trace two selected queries to queries[].precisionAtK and model.metrics.precisionAtK; explain candidate set and which value remains constant.",
+      "indicator": "Zero unexplained metric/legend mismatches across seven query selections."
+    },
+    {
+      "id": "CONTENT-02",
+      "category": "Content Quality",
+      "severity": "medium",
+      "confidence": "high",
+      "urls": [
+        "https://dextery.dev/portfolio",
+        "https://dextery.dev/projects/photo-graph"
+      ],
+      "title": "Project contribution and ownership remain inferred",
+      "observed": "Portfolio and focus details show artifacts, summaries and stack but not verified responsibility/results. Photo Graph has first-person testing evidence but does not delimit design/implementation/photography ownership. Catalog TBD fields are not public placeholders.",
+      "sources": [
+        "app/components/home-page-content.tsx:170-186",
+        "app/components/projects/project-catalog.ts:48-192",
+        "app/components/projects/project-browser.tsx:545-594",
+        "app/components/projects/project-case-study-shell.tsx:41-68",
+        "app/projects/photo-graph/model-comparison/photo-graph-model-comparison.tsx:109-120"
+      ],
+      "evidence": [
+        "content-portfolio-visible-desktop.json",
+        "content-portfolio-visible-mobile.json",
+        "content-portfolio-focus-mobile.json"
+      ],
+      "smallestChange": "One concise visible professional-role line and owner-approved contribution/result context in existing project copy/shared catalog. Do not invent numeric outcomes or add a blog.",
+      "dependency": "Owner confirmation of credits, collaborators, image ownership and supported outcomes.",
+      "verification": "A first-time reviewer can identify who built what, Dexter's part and a supported result without opening a PDF.",
+      "indicator": "Five of five displayed projects have verified contribution context; monitor existing project/contact/resume engagement cautiously."
+    },
+    {
+      "id": "CONTENT-03",
+      "category": "Content Quality",
+      "severity": "low",
+      "confidence": "high",
+      "urls": ["https://dextery.dev/grailed-plus"],
+      "title": "Installer trust context is indirect",
+      "observed": "Landing links official Store and domain but has no named maker or direct support/privacy signposting. Store does provide matching domain/email and a developer privacy disclosure; ecosystem absence or violation is not alleged.",
+      "sources": [
+        "app/components/projects/grailed-plus/grailed-plus-install-page.tsx:331-450",
+        "app/components/projects/grailed-plus/grailed-plus-install-page.tsx:558-592"
+      ],
+      "evidence": [
+        "content-grailed-plus-visible-desktop.json",
+        "content-corroboration-summary.json",
+        "content-corroboration-store.json"
+      ],
+      "smallestChange": "Compact maker/support/privacy line linking existing canonical disclosures; clarify affiliation using approved facts.",
+      "dependency": "Verify current extension disclosures; distinguish extension data handling from landing-page analytics.",
+      "verification": "Follow links without installing and compare identity/contact/disclosures with current Store and behavior.",
+      "indicator": "Maker, support and privacy discoverable from landing in one action with consistent contact."
+    },
+    {
+      "id": "CONTENT-04",
+      "category": "On-Page SEO",
+      "severity": "low",
+      "confidence": "high",
+      "urls": ["https://dextery.dev/grailed-plus"],
+      "title": "Metadata presents demos before the installable Chrome extension",
+      "observed": "Title lists features without product category; description leads Explore live demos while visible page is install-oriented. Metadata is unique and not templated; no rigid length failure.",
+      "sources": [
+        "lib/seo.ts:41-45",
+        "app/components/projects/grailed-plus/grailed-plus-install-page.tsx:420-449",
+        "app/components/projects/grailed-plus/grailed-plus-install-page.tsx:568-576"
+      ],
+      "evidence": [
+        "content-metadata-pairs.json",
+        "content-metadata-template.json"
+      ],
+      "smallestChange": "Lead existing metadata with Chrome extension and main benefit, preserving brand/features and only verified free-use claims.",
+      "dependency": "Owner-approved positioning and availability; demo verification.",
+      "verification": "Raw/rendered metadata agree and accurately explain what gets installed; Search Console may falsify an assumed intent gap.",
+      "indicator": "Feature/branded query CTR and existing landing-to-Store clicks versus baseline and channel mix; no causal ranking claim."
+    },
+    {
+      "id": "CONTENT-05",
+      "category": "On-Page SEO",
+      "severity": "low",
+      "confidence": "high",
+      "urls": ["https://dextery.dev/projects/photo-graph"],
+      "title": "Comparison-image alternatives do not describe visual evidence",
+      "observed": "Rank N, photo ID repeats adjacent caption without subject/tone/palette. Query-thumbnail empty alt is appropriate with adjacent label; portfolio poster alts are purposeful.",
+      "sources": [
+        "app/projects/photo-graph/model-comparison/photo-graph-model-comparison.tsx:174-188",
+        "app/projects/photo-graph/model-comparison/photo-graph-model-comparison.tsx:242-273",
+        "lib/photo-graph/types.ts:79-89"
+      ],
+      "evidence": [
+        "content-photo-graph-render.json",
+        "content-photo-graph-visible-desktop.json"
+      ],
+      "smallestChange": "Human-reviewed subject/colour descriptions for finite comparison set, keyed by image ID; preserve quiet decorative thumbnails.",
+      "dependency": "Curated descriptions; no descriptive GraphNode field currently exists. No database migration assumed.",
+      "verification": "Screen reader/images-off review can explain similarity evidence beyond numeric IDs.",
+      "indicator": "All informative comparison images have accurate alternatives, with duplicate/decorative images kept quiet."
+    }
+  ],
+  "observationsNotConfirmedDefects": [
+    {
+      "id": "CONTENT-OBS-01",
+      "url": "https://dextery.dev/grailed-plus",
+      "observed": "Isolated Chrome displayed temporarily unavailable demo fallback for overview/market compare; initial forced renderer saw connecting/lazy states.",
+      "evidence": [
+        "content-grailed-plus-visible-desktop.json",
+        "content-grailed-plus-render.json"
+      ],
+      "nextStep": "Technical owner should reproduce in ordinary clean browser before calling persistent outage. If persistent restore proof or provide truthful static fallback. No performance measurement or root cause claim."
+    }
+  ],
+  "limitations": [
+    "No Search Console, rankings, traffic, conversion, backlinks or broad reputation data.",
+    "LinkedIn public fetch returned 999; GitHub/Store corroborate identity/published product, not independent endorsement.",
+    "No extension install, permissions/data-behavior audit, credential inspection or production database access.",
+    "DOM innerText can include clipped desktop summaries. Mobile summaries require focus view; modal/focus-only content was not presented as default SSR copy.",
+    "Readability numbers use approximate syllable heuristics and extraction artifacts; no word-count minimum applied. Automated thin-content flags rejected for these page types.",
+    "Actual small-screen DOM viewport was 500px, not requested 375px; no exact 375px test claim."
+  ]
+}

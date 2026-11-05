@@ -64,10 +64,30 @@ function radiansToDegrees(value: number) {
   return (value * 180) / Math.PI;
 }
 
-export function deltaE2000(
+export type DeltaE2000Trace = {
+  deltaL: number;
+  deltaChroma: number;
+  deltaHue: number;
+  lightnessScale: number;
+  chromaScale: number;
+  hueScale: number;
+  normalizedL: number;
+  normalizedChroma: number;
+  normalizedHue: number;
+  lightnessSquared: number;
+  chromaSquared: number;
+  hueSquared: number;
+  rotation: number;
+  interaction: number;
+  sum: number;
+  distance: number;
+};
+
+/** Signed differences run from left to right; deltaHue is adjusted ΔH′, not degrees. */
+export function traceDeltaE2000(
   left: [number, number, number],
   right: [number, number, number],
-) {
+): DeltaE2000Trace {
   const [l1, a1, b1] = left;
   const [l2, a2, b2] = right;
   const chroma1 = Math.hypot(a1, b1);
@@ -131,12 +151,37 @@ export function deltaE2000(
   const normalizedChroma = deltaChroma / chromaScale;
   const normalizedHue = deltaHue / hueScale;
 
-  return Math.sqrt(
-    normalizedL ** 2 +
-      normalizedChroma ** 2 +
-      normalizedHue ** 2 +
-      rotation * normalizedChroma * normalizedHue,
-  );
+  const lightnessSquared = normalizedL ** 2;
+  const chromaSquared = normalizedChroma ** 2;
+  const hueSquared = normalizedHue ** 2;
+  const interaction = rotation * normalizedChroma * normalizedHue;
+  const sum = lightnessSquared + chromaSquared + hueSquared + interaction;
+
+  return {
+    deltaL,
+    deltaChroma,
+    deltaHue,
+    lightnessScale,
+    chromaScale,
+    hueScale,
+    normalizedL,
+    normalizedChroma,
+    normalizedHue,
+    lightnessSquared,
+    chromaSquared,
+    hueSquared,
+    rotation,
+    interaction,
+    sum,
+    distance: Math.sqrt(sum),
+  };
+}
+
+export function deltaE2000(
+  left: [number, number, number],
+  right: [number, number, number],
+) {
+  return traceDeltaE2000(left, right).distance;
 }
 
 export function hellingerDistance(left: number[], right: number[]) {

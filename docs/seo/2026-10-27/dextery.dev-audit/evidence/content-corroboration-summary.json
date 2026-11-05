@@ -1,0 +1,35 @@
+{
+  "scope": "Ancillary verification of the exact profile/store destinations linked by the three audited pages; no repository, backlink, competitor or broad platform crawl.",
+  "github": {
+    "url": "https://github.com/TheTexta",
+    "status": 200,
+    "evidence": "content-corroboration-github.json",
+    "rawHtmlObserved": {
+      "itemprop_name": "Dexter Young",
+      "itemprop_additionalName": "TheTexta",
+      "websiteAnchor": { "href": "https://dextery.dev", "rel": "nofollow me" },
+      "publicRepositoryLink": "/TheTexta/portfolio"
+    },
+    "limitation": "trafilatura extracted account interaction dialogs rather than the profile, so corroboration uses explicit raw profile fields. Profile is self-controlled; this is identity consistency, not independent acclaim. No dialogs or account actions were used."
+  },
+  "linkedin": {
+    "url": "https://www.linkedin.com/in/dexter-y",
+    "status": 999,
+    "evidence": "content-corroboration-linkedin.json",
+    "limitation": "Public fetch refused. No login, bypass, or reputation inference."
+  },
+  "chromeWebStore": {
+    "url": "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd",
+    "status": 200,
+    "evidence": "content-corroboration-store.json",
+    "observed": {
+      "description": "Listing insights, currency conversion, and dark mode for grailed.com.",
+      "version": "2.4.3",
+      "updated": "August 4, 2026",
+      "developerWebsite": "https://dextery.dev",
+      "developerEmailMatchesPortfolio": true,
+      "privacyDisclosure": "The developer has disclosed that it will not collect or use your data."
+    },
+    "limitation": "Published store metadata and developer disclosure only; extension behavior, code, permissions and data handling were not audited or independently verified. No install or tracked outbound click was performed."
+  }
+}

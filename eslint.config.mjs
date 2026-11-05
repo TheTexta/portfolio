@@ -47,6 +47,7 @@ const eslintConfig = defineConfig([
     "build/**",
     ".agents/docs/**",
     ".tmp/**",
+    "public/projects/grailed-plus/recorded-demo/**",
     "next-env.d.ts",
   ]),
 ]);

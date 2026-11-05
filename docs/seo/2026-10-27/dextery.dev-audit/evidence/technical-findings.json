@@ -1,0 +1,104 @@
+{
+  "category": "Technical SEO",
+  "status": "complete",
+  "audit_date_local": "2026-10-27",
+  "capture_date_utc": "2026-10-28",
+  "score": 96,
+  "score_type": "heuristic; limited to measured public technical signals",
+  "assertions": { "passed": 154, "failed": 0 },
+  "critical_or_high_live_defects": 0,
+  "findings": [
+    {
+      "id": "T2",
+      "priority": "medium",
+      "classification": "source-only conditional resilience risk; already documented",
+      "title": "Static Photo Graph fallback still resolves retired Supabase originals",
+      "urls": [
+        "https://dextery.dev/projects/photo-graph",
+        "https://dextery.dev/projects/photo-graph/experience"
+      ],
+      "evidence": [
+        "app/projects/photo-graph/page.tsx:58-67,74-89",
+        "lib/photo-graph/graph-store.ts:244-258,278-294,301-311",
+        "lib/photo-graph/media-url.ts:25-33,50-53",
+        "README.md:229-238",
+        "AGENTS.md:165-174"
+      ],
+      "recommendation": "Separately scope a provider-aware verified static snapshot and isolated fallback-output test; do not mutate production storage during the audit.",
+      "live_failure_reproduced": false,
+      "score_penalty": 0
+    },
+    {
+      "id": "T1",
+      "priority": "low",
+      "classification": "confirmed live redirect inefficiency, not an indexing blocker",
+      "title": "HTTP/www entry variants take extra permanent redirect hops",
+      "urls": [
+        "http://dextery.dev/",
+        "https://www.dextery.dev/",
+        "http://www.dextery.dev/",
+        "http://www.dextery.dev/grailed-plus?view=hero"
+      ],
+      "observations": [
+        "http://dextery.dev/ takes 2 permanent redirects to https://dextery.dev/portfolio",
+        "https://www.dextery.dev/ takes 2 permanent redirects to https://dextery.dev/portfolio",
+        "http://www.dextery.dev/ takes 3 permanent redirects to https://dextery.dev/portfolio",
+        "http://www.dextery.dev/grailed-plus?view=hero takes 2 permanent redirects to HTTPS non-www, retaining path/query"
+      ],
+      "evidence": [
+        "technical-fetch-manifest.json",
+        "app/page.tsx:1-6",
+        "lib/site-config.ts:1",
+        "README.md:76-81"
+      ],
+      "recommendation": "Optional approved hosting-level consolidation; keep /portfolio as canonical homepage and preserve path/query with permanent redirects.",
+      "score_penalty": 4
+    }
+  ],
+  "optional_observations": [
+    {
+      "title": "No CSP response header observed",
+      "classification": "optional defense-in-depth; not an SEO failure",
+      "evidence": [
+        "next.config.ts:33-48",
+        "technical-portfolio-browser.json",
+        "technical-photo-graph-browser.json",
+        "technical-grailed-plus-browser.json"
+      ],
+      "score_penalty": 0
+    }
+  ],
+  "passes": [
+    "All 3 canonical public pages return raw 200 HTML",
+    "Ordinary, Googlebot and smartphone-Googlebot metadata/main-text parity",
+    "Unique titles/descriptions and self-referencing HTTPS non-www canonicals",
+    "No public noindex or X-Robots restriction",
+    "Working declared XML sitemap containing exactly 3 public canonicals",
+    "Experience noindex,nofollow deliberate and crawlable",
+    "Known public legacy redirects permanent; removed preview is 404",
+    "Canonical query variant, trailing-slash normalization and path/query preservation",
+    "Direct public project links and captured same-origin anchors valid",
+    "HTTPS, HSTS, nosniff, framing and referrer controls present"
+  ],
+  "deliberate_exclusions": [
+    "/api/ and /admin disallowed by robots; not fetched",
+    "Experience routes intentionally noindex,nofollow and absent from sitemap",
+    "Retired Spotify public routes permanently redirect",
+    "Removed Nepobabies preview returns 404",
+    "Root permanently redirects to /portfolio"
+  ],
+  "limitations": [
+    "No real Googlebot IP or Search Console index status verification",
+    "No post-hydration/browser/mobile usability comparison",
+    "No performance/schema/content specialist work duplicated",
+    "Conditional static fallback not forced; media endpoints not fetched",
+    "Unmodified npm seo:validate not run because it requests robots-disallowed admin URLs",
+    "No installs, builds, deploys, indexing submissions, remote configuration writes or repository edits"
+  ],
+  "report": "findings/technical.md",
+  "evidence": [
+    "evidence/technical-analysis.json",
+    "evidence/technical-fetch-manifest.json",
+    "evidence/technical-sitemap-discovery.json"
+  ]
+}

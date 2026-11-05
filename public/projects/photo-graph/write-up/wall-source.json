@@ -1,0 +1,10 @@
+{
+  "source": "Owner-supplied replacement photograph attached on 2026-11-04",
+  "sourceFilename": "IMG_0708.jpeg",
+  "sourceSha256": "e17e344e69bc9d05bc0c989be045abd39e5274f50974edc6c83713e5e1d00ded",
+  "asset": "bedroom-wall.webp",
+  "assetSha256": "6b5630aaa8f7ba846895cd905a4adfd8ef2cf0a107adac86c20031e95866c19d",
+  "width": 2000,
+  "height": 1500,
+  "preparation": "Sharp: auto-orient, WebP quality 88, effort 6; original dimensions, no crop, metadata stripped. Separate from the benchmark media generator."
+}

@@ -11,6 +11,9 @@ import {
 import { RotateCw } from "lucide-react";
 
 import { cn } from "@/lib/cn";
+import AnimationPlayer from "@/app/components/ui/animation-player";
+import type { AnimationFrame } from "@/lib/animation/timeline";
+import comparisonTimeline from "@/public/projects/grailed-plus/recorded-demo/recorded-comparison-timeline.json";
 
 export type GrailedPlusDemoFeature =
   "overview" | "pricing" | "market-compare" | "currency" | "dark-mode";
@@ -50,6 +53,7 @@ type DemoMessage = {
 };
 
 const DEFAULT_DEMO_ORIGIN = "https://grailed-plus-demo.dextery.dev";
+const RECORDED_DEMO_PATH = "/projects/grailed-plus/recorded-demo/";
 const DEMO_ORIGIN = normalizeDemoOrigin(
   process.env.NEXT_PUBLIC_GRAILED_PLUS_DEMO_ORIGIN,
 );
@@ -60,7 +64,7 @@ const FRAME_HEIGHTS: Record<
 > = {
   overview: { min: 680, max: 820 },
   pricing: { min: 340, max: 620 },
-  "market-compare": { min: 180, max: 420 },
+  "market-compare": { min: 330, max: 580 },
   currency: { min: 360, max: 520 },
   "dark-mode": { min: 390, max: 540 },
 };
@@ -94,6 +98,9 @@ function clampFrameHeight(
 }
 
 function getDemoUrl(feature: GrailedPlusDemoFeature) {
+  if (feature === "market-compare") {
+    return `${RECORDED_DEMO_PATH}index.html?feature=market-compare`;
+  }
   const url = new URL(DEMO_ORIGIN);
   url.searchParams.set("feature", feature);
   return url.toString();
@@ -123,7 +130,10 @@ export default function GrailedPlusLiveDemo({
   const [isReady, setIsReady] = useState(false);
   const [hasTimedOut, setHasTimedOut] = useState(false);
   const demoUrl = useMemo(() => getDemoUrl(feature), [feature]);
-  const demoOrigin = useMemo(() => new URL(demoUrl).origin, [demoUrl]);
+  const demoOrigin = useMemo(
+    () => (feature === "market-compare" ? "" : new URL(demoUrl).origin),
+    [demoUrl, feature],
+  );
   const shouldLoad = eager || hasEnteredViewport;
 
   const clearReadyTimeout = useCallback(() => {
@@ -135,7 +145,7 @@ export default function GrailedPlusLiveDemo({
 
   const sendCommand = useCallback(
     (
-      type: "setCurrency" | "setDarkMode" | "theme" | "reset",
+      type: "setCurrency" | "setDarkMode" | "theme" | "reset" | "frame",
       payload?: object,
     ) => {
       const demoWindow = iframeRef.current?.contentWindow;
@@ -150,7 +160,7 @@ export default function GrailedPlusLiveDemo({
           type,
           ...(payload ?? {}),
         },
-        demoOrigin,
+        demoOrigin || window.location.origin,
       );
     },
     [demoOrigin],
@@ -160,6 +170,7 @@ export default function GrailedPlusLiveDemo({
     if (
       playSentRef.current ||
       !enteredViewportRef.current ||
+      feature === "market-compare" ||
       !isReady ||
       !iframeRef.current?.contentWindow
     ) {
@@ -173,9 +184,20 @@ export default function GrailedPlusLiveDemo({
         version: MESSAGE_VERSION,
         type: "play",
       },
-      demoOrigin,
+      demoOrigin || window.location.origin,
     );
-  }, [demoOrigin, isReady]);
+  }, [demoOrigin, feature, isReady]);
+
+  const renderAnimationFrame = useCallback(
+    (frame: AnimationFrame) => {
+      if (isReady)
+        sendCommand("frame", {
+          timeMs: frame.timeMs,
+          transition: frame.transition,
+        });
+    },
+    [isReady, sendCommand],
+  );
 
   const requestReady = useCallback(() => {
     const demoWindow = iframeRef.current?.contentWindow;
@@ -184,7 +206,9 @@ export default function GrailedPlusLiveDemo({
     }
 
     try {
-      if (demoWindow.location.origin !== demoOrigin) {
+      if (
+        demoWindow.location.origin !== (demoOrigin || window.location.origin)
+      ) {
         return;
       }
     } catch {
@@ -199,7 +223,7 @@ export default function GrailedPlusLiveDemo({
         ...(darkModeEnabled == null ? {} : { darkMode: darkModeEnabled }),
         ...(parentDarkMode == null ? {} : { parentDarkMode }),
       },
-      demoOrigin,
+      demoOrigin || window.location.origin,
     );
   }, [darkModeEnabled, demoOrigin, parentDarkMode]);
 
@@ -247,7 +271,7 @@ export default function GrailedPlusLiveDemo({
   useEffect(() => {
     const handleMessage = (event: MessageEvent<DemoMessage>) => {
       if (
-        event.origin !== demoOrigin ||
+        event.origin !== (demoOrigin || window.location.origin) ||
         event.source !== iframeRef.current?.contentWindow ||
         event.data?.source !== MESSAGE_SOURCE ||
         event.data.version !== MESSAGE_VERSION ||
@@ -338,81 +362,113 @@ export default function GrailedPlusLiveDemo({
   );
 
   const retryDemo = useCallback(() => {
+    playSentRef.current = false;
     setHasTimedOut(false);
     setIsReady(false);
     setAttempt((currentAttempt) => currentAttempt + 1);
   }, []);
 
+  const frame = (
+    <div
+      ref={containerRef}
+      className={cn("relative overflow-hidden bg-transparent", className)}
+      style={{ minHeight: frameBounds.min }}
+    >
+      {!isReady ? (
+        <div
+          className="absolute inset-x-0 top-0 z-0 flex items-center justify-center px-6 text-center text-xs tracking-[0.12em] text-muted uppercase"
+          style={{ minHeight: frameBounds.min }}
+          role="status"
+        >
+          {hasTimedOut ? (
+            <span className="flex flex-col items-center gap-3">
+              <span>Sample-data demo is temporarily unavailable</span>
+              <button
+                type="button"
+                onClick={retryDemo}
+                className="inline-flex size-8 items-center justify-center border transition-opacity hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+                aria-label="Retry loading live demo"
+                title="Retry loading live demo"
+              >
+                <RotateCw aria-hidden className="size-4" strokeWidth={1.75} />
+              </button>
+            </span>
+          ) : shouldLoad ? (
+            "Loading the sample-data demo"
+          ) : (
+            "Sample-data demo loads as it approaches"
+          )}
+        </div>
+      ) : null}
+
+      {shouldLoad ? (
+        <iframe
+          key={`${feature}-${attempt}`}
+          ref={iframeRef}
+          src={demoUrl}
+          title={title}
+          aria-describedby={descriptionId}
+          loading={eager ? "eager" : "lazy"}
+          referrerPolicy="strict-origin"
+          sandbox="allow-scripts allow-same-origin"
+          onLoad={requestReady}
+          scrolling="auto"
+          inert={!isReady}
+          tabIndex={isReady ? undefined : -1}
+          className={cn(
+            "relative z-10 block size-full border-0 bg-transparent transition-opacity duration-300",
+            isReady ? "opacity-100" : "pointer-events-none opacity-0",
+          )}
+          style={{
+            height: frameHeight,
+            width: "100%",
+            colorScheme: "light",
+            overflow: "hidden",
+          }}
+        />
+      ) : (
+        <div style={{ height: frameBounds.min }} aria-hidden />
+      )}
+    </div>
+  );
+
   return (
     <div>
-      <p
-        id={descriptionId}
-        className="border-b border-ink px-3 py-2 text-xs leading-5 text-muted"
-      >
-        Interactive demo using sample listings. Scores, timestamps and state
-        changes are illustrative; no live marketplace query is performed.
-      </p>
-      <div
-        ref={containerRef}
-        className={cn("relative overflow-hidden bg-transparent", className)}
-        style={{ minHeight: frameBounds.min }}
-      >
-        {!isReady ? (
-          <div
-            className="absolute inset-x-0 top-0 z-0 flex items-center justify-center px-6 text-center text-xs tracking-[0.12em] text-muted uppercase"
-            style={{ minHeight: frameBounds.min }}
-            role="status"
+      {feature !== "market-compare" ? (
+        <p
+          id={descriptionId}
+          className="border-b border-ink px-3 py-2 text-xs leading-5 text-muted"
+        >
+          Interactive demo using sample listings. Scores, timestamps and state
+          changes are illustrative; no live marketplace query is performed.
+        </p>
+      ) : null}
+      {feature === "market-compare" ? (
+        <AnimationPlayer
+          stages={comparisonTimeline.stages}
+          ready={isReady}
+          onFrame={renderAnimationFrame}
+          label="Image comparison"
+        >
+          {frame}
+        </AnimationPlayer>
+      ) : (
+        frame
+      )}
+      {feature === "market-compare" ? (
+        <p id={descriptionId} className="mt-3 text-xs leading-5 text-muted">
+          Recorded MobileCLIP-S1 comparison · sample metadata. No live search or
+          model download.{" "}
+          <a
+            href={`${RECORDED_DEMO_PATH}photo-credits.html`}
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-4"
           >
-            {hasTimedOut ? (
-              <span className="flex flex-col items-center gap-3">
-                <span>Sample-data demo is temporarily unavailable</span>
-                <button
-                  type="button"
-                  onClick={retryDemo}
-                  className="inline-flex size-8 items-center justify-center border transition-opacity hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
-                  aria-label="Retry loading live demo"
-                  title="Retry loading live demo"
-                >
-                  <RotateCw aria-hidden className="size-4" strokeWidth={1.75} />
-                </button>
-              </span>
-            ) : shouldLoad ? (
-              "Loading the sample-data demo"
-            ) : (
-              "Sample-data demo loads as it approaches"
-            )}
-          </div>
-        ) : null}
-
-        {shouldLoad ? (
-          <iframe
-            key={`${feature}-${attempt}`}
-            ref={iframeRef}
-            src={demoUrl}
-            title={title}
-            aria-describedby={descriptionId}
-            loading={eager ? "eager" : "lazy"}
-            referrerPolicy="strict-origin"
-            sandbox="allow-scripts allow-same-origin"
-            onLoad={requestReady}
-            scrolling="auto"
-            inert={!isReady}
-            tabIndex={isReady ? undefined : -1}
-            className={cn(
-              "relative z-10 block size-full border-0 bg-transparent transition-opacity duration-300",
-              isReady ? "opacity-100" : "pointer-events-none opacity-0",
-            )}
-            style={{
-              height: frameHeight,
-              width: "100%",
-              colorScheme: "light",
-              overflow: "hidden",
-            }}
-          />
-        ) : (
-          <div style={{ height: frameBounds.min }} aria-hidden />
-        )}
-      </div>
+            Photo credits
+          </a>
+        </p>
+      ) : null}
     </div>
   );
 }

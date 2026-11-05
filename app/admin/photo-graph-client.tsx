@@ -38,6 +38,7 @@ import {
 } from "@/lib/photo-graph/graph-controls";
 import { PHOTO_GRAPH_CACHE_CONTROL_SECONDS } from "@/lib/photo-graph/config";
 import { featureFromRgb, rgbToHex } from "@/lib/photo-graph/feature-extraction";
+import { measureMeanRgb } from "@/lib/photo-graph/mean-rgb";
 import {
   DEFAULT_SPARSE_EDGE_GENERATION_CONFIG,
   SPARSE_EDGE_GENERATION_LIMITS,
@@ -227,30 +228,7 @@ async function computeFeaturePayload(
   const imageData = context.getImageData(0, 0, targetWidth, targetHeight);
   const { data } = imageData;
 
-  let redSum = 0;
-  let greenSum = 0;
-  let blueSum = 0;
-  let weightSum = 0;
-
-  for (let index = 0; index < data.length; index += 4) {
-    const alphaWeight = data[index + 3] / 255;
-    if (alphaWeight <= 0) {
-      continue;
-    }
-
-    redSum += data[index] * alphaWeight;
-    greenSum += data[index + 1] * alphaWeight;
-    blueSum += data[index + 2] * alphaWeight;
-    weightSum += alphaWeight;
-  }
-
-  const safeWeight = weightSum || 1;
-
-  const rgb: [number, number, number] = [
-    redSum / safeWeight,
-    greenSum / safeWeight,
-    blueSum / safeWeight,
-  ];
+  const { rgb } = measureMeanRgb({ data });
 
   const feature = featureFromRgb(rgb, longSide);
   feature.colorV1 = extractPhotoGraphColorFeatureV1(imageData);

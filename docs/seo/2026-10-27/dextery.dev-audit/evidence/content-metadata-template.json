@@ -1,0 +1,41 @@
+{
+  "pages": [
+    {
+      "url": "https://dextery.dev/portfolio",
+      "title": "Dexter Young \u2014 Software Developer & Creative Technologist",
+      "description": "Dexter Young\u2019s portfolio of software, creative technology, photography, and design, including browser extensions and interactive image archives.",
+      "templated": false,
+      "severity": "none",
+      "cta_phrase": null,
+      "flags": [],
+      "signals": []
+    },
+    {
+      "url": "https://dextery.dev/projects/photo-graph",
+      "title": "Photo Node-Gallery \u2014 Dexter Young",
+      "description": "A force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review.",
+      "templated": false,
+      "severity": "none",
+      "cta_phrase": null,
+      "flags": [],
+      "signals": []
+    },
+    {
+      "url": "https://dextery.dev/grailed-plus",
+      "title": "Grailed Plus \u2014 Price Insights, Market Compare, Currency, and Dark Mode",
+      "description": "Explore live Grailed Plus demos for price insights, market comparison, custom currency conversion, seller context, and dark mode.",
+      "templated": false,
+      "severity": "none",
+      "cta_phrase": null,
+      "flags": [],
+      "signals": []
+    }
+  ],
+  "pages_checked": 3,
+  "templated_count": 0,
+  "templated_ratio": 0.0,
+  "shared_cta_phrases": {},
+  "site_flags": [],
+  "site_risk": "low",
+  "method": "heuristic"
+}

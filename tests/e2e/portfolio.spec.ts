@@ -43,6 +43,14 @@ for (const colorScheme of ["light", "dark"] as const) {
       "/grailed-plus",
     ]) {
       await page.goto(path);
+      await expect(page.locator("[data-header-gutter-ticks]")).toHaveCSS(
+        "border-left-color",
+        colorScheme === "light" ? "rgb(0, 0, 0)" : "rgb(235, 235, 235)",
+      );
+      await expect(page.locator("[data-header-content-ticks]")).toHaveCSS(
+        "border-left-color",
+        colorScheme === "light" ? "rgb(0, 0, 0)" : "rgb(235, 235, 235)",
+      );
       for (const selector of ["main h1", "main p", "main a"]) {
         const colors = await page
           .locator(selector)
@@ -63,6 +71,82 @@ for (const colorScheme of ["light", "dark"] as const) {
     }
   });
 }
+
+test("site header rails and inner ticks follow the shared padding and content column", async ({
+  page,
+}) => {
+  for (const path of ["/portfolio", "/write-ups/bot-or-not"]) {
+    await page.goto(path);
+    const header = page.locator("main > header");
+    const navigation = header.locator(":scope > nav");
+    const ticks = header.locator("[data-header-gutter-ticks]");
+    const innerTicks = ticks.locator("[data-header-content-ticks]");
+    await expect(ticks).toHaveCount(1);
+    await expect(ticks).toHaveAttribute("aria-hidden", "true");
+    await expect(ticks).toHaveCSS("pointer-events", "none");
+    await expect(ticks).toHaveCSS("border-left-width", "1px");
+    await expect(ticks).toHaveCSS("border-right-width", "1px");
+    await expect(innerTicks).toHaveCount(1);
+    await expect(innerTicks).toHaveCSS("border-left-width", "1px");
+    await expect(innerTicks).toHaveCSS("border-right-width", "1px");
+    for (const [width, gutter] of [
+      [320, 20],
+      [768, 32],
+      [977, 32],
+      [980, 32],
+      [1024, 48],
+      [1280, 48],
+      [1440, 48],
+    ]) {
+      await page.setViewportSize({ width, height: 844 });
+      await expect(ticks).toHaveCSS(
+        "transform",
+        /^(none|matrix\(1, 0, 0, 1, 0, 0\))$/,
+      );
+      const headerBounds = (await header.boundingBox())!;
+      const tickBounds = (await ticks.boundingBox())!;
+      expect(tickBounds.x).toBeCloseTo(gutter, 0);
+      expect(width - tickBounds.x - tickBounds.width).toBeCloseTo(gutter, 0);
+      expect(tickBounds.y).toBeCloseTo(
+        headerBounds.y + headerBounds.height - 4,
+        0,
+      );
+      expect(tickBounds.height).toBeCloseTo(28, 0);
+      expect(tickBounds.y + tickBounds.height).toBeCloseTo(
+        headerBounds.y + headerBounds.height + 24,
+        0,
+      );
+      expect(headerBounds.height).toBeCloseTo(32, 0);
+      await expect(navigation).toHaveCSS("padding-left", `${gutter}px`);
+      await expect(navigation).toHaveCSS("padding-right", `${gutter}px`);
+      if (width - 2 * gutter <= 915) {
+        await expect(innerTicks).toBeHidden();
+      } else {
+        await expect(innerTicks).toBeVisible();
+        const innerBounds = (await innerTicks.boundingBox())!;
+        expect(innerBounds.x).toBeCloseTo((width - 913) / 2, 0);
+        expect(innerBounds.width).toBeCloseTo(913, 0);
+        expect(innerBounds.y).toBeCloseTo(
+          headerBounds.y + headerBounds.height,
+          0,
+        );
+        expect(innerBounds.height).toBeCloseTo(12, 0);
+        if (path === "/portfolio") {
+          const contentBounds = (await page
+            .locator("[data-about-introduction]")
+            .locator("..")
+            .boundingBox())!;
+          expect(innerBounds.x).toBeCloseTo(contentBounds.x, 0);
+          expect(innerBounds.width).toBeCloseTo(contentBounds.width, 0);
+        }
+      }
+      expect(await page.evaluate(() => document.body.scrollWidth)).toBe(width);
+      await expect(
+        header.getByRole("link", { name: "Dexter Young" }),
+      ).toBeVisible();
+    }
+  }
+});
 
 test("project browsing omits per-project number labels", async ({
   page,
@@ -200,6 +284,7 @@ test("About pairs the introduction with every write-up in a scrollable disclosur
   });
   await expect(writeUpsHeading).toBeVisible();
   await expect(writeUpsHeading).toHaveCSS("text-transform", "uppercase");
+  await expect(writeUpsHeading.locator("..")).toHaveCSS("text-align", "center");
   const navigation = about.getByRole("navigation", {
     name: "Project write-ups",
   });
@@ -207,6 +292,8 @@ test("About pairs the introduction with every write-up in a scrollable disclosur
   const links = navigation.getByRole("link");
   await expect(links).toHaveCount(projects.length);
   await expect(links).toHaveText(projects.map((project) => project.title));
+  await expect(links.first()).toHaveCSS("justify-content", "flex-end");
+  await expect(links.first()).toHaveCSS("text-align", "right");
   for (const [index, project] of projects.entries()) {
     await expect(links.nth(index)).toHaveAttribute(
       "href",
@@ -215,7 +302,33 @@ test("About pairs the introduction with every write-up in a scrollable disclosur
     await expect(links.nth(index)).toContainText(project.title);
   }
   const paragraph = await introduction.boundingBox();
-  const list = await navigation.locator("..").boundingBox();
+  const frame = about.locator("[data-write-up-frame]");
+  const list = await frame.boundingBox();
+  const panel = navigation.locator("..");
+  const panelBounds = (await panel.boundingBox())!;
+  const heading = (await writeUpsHeading.boundingBox())!;
+  expect(
+    Math.abs(heading.x + heading.width / 2 - list!.x - list!.width / 2),
+  ).toBeLessThan(1);
+  expect(Math.abs(heading.y + heading.height / 2 - panelBounds.y)).toBeLessThan(
+    1,
+  );
+  await expect(panel).toHaveCSS("outline-width", "1px");
+  await expect(navigation).toHaveCSS("border-top-width", "0px");
+  await expect(frame.locator(':scope > span[aria-hidden="true"]')).toHaveCount(
+    4,
+  );
+  const canvasColor = await page
+    .locator("main")
+    .evaluate((element) => getComputedStyle(element).backgroundColor);
+  await expect(writeUpsHeading.locator("..")).toHaveCSS(
+    "background-color",
+    canvasColor,
+  );
+  await expect(page.locator("#contact [data-border-label]")).toHaveCount(0);
+  await expect(
+    page.locator("h1").locator("..").locator("[data-border-label]"),
+  ).toHaveCount(0);
   if (info.project.name === "desktop") {
     expect(paragraph!.x + paragraph!.width).toBeLessThan(list!.x);
     expect(Math.abs(paragraph!.width - list!.width)).toBeLessThan(2);
@@ -244,10 +357,13 @@ test("About pairs the introduction with every write-up in a scrollable disclosur
   await navigation.focus();
   await expect(navigation).toBeFocused();
   if (hasOverflow) {
+    const labelBeforeScroll = (await writeUpsHeading.boundingBox())!;
     await page.keyboard.press("End");
     await expect
       .poll(() => navigation.evaluate((element) => element.scrollTop))
       .toBeGreaterThan(0);
+    const labelAfterScroll = (await writeUpsHeading.boundingBox())!;
+    expect(labelAfterScroll.y).toBeCloseTo(labelBeforeScroll.y, 0);
   }
   await links.last().focus();
   await expect(links.last()).toBeInViewport();
@@ -261,6 +377,8 @@ test("About pairs the introduction with every write-up in a scrollable disclosur
   await expect(
     lastRow.getByText(projects.at(-1)!.summary, { exact: true }),
   ).toBeVisible();
+  await expect(lastRow.locator("p")).toHaveCSS("text-align", "left");
+  await expect(lastRow).toHaveCSS("border-bottom-width", "0px");
   await expect(navigation.locator('[class*="mix-blend"]')).toHaveCount(0);
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(new RegExp(`${projects.at(-1)!.writeUpHref}$`));

@@ -22,7 +22,7 @@ export default function WriteUpList({
       aria-label="Project write-ups"
       data-write-up-list
       tabIndex={0}
-      className="h-64 min-h-0 min-w-0 overflow-y-auto overscroll-y-contain border-y border-ink focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink md:h-auto md:flex-1"
+      className="h-64 min-h-0 min-w-0 overflow-y-auto overscroll-y-contain focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink md:h-auto md:flex-1"
     >
       <ul>
         {projects.map((project) => {
@@ -68,7 +68,7 @@ export default function WriteUpList({
                 aria-expanded={expanded}
                 aria-controls={synopsisId}
                 aria-describedby={expanded ? synopsisId : undefined}
-                className="flex min-h-12 min-w-0 items-center px-3 text-xs font-semibold tracking-[0.12em] uppercase hover:underline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink sm:text-sm"
+                className="flex min-h-12 min-w-0 items-center justify-end px-3 text-right text-xs font-semibold tracking-[0.12em] uppercase hover:underline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink sm:text-sm"
                 onClick={(event) => {
                   if (
                     !expanded &&
@@ -105,7 +105,7 @@ export default function WriteUpList({
                 }}
                 transition={transition}
               >
-                <p className="px-3 pb-3 text-sm leading-6 text-muted">
+                <p className="px-3 pb-3 text-left text-sm leading-6 text-muted">
                   {project.summary}
                 </p>
               </motion.div>

@@ -16,8 +16,10 @@ The commit date does not prove when the repository became public.
 The files contain populated signing/access credentials, service passwords and
 secret-named Compose literals. Treat confidential values as potentially
 compromised. Public anonymous API keys are not equivalent to service-role keys
-or JWT signing secrets. No values are reproduced here, and none were tested
-against live services. Current validity and unauthorized use are not established.
+or JWT signing secrets. No values are reproduced here. At this initial review,
+none were tested against live services; validity and unauthorized use were not
+established. The separately authorized remediation checkpoint below supersedes
+that initial validity limitation for the credentials actually rotated.
 
 A bounded exact-match check found no copies of the identified literals in the
 remaining 270 tracked text files inspected (files larger than 2 MB and binary
@@ -70,6 +72,30 @@ does not authorize production changes, visibility changes or history rewriting.
 Local removal does not change GitHub until committed and pushed. A normal removal
 commit also does not erase historical commits, caches, forks, clones or artifacts,
 and does not revoke credentials. Do not treat repository cleanup as incident closure.
+
+## Authorized remediation checkpoint — 2026-11-03
+
+The owner separately approved live rotation and the coordinated shared-database
+maintenance window. Active dashboard, MinIO/Storage, PostgreSQL, Logflare API and
+pooler application credentials were rotated. Database changes coordinated all
+seven affected login roles and persisted connection settings, preserving grants,
+independent credentials, user identities and application configuration.
+
+Applicable old passwords/API keys were rejected and replacements authenticated;
+the pooler application secret was verified through runtime configuration rather
+than an old/new-cookie HTTP test. Public/API checks and sampled Storage file
+digests passed. Detailed preserving procedures, recovery evidence and a detected
+Realtime startup-seed correction are retained in the private infrastructure repo.
+No credential values or private backup contents are included here.
+
+Persistent encryption keys have **not** been replaced: they require a preserving,
+restore-tested re-encryption procedure. Historical signing/API values did not match
+the inspected active configuration; that comparison is not universal revocation
+proof. These rotations did not require a signing-key cutover or Vercel application
+deployment.
+History rewriting, force-pushing and repository-visibility changes remain separate
+and unapproved. A full restore/off-site recovery test and abuse investigation are
+not established by these checks; the incident is not declared closed.
 
 ## Separate approval gates
 

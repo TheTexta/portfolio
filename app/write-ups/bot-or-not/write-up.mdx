@@ -5,35 +5,94 @@
 <ProjectMeta>
   <ProjectDetails project={props.project} />
   <nav aria-label={`${props.project.title} project links`}>
-    <a href={props.project.sourceHref}>Source and reproduction instructions</a>
-    <a href="https://github.com/TheTexta/bot-or-not-mcgill/blob/5539649f4757570eab0c1bdc8d304597492d7aa4/tests/test_modeling.py">
-      Split-contract tests
-    </a>
+    <a href={props.project.sourceHref}>Source and workflow instructions</a>
   </nav>
 </ProjectMeta>
 
 <Lead>
   {
-    "Comparing English and French bot classifiers, with reproducible selection reports and explicit evaluation boundaries."
+    "I built a Python pipeline that classifies English- and French-language social-media accounts as bots or humans from their profiles and posting histories. It compares text-based and behavioural models and selects a separate model and decision threshold for each language."
   }
 </Lead>
 
 </header>
 
-For the McGill Bot or Not challenge, I worked on a language-specific classifier
-comparison and reporting pipeline. It combines account behavior, profile features,
-and text representations to classify accounts. English and French use separate
-models and thresholds; the bilingual wrapper coordinates their runs rather than
-training one multilingual model.
+## The classification task and my contribution
 
-## Comparing models before selecting a threshold
+The McGill Bot or Not challenge asks participants to identify bot accounts from
+supplied social-media datasets without wrongly flagging human accounts. Each
+account has a profile and a timeline of timestamped posts; the target is the
+account, not whether an individual post sounds machine-generated. The output is a
+file of account IDs flagged as bots.
 
-The pipeline compares logistic regression, a hybrid text model, histogram gradient
-boosting, ExtraTrees, and an ensemble. The official-first workflow groups validation
-by whole official dataset shards. Out-of-fold predictions select the model and
-language-specific threshold, after which the estimator is refit on the combined
-official training data. The run saves its configuration, selection report, model
-bundle, and prediction artifacts.
+This was a solo implementation. I built the feature extraction, model comparison,
+threshold selection, reporting and prediction commands. English and French have
+separate fitted models and thresholds. The bilingual command coordinates their
+runs and collects their artifacts; it does not train a multilingual model.
+
+## Combining account and text features
+
+I represented each account through both numerical summaries and its post text:
+
+- **Profile and activity:** post count, the supplied activity z-score, profile-field
+  lengths, and flags for empty descriptions or locations.
+- **Posting behaviour:** duplicate-post ratio, average URL and mention counts,
+  variation in post lengths, intervals between posts, and posting-hour entropy—a
+  measure of how spread out the account's activity is across the day.
+- **Text:** posts joined into one document per account, then represented with
+  TF-IDF. Sequences that recur within an account but are less common across
+  training accounts receive more weight.
+
+The comparison asks whether numerical behaviour summaries are enough, or whether
+text patterns add a useful signal. Character sequences capture recurring fragments
+without requiring whole-word matches; word sequences preserve phrases. These are
+representation choices, not a claim that every feature improves performance.
+
+The five model configurations make those alternatives explicit:
+
+- **Logistic regression** joins character 3–5-gram TF-IDF with scaled numerical
+  account features in one feature vector.
+- **Hybrid text** combines word 1–2-gram and character 3–5-gram TF-IDF, each
+  compressed with truncated SVD into a smaller dense vector, with an extended set
+  of scaled account features. A calibrated logistic regression uses that combined
+  vector. These are fitted TF-IDF/SVD representations, not pretrained
+  language-model embeddings.
+- **Histogram gradient boosting** uses the base numerical features to model
+  nonlinear combinations of account behaviour.
+- **ExtraTrees** uses extended numerical features, including vocabulary diversity,
+  punctuation ratios, retweet share and burst-versus-gap timing statistics.
+- **The ensemble** blends the calibrated bot probabilities from histogram gradient
+  boosting and ExtraTrees. Its component weights are selected using out-of-fold
+  predictions, allowing the comparison to test a blend of the two tree approaches.
+
+The [saved April run](https://github.com/TheTexta/bot-or-not-mcgill/blob/5539649f4757570eab0c1bdc8d304597492d7aa4/runs/20260404T162558Z-both-official-first-optimize/summary.json)
+selected the tree ensemble for both languages.
+
+## Selecting models and thresholds
+
+An official shard is one supplied, labelled dataset: account profiles and post
+timelines associated with a collection window and topics. The official-first
+workflow uses English shards 1, 3 and 5, and French shards 2, 4 and 6. It validates
+on one whole shard at a time while fitting on the other two. This preserves
+collection boundaries during selection rather than mixing accounts from every
+collection into each fold. The aim is to favour models that work across
+collections, not just within one.
+
+Selection follows the challenge's utility score, `2TP − 6FP − 2FN`, rather than
+maximising F1. A false accusation against a human costs three times the penalty
+for missing a bot. Each candidate's out-of-fold probabilities are used to choose a
+threshold; the candidate with the highest utility wins, with fewer false positives
+preferred in a tie. Thresholds are selected separately for English and French so
+each language's validation predictions determine its own operating point rather
+than assuming a shared probability scale or cutoff.
+
+**These out-of-fold predictions are selection data, not an independent final
+test.** Model choice, ensemble weights and thresholds all use them. After selection,
+the estimator is refit on the combined official training data for its language.
+The workflow records configurations, selection reports, model bundles and
+prediction artifacts. These make the choices inspectable and support future
+reproduction; they do not establish that the historical numbers have been
+reproduced.
 
 <Figure
   src="/projects/posters/bot-or-not.png"
@@ -43,53 +102,131 @@ bundle, and prediction artifacts.
   caption="The saved official-first workflow separates model selection from practice reporting. A separate practice filename does not guarantee independent content."
 />
 
-This path differs from the lower-level training command, which can reserve a
-stratified primary holdout. The saved official-first run has no additional primary
-holdout (`selected_holdout` is null). The
+### Training-command differences
+
+The lower-level training command can reserve a stratified primary holdout before
+model and threshold selection. The saved official-first run instead uses whole
+official shards for selection and has no additional primary holdout
+(`selected_holdout` is null). The pinned
 [modeling tests](https://github.com/TheTexta/bot-or-not-mcgill/blob/5539649f4757570eab0c1bdc8d304597492d7aa4/tests/test_modeling.py)
 check that reserved holdout accounts stay out of selection-time fitting and that
-predefined official fold IDs are respected. Those tests protect split behavior;
-the default mocked suite does not reproduce expensive numerical training results.
+predefined official fold IDs are respected. Those tests verify split behaviour,
+not numerical reproduction of the saved scores.
 
-## What the saved practice scores mean
+## Finding overlap in practice data
 
-The run `20260404T162558Z-both-official-first-optimize` reports:
+**The checked-in practice datasets contain extensive content overlap with official
+training inputs, so the saved practice scores cannot serve as evidence of
+generalisation to unseen content.** A different filename or account ID is not
+enough to establish independence.
 
-- [English practice shard 30](https://github.com/TheTexta/bot-or-not-mcgill/blob/5539649f4757570eab0c1bdc8d304597492d7aa4/runs/20260404T162558Z-both-official-first-optimize/en/practice-evaluation-report.json): F1 0.95238 across 275 accounts, with TP 60, FP 0, FN 6, and TN 209.
-- [French practice shard 31](https://github.com/TheTexta/bot-or-not-mcgill/blob/5539649f4757570eab0c1bdc8d304597492d7aa4/runs/20260404T162558Z-both-official-first-optimize/fr/practice-evaluation-report.json): F1 1.000 across 171 accounts, with TP 27, FP 0, FN 0, and TN 144.
+The table pairs historical results from
+`20260404T162558Z-both-official-first-optimize` with an October 2026 audit of the
+checked-in inputs. The audit did not establish byte-for-byte identity with the
+historical run or reproduce its numerical scores.
 
-**These are saved practice results, not an independent unseen-content evaluation.**
-An October 2026 audit of the checked-in inputs found exact complete-text-timeline
-matches for 252 of 275 English practice accounts against official shards 1, 3,
-and 5, and for 164 of 171 French practice accounts against official shard 2 alone.
-English profiles differed: those 252 matches were not identical full records.
-For French, 131 of 171 matched the full profile and timestamped-post payload after
-excluding IDs. Account-ID disjointness alone does not catch renamed accounts with
-reused content.
+{<div className="my-4 overflow-x-auto">
 
-The audit matched SHA-256 fingerprints of sorted complete post-text lists, and
-separately of canonical profile/post payloads with identifier fields excluded.
-It applies to inputs at revision `5539649f4757570eab0c1bdc8d304597492d7aa4`.
-The historical reports name the same dataset IDs but do not establish input-byte
-parity through saved checksums. The training run and numerical scores were not
-reproduced by that audit. The overlap limits the generalization claim; it does not
-reconstruct every detail of the historical run or establish failure of the grouped
-official validation.
+  <table className="w-full border-collapse text-left text-sm leading-relaxed">
+    <caption className="mb-3 text-left text-muted">
+      Saved practice results and checked-in input overlap—not an independent assessment.
+    </caption>
+    <thead>
+      <tr className="border-b border-ink">
+        <th scope="col" className="py-3 pr-4 font-semibold">Language</th>
+        <th scope="col" className="py-3 pr-4 font-semibold">Saved practice F1</th>
+        <th scope="col" className="py-3 pr-4 font-semibold">Accounts</th>
+        <th scope="col" className="py-3 font-semibold">
+          Exact text-timeline matches in checked-in official data
+        </th>
+      </tr>
+    </thead>
+    <tbody className="tabular-nums">
+      <tr className="border-b border-muted/30">
+        <th scope="row" className="py-3 pr-4 font-normal">
+          <a href="https://github.com/TheTexta/bot-or-not-mcgill/blob/5539649f4757570eab0c1bdc8d304597492d7aa4/runs/20260404T162558Z-both-official-first-optimize/en/practice-evaluation-report.json">
+            English
+          </a>
+        </th>
+        <td className="py-3 pr-4">0.95238</td>
+        <td className="py-3 pr-4">275</td>
+        <td className="py-3">252</td>
+      </tr>
+      <tr className="border-b border-muted/30">
+        <th scope="row" className="py-3 pr-4 font-normal">
+          <a href="https://github.com/TheTexta/bot-or-not-mcgill/blob/5539649f4757570eab0c1bdc8d304597492d7aa4/runs/20260404T162558Z-both-official-first-optimize/fr/practice-evaluation-report.json">
+            French
+          </a>
+        </th>
+        <td className="py-3 pr-4">1.000</td>
+        <td className="py-3 pr-4">171</td>
+        <td className="py-3">164</td>
+      </tr>
+    </tbody>
+  </table>
+</div>}
 
-## The next evaluation boundary
+This finding changes what those results support. It does not measure how much
+overlap affected the scores, nor establish that every official validation fold was
+invalid. The original practice reports remain unchanged, with their scope
+explained here rather than retroactively relabelled as independent results.
 
-The useful engineering result is a repeatable model-comparison, selection, and
-prediction workflow. The follow-up split audit records input and label checksums,
-multiset account-ID and content overlap, and label conflicts without publishing
-account records. Exact aliases stay together in outer holdout and out-of-fold
-splits. Incompatible fixed-shard or train/practice boundaries fail before fitting
-rather than silently moving records. The overlapping official/practice pairing
-therefore cannot pass the current optimization guard unchanged.
+### Overlap audit method
 
-These exact-match checks do not detect paraphrases or establish independence for
-near duplicates. Internal estimator calibration is not group-aware and is not
-presented as an additional independent assessment. A stronger generalization
-result still requires a frozen protocol, independently labelled or appropriately
-grouped assessment data, and evaluation after model and threshold choices are
-fixed. That assessment remains future work. The historical practice artifacts
-retain their original labels and should be read with the overlap context above.
+The audit inspected checked-in inputs at revision
+`5539649f4757570eab0c1bdc8d304597492d7aa4`. It compared SHA-256 fingerprints of
+sorted complete post-text lists, ignoring post order but preserving repeated
+occurrences. It did not normalise case or whitespace. A separate fingerprint
+compared canonical full profile/post payloads with account and post identifiers
+excluded, retaining timestamps and other fields.
+
+The 252 English timeline matches were against official shards 1, 3 and 5; none
+were identical full records. The 164 French timeline matches were present against
+official shard 2 alone; 131 also matched the ID-stripped full payload. The
+historical reports name the same dataset IDs, but lack saved input checksums to
+establish historical-byte parity. These checks identify exact content reuse in
+the inspected files, not a reconstruction of the training run.
+
+## Preventing overlap in future runs
+
+Consider an account copied into a practice file under a new ID but with an
+identical list of post texts. An ID-only check would accept it as a new example.
+The local follow-up implementation instead treats it as an exact alias, alongside
+accounts sharing an ID.
+
+**Exact aliases stay together during splitting, and incompatible predefined
+boundaries fail before fitting.** Generated outer holdout and out-of-fold splits
+keep alias groups intact. If an alias crosses fixed official-shard, train/practice
+or primary/auxiliary boundaries, the workflow stops rather than quietly moving or
+dropping records. Conflicting labels within an alias group also stop the run. The
+shipped overlapping official/practice pairing therefore cannot pass the current
+optimisation guard unchanged.
+
+The follow-up audit records input and label checksums, overlap counts and label
+conflicts without publishing account records. These local safeguards postdate the
+pinned historical run and tests above; they do not turn its saved practice results
+into an independent assessment.
+
+### Evaluating on independent accounts
+
+The remaining assessment needs to happen in this order:
+
+1. **Freeze the inputs and grouping rules.** Record checksums, label provenance and
+   source/entity groups, with a declared near-duplicate policy. Exact matching
+   misses paraphrases, edited timelines and other near duplicates.
+2. **Reserve assessment data before selection.** Use independently labelled
+   accounts with appropriate separation from development data, keeping their
+   results out of model, ensemble-weight and threshold decisions.
+3. **Fit within the permitted training partitions.** Learn TF-IDF vocabularies,
+   SVD projections, scaling, calibration and models only from allowed training
+   accounts. Internal probability calibration currently uses ungrouped folds;
+   aliases can cross those internal folds, affecting the probabilities used for
+   threshold selection. The protected outer boundaries still apply, but making
+   calibration itself group-aware remains a separate modelling follow-up.
+4. **Assess the fixed system on the reserved accounts.** Record per-language
+   confusion counts, utility and F1 with the frozen model and threshold choices,
+   without using those results to promote another candidate.
+
+That assessment has not been run. The result I can currently defend is a
+model-comparison pipeline with recorded decisions and increasingly careful
+data-splitting safeguards; independent predictive performance remains unresolved.

@@ -2,6 +2,7 @@ import type { MDXComponents } from "mdx/types";
 import type { ComponentProps, ReactNode } from "react";
 
 import {
+  WriteUpBody,
   WriteUpFigure,
   WriteUpProjectDetails,
   WriteUpProjectMeta,
@@ -37,6 +38,7 @@ function MediaPlaceholder({ caption }: { caption: ReactNode }) {
 
 const components = {
   h1: WriteUpTitle,
+  WriteUpBody,
   Lead,
   Figure,
   MediaPlaceholder,

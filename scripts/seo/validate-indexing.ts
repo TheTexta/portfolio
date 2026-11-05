@@ -301,6 +301,13 @@ async function main() {
       const urls = entries.map((entry) =>
         decodeEntities(entry.match(/<loc>(.*?)<\/loc>/)?.[1] ?? ""),
       );
+      for (const url of urls) {
+        assert.equal(
+          new URL(url).origin,
+          SITE_ORIGIN,
+          "Sitemap page URLs must use the canonical site origin",
+        );
+      }
       assert.deepEqual(
         urls.toSorted(),
         Object.values(PUBLIC_PAGES)

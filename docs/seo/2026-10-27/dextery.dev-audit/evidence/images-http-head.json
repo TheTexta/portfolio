@@ -1,0 +1,93 @@
+[
+  {
+    "url": "https://dextery.dev/projects/posters/photo-graph.webp",
+    "status": 200,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-length": "346282",
+      "content-type": "image/webp",
+      "etag": "\"55c7c177d1e1d3661d57cfb8bd2a5ae6\"",
+      "x-vercel-cache": "HIT"
+    }
+  },
+  {
+    "url": "https://dextery.dev/projects/posters/elliot-mairet.png",
+    "status": 200,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-length": "2589833",
+      "content-type": "image/png",
+      "etag": "\"bdb729b37d4c25301e850baf50248c95\"",
+      "x-vercel-cache": "MISS"
+    }
+  },
+  {
+    "url": "https://dextery.dev/projects/posters/bur1alrites.png",
+    "status": 200,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-length": "320246",
+      "content-type": "image/png",
+      "etag": "\"9278e2625ebdabbf9fc9cf330d880131\"",
+      "x-vercel-cache": "MISS"
+    }
+  },
+  {
+    "url": "https://dextery.dev/projects/posters/grailed-plus.webp",
+    "status": 200,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-length": "46782",
+      "content-type": "image/webp",
+      "etag": "\"15c1d311d78499828aab405ac5834e40\"",
+      "x-vercel-cache": "MISS"
+    }
+  },
+  {
+    "url": "https://dextery.dev/projects/posters/nepobabies.webp",
+    "status": 200,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-length": "839120",
+      "content-type": "image/webp",
+      "etag": "\"8adf150e6cdd824b3d6ade3a9fdc5bc5\"",
+      "x-vercel-cache": "MISS"
+    }
+  },
+  {
+    "url": "https://images.dextery.dev/photo-graph/photography-images/14.png?width=560&quality=86&format=auto&resize=cover",
+    "status": 200,
+    "headers": {
+      "content-type": "image/avif",
+      "content-length": "100139",
+      "cf-cache-status": "HIT",
+      "cache-control": "public, max-age=31536000, immutable",
+      "etag": "\"cfO8GtZidTRAy4tlD1S9mOa37-1SLV6NG99QmVDXPlDQ:a78c0d4313ca24ca6055023dab8766df\"",
+      "vary": "Accept"
+    }
+  },
+  {
+    "url": "https://images.dextery.dev/photo-graph/photography-images/20.png?width=560&quality=86&format=auto&resize=cover",
+    "status": 200,
+    "headers": {
+      "content-type": "image/avif",
+      "content-length": "53525",
+      "cf-cache-status": "HIT",
+      "cache-control": "public, max-age=31536000, immutable",
+      "etag": "\"cfNHo3G5R1ni_shpYQRbyo6FuL1SLV6NG99QmVDXPlDQ:0f328b6e96e9da9e093f1d65ec7587ad\"",
+      "vary": "Accept"
+    }
+  },
+  {
+    "url": "https://images.dextery.dev/photo-graph/photography-images/94.png?width=560&quality=86&format=auto&resize=cover",
+    "status": 200,
+    "headers": {
+      "content-type": "image/avif",
+      "content-length": "14415",
+      "cf-cache-status": "HIT",
+      "cache-control": "public, max-age=31536000, immutable",
+      "etag": "\"cfCBTOydV0hfrmtzdNzTF0ZZ-k1SLV6NG99QmVDXPlDQ:4143ad7593af0882d409408ac5cab851\"",
+      "vary": "Accept"
+    }
+  }
+]

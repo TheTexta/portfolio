@@ -1,0 +1,100 @@
+[
+  {
+    "url": "https://dextery.dev/portfolio",
+    "status_code": 200,
+    "render_engine": null,
+    "mode_used": "raw",
+    "error": null,
+    "console_errors": [],
+    "render_diagnostics": [],
+    "title": "Dexter Young \u2014 Software Developer & Creative Technologist",
+    "anchors": [
+      ["/portfolio", "", "Dexter Young"],
+      ["/portfolio", "", "portfolio"],
+      ["#contact", "", "Contact"],
+      ["/projects/photo-graph", "Open Photo Node-Gallery focus view", ""],
+      [
+        "/projects/photo-graph",
+        "View Photo Node-Gallery details",
+        "Photo Node-Gallery01Next.js \u00b7 D3 \u00b7 SupabaseA force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review."
+      ],
+      [
+        "https://elliotmairet.com/",
+        "View Elliot Mairet details",
+        "Elliot Mairet02Next.js \u00b7 React \u00b7 SupabaseA photographic archive that pairs an expansive image index with colour palettes and related-image discovery."
+      ],
+      [
+        "https://bur1alrites.vercel.app/",
+        "View bur1alrites details",
+        "bur1alrites03Next.js \u00b7 TypeScript \u00b7 Tailwind CSSA black-and-white moving-image archive where clips begin as inverted studies and reveal their colour on hover."
+      ],
+      [
+        "/grailed-plus",
+        "View Grailed Plus details",
+        "Grailed Plus04Chrome MV3 \u00b7 JavaScriptCross-market comparison, price context, local currency, seller metadata, and dark mode inside Grailed."
+      ],
+      [
+        "https://thetexta.github.io/nepobabiesruntheunderground/",
+        "View nepobabiesruntheunderground details",
+        "nepobabiesruntheunderground05HTML \u00b7 CSS \u00b7 JavaScript \u00b7 WebGLAn experimental interface combining custom typography, collage imagery, motion, and WebGL texture."
+      ],
+      ["https://github.com/TheTexta", "", "GitHub@TheTexta"],
+      ["https://www.linkedin.com/in/dexter-y", "", "LinkedIndexter-y"],
+      ["mailto:dextery777@gmail.com", "", "Emaildextery777@gmail.com"],
+      ["/Dexter_Young_CV.pdf", "", "ResumeDownload PDF"]
+    ]
+  },
+  {
+    "url": "https://dextery.dev/projects/photo-graph",
+    "status_code": 200,
+    "render_engine": null,
+    "mode_used": "raw",
+    "error": null,
+    "console_errors": [],
+    "render_diagnostics": [],
+    "title": "Photo Node-Gallery \u2014 Dexter Young",
+    "anchors": [
+      ["/portfolio", "", "Dexter Young"],
+      ["/portfolio#projects", "", "projects"],
+      ["/projects/photo-graph", "", "photo-graph"],
+      ["/portfolio#projects", "", "Index"],
+      ["/projects/photo-graph/experience", "", "Launch experience"]
+    ]
+  },
+  {
+    "url": "https://dextery.dev/grailed-plus",
+    "status_code": 200,
+    "render_engine": null,
+    "mode_used": "raw",
+    "error": null,
+    "console_errors": [],
+    "render_diagnostics": [],
+    "title": "Grailed Plus \u2014 Price Insights, Market Compare, Currency, and Dark Mode",
+    "anchors": [
+      ["/portfolio", "", "dextery.dev"],
+      ["/grailed-plus", "", "grailed-plus"],
+      ["#features", "", "Index"],
+      [
+        "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd",
+        "",
+        "Install \u2197"
+      ],
+      ["#feature-market-compare", "", "Market compare"],
+      ["#feature-pricing", "", "Price intelligence"],
+      ["#feature-currency", "", "Custom currency"],
+      ["#feature-dark-mode", "", "Dark mode"],
+      [
+        "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd",
+        "",
+        "View in Chrome Web StoreAdd to Chrome"
+      ],
+      ["#features", "", "Explore features"],
+      [
+        "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd",
+        "",
+        "View in Chrome Web StoreAdd to Chrome"
+      ],
+      ["/portfolio", "", "dextery.dev"]
+    ]
+  }
+]

@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 import createMDX from "@next/mdx";
 import {
@@ -119,6 +120,15 @@ const nextConfig: NextConfig = {
   },
 };
 
-const withMDX = createMDX();
+const withMDX = createMDX({
+  options: {
+    remarkPlugins: [
+      "remark-math",
+      path.resolve("lib/mdx/remark-write-up-contents.mjs"),
+      path.resolve("lib/mdx/remark-write-up-body.mjs"),
+    ],
+    rehypePlugins: ["rehype-katex"],
+  },
+});
 
 export default withMDX(nextConfig);

@@ -1,0 +1,132 @@
+{
+  "category": "Sitemap",
+  "status": "complete",
+  "audit_date_local": "2026-10-27",
+  "target": "https://dextery.dev",
+  "mode": "read-only, shared current live captures plus source and git inspection",
+  "findings": [],
+  "summary": "No confirmed sitemap defects, missing intended indexable HTML pages, or indexable orphan HTML pages in reviewed scope.",
+  "sitemap": {
+    "url": "https://dextery.dev/sitemap.xml",
+    "discovered_from": "robots.txt",
+    "discovery_evidence": "technical-sitemap-discovery.json",
+    "declared_failures": [],
+    "status": 200,
+    "content_type": "application/xml",
+    "source_evidence": "technical-sitemap-browser.html",
+    "sha256": "51a7542dd4f84d40dd44e387ff100d75aa416910d5a2a145d88848b95b4a2ca7",
+    "uncompressed_bytes": 1181,
+    "xml_well_formed": true,
+    "root_namespace": "http://www.sitemaps.org/schemas/sitemap/0.9",
+    "image_namespace": "http://www.google.com/schemas/sitemap-image/1.1",
+    "url_count": 3,
+    "image_reference_count": 7,
+    "unique_images": 5,
+    "limits_pass": true,
+    "deprecated_tags": [],
+    "lastmod_format_valid": true
+  },
+  "pages": [
+    {
+      "url": "https://dextery.dev/portfolio",
+      "http_status_browser": 200,
+      "http_status_googlebot": 200,
+      "redirected": false,
+      "self_canonical": true,
+      "noindex": false,
+      "lastmod": "2026-10-06",
+      "image_count": 5,
+      "internal_inbound_from": [
+        "https://dextery.dev/projects/photo-graph",
+        "https://dextery.dev/grailed-plus"
+      ]
+    },
+    {
+      "url": "https://dextery.dev/projects/photo-graph",
+      "http_status_browser": 200,
+      "http_status_googlebot": 200,
+      "redirected": false,
+      "self_canonical": true,
+      "noindex": false,
+      "lastmod": "2026-10-06",
+      "image_count": 1,
+      "internal_inbound_from": ["https://dextery.dev/portfolio"]
+    },
+    {
+      "url": "https://dextery.dev/grailed-plus",
+      "http_status_browser": 200,
+      "http_status_googlebot": 200,
+      "redirected": false,
+      "self_canonical": true,
+      "noindex": false,
+      "lastmod": "2026-10-06",
+      "image_count": 1,
+      "internal_inbound_from": ["https://dextery.dev/portfolio"]
+    }
+  ],
+  "images": [
+    {
+      "url": "https://dextery.dev/projects/posters/photo-graph.webp",
+      "head_status": 200,
+      "content_type": "image/webp"
+    },
+    {
+      "url": "https://dextery.dev/projects/posters/elliot-mairet.png",
+      "head_status": 200,
+      "content_type": "image/png"
+    },
+    {
+      "url": "https://dextery.dev/projects/posters/bur1alrites.png",
+      "head_status": 200,
+      "content_type": "image/png"
+    },
+    {
+      "url": "https://dextery.dev/projects/posters/grailed-plus.webp",
+      "head_status": 200,
+      "content_type": "image/webp"
+    },
+    {
+      "url": "https://dextery.dev/projects/posters/nepobabies.webp",
+      "head_status": 200,
+      "content_type": "image/webp"
+    }
+  ],
+  "image_evidence": "images-http-head.json",
+  "link_evidence": "image-and-link-inventory.json",
+  "intentional_exclusions": {
+    "noindex_experiences": [
+      "/projects/photo-graph/experience",
+      "/grailed-plus/experience"
+    ],
+    "redirect_sources": "Root, legacy component paths, retired Spotify routes and old Grailed Plus aliases",
+    "service_paths": ["/admin", "/api/"],
+    "external_project_sites": [
+      "https://elliotmairet.com/",
+      "https://bur1alrites.vercel.app/",
+      "https://thetexta.github.io/nepobabiesruntheunderground/"
+    ],
+    "ancillary_pdf": {
+      "path": "/Dexter_Young_CV.pdf",
+      "status": 200,
+      "directly_linked": true,
+      "sitemap_optional": true
+    }
+  },
+  "missing_indexable_html": [],
+  "extra_invalid_sitemap_urls": [],
+  "indexable_orphans_in_scope": [],
+  "lastmod_review": {
+    "supporting_content_metadata_commit": "21bf86e (2026-10-06)",
+    "later_page_change": "84f8f5f (2026-10-14): Photo Graph provider-aware media URL construction only",
+    "conclusion": "Uniform dates are supported by reviewed history; no later significant public content change demonstrated. Do not derive dates from mechanical storage changes or deployment timestamps.",
+    "action": "Update only the affected page date when a significant published content, link or structured-data change is established."
+  },
+  "limitations": [
+    "Shared current live HTTP/browser evidence reused; no duplicate broad seo:validate run.",
+    "XML parsed independently with ElementTree; no external XSD validation.",
+    "Image status based on HEAD evidence; no second body decode.",
+    "Source and captured href graph reviewed, not exhaustive logs, external backlinks or Search Console.",
+    "Git history cannot prove all historical deployments or mutable backend edits.",
+    "No Google-selected canonical or indexing evidence; no submissions or writes."
+  ]
+}

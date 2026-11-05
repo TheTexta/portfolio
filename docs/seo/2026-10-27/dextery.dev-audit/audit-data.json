@@ -1,0 +1,349 @@
+{
+  "audit": {
+    "date_local": "2026-10-27",
+    "target": "https://dextery.dev",
+    "source_commit": "8c81df1",
+    "source_state": "Existing local documentation changes preserved; deployment commit identity not established",
+    "mode": "Read-only production/source audit; local reports and curated evidence only",
+    "indexable_html_pages_reviewed": 3,
+    "specialist_agents": 10,
+    "lead_image_review": true
+  },
+  "summary": {
+    "health_score": 86,
+    "score_label": "Provisional observed SEO readiness, not a complete health measurement or Google score",
+    "score_coverage_percent": 90,
+    "observed_weighted_contribution": 77.15,
+    "normalization": "77.15 / 0.90 = 85.722..., rounded to 86; Performance weight 10% unscored",
+    "business_type": "Personal software-development / creative-technology portfolio with project study and browser-extension landing page",
+    "confirmed_critical_indexing_blockers": 0,
+    "top_findings": [
+      "Invisible keyboard focus on several shared links and query buttons",
+      "Grailed Plus demo unavailable states and independent direct-fetch timeout; root cause and persistence unverified",
+      "Photo Graph no-scroll capture completed 120 image responses / 4221724 encoded bytes",
+      "Benchmark labels omit judged-candidate filtering and seven-query model-average scope",
+      "Visible project contribution context is less explicit than the existing creator schema"
+    ],
+    "quick_wins": [
+      "Restore explicit visible focus styling",
+      "Correct benchmark definitions and aggregate labels",
+      "Add owner-confirmed contribution context from the shared catalog",
+      "Defer and appropriately size below-fold comparison imagery",
+      "Identify Grailed Plus as a Chrome extension in existing product metadata"
+    ]
+  },
+  "categories": [
+    {
+      "name": "Technical SEO",
+      "weight_percent": 22,
+      "score": 96,
+      "score_type": "Scoped live-check heuristic; not Google index coverage",
+      "what_works": [
+        "154 bounded assertions passed, zero failed",
+        "Three HTTP-200 self-canonical public pages with meaningful raw text and simulated user-agent parity",
+        "Valid sitemap, deliberate noindex experiences, working permanent legacy redirects"
+      ],
+      "findings": [
+        {
+          "id": "T2",
+          "title": "Legacy graph fallback retains retired Supabase media assumptions",
+          "severity": "Medium",
+          "status": "source-only, already documented; not reproduced live",
+          "description": "Static fallback nodes without a provider normalize to Supabase even though retained originals were retired.",
+          "recommendation": "Separately repair/rebuild provider-qualified fallback paths and test the branch in isolation; do not mutate production storage during diagnosis.",
+          "sources": [
+            "lib/photo-graph/graph-store.ts:244-294",
+            "lib/photo-graph/media-url.ts:25-53"
+          ],
+          "action": "A6"
+        },
+        {
+          "id": "T1",
+          "title": "Extra permanent HTTP/www entry redirect hops",
+          "severity": "Low",
+          "status": "confirmed live inefficiency, not indexing blocker",
+          "description": "http://www.dextery.dev/ takes three 308 redirects to /portfolio; final destinations and query preservation work.",
+          "recommendation": "Optional consolidation only during approved hosting maintenance; preserve canonical homepage routing."
+        }
+      ]
+    },
+    {
+      "name": "Content Quality",
+      "weight_percent": 23,
+      "score": 76,
+      "score_type": "Editorial heuristic, rounded equal-page mean",
+      "what_works": [
+        "Original work, real methodological evidence, disclosed benchmark scope and limitations",
+        "Named owner, public contact/CV and consistent official profile/Store signals",
+        "No arbitrary word-count or generic blogging requirement"
+      ],
+      "findings": [
+        {
+          "id": "CONTENT-01",
+          "title": "Benchmark definitions and aggregate scope are imprecise",
+          "severity": "Medium",
+          "status": "confirmed public wording/source mismatch",
+          "description": "P@4 filters to judged candidates before selecting four; active-query cards display model averages across seven queries. The displayed numbers are explainable, not alleged fabrication.",
+          "recommendation": "Qualify judged-candidate denominator and seven-query averages, retaining the historical benchmark date and corpus scope.",
+          "sources": [
+            "scripts/photo-graph/benchmark-color-models.ts:195-243",
+            "app/projects/photo-graph/model-comparison/photo-graph-model-comparison.tsx:206-210,284-299"
+          ],
+          "action": "A7"
+        },
+        {
+          "id": "CONTENT-02",
+          "title": "Project contribution and ownership remain inferred",
+          "severity": "Medium",
+          "status": "confirmed content gap; owner facts required before changes",
+          "description": "Artifact summaries and stack are visible, but personal responsibility/collaboration/result context is less explicit. Internal TBD values are not public placeholders.",
+          "recommendation": "Use short owner-confirmed contribution and supported outcome context in the shared catalog and existing views.",
+          "action": "A4"
+        },
+        {
+          "id": "CONTENT-03",
+          "title": "Maker/support/privacy signposting is indirect on Grailed Plus",
+          "severity": "Low",
+          "status": "page-level clarity opportunity, not ecosystem absence or policy violation",
+          "description": "The Store already supplies matching developer/contact/disclosure context, one destination away.",
+          "recommendation": "Link existing current disclosures and maker/support context accurately; distinguish extension behavior from landing-page analytics."
+        }
+      ]
+    },
+    {
+      "name": "On-Page SEO",
+      "weight_percent": 20,
+      "score": 87,
+      "score_type": "Editorial heuristic, rounded equal-page mean",
+      "what_works": [
+        "Unique titles/descriptions",
+        "Coherent headings and meaningful SSR copy",
+        "Metadata-template risk low across all three pages"
+      ],
+      "findings": [
+        {
+          "id": "CONTENT-04",
+          "title": "Grailed Plus metadata leads with demos rather than product category",
+          "severity": "Low",
+          "description": "Current metadata enumerates features and invites live demos but does not explicitly name the Chrome-extension category.",
+          "recommendation": "Lead existing metadata with the installable Chrome extension and main benefit, using verified positioning."
+        },
+        {
+          "id": "CONTENT-05",
+          "title": "Informative comparison-image alternatives are only rank/ID",
+          "severity": "Low",
+          "description": "Rank and image ID repeat captions rather than explaining the visual similarity evidence. Empty query-thumbnail alts are appropriate with adjacent labels.",
+          "recommendation": "Curate concise subject/colour descriptions for the finite informative comparison set without requiring a database migration."
+        }
+      ]
+    },
+    {
+      "name": "Schema / Structured Data",
+      "weight_percent": 10,
+      "score": 92,
+      "score_type": "Syntax, vocabulary and entity-relationship heuristic; no hosted external validator submission",
+      "what_works": [
+        "Six JSON-LD blocks parse",
+        "Zero dangling references",
+        "Appropriate Person/WebSite/page/image/CreativeWork/ItemList entities"
+      ],
+      "findings": [
+        {
+          "id": "SCHEMA-01-02",
+          "title": "Optional pixel typing and stable project entity IDs",
+          "severity": "Low",
+          "description": "Strict dimension vocabulary ranges and explicit project identity can be refined; current graphs are not malformed or demonstrated indexing blockers.",
+          "recommendation": "Consider typed pixel values and stable project IDs only if useful; never invent reviews, ratings or offers for rich results."
+        }
+      ]
+    },
+    {
+      "name": "Performance (CWV)",
+      "weight_percent": 10,
+      "score": null,
+      "score_type": "Not scored: PSI 429; no CrUX/INP or Lighthouse dataset",
+      "what_works": [
+        "Useful bounded local browser resource measurements available",
+        "No demonstrated field CWV, TTFB or CLS failure"
+      ],
+      "findings": [
+        {
+          "id": "PERF-01",
+          "title": "Photo Graph initial image work is substantial",
+          "severity": "High",
+          "status": "measured optimization opportunity, not a field CWV verdict",
+          "description": "Single unthrottled 390x844/DPR3 no-scroll capture completed 120 image responses / 4221724 encoded bytes; 2984361 canvas-image bytes and 1237363 comparison-image bytes.",
+          "recommendation": "First defer/resize below-fold comparison images; then measure whether graph activation/concurrency changes justify the experience tradeoff.",
+          "action": "A3"
+        },
+        {
+          "id": "PERF-02",
+          "title": "Root fonts consume 246 KB of initial portfolio transfer",
+          "severity": "Medium",
+          "description": "Six fonts account for 246122 bytes and 45.4% of the observed primary portfolio mobile payload.",
+          "recommendation": "Compare WOFF2 and truly initial-face preloads while preserving typography and avoiding new CLS/FOIT.",
+          "action": "A5"
+        }
+      ]
+    },
+    {
+      "name": "AI Search Readiness",
+      "weight_percent": 10,
+      "score": 82,
+      "score_type": "GEO content/entity heuristic with separate agentic access corroboration; actual citation visibility unknown",
+      "what_works": [
+        "Readable initial HTML and relevant original evidence",
+        "Existing Person/sameAs and creator relations",
+        "Four representative UA strings receive identical unchallenged HTTP-200 homepage HTML"
+      ],
+      "findings": [],
+      "notes": [
+        "Contribution and benchmark clarity findings are already represented in Content Quality, not duplicated as extra defects",
+        "Optional missing llms.txt/Markdown/discovery/WebMCP are not indexing defects",
+        "One failed animated-control automation attempt was reclassified as a testing limitation after intended focus links were verified in source",
+        "Homepage Agent-UX naming score is not a whole-site task-success or Lighthouse Agentic score"
+      ]
+    },
+    {
+      "name": "Images",
+      "weight_percent": 5,
+      "score": 75,
+      "score_type": "Lead image-delivery heuristic, not Google Images ranking or CWV",
+      "what_works": [
+        "Descriptive poster alts and valid sized fill containers",
+        "Five sitemap poster originals HTTP 200",
+        "Sample R2 transforms negotiate AVIF with Vary: Accept and immutable caching"
+      ],
+      "findings": [],
+      "notes": [
+        "Initial image work is reported once as PERF-01; informative-alt refinement is CONTENT-05",
+        "Original asset sizes are not optimized browser transfer sizes"
+      ]
+    },
+    {
+      "name": "Accessibility and Search Experience (supplemental)",
+      "weight_percent": 0,
+      "score": null,
+      "what_works": [
+        "Six responsive captures HTTP 200 with no document overflow",
+        "Sample query selection works with Enter",
+        "Appropriate portfolio/study/product entry-page separation"
+      ],
+      "findings": [
+        {
+          "id": "V1",
+          "title": "Keyboard focus is invisible on several controls",
+          "severity": "High",
+          "status": "confirmed live",
+          "description": "Affected focused links/query buttons compute outline style none with no visible alternative, despite functional keyboard activation.",
+          "recommendation": "Restore explicit visible focus styling and verify pointer/keyboard behavior in both themes.",
+          "action": "A1"
+        },
+        {
+          "id": "SXO-01",
+          "title": "Grailed Plus demo did not become ready",
+          "severity": "High",
+          "status": "investigation priority; observed captures, root cause/persistence unknown",
+          "description": "Desktop/mobile captures reached unavailable fallback; independent direct fetch timed out after 30 seconds. First-party copy and Store links remain.",
+          "recommendation": "Diagnose availability and ready handshake, preserve useful static proof/retry and official install path; approve service fixes separately.",
+          "action": "A2"
+        }
+      ]
+    },
+    {
+      "name": "Backlink Profile (supplemental)",
+      "weight_percent": 0,
+      "score": null,
+      "score_type": "Insufficient profile-level data, not a zero or poor rating",
+      "what_works": [
+        "Two actual inbound linking pages verified: GitHub website field and Elliot development credit"
+      ],
+      "findings": [],
+      "notes": [
+        "Two is a verified sample, not site-wide backlink/referring-domain total",
+        "Common Crawl broad table scan not run; LinkedIn 999 is an access limitation",
+        "No DA/PA/toxicity/velocity or disavow conclusion"
+      ]
+    }
+  ],
+  "action_plan": {
+    "phases": [
+      {
+        "name": "Phase 1: Accessibility, product proof and initial payload",
+        "timeframe": "Next separately approved implementation",
+        "items": [
+          "A1: visible keyboard focus",
+          "A2: demo diagnosis before choosing a service fix",
+          "A3: below-fold thumbnail deferral/sizing before broader graph changes"
+        ]
+      },
+      {
+        "name": "Phase 2: Factual clarity and efficient delivery",
+        "timeframe": "After facts and evaluation definition are confirmed",
+        "items": [
+          "A7: judged-candidate/seven-query metric labels",
+          "A4: owner-confirmed contributions",
+          "A5: measured font optimization",
+          "A6: separate isolated fallback repair"
+        ]
+      },
+      {
+        "name": "Phase 3: Conditional content and authority polish",
+        "timeframe": "Only if audience testing or actual query evidence justifies it",
+        "items": [
+          "Mobile work-category cues",
+          "Product maker/support/privacy and snippet clarity",
+          "Curated image alternatives",
+          "Preserve genuine credits/profiles; no manufactured link campaign"
+        ]
+      },
+      {
+        "name": "Phase 4: Verification and monitoring",
+        "timeframe": "After any separately approved release",
+        "items": [
+          "Normal project checks/build and relevant tests for implementation",
+          "Public HTTP and keyboard/demo/image regressions",
+          "Owner-supplied Search Console and field-performance evidence when available",
+          "No automatic indexing submissions or policy changes"
+        ]
+      }
+    ]
+  },
+  "verification": {
+    "technical_assertions_passed": 154,
+    "technical_assertions_failed": 0,
+    "json_ld_blocks_parsed": 6,
+    "dangling_schema_references": 0,
+    "responsive_page_viewport_captures": 6,
+    "backlink_report_validation_errors": 0,
+    "backlink_report_validation_warnings": 1,
+    "backlink_warning_review": "Reciprocal links explained by identity linking and genuine development credit; no manipulation inferred",
+    "unmodified_npm_seo_validate_run": false,
+    "npm_validator_reason": "Also fetches robots-disallowed admin paths; scoped public assertions used instead",
+    "code_checks_build_tests_run": false,
+    "code_checks_reason": "No implementation/configuration change",
+    "real_google_indexing_verified": false,
+    "real_user_cwv_measured": false,
+    "ai_citation_rate_measured": false,
+    "independent_consistency_review": "No material corrections found; measurement and replay-archive caveats retained",
+    "report_archive": {
+      "prettier_check_passed": true,
+      "json_files_parsed": 22,
+      "copied_json_evidence_value_equivalence_passed": 20,
+      "sitemap_xml_well_formed_and_capture_identical": true,
+      "score_arithmetic_and_core_report_links_passed": true,
+      "findings_files": 11,
+      "retained_screenshots": 7
+    }
+  },
+  "artifacts": {
+    "report": "FULL-AUDIT-REPORT.md",
+    "action_plan": "ACTION-PLAN.md",
+    "methodology": "METHODOLOGY.md",
+    "evidence_notes": "EVIDENCE.md",
+    "findings_dir": "findings/",
+    "screenshots_dir": "screenshots/",
+    "evidence_dir": "evidence/",
+    "pdf_generated": false
+  }
+}

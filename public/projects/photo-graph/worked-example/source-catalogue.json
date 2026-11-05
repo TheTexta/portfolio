@@ -1,0 +1,608 @@
+{
+  "version": 1,
+  "fetchedAt": "2026-11-04T07:37:05.515Z",
+  "url": "https://dextery.dev/api/photo-graph/graph",
+  "responseSha256": "30071cddd8730490a656a7fc0d46232c3cd2f5df1fd5c3364ff379afba06bfc3",
+  "nodes": [
+    {
+      "id": "1",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/1.png",
+      "storagePath": "photography-images/1.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "3",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/3.png",
+      "storagePath": "photography-images/3.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "4",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/4.png",
+      "storagePath": "photography-images/4.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "5",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/5.png",
+      "storagePath": "photography-images/5.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "7",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/7.png",
+      "storagePath": "photography-images/7.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "8",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/8.png",
+      "storagePath": "photography-images/8.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "9",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/9.png",
+      "storagePath": "photography-images/9.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "10",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/10.png",
+      "storagePath": "photography-images/10.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "11",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/11.png",
+      "storagePath": "photography-images/11.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "12",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/12.png",
+      "storagePath": "photography-images/12.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "13",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/13.png",
+      "storagePath": "photography-images/13.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "14",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/14.png",
+      "storagePath": "photography-images/14.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "15",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/15.png",
+      "storagePath": "photography-images/15.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "16",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/16.png",
+      "storagePath": "photography-images/16.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "18",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/18.png",
+      "storagePath": "photography-images/18.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "19",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/19.png",
+      "storagePath": "photography-images/19.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "20",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/20.png",
+      "storagePath": "photography-images/20.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "21",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/21.png",
+      "storagePath": "photography-images/21.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "24",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/24.png",
+      "storagePath": "photography-images/24.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "27",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/27.png",
+      "storagePath": "photography-images/27.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "28",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/28.png",
+      "storagePath": "photography-images/28.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "29",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/29.png",
+      "storagePath": "photography-images/29.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "30",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/30.png",
+      "storagePath": "photography-images/30.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "31",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/31.png",
+      "storagePath": "photography-images/31.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "32",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/32.png",
+      "storagePath": "photography-images/32.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "33",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/33.png",
+      "storagePath": "photography-images/33.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "34",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/34.png",
+      "storagePath": "photography-images/34.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "35",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/35.png",
+      "storagePath": "photography-images/35.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "36",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/36.png",
+      "storagePath": "photography-images/36.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "37",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/37.png",
+      "storagePath": "photography-images/37.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "38",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/38.png",
+      "storagePath": "photography-images/38.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "39",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/39.png",
+      "storagePath": "photography-images/39.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "40",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/40.png",
+      "storagePath": "photography-images/40.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "41",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/41.png",
+      "storagePath": "photography-images/41.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "43",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/43.png",
+      "storagePath": "photography-images/43.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "45",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/45.png",
+      "storagePath": "photography-images/45.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "46",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/46.png",
+      "storagePath": "photography-images/46.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "47",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/47.png",
+      "storagePath": "photography-images/47.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "48",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/48.png",
+      "storagePath": "photography-images/48.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "49",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/49.png",
+      "storagePath": "photography-images/49.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "50",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/50.png",
+      "storagePath": "photography-images/50.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "51",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/51.png",
+      "storagePath": "photography-images/51.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "55",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/55.png",
+      "storagePath": "photography-images/55.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "56",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/56.png",
+      "storagePath": "photography-images/56.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "57",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/57.png",
+      "storagePath": "photography-images/57.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "61",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/61.png",
+      "storagePath": "photography-images/61.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "63",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/63.png",
+      "storagePath": "photography-images/63.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "64",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/64.png",
+      "storagePath": "photography-images/64.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "65",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/65.png",
+      "storagePath": "photography-images/65.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "66",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/66.png",
+      "storagePath": "photography-images/66.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "67",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/67.png",
+      "storagePath": "photography-images/67.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "68",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/68.png",
+      "storagePath": "photography-images/68.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "69",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/69.png",
+      "storagePath": "photography-images/69.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "70",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/70.png",
+      "storagePath": "photography-images/70.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "72",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/72.png",
+      "storagePath": "photography-images/72.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "73",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/73.png",
+      "storagePath": "photography-images/73.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "74",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/74.png",
+      "storagePath": "photography-images/74.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "75",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/75.png",
+      "storagePath": "photography-images/75.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "76",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/76.png",
+      "storagePath": "photography-images/76.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "78",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/78.png",
+      "storagePath": "photography-images/78.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "81",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/81.png",
+      "storagePath": "photography-images/81.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "82",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/82.png",
+      "storagePath": "photography-images/82.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "83",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/83.jpg",
+      "storagePath": "photography-images/83.jpg",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "84",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/84.png",
+      "storagePath": "photography-images/84.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "86",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/86.png",
+      "storagePath": "photography-images/86.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "87",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/87.png",
+      "storagePath": "photography-images/87.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "88",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/88.png",
+      "storagePath": "photography-images/88.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "89",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/89.png",
+      "storagePath": "photography-images/89.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "91",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/91.png",
+      "storagePath": "photography-images/91.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "92",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/92.png",
+      "storagePath": "photography-images/92.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "93",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/93.png",
+      "storagePath": "photography-images/93.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "94",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/94.png",
+      "storagePath": "photography-images/94.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "95",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/95.png",
+      "storagePath": "photography-images/95.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "96",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/96.png",
+      "storagePath": "photography-images/96.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "97",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/97.png",
+      "storagePath": "photography-images/97.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "98",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/98.png",
+      "storagePath": "photography-images/98.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "99",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/99.png",
+      "storagePath": "photography-images/99.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "101",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/101.png",
+      "storagePath": "photography-images/101.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "103",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/103.png",
+      "storagePath": "photography-images/103.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "104",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/104.png",
+      "storagePath": "photography-images/104.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "105",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/105.png",
+      "storagePath": "photography-images/105.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "106",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/106.png",
+      "storagePath": "photography-images/106.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "107",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/107.png",
+      "storagePath": "photography-images/107.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "108",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/108.png",
+      "storagePath": "photography-images/108.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "109",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/109.png",
+      "storagePath": "photography-images/109.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "110",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/110.png",
+      "storagePath": "photography-images/110.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "111",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/111.png",
+      "storagePath": "photography-images/111.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "112",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/112.png",
+      "storagePath": "photography-images/112.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "113",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/113.png",
+      "storagePath": "photography-images/113.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "114",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/114.png",
+      "storagePath": "photography-images/114.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "115",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/115.png",
+      "storagePath": "photography-images/115.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "116",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/116.png",
+      "storagePath": "photography-images/116.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "117",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/117.png",
+      "storagePath": "photography-images/117.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "118",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/118.png",
+      "storagePath": "photography-images/118.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "119",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/119.png",
+      "storagePath": "photography-images/119.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "120",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/120.png",
+      "storagePath": "photography-images/120.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "121",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/121.png",
+      "storagePath": "photography-images/121.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "122",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/122.png",
+      "storagePath": "photography-images/122.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "124",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/124.png",
+      "storagePath": "photography-images/124.png",
+      "storageProvider": "r2"
+    },
+    {
+      "id": "125",
+      "sourceUrl": "https://media.dextery.dev/photo-graph/photography-images/125.png",
+      "storagePath": "photography-images/125.png",
+      "storageProvider": "r2"
+    }
+  ]
+}

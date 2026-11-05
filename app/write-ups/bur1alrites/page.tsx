@@ -7,7 +7,7 @@ import {
   PUBLIC_PAGES,
 } from "@/lib/seo";
 
-import WriteUpContent from "./write-up.mdx";
+import WriteUpContent, { writeUpContents } from "./write-up.mdx";
 
 const project = getProject("bur1alrites");
 
@@ -15,7 +15,7 @@ export const metadata = createPageMetadata(PUBLIC_PAGES.bur1alrites);
 
 export default function Page() {
   return (
-    <ProjectWriteUp project={project}>
+    <ProjectWriteUp project={project} contents={writeUpContents}>
       <StructuredData
         data={createPageStructuredData(PUBLIC_PAGES.bur1alrites)}
       />

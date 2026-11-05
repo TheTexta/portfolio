@@ -1,0 +1,12 @@
+{
+  "test": "Isolated Playwright, /portfolio, default desktop context, DOMContentLoaded; getByRole('button', {name:'View Photo Node-Gallery details', exact:true}).click({timeout:5000})",
+  "result": "TimeoutError after 5000ms; no successful navigation or focus-view verification",
+  "observed_log_excerpts": [
+    "locator resolved to <a role=\"button\" tabindex=\"-1\" href=\"/projects/photo-graph\" aria-label=\"View Photo Node-Gallery details\" ...>",
+    "element is visible, enabled and stable",
+    "<div class=\"project-mini-view-media relative size-full origin-center overflow-hidden border border-ink\">…</div> intercepts pointer events",
+    "element is not stable"
+  ],
+  "interpretation": "A single direct named-control activation failed; does not prove all navigation is blocked. Alternate Show … in focus view button and keyboard route were not exercised. No forced click or retry run performed.",
+  "source": "app/components/projects/project-browser.tsx:169-202"
+}

@@ -6,7 +6,7 @@ selects the opening and ordering without inventing new experience.
 
 | Application           | CV download                        | Lead evidence                                                                                  |
 | --------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Software / full stack | `/Dexter_Young_CV.pdf`             | Grailed Plus, TVM bot, Photo Graph or Elliot                                                   |
+| Software / full stack | `/Dexter_Young_CV.pdf`             | Grailed Plus, Discord Shoot Manager, Photo Graph or Elliot                                     |
 | Applied ML            | `/Dexter_Young_CV_ml.pdf`          | Grailed inference integration, Bot or Not evaluation workflow, Photo Graph's scoped comparison |
 | Interactive media     | `/Dexter_Young_CV_interactive.pdf` | bur1alrites, Photo Graph, Elliot and the browser product                                       |
 
@@ -30,7 +30,7 @@ Suggested bio for owner review:
 
 Before applying it, verify the current degree wording, student year and personal
 preference. In GitHub's normal signed-out view, consider foregrounding the public
-TVM bot, portfolio and Bot or Not repositories, then a client archive or visual
+Discord Shoot Manager, portfolio and Bot or Not repositories, then a client archive or visual
 project appropriate to the role. Do not pin private Grailed repositories as if a
 signed-out reviewer can inspect them: use the public Grailed engineering article
 and clearly labelled sample-data demos. Bio/pin changes require owner action.

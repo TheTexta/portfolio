@@ -1,0 +1,162 @@
+{
+  "category": "AI Search Readiness",
+  "audit_date_local": "2026-10-27",
+  "scope": "Read-only content, entity, raw-HTML delivery and on-page snippet controls; agentic crawler/access audit is separate",
+  "score": {
+    "value": 82,
+    "maximum": 100,
+    "type": "heuristic scoped readiness, not measured visibility",
+    "dimensions": {
+      "citability": { "earned": 18, "maximum": 25 },
+      "structural_readability": { "earned": 18, "maximum": 20 },
+      "multimodal_content": { "earned": 14, "maximum": 15 },
+      "authority_entity": { "earned": 12, "maximum": 20 },
+      "technical_content_delivery": {
+        "earned": 20,
+        "maximum": 20,
+        "limitation": "Raw HTML and on-page preview controls only; crawler policy, WAF, and indexing not included"
+      }
+    }
+  },
+  "shared_evidence": [
+    "homepage-render.json",
+    "photo-graph-render.json",
+    "grailed-plus-render.json"
+  ],
+  "observed_pages": [
+    {
+      "url": "https://dextery.dev/portfolio",
+      "status": 200,
+      "raw_mode": true,
+      "is_spa": false,
+      "h1": "Dexter Young",
+      "heading_sequence": ["h1", "h2", "h3", "h3", "h3", "h3", "h3", "h2"],
+      "official_profile_links_in_html": [
+        "https://github.com/TheTexta",
+        "https://www.linkedin.com/in/dexter-y"
+      ],
+      "main_text_extraction_limitation": "Boilerplate-stripped text omits name/contact although raw HTML includes both"
+    },
+    {
+      "url": "https://dextery.dev/projects/photo-graph",
+      "status": 200,
+      "raw_mode": true,
+      "is_spa": false,
+      "h1": "Photo Node-Gallery",
+      "benchmark": {
+        "generated": "2026-08-26",
+        "node_count": 100,
+        "query_count": 7,
+        "pair_count": 4950
+      },
+      "main_text_extraction_limitation": "Extracted ordering starts with Model 01 metrics; raw HTML contains title and model-selection summary"
+    },
+    {
+      "url": "https://dextery.dev/grailed-plus",
+      "status": 200,
+      "raw_mode": true,
+      "is_spa": false,
+      "h1": "Grailed Plus+",
+      "official_store_link": "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd",
+      "external_store_listing_verified": false
+    }
+  ],
+  "on_page_snippet_controls": {
+    "all_three": {
+      "meta_author": "Dexter Young",
+      "meta_googlebot": "max-image-preview:large",
+      "restrictive_robots_meta_found": false,
+      "data_nosnippet_found": false,
+      "restrictive_x_robots_tag_found": false
+    },
+    "actual_indexing_and_ai_appearance": "not measured"
+  },
+  "entity_schema": {
+    "all_three": ["Person", "WebSite", "ImageObject"],
+    "sameAs": [
+      "https://github.com/TheTexta",
+      "https://www.linkedin.com/in/dexter-y"
+    ],
+    "project_mainEntity": "CreativeWork with creator reference to https://dextery.dev/#person"
+  },
+  "searches": [
+    {
+      "query": "\"dextery.dev\" \"Dexter\"",
+      "tool": "websearch",
+      "returned_results": [
+        "https://www.reddit.com/r/Dexter/comments/1kjzniz/deb_could_be_spoilers/",
+        "https://www.vulture.com/2012/07/dexter-season-seven-opener.html",
+        "https://www.goodreads.com/characters/3819-deborah-morgan",
+        "https://www.instagram.com/popular/debra-de-dexter/",
+        "https://www.tiktok.com/discover/deb-now-dexter",
+        "https://www.tumblr.com/sitaxdebster"
+      ],
+      "interpretation": "Unrelated results; exact-domain query handling appears unreliable; no absence or rank inference"
+    },
+    {
+      "query": "\"TheTexta\" \"Dexter Young\"",
+      "tool": "websearch",
+      "returned_results": [
+        {
+          "url": "https://dextery.dev/portfolio",
+          "title": "Dexter Young — Software Developer & Creative Technologist",
+          "snippet": "Dexter Young's portfolio of software, creative technology, photography ... Contact. GitHub@TheTexta · LinkedIndexter-y · Emaildextery777@gmail.com · Resume ..."
+        }
+      ],
+      "interpretation": "First-party page surfaced; no independent corroboration established by this bounded search"
+    }
+  ],
+  "findings": [
+    {
+      "id": "GEO-01",
+      "severity": "medium",
+      "title": "Human-readable project contribution is less explicit than creator schema",
+      "evidence": [
+        "app/components/home-page-content.tsx:170-208",
+        "app/components/projects/project-catalog.ts:67-69",
+        "app/components/projects/project-catalog.ts:90-92",
+        "app/components/projects/project-case-study-shell.tsx:41-68",
+        "lib/seo.ts:138-145"
+      ],
+      "recommendation": "Add owner-approved brief role/contribution context without inventing outcomes or publishing TBD placeholders"
+    },
+    {
+      "id": "GEO-02",
+      "severity": "low",
+      "title": "Grailed Plus feature prose can identify the extension and creator more directly",
+      "evidence": [
+        "app/components/projects/grailed-plus/grailed-plus-install-page.tsx:365-392",
+        "app/components/projects/grailed-plus/grailed-plus-install-page.tsx:65-98"
+      ],
+      "recommendation": "Use one concise plain-language product definition adjacent to hero, preserving shopper-focused features"
+    },
+    {
+      "id": "GEO-03",
+      "severity": "low",
+      "title": "Benchmark snapshot scope is clearer in notes than the standalone project readout",
+      "evidence": [
+        "app/projects/photo-graph/model-comparison/photo-graph-model-comparison.tsx:124-147",
+        "app/projects/photo-graph/model-comparison/photo-graph-model-comparison.tsx:326-335",
+        "app/projects/photo-graph/model-comparison/photo-graph-model-comparison.tsx:354-360",
+        "public/projects/photo-graph/color-model-benchmark-v1.json:1"
+      ],
+      "recommendation": "Identify 100-photo claims as the dated benchmark set rather than implying a current full-archive count; preserve genuine original evidence"
+    }
+  ],
+  "not_measured": [
+    "AI citation rates",
+    "AI platform visibility",
+    "search rankings",
+    "Google or Bing indexing",
+    "independent brand mention coverage",
+    "profile ownership through reciprocal links"
+  ],
+  "delegated": [
+    "llms.txt",
+    "robots AI crawler rules",
+    "accessibility tree",
+    "WebMCP",
+    "discovery endpoints",
+    "RSL licensing"
+  ]
+}

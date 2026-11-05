@@ -1,0 +1,26 @@
+{
+  "grailed": {
+    "text": "DEXTERY.DEV\nINSTALL ↗\nDARK\n\nA SHARPER LAYER FOR GRAILED\n\nGrailed\nPlus\n+\n\nMarket context, local currency, and a native-feeling dark mode, directly inside the pages you already browse.\n\nMARKET COMPARE\nPRICE INTELLIGENCE\nCUSTOM CURRENCY\nDARK MODE\nVIEW IN CHROME WEB STORE\nEXPLORE FEATURES\n\nChrome extensions install on desktop. Open the Store now or revisit this page on your computer.\n\nLIVE DEMO IS TEMPORARILY UNAVAILABLE\n\nFEATURE INDEX\n\nFour upgrades.\nZero workflow change.\n\nGrailed Plus works where the decision happens—inside listings, search results, and messages—not in another tab.\n\nSEARCH BEYOND GRAILED\n\n/ 01\nMarket compare\n\nCompare candidates from eBay and Depop, then refine them locally with product and image similarity.\n\nLIVE DEMO LOADS AS IT APPROACHES\n\nBUY WITH CONTEXT\n\n/ 02\nPricing insights\n\nTrack price drops, estimate the next change, and see seller context without leaving the item page.\n\nLIVE DEMO LOADS AS IT APPROACHES\n\nTHINK IN YOUR CURRENCY\n\n/ 03\nSite-wide conversion\n\nChoose the currency you actually use. Prices update across Grailed while the original USD value stays one hover away.\n\nLIVE DEMO LOADS AS IT APPROACHES\n\nBROWSE AFTER DARK\n\n/ 04\nNative-feeling dark mode\n\nMatch your device, keep dark mode always on, and tune the interface with a custom primary color—without white flashes between pages.\n\nLIVE DEMO LOADS AS IT APPROACHES\n\nREADY WHEN YOU ARE\n\nMake every listing tell you more.\nVIEW IN CHROME WEB STORE\n\nOfficial Chrome Web Store install. No subscription or hidden payments required. Grailed Plus is completely free to use.\n\nGrailed Plus for Chrome\n\ndextery.dev",
+    "frames": ["https://dextery.dev/grailed-plus", ""]
+  },
+  "brand": {
+    "text": "DEXTER YOUNG",
+    "outline": "rgb(0, 0, 0) none 2px",
+    "background": "rgba(0, 0, 0, 0)",
+    "color": "rgb(0, 0, 0)",
+    "decoration": "none",
+    "boxShadow": "none"
+  },
+  "queryFocus": {
+    "outline": "rgb(0, 0, 0) none 2px",
+    "boxShadow": "none"
+  },
+  "queryAfterEnter": {
+    "pressed": "true",
+    "heading": "Dense neutral texture"
+  },
+  "reducedMotion": {
+    "media": true,
+    "scroll": "auto"
+  }
+}

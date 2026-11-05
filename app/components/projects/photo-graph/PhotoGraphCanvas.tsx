@@ -565,8 +565,7 @@ export default function PhotoGraphCanvas({
           <PhotoGraphControls
             menuOpen={menuOpen}
             controls={activeControls}
-            reserveNavigationSpace={showNavigation && !isFullPageRoute}
-            navigationAbove={showNavigation && isFullPageRoute}
+            reserveNavigationSpace={showNavigation}
             showTheme={isFullPageRoute && forcedDarkMode === undefined}
             onMenuOpen={() => setMenuOpen(true)}
             onMenuClose={() => setMenuOpen(false)}
@@ -582,6 +581,7 @@ export default function PhotoGraphCanvas({
             experienceHref={
               isFullPageRoute ? undefined : PROJECT_ROUTES.photoGraphExperience
             }
+            showWriteUpLabel={false}
             ariaLabel="Photo graph controls"
             className="[&>*]:min-h-8"
           />
@@ -633,7 +633,7 @@ export default function PhotoGraphCanvas({
                 onZoomEnd={handleZoomEnd}
               />
             )}
-          {showControls && loadStatus === "ready" && (
+          {showControls && !isFullPageRoute && loadStatus === "ready" && (
             <PhotoGraphBrowser
               graph={graphData}
               selectedId={selectedPhotoId}

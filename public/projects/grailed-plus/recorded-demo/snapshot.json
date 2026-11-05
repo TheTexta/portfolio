@@ -1,0 +1,22 @@
+{
+  "source": "grailed-plus/demo",
+  "note": "Local source build; version.json identifies checkout HEAD, not proof that uncommitted source matches that commit. File hashes identify the actual snapshot.",
+  "files": {
+    "LICENSE.txt": "7eb0b97cdb1a18040a632b23f50c7e0e710c3489c1ee39eb09b3b881f18cf694",
+    "assets/index-CFIS6E5X.js": "a167bbc432d5d652f0ffeca22ec2dbae889faf178ba67ec638dc2d215b7db5d4",
+    "assets/index-ZGZYFORI.css": "526f7869684bf56b40229ec0ff60929652de48e318d2100d3d23c285fb0d375b",
+    "index.html": "b6afe47916097f25c7a5e59d538318c2db1ef7550d194af591c10c0642a11b8a",
+    "photo-credits.html": "35be2703d22ea78966d8b2bd0c288e7fe4f5ea209cb1134331ad091db3722ea4",
+    "photo-credits.json": "cc0a03d4b830a6cdf7f79700ade765546878172fe2e52621faf47020ff0bb1d1",
+    "photos/501xx.webp": "f1c9eb506f140df060e98ea5a676e3f0138b4c352f7aeb7ecaf894255e7beaa9",
+    "photos/akings.webp": "074abf001b156ceccc0c6e53425a9d0fd744f7a7dbaec25cdc0665becf62d5ac",
+    "photos/jeans.webp": "66ed0fa0b6a65a2fa73d796a78b00ef4acfd07b4c53bd40e612d138adb967349",
+    "photos/met.webp": "b34150f31cd3abe5334ee4897fd3e0bc27f442e4a3ae0a23e2e79d1af136e8d2",
+    "photos/overzeas.webp": "8355b732e210af9a3a21df16f88caef36d8f7ac80fd8791b7890c00930792239",
+    "photos/source.webp": "dc6fc1c64330a8313c2b72de5d3f9af20b82fede1c27fb2412d5394760383cb9",
+    "recorded-comparison-input.json": "cabde04e513c4e8de08f1f2a2e218dcbfb96a8a0a9d88b633e04607b1e67a760",
+    "recorded-comparison-timeline.json": "67c71dda87bf4d93b5f663e43cf141fa2b1f736b4d97d299d7548bccf9e2af63",
+    "recorded-comparison.json": "3cde81c89858648e88fa52994269e2a6ce0c7c6dd37fee2c635e4756681de998",
+    "version.json": "2eab3b83085a1fff658ecc489f2de08da51c6ee1b968457a4c5546e7a09529ba"
+  }
+}

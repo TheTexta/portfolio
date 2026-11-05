@@ -754,6 +754,7 @@ export default function ProjectBrowser({
   );
 
   useProjectRailMotion({
+    allowManualScroll: !embedded,
     containerRef: railAreaRef,
     enabled: focusedProjectId === null,
     rails: railMotion,

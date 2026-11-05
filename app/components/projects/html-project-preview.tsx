@@ -4,6 +4,7 @@ import { useRef, useState, useSyncExternalStore } from "react";
 import { useElementSize } from "@/app/hooks/use-element-size";
 import { useIframeOpenOnClick } from "@/app/hooks/use-iframe-open-on-click";
 import { cn } from "@/lib/cn";
+import { getPreviewFrameSize } from "./preview-frame";
 
 type HtmlProjectPreviewProps = {
   title: string;
@@ -64,8 +65,9 @@ export default function HtmlProjectPreview({
     getServerCompactPreview,
   );
   const previewScale = isCompact ? mobilePreviewScale : desktopPreviewScale;
-  const previewWidth = isMeasured ? shellSize.width / previewScale : 0;
-  const previewHeight = isMeasured ? shellSize.height / previewScale : 0;
+  const previewSize = isMeasured
+    ? getPreviewFrameSize(shellSize.width, shellSize.height, previewScale)
+    : { width: 0, height: 0 };
 
   return (
     <div ref={shellRef} className={cn(htmlPreviewShell, htmlPreviewShellTone)}>
@@ -87,8 +89,7 @@ export default function HtmlProjectPreview({
         onMouseLeave={iframeClick.onMouseLeave}
         className={cn(htmlPreviewFrame, !isMeasured && "invisible")}
         style={{
-          width: previewWidth,
-          height: previewHeight,
+          ...previewSize,
           transform: `scale(${previewScale})`,
         }}
         onLoad={() => {

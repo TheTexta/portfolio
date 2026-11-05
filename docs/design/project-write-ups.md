@@ -41,13 +41,138 @@ FINISH: verify the shared column, responsive media, native previews and accessib
 navigation in the browser. Keep the scoped design decisions in this surface brief
 and provenance beside every shipping raster; no root design-system rewrite.
 
+## Desktop contents navigation
+
+All seven articles have a LessWrong-style left contents rail at viewport widths
+of 1024px and above. Its width adapts to the existing margin, leaving the centred 672px
+reading column, figures and previews unchanged. Below that breakpoint the rail
+is hidden, including from keyboard and screen-reader navigation; there is no
+mobile disclosure or floating control.
+
+`lib/mdx/remark-write-up-contents.mjs` derives the outline from authored `##` and
+`###` headings at compile time, assigns stable `section-` anchors and exports
+`writeUpContents` for each route to pass into the shared shell. Duplicate generated
+slugs receive numeric suffixes. Embedded components' internal headings are not
+included. Links and anchors are server-rendered and work without JavaScript.
+
+The rail now follows ForumMagnum's full-height reading-map design rather than a
+conventional compact list. Section markers are spaced according to measured
+document lengths inside a separate post-content container. The title remains a
+fixed-height row; content rows use zero-basis scaled flex space, subject to their
+natural minimum label sizes. An unlabelled introductory spacer is inserted only
+when the first section starts more than 50px into the content, as in the source.
+The earlier `flex-basis: auto` adjustment is no longer used. Labels recede while reading
+and appear when the left margin is hovered or any contents link receives keyboard
+focus. Touch-capable desktop layouts without hover keep labels visible. A native
+title link returns to the article's beginning. Small square markers, Red Hat type
+and existing ink/muted tokens adapt the pattern to the portfolio's own identity.
+
+The moving line maps the visible document range to actual marker positions using
+piecewise interpolation; it is not a simple percentage-complete bar. Document-top
+and content-bottom bounds plus the measured heading/marker correspondences match
+the source's mapping, with a 10px minimum indicator. It expands across short,
+densely marked sections and contracts within long sections. Resize and
+font/content changes remeasure section lengths. Frame-batched scrolling updates
+CSS variables for the line without rendering React on every pixel. Current-section
+selection follows roughly the upper third of the viewport, as in the source.
+When the highlighted window intersects a marker's actual bounds, the 1px square
+dot itself morphs into a centred 11px horizontal tick, extending 5px either side.
+The rail, active segment, dots and ticks all have 1px thickness. The tick matches
+the active navigation line's ink colour; there
+is no separate overlaid line or residual square underneath. It returns to a dot
+on exit. Framer Motion animates the centred scale over 180ms; reduced motion applies
+the state instantly.
+The marker's fixed 1px canvas-coloured clearance remains above and below it in
+both states, keeping the rail and active segment separated from the dot/tick.
+This uses window/marker overlap, independently of `aria-current`, so several ticks
+can be expanded at once. The marker bounds and article/label layout do not change;
+an extra 4px of internal gutter prevents clipping without moving the rail itself.
+Only explicit anchor navigation changes the fragment and browser history.
+The rail's sticky top follows the actual site-header boundary, and its height is
+the remaining viewport below that boundary, instead of subtracting a fixed 144px
+allowance. The track retains the source's 22px top inset. Header, content,
+font and viewport changes are observed and remeasured. There is no fixed comment
+footer on the portfolio, so no comment-footer allowance is reserved.
+The list can scroll independently on short viewports and is omitted from print.
+Label fades respect reduced motion. Clicked sections use Framer Motion's numeric
+`animate` to move the document over 450ms with the portfolio's existing ease-out
+curve. `use-write-up-scroll.ts` preserves hashes/history and moves focus on arrival;
+reduced motion jumps instantly. Wheel/touch/keyboard input, another click, resize
+or history navigation cancels an in-flight animation. Ordinary anchor behaviour
+remains available without JavaScript and for modified/new-tab clicks.
+
+### Source reference
+
+Reviewed ForumMagnum `master` at commit
+[`fbae1ff645880ebe0dc291162ce954c420e5e01b`](https://github.com/ForumMagnum/ForumMagnum/commit/fbae1ff645880ebe0dc291162ce954c420e5e01b):
+
+- [`FixedPositionToC.tsx`](https://github.com/ForumMagnum/ForumMagnum/blob/fbae1ff645880ebe0dc291162ce954c420e5e01b/packages/lesswrong/components/posts/TableOfContents/FixedPositionToC.tsx): proportional section rows and hover-revealed labels.
+- [`MultiToCLayout.tsx`](https://github.com/ForumMagnum/ForumMagnum/blob/fbae1ff645880ebe0dc291162ce954c420e5e01b/packages/lesswrong/components/posts/TableOfContents/MultiToCLayout.tsx): full-height sticky rail and margin-hover behaviour.
+- [`useTocProgressLine.ts`](https://github.com/ForumMagnum/ForumMagnum/blob/fbae1ff645880ebe0dc291162ce954c420e5e01b/packages/lesswrong/components/posts/TableOfContents/useTocProgressLine.ts): visible-window mapping through heading/marker correspondences.
+
+ForumMagnum is GPL-3.0 licensed. This is an independent implementation of the
+interaction pattern, not a copied component or a new ForumMagnum dependency.
+The existing compile-time MDX outlines and stable anchors remain unchanged.
+
+`remark-write-up-body.mjs` wraps the material after the authored
+`data-write-up-header` in the shared server-rendered `WriteUpBody`. This creates
+`#write-up-content`, excluding the title frame, metadata and lead from section
+scaling while retaining the existing prose, preview and media spacing. MDX module
+imports/exports remain top-level; this sidebar change does not edit the seven
+authored articles.
+
+`tests/e2e/write-up-contents.spec.ts` covers every article, breakpoint boundaries,
+column alignment, native anchors/history, keyboard focus and no-JavaScript links.
+`tests/unit/write-up-contents.test.ts` covers outline generation and slug handling;
+`tests/unit/write-up-reading-map.test.ts` covers viewport-to-rail mapping, and
+`tests/unit/write-up-body.test.ts` covers the generated content boundary. Browser
+coverage also checks label reveal, fixed title/separate introduction rows,
+content-only scales, actual indicator-size changes across sections/viewport
+heights, live header sizing and content/header layout changes.
+
+Content-boundary/header-aware geometry verification on 2026-11-04: all 18 targeted
+MDX/reading-map unit tests and both offline algorithm validators passed. The
+contents and unaffected write-up browser checks passed 34 cases, with eight
+desktop-only skips on mobile. Four Photo Graph copy-dependent browser cases were
+excluded from the final run after the full run demonstrated their stale wording
+and disclosure labels. Motion-step, reduced-motion, interruption, native-history,
+no-JavaScript, separate intro/title, growing header and content-only scaling checks
+passed. An isolated Turbopack production build retained all seven static article
+routes. Visual review covered light/dark desktop and unchanged mobile geometry;
+independent source review found no blocking issues.
+
+Scoped lint, typecheck and formatting passed. Repository-wide validation still
+finds two unrelated Photo Graph text assertions and formatting in in-progress
+homepage/project-rail/Photo Graph files. The edited Photo Graph source also emits
+nested-paragraph hydration warnings: an in-memory AST comparison found the same
+offending paragraph nodes before and after both sidebar transforms. Those authored
+markup/content issues were not changed as part of this sidebar work.
+
+Dot-to-tick/uniform-1px/gap verification on 2026-11-04: all 21 targeted unit tests and
+24 contents browser checks passed, with ten desktop-only checks skipped on mobile.
+The browser checks cover a single painted shape, 1px square resting bounds,
+11px-by-1px expanded bounds, 1px rail/active thickness, matching active-line colour,
+centred expansion, retraction, retained clearance in both states, reduced motion
+and unclipped 1024px rendering. Light/dark screenshot pixels confirmed 1px gaps
+above/below an expanded tick without breaking the horizontal stroke. The earlier
+uniform-1px isolated production build passed; it was not rerun for the outline-only
+gap refinement. Scoped lint and formatting passed; the full repository check
+passed typechecking but remains blocked by unrelated homepage/Grailed Plus
+formatting (with two existing homepage lint warnings).
+
+Earlier outline-integration verification also passed eleven navigation and shared
+component cases. The Photo Graph homepage-to-article navigation case failed
+identically in a fresh baseline fixture with the contents integration removed;
+that separately observed failure was left outside this change.
+No production deployment was performed.
+
 ## Boundaries
 
-Photo Graph's experience, data, and processing tools are not redesigned. The
-write-up uses local static media and the saved August 2026 benchmark, with its
-historical dataset and editorial-review caveats stated explicitly. Article HTML
-does not need a database read; the client-side graph preview separately loads
-the public graph API. Its live data must not be confused with the saved benchmark.
+Photo Graph's full experience is not redesigned. Its write-up now follows six
+local worked-example demonstrations, with server-rendered defaults and shared
+comparison state. The 4 November extraction is separate from both the August
+benchmark and the live graph; no article region fetches the live API. See
+`photo-graph-walkthrough.md` for fixture and layout boundaries.
 Elliot is a completed, indexable article with project structured data and a sitemap
 entry. Its three figures are screenshots of public views, not private admin data;
 capture provenance is in `public/projects/elliot-mairet/write-up/sources.json`.
@@ -58,11 +183,11 @@ The inspection was rendered in a disposable local copy with neutral materials,
 wireframe/grid/camera helpers and no bloom. It does not pretend to be Blender or
 an unaltered public-site screenshot. The hosted app and source checkout are unchanged.
 
-Photo Graph's seven review images and two ranked result rows use individual
-local photographs. `Gallery` and `Comparison` are server-rendered MDX components,
-not embedded contact sheets. They preserve each image's aspect ratio, use the
-page's own canvas in light and dark mode, and keep model labels and captions as
-selectable HTML. The generated `gallery.json` retains the saved benchmark's order.
+Photo Graph's optional August methodology retains seven local review photographs.
+Historical `Gallery` and `Comparison` assets preserve their saved order in
+`gallery.json`; the new running example does not reuse their compressed pixels
+as descriptor inputs. All six new figures preserve aspect ratios and use the
+page's canvas in light and dark mode, with selectable labels and calculations.
 
 HTML previews opt into native interaction, disable the portfolio's click-to-launch
 hook, and send no referrer so the hosted site's portfolio-navigation bridge stays
@@ -123,8 +248,9 @@ Below 640px the outer padding is 32px, the minimum frame is 272px, and the side
 extensions shrink to keep the title readable. The homepage and live example keep
 their existing frame geometry while sharing the same text-size ramp.
 
-The TVM case study now links to `TheTexta/discord-shoot-manager`; the TVM
-installation keeps its identity and the case-study URL stays stable. Historical
+The Discord Shoot Manager case study links to `TheTexta/discord-shoot-manager`;
+the case-study URL stays stable. This display-name update does not change the
+deployed Discord application's identity or existing production workspaces. Historical
 source/CI links remain pinned to the reviewed revision under the new repository
 name. Grailed Plus's introduction and contribution metadata describe the owner's
 product work without fork framing or an unverified code-percentage claim; this

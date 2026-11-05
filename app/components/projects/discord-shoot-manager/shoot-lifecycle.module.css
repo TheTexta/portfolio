@@ -1,0 +1,280 @@
+.root {
+  --reacted: 0;
+  --joined: 0;
+  --archived: 0;
+  container-type: inline-size;
+}
+
+.scene {
+  display: grid;
+  height: 400px;
+  grid-template-rows: 52px 1fr;
+  overflow: hidden;
+  border: 1px solid rgb(var(--ink-rgb) / 20%);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 20px;
+  border-bottom: 1px solid rgb(var(--ink-rgb) / 15%);
+}
+
+.channelTitle {
+  position: relative;
+  flex: 1;
+  height: 22px;
+  font-weight: 600;
+}
+
+.publicTitle,
+.privateTitle {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.publicTitle {
+  opacity: calc(1 - var(--joined));
+}
+.privateTitle {
+  opacity: var(--joined);
+}
+.viewLabel {
+  color: var(--color-muted);
+  font-size: 11px;
+}
+.body {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: 170px 1fr;
+}
+
+.sidebar {
+  position: relative;
+  padding: 22px 14px;
+  border-right: 1px solid rgb(var(--ink-rgb) / 15%);
+  background: rgb(var(--surface-rgb) / 35%);
+  font-size: 12px;
+}
+
+.category,
+.activeCategory,
+.archiveCategory {
+  color: var(--color-muted);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.activeCategory {
+  position: absolute;
+  top: 104px;
+}
+.archiveCategory {
+  position: absolute;
+  top: 208px;
+}
+.invitationChannel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.shootChannel {
+  position: absolute;
+  top: 130px;
+  right: 8px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 6px;
+  background: var(--color-canvas);
+  opacity: var(--joined);
+  transform: translateY(calc(var(--archived) * 104px));
+}
+
+.messages {
+  position: relative;
+  min-width: 0;
+}
+.invitation,
+.workspace {
+  position: absolute;
+  inset: 0;
+  padding: 24px;
+}
+.invitation {
+  opacity: calc(1 - var(--joined));
+  transform: translateY(calc(var(--joined) * -12px));
+}
+.workspace {
+  opacity: var(--joined);
+  transform: translateY(calc((1 - var(--joined)) * 12px));
+}
+.sender {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.sender > span {
+  color: var(--color-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.shootName {
+  margin-top: 16px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 20px;
+}
+.details span,
+.crew > span {
+  color: var(--color-muted);
+  font-size: 12px;
+}
+.details p {
+  margin-top: 3px;
+}
+.joinInstruction {
+  max-width: 30ch;
+  margin-top: 26px;
+  font-size: 13px;
+}
+.reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 3px 10px;
+  border: 1px solid rgb(var(--ink-rgb) / 30%);
+  background: rgb(var(--ink-rgb) / calc(var(--reacted) * 8%));
+}
+.reactionCount {
+  display: grid;
+}
+.reactionCount > span {
+  grid-area: 1 / 1;
+}
+.reactionCount > span:first-child {
+  opacity: calc(1 - var(--reacted));
+}
+.reactionCount > span:last-child {
+  opacity: var(--reacted);
+}
+.pinned {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--color-muted);
+  font-size: 12px;
+}
+.workspace .shootName {
+  margin-top: 10px;
+}
+.workspace .details {
+  margin-top: 16px;
+}
+.crew {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid rgb(var(--ink-rgb) / 15%);
+}
+.message {
+  margin-top: 18px;
+  font-size: 13px;
+}
+.message strong {
+  font-size: 12px;
+}
+.message p {
+  margin-top: 4px;
+}
+
+.composer {
+  position: absolute;
+  right: 24px;
+  bottom: 20px;
+  left: 24px;
+  height: 38px;
+  border: 1px solid rgb(var(--ink-rgb) / 20%);
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.openComposer,
+.closedComposer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+}
+.openComposer {
+  opacity: calc(1 - var(--archived));
+}
+.closedComposer {
+  opacity: var(--archived);
+}
+.captions {
+  min-height: 48px;
+  padding-top: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.createCaption,
+.joinCaption,
+.archiveCaption {
+  display: none;
+}
+.root[data-scene-stage="create"] .createCaption,
+.root[data-scene-stage="join"] .joinCaption,
+.root[data-scene-stage="archive"] .archiveCaption {
+  display: block;
+}
+
+@container (max-width: 480px) {
+  .body {
+    grid-template-columns: 1fr;
+  }
+  .sidebar,
+  .viewLabel {
+    display: none;
+  }
+  .header {
+    padding-inline: 18px;
+  }
+  .invitation,
+  .workspace {
+    padding: 22px 18px;
+  }
+  .composer {
+    right: 18px;
+    left: 18px;
+  }
+  .captions {
+    min-height: 60px;
+  }
+}

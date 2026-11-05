@@ -564,7 +564,13 @@ export default function GrailedPlusInstallPage({
                         textOnLeft ? "lg:order-2" : "lg:order-1",
                       )}
                     >
-                      <div className="overflow-hidden border border-ink bg-transparent">
+                      <div
+                        className={cn(
+                          "overflow-hidden bg-transparent",
+                          feature.id !== "market-compare" &&
+                            "border border-ink",
+                        )}
+                      >
                         <GrailedPlusLiveDemo
                           currencyCode={demoCurrency}
                           darkModeEnabled={demoDarkMode}

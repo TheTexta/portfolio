@@ -1,0 +1,12 @@
+#write-up-article .katex-display {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.25em;
+}
+
+/* Keep the beginning of an oversized, centred equation reachable by scrolling. */
+#write-up-article .katex-display > .katex {
+  width: max-content;
+  min-width: 100%;
+}

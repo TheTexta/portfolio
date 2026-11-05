@@ -1,179 +1,322 @@
+import ComparisonDemo from "./_components/comparison-demo";
+import NeighboursDemo from "./_components/neighbours-demo";
+import ProjectPreview from "@/app/components/projects/project-write-up-preview";
+
 <header data-write-up-header>
 
 # {props.project.title}
 
 <ProjectMeta>
   <ProjectDetails project={props.project} />
-  <nav aria-label={`${props.project.title} project links`}>
+  <nav aria-label={props.project.title + " project links"}>
     <a href={props.project.experienceHref}>Launch experience</a>
   </nav>
 </ProjectMeta>
 
 <Lead>
   {
-    "An interactive photography archive that links images by colour rather than subject. I built the graph interface, colour-processing pipeline, and comparison of five similarity configurations."
+    "An interactive photography archive that connects images through colour. I built the image-processing pipeline, neighbour-generation algorithm and graph interface, bringing an arrangement of printed photographs into a digital space."
   }
 </Lead>
 
 </header>
+## Browsing by colour
 
-<ProjectPreview projectId="photo-graph" />
-
-## Following colour
-
-Two photographs can have little in common as subjects and still look right beside
-each other. I built Photo Node-Gallery to follow those connections.
-
-Each photograph is a node. Colour similarity creates the links; a force-directed
-layout arranges the graph. Drag, zoom, or open an image for a closer look. Following
-a chain of links takes you across different subjects through shared tones.
+The project began with photographs on my bedroom wall. While arranging my
+prints, I found that grouping similar colours gave the collection a pleasing visual
+structure. Complementary colours helped neighbouring groups meet, creating
+connections between photographs of different subjects.
 
 <Figure
-  src={props.project.posterSrc}
-  alt={props.project.posterAlt}
-  width={props.project.posterWidth}
-  height={props.project.posterHeight}
-  caption="Links let you follow colour relationships across photographs of different subjects. Their positions come from the force simulation."
+  src="/projects/photo-graph/write-up/bedroom-wall.webp"
+  width={2000}
+  height={1500}
+  alt="Printed photographs arranged across a bedroom wall in groups of similar colours, with contrasting colours where the groups meet."
+  caption="The bedroom photo wall that inspired Photo Graph."
 />
 
-## Building the archive
+I wanted to explore that arrangement digitally. A graph lets each photograph
+connect to several others, so viewers can follow relationships through the
+collection instead of choosing a category first. The implementation currently
+models similar-colour connections; the complementary relationships on the wall
+remain outside its comparison model.
 
-Colour features are calculated ahead of time, so browsing does not require
-reprocessing the originals.
+Building it involved three decisions: how to represent a photograph's colour,
+which comparisons should become links, and how to arrange those links while
+keeping the photographs readable.
 
-Next.js provides the pages and API routes. react-force-graph draws the canvas,
-while D3 handles the force simulation, keeping the moving photographs out of the
-HTML layout. Supabase stores the precomputed graph and colour features; published
-images are delivered from Cloudflare R2 through a shared media Worker.
+## Defining what “similar” means
 
-Publishing a photograph must keep its node and generated relationships consistent.
-The database registration operation commits them together and rejects a generation
-based on a stale graph revision. A lost response can then be retried with the same
-upload identity. The [database regression tests](https://github.com/TheTexta/portfolio/blob/af8f1cc4c6bd66bce39c1b7ced7902341731a02a/tests/unit/upload-database.test.ts)
-check rollback after a failed neighbour insert, rejection of stale work, and replay
-that returns the accepted result while leaving exactly one node.
+I started with a simple descriptor: **the average RGB colour of each photograph,
+converted into a CIELAB vector**. The average provides a broad signal about the
+image's colour cast and illumination. It is also easy to inspect: I can display
+the descriptor as a swatch beside the photograph and see what the reduction has
+preserved.
 
-## Testing the links
+The processing order matters. I average the RGB channels across the analysis
+image, then convert that average into LAB. This produces three coordinates,
 
-The original model compared average colours using CIE76, a distance measure in LAB
-colour space. A mean loses the distribution of colours within an image, so I
-compared it with palette and distribution approaches, as well as other distances
-between mean colours.
+$[L^*, a^*, b^*]$: lightness, a green-to-red axis and a blue-to-yellow
+axis.
 
-The benchmark from 26 August 2026 covers
-{props.benchmark.nodeCount} photographs and {props.benchmark.queryCount} reviewed
-query images, ranging from snow to coloured stage lighting.
+For photograph Iᵢ, the representation and comparison are:
 
-<Gallery
-  images={props.gallery.reviewImages}
-  label="Seven review photographs"
-  caption="The seven review images, read left to right, top to bottom."
-/>
+$$
+\begin{aligned}
+\mathbf{v}_i &= \operatorname{Lab}\!\left(\operatorname{meanRGB}(I_i)\right) \\
+d_{ij} &= \Delta E_{00}(\mathbf{v}_i, \mathbf{v}_j)
+\end{aligned}
+$$
 
-For each query I selected eight positive and eight negative examples based on
-colour and tone. I filtered each model's ranking to those sixteen judged
-candidates, then counted positives in its first four slots. Across seven queries,
-that gives 28 evaluated slots. A separate measure counts how often a judged
-positive ranks ahead of a judged negative; it does not compare a complete human
-ranking. I also checked whether each generated graph left photographs disconnected.
+**CIEDE2000** adjusts differences in lightness, chroma and hue to account for
+perceptual unevenness in LAB. Chroma describes how far a colour is from neutral;
+hue describes its colour direction. The formula includes a chroma–hue interaction,
+so its result is more involved than the straight-line distance between the three
+coordinates.
 
-## The result
+The descriptor makes this comparison compact, but also limits what it can
+recognise. Separate blue and magenta regions in a performance photograph collapse
+into one average. Different colour distributions can produce similar vectors,
+and the positions of objects and colours disappear entirely. The graph therefore
+follows overall colour affinity, with no knowledge of what a photograph depicts.
 
-With CIEDE2000, still using mean LAB colour, 25 of 28 top-four slots within the
-judged candidate sets were positive ({props.benchmark.selectedPrecision}), compared
-with 24 of 28 for CIE76 ({props.benchmark.originalPrecision}). The 3.6 percentage-point
-difference represents one additional positive slot in this small comparison.
+<ComparisonDemo />
 
-<div className="my-8 overflow-x-auto">
+I compared this baseline with a mean in Oklab, a 64-component Oklab histogram
+and a weighted palette compared using Earth Mover distance. The histogram and
+palette preserve more of an image's colour distribution, but neither outperformed
+mean LAB with CIEDE2000 on the top-four criterion in my small manual review.
+I retained the simpler representation for this archive. The review covered seven
+hand-picked queries, so I treat it as a model-selection aid; a stronger assessment
+would use new queries and separately collected judgments.
+
+### Colour-model comparison and review method
+
+{<div className="my-4">
+
+  <p>
+    The saved 26 August 2026 benchmark covered 100 photographs. For each of
+    seven queries, I selected eight positive and eight negative examples based
+    on colour and tone. I filtered each model's ranking to those 16 judged
+    candidates, then counted positives in the first four positions. This gives
+    28 evaluated positions across the seven queries.
+  </p>
+</div>}
+
+{<div className="my-4 overflow-x-auto">
+
   <table className="w-full border-collapse text-left text-sm leading-relaxed">
     <caption className="mb-3 text-left text-muted">
-      Saved August comparison: first four judged candidates per query, seven
-      queries. Components describe the graph over all 100 photographs.
+      Positive results among the first four judged candidates per query.
     </caption>
     <thead>
       <tr className="border-b border-ink">
-        <th scope="col" className="py-3 pr-3 font-semibold">
+        <th scope="col" className="py-3 pr-4 font-semibold">
           Configuration
         </th>
-        <th scope="col" className="py-3 pr-3 font-semibold">
-          Positive slots
-        </th>
         <th scope="col" className="py-3 font-semibold">
-          Components
+          Positive positions
         </th>
       </tr>
     </thead>
     <tbody>
       <tr className="border-b border-muted/30">
-        <th scope="row" className="py-3 pr-3 font-normal">
+        <th scope="row" className="py-3 pr-4 font-normal">
           Mean LAB / CIE76
         </th>
-        <td className="py-3 pr-3">24/28 (85.7%)</td>
-        <td className="py-3">7</td>
+        <td className="py-3">24 / 28</td>
       </tr>
       <tr className="border-b border-muted/30">
-        <th scope="row" className="py-3 pr-3 font-normal">
+        <th scope="row" className="py-3 pr-4 font-normal">
           Mean LAB / CIEDE2000
         </th>
-        <td className="py-3 pr-3">25/28 (89.3%)</td>
-        <td className="py-3">1</td>
+        <td className="py-3">25 / 28</td>
       </tr>
       <tr className="border-b border-muted/30">
-        <th scope="row" className="py-3 pr-3 font-normal">
+        <th scope="row" className="py-3 pr-4 font-normal">
           Mean Oklab
         </th>
-        <td className="py-3 pr-3">21/28 (75.0%)</td>
-        <td className="py-3">2</td>
+        <td className="py-3">21 / 28</td>
       </tr>
       <tr className="border-b border-muted/30">
-        <th scope="row" className="py-3 pr-3 font-normal">
-          Oklab distribution
+        <th scope="row" className="py-3 pr-4 font-normal">
+          Oklab histogram / Hellinger
         </th>
-        <td className="py-3 pr-3">23/28 (82.1%)</td>
-        <td className="py-3">1</td>
+        <td className="py-3">23 / 28</td>
       </tr>
       <tr className="border-b border-muted/30">
-        <th scope="row" className="py-3 pr-3 font-normal">
-          Oklab palette
+        <th scope="row" className="py-3 pr-4 font-normal">
+          Oklab palette / Earth Mover
         </th>
-        <td className="py-3 pr-3">20/28 (71.4%)</td>
-        <td className="py-3">2</td>
+        <td className="py-3">20 / 28</td>
       </tr>
     </tbody>
   </table>
-</div>
+</div>}
 
-The image comparison below shows actual nearest neighbours from the full saved
-archive ranking. It includes unjudged photographs, so these pictures are not the
-candidate sets used to calculate the percentages above.
+{<div className="my-4">
 
-<Comparison
-  query={props.gallery.comparison.query}
-  rows={props.gallery.comparison.rows}
-  caption="Actual nearest neighbours from the full saved archive ranking, in order. This illustration is separate from evaluation within the manually judged candidate sets."
+  <p>
+    CIEDE2000 gained one positive position over CIE76 in this review. The same
+    queries informed model selection. Unjudged photographs were excluded from
+    the score rather than counted as incorrect, so the counts do not describe
+    the first four neighbours from the complete archive.
+  </p>
+  <p>
+    Graph cutoffs also differed: CIEDE2000 used 16 and CIE76 used 19.
+    Connectivity depends on these settings as well as the comparison formula.
+    The benchmark describes the saved August extraction, separately from the
+    worked example and live archive.
+  </p>
+</div>}
+
+<Gallery
+  images={props.gallery.reviewImages}
+  label="Seven August review photographs"
+  caption="The photographs used for the saved colour-affinity review."
 />
 
-I retained mean colour because the richer representations did not outperform the
-selected configuration on this criterion. Its graph formed one connected component
-with no isolated photographs, allowing traversal through the archive. The original
-configuration split into {props.benchmark.originalComponents} groups, including
-{props.benchmark.originalIsolates} photographs with no links. The distance thresholds
-also differ between configurations, so connectivity cannot be attributed to the
-distance formula alone. CIE76 placed judged positives ahead of negatives slightly
-more often: 82.15%, compared with 81.92% for CIEDE2000.
+{<div className="my-4">
 
-These results describe the saved August benchmark, not the current live archive.
+<a href="https://github.com/TheTexta/portfolio/blob/main/public/projects/photo-graph/color-model-benchmark-v1.json">
+  Saved benchmark
+</a>
+{" · "}
+<a href="https://github.com/TheTexta/portfolio/blob/main/scripts/photo-graph/color-benchmark-judgments-v1.json">
+  Judgments
+</a>
+{" · "}
+<a href="https://github.com/TheTexta/portfolio/blob/main/scripts/photo-graph/benchmark-color-models.ts">
+  Evaluation code
+</a>
 
-## Where it falls short
+  </div>}
 
-Colour matching ignores the subject. It can link unrelated scenes or separate two
-views of the same place because their lighting differs.
+## Turning similarity into a useful graph
 
-The review covers seven hand-picked starting images and my judgments of colour and
-tone, not a complete set of correct matches or an independent evaluation. The same
-queries informed model selection. Unmarked results are unjudged, not automatically
-wrong. The [saved benchmark](https://github.com/TheTexta/portfolio/blob/af8f1cc4c6bd66bce39c1b7ced7902341731a02a/public/projects/photo-graph/color-model-benchmark-v1.json),
-[judgment sets](https://github.com/TheTexta/portfolio/blob/af8f1cc4c6bd66bce39c1b7ced7902341731a02a/scripts/photo-graph/color-benchmark-judgments-v1.json),
-and [evaluation code](https://github.com/TheTexta/portfolio/blob/af8f1cc4c6bd66bce39c1b7ced7902341731a02a/scripts/photo-graph/benchmark-color-models.ts)
-make that scope inspectable. A broader relevance claim would need new assessment
-queries and separately collected judgments.
+With 100 photographs, comparing every unique pair requires **4,950 calculations**.
+That is manageable during preprocessing, but drawing every pair would overwhelm
+the images. I select a sparse set of relationships:
+
+1. Calculate colour differences between photographs.
+2. Exclude candidates beyond the colour-difference cutoff.
+3. Keep up to four nearest neighbours for each photograph.
+4. Combine those directional selections into undirected links.
+5. Convert the retained differences into weights for the layout.
+
+The neighbour limit applies to each photograph's selections. Its final number
+of links can be higher because other photographs can select it too. A connection
+therefore survives when either end chooses the other.
+
+For colour difference d and cutoff τ, I calculate the link weight as:
+
+$$
+s = \max\!\left(0,\min\!\left(1,1-\frac{d}{\tau}\right)\right)
+$$
+
+Closer matches receive larger weights. At the cutoff, the weight reaches zero
+and no link is retained. The cutoff therefore affects both which relationships
+appear and the weights of the surviving links.
+
+Increasing the neighbour limit gives photographs more connections, but adds
+clutter. Tightening the cutoff can leave photographs isolated. I used the manual
+colour review alongside visual inspection of the graph to settle on the current
+defaults: **up to four neighbours and a CIEDE2000 cutoff of 16**.
+
+In the worked example, Harbour is Performance's third-nearest candidate, with a
+colour difference of **{props.example.harbourCiede2000}**. Its weight is only
+**{props.example.harbourWeight}**, placing it just inside the cutoff. A small
+reduction in the cutoff removes that connection. This makes it a useful example
+of how the browsing rules affect the graph.
+
+<NeighboursDemo />
+
+{<p className="text-sm leading-relaxed text-muted">
+Both inspectors use a frozen extraction of 100 photographs dated{" "}
+
+  <strong>{props.example.date}</strong>. The neighbour map keeps positions fixed
+  while its links change. This snapshot is separate from the live archive. Its{" "}
+  <a href="/projects/photo-graph/worked-example/fixture.json">data fixture</a>
+  {" and "}
+  <a href="/projects/photo-graph/worked-example/README.md">
+    preparation notes
+  </a>{" "}
+  record the source images, descriptors and extraction settings.
+</p>}
+
+## Making the graph usable
+
+Image analysis and neighbour generation happen when the archive is updated.
+The browsing interface loads the precomputed graph, so panning and zooming do
+not require decoding original images or comparing photographs again.
+
+A force layout lets a photograph be drawn toward several related images at
+once. Stronger link weights favour shorter distances and stronger attraction;
+repulsion spreads the collection out. The resulting positions reflect those
+competing influences across the graph.
+
+Photographs occupy rectangles rather than points. I preserve their aspect ratios
+and use rectangle collisions to account for their different dimensions.
+Preferred link spacing also considers image size, reducing overlap between
+large photographs.
+
+Rendering is handled separately from the simulation. Images load near the
+viewport and upgrade resolution as zoom and device pixel ratio require it.
+The canvas follows its container size, and narrow screens retain a pannable
+view rather than fitting the whole collection into tiny thumbnails.
+
+The layout is a way to explore the relationships. Moving a photograph changes
+its screen coordinates while its colour vector and calculated differences stay
+the same. Nearby images may also be positioned together because of their other
+neighbours, so screen distance is only a visual expression of the graph's
+relationships.
+
+## Updating the archive
+
+Adding a photograph can change the nearest neighbours of existing photographs
+as well as introducing a new node. The admin pipeline prepares image features,
+uploads the original and generates the affected relationships. Cloudflare R2
+delivers published images; Supabase stores metadata and graph state.
+
+One failure I needed to handle was a committed upload whose response never
+reaches the browser. Repeating an ordinary insert could create duplicates.
+Instead, each batch has a stable identity: retrying a completed batch returns
+its recorded result, while reusing that identity with a different payload is
+rejected.
+
+A separate revision check handles concurrent updates. If the graph changes
+while relationships are being generated, registration rejects the stale work
+so it can be regenerated. New nodes, affected relationships and the accepted
+batch result are committed together in a database transaction.
+
+### Recovering interrupted uploads
+
+{<div className="my-4 space-y-4">
+
+<p>
+  Before sending image bytes, the client records the batch's paths, checksums
+  and upload phase in a recovery journal. After an interruption, it can check
+  which objects arrived and request any missing originals again. Recovery
+  continues the same batch.
+</p>
+<p>
+  Object storage sits outside the database transaction. Originals are published
+  before registration, and source cleanup follows a successful commit. Recovery
+  objects are retained when an operation fails, while failed cleanup leaves the
+  journal available for another attempt.
+</p>
+<p>
+  The registration tests cover rollback, rejection of stale generations and
+  replay without duplicate nodes. These checks address failures at different
+  points in the update, including a lost response after a successful commit.
+</p>
+
+   </div>}
+
+The average-colour descriptor remains the clearest limitation. It can connect
+photographs with different distributions of colour and separate photographs
+whose lighting differs, even when their subjects are closely related. My next
+experiment would use a held-out review focused on those cases, testing whether
+a distribution-aware representation produces more useful browsing paths. That
+would give the added complexity a concrete purpose: preserving visual
+relationships that the current average cannot express.

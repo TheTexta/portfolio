@@ -1,0 +1,7 @@
+{
+  "stages": [
+    { "id": "analysis", "label": "Analysis", "durationMs": 2700 },
+    { "id": "reordering", "label": "Reordering", "durationMs": 1200 },
+    { "id": "complete", "label": "Complete", "durationMs": 3000 }
+  ]
+}

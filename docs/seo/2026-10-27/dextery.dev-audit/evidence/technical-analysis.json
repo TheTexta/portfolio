@@ -1,0 +1,2063 @@
+{
+  "analyzed_at_utc": "2026-10-28T01:51:40.776145+00:00",
+  "passed": 154,
+  "failed": 0,
+  "checks": [
+    {
+      "check": "portfolio-browser: 200 HTML",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio-browser: one nonempty title",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio-browser: one nonempty description",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio-browser: canonical",
+      "passed": true,
+      "detail": ["https://dextery.dev/portfolio"]
+    },
+    {
+      "check": "portfolio-browser: indexable directives",
+      "passed": true,
+      "detail": "max-image-preview:large"
+    },
+    {
+      "check": "portfolio-browser: raw main and H1",
+      "passed": true,
+      "detail": 1163
+    },
+    {
+      "check": "portfolio-browser: viewport",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio-browser: no mixed-content src",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio-browser: lang en",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio-googlebot: 200 HTML",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio-googlebot: one nonempty title",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio-googlebot: one nonempty description",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio-googlebot: canonical",
+      "passed": true,
+      "detail": ["https://dextery.dev/portfolio"]
+    },
+    {
+      "check": "portfolio-googlebot: indexable directives",
+      "passed": true,
+      "detail": "max-image-preview:large"
+    },
+    {
+      "check": "portfolio-googlebot: raw main and H1",
+      "passed": true,
+      "detail": 1163
+    },
+    {
+      "check": "portfolio-googlebot: viewport",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio-googlebot: no mixed-content src",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio-googlebot: lang en",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio-smartphone: 200 HTML",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio-smartphone: one nonempty title",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio-smartphone: one nonempty description",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio-smartphone: canonical",
+      "passed": true,
+      "detail": ["https://dextery.dev/portfolio"]
+    },
+    {
+      "check": "portfolio-smartphone: indexable directives",
+      "passed": true,
+      "detail": "max-image-preview:large"
+    },
+    {
+      "check": "portfolio-smartphone: raw main and H1",
+      "passed": true,
+      "detail": 1163
+    },
+    {
+      "check": "portfolio-smartphone: viewport",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio-smartphone: no mixed-content src",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio-smartphone: lang en",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio: browser/googlebot titles parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio: browser/googlebot descriptions parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio: browser/googlebot canonicals parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio: browser/googlebot robots parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio: browser/googlebot h1 parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio: browser/googlebot main_text parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio: browser/smartphone titles parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio: browser/smartphone descriptions parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio: browser/smartphone canonicals parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio: browser/smartphone robots parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio: browser/smartphone h1 parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "portfolio: browser/smartphone main_text parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-browser: 200 HTML",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-browser: one nonempty title",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-browser: one nonempty description",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-browser: canonical",
+      "passed": true,
+      "detail": ["https://dextery.dev/projects/photo-graph"]
+    },
+    {
+      "check": "photo-graph-browser: indexable directives",
+      "passed": true,
+      "detail": "max-image-preview:large"
+    },
+    {
+      "check": "photo-graph-browser: raw main and H1",
+      "passed": true,
+      "detail": 3868
+    },
+    {
+      "check": "photo-graph-browser: viewport",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-browser: no mixed-content src",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-browser: lang en",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-googlebot: 200 HTML",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-googlebot: one nonempty title",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-googlebot: one nonempty description",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-googlebot: canonical",
+      "passed": true,
+      "detail": ["https://dextery.dev/projects/photo-graph"]
+    },
+    {
+      "check": "photo-graph-googlebot: indexable directives",
+      "passed": true,
+      "detail": "max-image-preview:large"
+    },
+    {
+      "check": "photo-graph-googlebot: raw main and H1",
+      "passed": true,
+      "detail": 3868
+    },
+    {
+      "check": "photo-graph-googlebot: viewport",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-googlebot: no mixed-content src",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-googlebot: lang en",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-smartphone: 200 HTML",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-smartphone: one nonempty title",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-smartphone: one nonempty description",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-smartphone: canonical",
+      "passed": true,
+      "detail": ["https://dextery.dev/projects/photo-graph"]
+    },
+    {
+      "check": "photo-graph-smartphone: indexable directives",
+      "passed": true,
+      "detail": "max-image-preview:large"
+    },
+    {
+      "check": "photo-graph-smartphone: raw main and H1",
+      "passed": true,
+      "detail": 3868
+    },
+    {
+      "check": "photo-graph-smartphone: viewport",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-smartphone: no mixed-content src",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-smartphone: lang en",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph: browser/googlebot titles parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph: browser/googlebot descriptions parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph: browser/googlebot canonicals parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph: browser/googlebot robots parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph: browser/googlebot h1 parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph: browser/googlebot main_text parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph: browser/smartphone titles parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph: browser/smartphone descriptions parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph: browser/smartphone canonicals parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph: browser/smartphone robots parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph: browser/smartphone h1 parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph: browser/smartphone main_text parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-browser: 200 HTML",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-browser: one nonempty title",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-browser: one nonempty description",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-browser: canonical",
+      "passed": true,
+      "detail": ["https://dextery.dev/grailed-plus"]
+    },
+    {
+      "check": "grailed-plus-browser: indexable directives",
+      "passed": true,
+      "detail": "max-image-preview:large"
+    },
+    {
+      "check": "grailed-plus-browser: raw main and H1",
+      "passed": true,
+      "detail": 1672
+    },
+    {
+      "check": "grailed-plus-browser: viewport",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-browser: no mixed-content src",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-browser: lang en",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-googlebot: 200 HTML",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-googlebot: one nonempty title",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-googlebot: one nonempty description",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-googlebot: canonical",
+      "passed": true,
+      "detail": ["https://dextery.dev/grailed-plus"]
+    },
+    {
+      "check": "grailed-plus-googlebot: indexable directives",
+      "passed": true,
+      "detail": "max-image-preview:large"
+    },
+    {
+      "check": "grailed-plus-googlebot: raw main and H1",
+      "passed": true,
+      "detail": 1672
+    },
+    {
+      "check": "grailed-plus-googlebot: viewport",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-googlebot: no mixed-content src",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-googlebot: lang en",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-smartphone: 200 HTML",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-smartphone: one nonempty title",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-smartphone: one nonempty description",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-smartphone: canonical",
+      "passed": true,
+      "detail": ["https://dextery.dev/grailed-plus"]
+    },
+    {
+      "check": "grailed-plus-smartphone: indexable directives",
+      "passed": true,
+      "detail": "max-image-preview:large"
+    },
+    {
+      "check": "grailed-plus-smartphone: raw main and H1",
+      "passed": true,
+      "detail": 1672
+    },
+    {
+      "check": "grailed-plus-smartphone: viewport",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-smartphone: no mixed-content src",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus-smartphone: lang en",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus: browser/googlebot titles parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus: browser/googlebot descriptions parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus: browser/googlebot canonicals parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus: browser/googlebot robots parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus: browser/googlebot h1 parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus: browser/googlebot main_text parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus: browser/smartphone titles parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus: browser/smartphone descriptions parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus: browser/smartphone canonicals parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus: browser/smartphone robots parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus: browser/smartphone h1 parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "grailed-plus: browser/smartphone main_text parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "public pages: unique titles",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "public pages: unique descriptions",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots *: allows /portfolio",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots *: allows /projects/photo-graph",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots *: allows /grailed-plus",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots *: allows /projects/photo-graph/experience",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots *: allows /grailed-plus/experience",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots *: allows /projects/spotify-nodify",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots *: blocks /api/photo-graph/graph (policy only, not fetched)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots *: blocks /admin (policy only, not fetched)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots *: blocks /admin/photo-graph (policy only, not fetched)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots Googlebot: allows /portfolio",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots Googlebot: allows /projects/photo-graph",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots Googlebot: allows /grailed-plus",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots Googlebot: allows /projects/photo-graph/experience",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots Googlebot: allows /grailed-plus/experience",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots Googlebot: allows /projects/spotify-nodify",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots Googlebot: blocks /api/photo-graph/graph (policy only, not fetched)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots Googlebot: blocks /admin (policy only, not fetched)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots Googlebot: blocks /admin/photo-graph (policy only, not fetched)",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "robots browser/Googlebot parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "photo-graph-experience-browser: intentional 200 noindex,nofollow",
+      "passed": true,
+      "detail": "noindex, nofollow"
+    },
+    {
+      "check": "photo-graph-experience-googlebot: intentional 200 noindex,nofollow",
+      "passed": true,
+      "detail": "noindex, nofollow"
+    },
+    {
+      "check": "grailed-plus-experience-browser: intentional 200 noindex,nofollow",
+      "passed": true,
+      "detail": "noindex, nofollow"
+    },
+    {
+      "check": "grailed-plus-experience-googlebot: intentional 200 noindex,nofollow",
+      "passed": true,
+      "detail": "noindex, nofollow"
+    },
+    {
+      "check": "grailed-plus-hero-browser: 200 clean canonical",
+      "passed": true,
+      "detail": ["https://dextery.dev/grailed-plus"]
+    },
+    {
+      "check": "grailed-plus-hero-googlebot: 200 clean canonical",
+      "passed": true,
+      "detail": ["https://dextery.dev/grailed-plus"]
+    },
+    {
+      "check": "sitemap: exactly three canonical public pages",
+      "passed": true,
+      "detail": [
+        {
+          "url": "https://dextery.dev/portfolio",
+          "lastmod": "2026-10-06",
+          "images": [
+            "https://dextery.dev/projects/posters/photo-graph.webp",
+            "https://dextery.dev/projects/posters/elliot-mairet.png",
+            "https://dextery.dev/projects/posters/bur1alrites.png",
+            "https://dextery.dev/projects/posters/grailed-plus.webp",
+            "https://dextery.dev/projects/posters/nepobabies.webp"
+          ]
+        },
+        {
+          "url": "https://dextery.dev/projects/photo-graph",
+          "lastmod": "2026-10-06",
+          "images": ["https://dextery.dev/projects/posters/photo-graph.webp"]
+        },
+        {
+          "url": "https://dextery.dev/grailed-plus",
+          "lastmod": "2026-10-06",
+          "images": ["https://dextery.dev/projects/posters/grailed-plus.webp"]
+        }
+      ]
+    },
+    {
+      "check": "sitemap: browser/Googlebot parity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "sitemap https://dextery.dev/portfolio: lastmod content date",
+      "passed": true,
+      "detail": "2026-10-06"
+    },
+    {
+      "check": "sitemap https://dextery.dev/portfolio: image count",
+      "passed": true,
+      "detail": 5
+    },
+    {
+      "check": "sitemap https://dextery.dev/projects/photo-graph: lastmod content date",
+      "passed": true,
+      "detail": "2026-10-06"
+    },
+    {
+      "check": "sitemap https://dextery.dev/projects/photo-graph: image count",
+      "passed": true,
+      "detail": 1
+    },
+    {
+      "check": "sitemap https://dextery.dev/grailed-plus: lastmod content date",
+      "passed": true,
+      "detail": "2026-10-06"
+    },
+    {
+      "check": "sitemap https://dextery.dev/grailed-plus: image count",
+      "passed": true,
+      "detail": 1
+    },
+    {
+      "check": "public HTML: all same-origin anchor targets captured as 200 and applicable fragments exist",
+      "passed": true,
+      "detail": [
+        {
+          "from": "https://dextery.dev/portfolio",
+          "href": "/portfolio",
+          "resolved": "https://dextery.dev/portfolio",
+          "target_status": 200,
+          "fragment_checked": false,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/portfolio",
+          "href": "/portfolio",
+          "resolved": "https://dextery.dev/portfolio",
+          "target_status": 200,
+          "fragment_checked": false,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/portfolio",
+          "href": "#contact",
+          "resolved": "https://dextery.dev/portfolio#contact",
+          "target_status": 200,
+          "fragment_checked": true,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/portfolio",
+          "href": "/projects/photo-graph",
+          "resolved": "https://dextery.dev/projects/photo-graph",
+          "target_status": 200,
+          "fragment_checked": false,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/portfolio",
+          "href": "/projects/photo-graph",
+          "resolved": "https://dextery.dev/projects/photo-graph",
+          "target_status": 200,
+          "fragment_checked": false,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/portfolio",
+          "href": "/grailed-plus",
+          "resolved": "https://dextery.dev/grailed-plus",
+          "target_status": 200,
+          "fragment_checked": false,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/portfolio",
+          "href": "/Dexter_Young_CV.pdf",
+          "resolved": "https://dextery.dev/Dexter_Young_CV.pdf",
+          "target_status": 200,
+          "fragment_checked": false,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/projects/photo-graph",
+          "href": "/portfolio",
+          "resolved": "https://dextery.dev/portfolio",
+          "target_status": 200,
+          "fragment_checked": false,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/projects/photo-graph",
+          "href": "/portfolio#projects",
+          "resolved": "https://dextery.dev/portfolio#projects",
+          "target_status": 200,
+          "fragment_checked": true,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/projects/photo-graph",
+          "href": "/projects/photo-graph",
+          "resolved": "https://dextery.dev/projects/photo-graph",
+          "target_status": 200,
+          "fragment_checked": false,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/projects/photo-graph",
+          "href": "/portfolio#projects",
+          "resolved": "https://dextery.dev/portfolio#projects",
+          "target_status": 200,
+          "fragment_checked": true,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/projects/photo-graph",
+          "href": "/projects/photo-graph/experience",
+          "resolved": "https://dextery.dev/projects/photo-graph/experience",
+          "target_status": 200,
+          "fragment_checked": false,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/grailed-plus",
+          "href": "/portfolio",
+          "resolved": "https://dextery.dev/portfolio",
+          "target_status": 200,
+          "fragment_checked": false,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/grailed-plus",
+          "href": "/grailed-plus",
+          "resolved": "https://dextery.dev/grailed-plus",
+          "target_status": 200,
+          "fragment_checked": false,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/grailed-plus",
+          "href": "#features",
+          "resolved": "https://dextery.dev/grailed-plus#features",
+          "target_status": 200,
+          "fragment_checked": true,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/grailed-plus",
+          "href": "#feature-market-compare",
+          "resolved": "https://dextery.dev/grailed-plus#feature-market-compare",
+          "target_status": 200,
+          "fragment_checked": true,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/grailed-plus",
+          "href": "#feature-pricing",
+          "resolved": "https://dextery.dev/grailed-plus#feature-pricing",
+          "target_status": 200,
+          "fragment_checked": true,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/grailed-plus",
+          "href": "#feature-currency",
+          "resolved": "https://dextery.dev/grailed-plus#feature-currency",
+          "target_status": 200,
+          "fragment_checked": true,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/grailed-plus",
+          "href": "#feature-dark-mode",
+          "resolved": "https://dextery.dev/grailed-plus#feature-dark-mode",
+          "target_status": 200,
+          "fragment_checked": true,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/grailed-plus",
+          "href": "#features",
+          "resolved": "https://dextery.dev/grailed-plus#features",
+          "target_status": 200,
+          "fragment_checked": true,
+          "passed": true
+        },
+        {
+          "from": "https://dextery.dev/grailed-plus",
+          "href": "/portfolio",
+          "resolved": "https://dextery.dev/portfolio",
+          "target_status": 200,
+          "fragment_checked": false,
+          "passed": true
+        }
+      ]
+    },
+    {
+      "check": "portfolio: direct crawlable links to both project public pages",
+      "passed": true,
+      "detail": null
+    }
+  ],
+  "public_pages": {
+    "portfolio-browser": {
+      "url": "https://dextery.dev/portfolio",
+      "status": 200,
+      "bytes": 56141,
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Age": "1121173",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Content-Disposition": "inline",
+        "Content-Encoding": "gzip",
+        "Content-Type": "text/html; charset=utf-8",
+        "Date": "Wed, 28 Oct 2026 01:46:41 GMT",
+        "Etag": "W/\"4554c515325479f89b64f8a3b16ad225\"",
+        "Permissions-Policy": "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Server": "Vercel",
+        "Strict-Transport-Security": "max-age=63072000",
+        "Vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+        "X-Matched-Path": "/portfolio",
+        "X-Nextjs-Prerender": "1",
+        "X-Nextjs-Stale-Time": "300",
+        "X-Vercel-Cache": "HIT",
+        "X-Vercel-Id": "yul1::6859x-1793152001760-7ed4e2103cd2",
+        "Transfer-Encoding": "chunked"
+      },
+      "titles": [
+        "Dexter Young \u2014 Software Developer & Creative Technologist"
+      ],
+      "descriptions": [
+        "Dexter Young\u2019s portfolio of software, creative technology, photography, and design, including browser extensions and interactive image archives."
+      ],
+      "canonicals": ["https://dextery.dev/portfolio"],
+      "robots": ["max-image-preview:large"],
+      "viewport": ["width=device-width, initial-scale=1"],
+      "h1": ["Dexter Young"],
+      "lang": "en",
+      "main_text": "Dexter Young / portfolio / Contact Dark Software + multimedia Dexter Young Multimedia webworks, browser extensions and interactive image systems Projects Photo Node-Gallery 01 Elliot Mairet 02 bur1alrites 03 Grailed Plus 04 nepobabiesruntheunderground 05 Photo Node-Gallery 01 Next.js \u00b7 D3 \u00b7 Supabase A force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review. Elliot Mairet 02 Next.js \u00b7 React \u00b7 Supabase A photographic archive that pairs an expansive image index with colour palettes and related-image discovery. bur1alrites 03 Next.js \u00b7 TypeScript \u00b7 Tailwind CSS A black-and-white moving-image archive where clips begin as inverted studies and reveal their colour on hover. Grailed Plus 04 Chrome MV3 \u00b7 JavaScript Cross-market comparison, price context, local currency, seller metadata, and dark mode inside Grailed. nepobabiesruntheunderground 05 HTML \u00b7 CSS \u00b7 JavaScript \u00b7 WebGL An experimental interface combining custom typography, collage imagery, motion, and WebGL texture. Contact GitHub @TheTexta LinkedIn dexter-y Email dextery777@gmail.com Resume Download PDF",
+      "main_characters": 1163,
+      "main_words": 160,
+      "links": [
+        {
+          "class": "flex min-h-7 items-center outline-none transition-opacity hover:underline hover:opacity-55 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80 w-fit min-w-0 truncate",
+          "href": "/portfolio"
+        },
+        {
+          "class": "transition-opacity outline-none hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80",
+          "href": "/portfolio"
+        },
+        {
+          "href": "#contact",
+          "class": "flex min-h-7 items-center transition-opacity hover:opacity-55"
+        },
+        {
+          "href": "/projects/photo-graph",
+          "role": "button",
+          "data-project-trigger": "true",
+          "class": "relative block aspect-[var(--aspect)] w-full overflow-hidden border border-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink",
+          "style": "--aspect:2",
+          "aria-label": "Open Photo Node-Gallery focus view"
+        },
+        {
+          "href": "/projects/photo-graph",
+          "role": "button",
+          "tabindex": "-1",
+          "class": "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 block max-h-full cursor-pointer overflow-hidden bg-canvas text-ink no-underline opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
+          "aria-label": "View Photo Node-Gallery details",
+          "style": "transform:translateY(calc(100% - 3rem))"
+        },
+        {
+          "href": "https://elliotmairet.com/",
+          "role": "button",
+          "tabindex": "-1",
+          "class": "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 block max-h-full cursor-pointer overflow-hidden bg-canvas text-ink no-underline opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
+          "aria-label": "View Elliot Mairet details",
+          "style": "transform:translateY(calc(100% - 3rem))"
+        },
+        {
+          "href": "https://bur1alrites.vercel.app/",
+          "role": "button",
+          "tabindex": "-1",
+          "class": "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 block max-h-full cursor-pointer overflow-hidden bg-canvas text-ink no-underline opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
+          "aria-label": "View bur1alrites details",
+          "style": "transform:translateY(calc(100% - 3rem))"
+        },
+        {
+          "href": "/grailed-plus",
+          "role": "button",
+          "tabindex": "-1",
+          "class": "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 block max-h-full cursor-pointer overflow-hidden bg-canvas text-ink no-underline opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
+          "aria-label": "View Grailed Plus details",
+          "style": "transform:translateY(calc(100% - 3rem))"
+        },
+        {
+          "href": "https://thetexta.github.io/nepobabiesruntheunderground/",
+          "role": "button",
+          "tabindex": "-1",
+          "class": "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 block max-h-full cursor-pointer overflow-hidden bg-canvas text-ink no-underline opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
+          "aria-label": "View nepobabiesruntheunderground details",
+          "style": "transform:translateY(calc(100% - 3rem))"
+        },
+        {
+          "href": "https://github.com/TheTexta",
+          "class": "group relative isolate flex h-full w-full items-center justify-between overflow-hidden bg-canvas px-3 text-xs transition-opacity sm:text-sm"
+        },
+        {
+          "href": "https://www.linkedin.com/in/dexter-y",
+          "class": "group relative isolate flex h-full w-full items-center justify-between overflow-hidden bg-canvas px-3 text-xs transition-opacity sm:text-sm"
+        },
+        {
+          "href": "mailto:dextery777@gmail.com",
+          "class": "group relative isolate flex h-full w-full items-center justify-between overflow-hidden bg-canvas px-3 text-xs transition-opacity sm:text-sm"
+        },
+        {
+          "href": "/Dexter_Young_CV.pdf",
+          "class": "group relative isolate flex h-full w-full items-center justify-between overflow-hidden bg-canvas px-3 text-xs transition-opacity sm:text-sm"
+        }
+      ],
+      "ids": [
+        "projects",
+        "mobile-table-photo-graph-0-preview",
+        "contact",
+        "_R_"
+      ],
+      "mixed_content_resources": []
+    },
+    "portfolio-googlebot": {
+      "url": "https://dextery.dev/portfolio",
+      "status": 200,
+      "bytes": 56141,
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Age": "1121320",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Content-Disposition": "inline",
+        "Content-Encoding": "gzip",
+        "Content-Type": "text/html; charset=utf-8",
+        "Date": "Wed, 28 Oct 2026 01:49:08 GMT",
+        "Etag": "W/\"4554c515325479f89b64f8a3b16ad225\"",
+        "Permissions-Policy": "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Server": "Vercel",
+        "Strict-Transport-Security": "max-age=63072000",
+        "Vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+        "X-Matched-Path": "/portfolio",
+        "X-Nextjs-Prerender": "1",
+        "X-Nextjs-Stale-Time": "300",
+        "X-Vercel-Cache": "HIT",
+        "X-Vercel-Id": "yul1::nvdr4-1793152148279-15b87fe85b9b",
+        "Transfer-Encoding": "chunked"
+      },
+      "titles": [
+        "Dexter Young \u2014 Software Developer & Creative Technologist"
+      ],
+      "descriptions": [
+        "Dexter Young\u2019s portfolio of software, creative technology, photography, and design, including browser extensions and interactive image archives."
+      ],
+      "canonicals": ["https://dextery.dev/portfolio"],
+      "robots": ["max-image-preview:large"],
+      "viewport": ["width=device-width, initial-scale=1"],
+      "h1": ["Dexter Young"],
+      "lang": "en",
+      "main_text": "Dexter Young / portfolio / Contact Dark Software + multimedia Dexter Young Multimedia webworks, browser extensions and interactive image systems Projects Photo Node-Gallery 01 Elliot Mairet 02 bur1alrites 03 Grailed Plus 04 nepobabiesruntheunderground 05 Photo Node-Gallery 01 Next.js \u00b7 D3 \u00b7 Supabase A force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review. Elliot Mairet 02 Next.js \u00b7 React \u00b7 Supabase A photographic archive that pairs an expansive image index with colour palettes and related-image discovery. bur1alrites 03 Next.js \u00b7 TypeScript \u00b7 Tailwind CSS A black-and-white moving-image archive where clips begin as inverted studies and reveal their colour on hover. Grailed Plus 04 Chrome MV3 \u00b7 JavaScript Cross-market comparison, price context, local currency, seller metadata, and dark mode inside Grailed. nepobabiesruntheunderground 05 HTML \u00b7 CSS \u00b7 JavaScript \u00b7 WebGL An experimental interface combining custom typography, collage imagery, motion, and WebGL texture. Contact GitHub @TheTexta LinkedIn dexter-y Email dextery777@gmail.com Resume Download PDF",
+      "main_characters": 1163,
+      "main_words": 160,
+      "links": [
+        {
+          "class": "flex min-h-7 items-center outline-none transition-opacity hover:underline hover:opacity-55 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80 w-fit min-w-0 truncate",
+          "href": "/portfolio"
+        },
+        {
+          "class": "transition-opacity outline-none hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80",
+          "href": "/portfolio"
+        },
+        {
+          "href": "#contact",
+          "class": "flex min-h-7 items-center transition-opacity hover:opacity-55"
+        },
+        {
+          "href": "/projects/photo-graph",
+          "role": "button",
+          "data-project-trigger": "true",
+          "class": "relative block aspect-[var(--aspect)] w-full overflow-hidden border border-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink",
+          "style": "--aspect:2",
+          "aria-label": "Open Photo Node-Gallery focus view"
+        },
+        {
+          "href": "/projects/photo-graph",
+          "role": "button",
+          "tabindex": "-1",
+          "class": "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 block max-h-full cursor-pointer overflow-hidden bg-canvas text-ink no-underline opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
+          "aria-label": "View Photo Node-Gallery details",
+          "style": "transform:translateY(calc(100% - 3rem))"
+        },
+        {
+          "href": "https://elliotmairet.com/",
+          "role": "button",
+          "tabindex": "-1",
+          "class": "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 block max-h-full cursor-pointer overflow-hidden bg-canvas text-ink no-underline opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
+          "aria-label": "View Elliot Mairet details",
+          "style": "transform:translateY(calc(100% - 3rem))"
+        },
+        {
+          "href": "https://bur1alrites.vercel.app/",
+          "role": "button",
+          "tabindex": "-1",
+          "class": "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 block max-h-full cursor-pointer overflow-hidden bg-canvas text-ink no-underline opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
+          "aria-label": "View bur1alrites details",
+          "style": "transform:translateY(calc(100% - 3rem))"
+        },
+        {
+          "href": "/grailed-plus",
+          "role": "button",
+          "tabindex": "-1",
+          "class": "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 block max-h-full cursor-pointer overflow-hidden bg-canvas text-ink no-underline opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
+          "aria-label": "View Grailed Plus details",
+          "style": "transform:translateY(calc(100% - 3rem))"
+        },
+        {
+          "href": "https://thetexta.github.io/nepobabiesruntheunderground/",
+          "role": "button",
+          "tabindex": "-1",
+          "class": "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 block max-h-full cursor-pointer overflow-hidden bg-canvas text-ink no-underline opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
+          "aria-label": "View nepobabiesruntheunderground details",
+          "style": "transform:translateY(calc(100% - 3rem))"
+        },
+        {
+          "href": "https://github.com/TheTexta",
+          "class": "group relative isolate flex h-full w-full items-center justify-between overflow-hidden bg-canvas px-3 text-xs transition-opacity sm:text-sm"
+        },
+        {
+          "href": "https://www.linkedin.com/in/dexter-y",
+          "class": "group relative isolate flex h-full w-full items-center justify-between overflow-hidden bg-canvas px-3 text-xs transition-opacity sm:text-sm"
+        },
+        {
+          "href": "mailto:dextery777@gmail.com",
+          "class": "group relative isolate flex h-full w-full items-center justify-between overflow-hidden bg-canvas px-3 text-xs transition-opacity sm:text-sm"
+        },
+        {
+          "href": "/Dexter_Young_CV.pdf",
+          "class": "group relative isolate flex h-full w-full items-center justify-between overflow-hidden bg-canvas px-3 text-xs transition-opacity sm:text-sm"
+        }
+      ],
+      "ids": [
+        "projects",
+        "mobile-table-photo-graph-0-preview",
+        "contact",
+        "_R_"
+      ],
+      "mixed_content_resources": []
+    },
+    "portfolio-smartphone": {
+      "url": "https://dextery.dev/portfolio",
+      "status": 200,
+      "bytes": 56141,
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Age": "1121320",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Content-Disposition": "inline",
+        "Content-Encoding": "gzip",
+        "Content-Type": "text/html; charset=utf-8",
+        "Date": "Wed, 28 Oct 2026 01:49:08 GMT",
+        "Etag": "W/\"4554c515325479f89b64f8a3b16ad225\"",
+        "Permissions-Policy": "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Server": "Vercel",
+        "Strict-Transport-Security": "max-age=63072000",
+        "Vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+        "X-Matched-Path": "/portfolio",
+        "X-Nextjs-Prerender": "1",
+        "X-Nextjs-Stale-Time": "300",
+        "X-Vercel-Cache": "HIT",
+        "X-Vercel-Id": "yul1::tqfxs-1793152148264-004af5ad2099",
+        "Transfer-Encoding": "chunked"
+      },
+      "titles": [
+        "Dexter Young \u2014 Software Developer & Creative Technologist"
+      ],
+      "descriptions": [
+        "Dexter Young\u2019s portfolio of software, creative technology, photography, and design, including browser extensions and interactive image archives."
+      ],
+      "canonicals": ["https://dextery.dev/portfolio"],
+      "robots": ["max-image-preview:large"],
+      "viewport": ["width=device-width, initial-scale=1"],
+      "h1": ["Dexter Young"],
+      "lang": "en",
+      "main_text": "Dexter Young / portfolio / Contact Dark Software + multimedia Dexter Young Multimedia webworks, browser extensions and interactive image systems Projects Photo Node-Gallery 01 Elliot Mairet 02 bur1alrites 03 Grailed Plus 04 nepobabiesruntheunderground 05 Photo Node-Gallery 01 Next.js \u00b7 D3 \u00b7 Supabase A force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review. Elliot Mairet 02 Next.js \u00b7 React \u00b7 Supabase A photographic archive that pairs an expansive image index with colour palettes and related-image discovery. bur1alrites 03 Next.js \u00b7 TypeScript \u00b7 Tailwind CSS A black-and-white moving-image archive where clips begin as inverted studies and reveal their colour on hover. Grailed Plus 04 Chrome MV3 \u00b7 JavaScript Cross-market comparison, price context, local currency, seller metadata, and dark mode inside Grailed. nepobabiesruntheunderground 05 HTML \u00b7 CSS \u00b7 JavaScript \u00b7 WebGL An experimental interface combining custom typography, collage imagery, motion, and WebGL texture. Contact GitHub @TheTexta LinkedIn dexter-y Email dextery777@gmail.com Resume Download PDF",
+      "main_characters": 1163,
+      "main_words": 160,
+      "links": [
+        {
+          "class": "flex min-h-7 items-center outline-none transition-opacity hover:underline hover:opacity-55 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80 w-fit min-w-0 truncate",
+          "href": "/portfolio"
+        },
+        {
+          "class": "transition-opacity outline-none hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80",
+          "href": "/portfolio"
+        },
+        {
+          "href": "#contact",
+          "class": "flex min-h-7 items-center transition-opacity hover:opacity-55"
+        },
+        {
+          "href": "/projects/photo-graph",
+          "role": "button",
+          "data-project-trigger": "true",
+          "class": "relative block aspect-[var(--aspect)] w-full overflow-hidden border border-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink",
+          "style": "--aspect:2",
+          "aria-label": "Open Photo Node-Gallery focus view"
+        },
+        {
+          "href": "/projects/photo-graph",
+          "role": "button",
+          "tabindex": "-1",
+          "class": "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 block max-h-full cursor-pointer overflow-hidden bg-canvas text-ink no-underline opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
+          "aria-label": "View Photo Node-Gallery details",
+          "style": "transform:translateY(calc(100% - 3rem))"
+        },
+        {
+          "href": "https://elliotmairet.com/",
+          "role": "button",
+          "tabindex": "-1",
+          "class": "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 block max-h-full cursor-pointer overflow-hidden bg-canvas text-ink no-underline opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
+          "aria-label": "View Elliot Mairet details",
+          "style": "transform:translateY(calc(100% - 3rem))"
+        },
+        {
+          "href": "https://bur1alrites.vercel.app/",
+          "role": "button",
+          "tabindex": "-1",
+          "class": "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 block max-h-full cursor-pointer overflow-hidden bg-canvas text-ink no-underline opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
+          "aria-label": "View bur1alrites details",
+          "style": "transform:translateY(calc(100% - 3rem))"
+        },
+        {
+          "href": "/grailed-plus",
+          "role": "button",
+          "tabindex": "-1",
+          "class": "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 block max-h-full cursor-pointer overflow-hidden bg-canvas text-ink no-underline opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
+          "aria-label": "View Grailed Plus details",
+          "style": "transform:translateY(calc(100% - 3rem))"
+        },
+        {
+          "href": "https://thetexta.github.io/nepobabiesruntheunderground/",
+          "role": "button",
+          "tabindex": "-1",
+          "class": "project-mini-view-info pointer-events-none absolute inset-x-0 bottom-0 z-20 block max-h-full cursor-pointer overflow-hidden bg-canvas text-ink no-underline opacity-100 group-focus-within/card:pointer-events-auto group-hover/card:pointer-events-auto",
+          "aria-label": "View nepobabiesruntheunderground details",
+          "style": "transform:translateY(calc(100% - 3rem))"
+        },
+        {
+          "href": "https://github.com/TheTexta",
+          "class": "group relative isolate flex h-full w-full items-center justify-between overflow-hidden bg-canvas px-3 text-xs transition-opacity sm:text-sm"
+        },
+        {
+          "href": "https://www.linkedin.com/in/dexter-y",
+          "class": "group relative isolate flex h-full w-full items-center justify-between overflow-hidden bg-canvas px-3 text-xs transition-opacity sm:text-sm"
+        },
+        {
+          "href": "mailto:dextery777@gmail.com",
+          "class": "group relative isolate flex h-full w-full items-center justify-between overflow-hidden bg-canvas px-3 text-xs transition-opacity sm:text-sm"
+        },
+        {
+          "href": "/Dexter_Young_CV.pdf",
+          "class": "group relative isolate flex h-full w-full items-center justify-between overflow-hidden bg-canvas px-3 text-xs transition-opacity sm:text-sm"
+        }
+      ],
+      "ids": [
+        "projects",
+        "mobile-table-photo-graph-0-preview",
+        "contact",
+        "_R_"
+      ],
+      "mixed_content_resources": []
+    },
+    "photo-graph-browser": {
+      "url": "https://dextery.dev/projects/photo-graph",
+      "status": 200,
+      "bytes": 105572,
+      "headers": {
+        "Age": "0",
+        "Cache-Control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "Content-Encoding": "gzip",
+        "Content-Type": "text/html; charset=utf-8",
+        "Date": "Wed, 28 Oct 2026 01:46:43 GMT",
+        "Link": "</_next/static/immutable/media/7ebf22b5a21034f8-s.p.3strvg7o-g5v2.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </_next/static/immutable/media/9e8fa6e4d0f4977e-s.p.13xt647a3hgi-.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </_next/static/immutable/media/RedHatDisplay_Italic_VariableFont_wght-s.p.0jojo_qbx9h_u.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatDisplay_VariableFont_wght-s.p.3ns3tq_s2jtg0.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatText_Italic_VariableFont_wght-s.p.28w5ssm1gdu12.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatText_VariableFont_wght-s.p.02hax2zqbmq-p.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/chunks/2-91vsmdhm_c1.css>; rel=preload; as=\"style\"",
+        "Permissions-Policy": "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Server": "Vercel",
+        "Strict-Transport-Security": "max-age=63072000",
+        "Vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+        "X-Matched-Path": "/projects/photo-graph",
+        "X-Powered-By": "Next.js",
+        "X-Vercel-Cache": "MISS",
+        "X-Vercel-Id": "yul1::iad1::gn9n5-1793152001760-de0dc010be6e",
+        "Transfer-Encoding": "chunked"
+      },
+      "titles": ["Photo Node-Gallery \u2014 Dexter Young"],
+      "descriptions": [
+        "A force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review."
+      ],
+      "canonicals": ["https://dextery.dev/projects/photo-graph"],
+      "robots": ["max-image-preview:large"],
+      "viewport": ["width=device-width, initial-scale=1"],
+      "h1": ["Photo Node-Gallery"],
+      "lang": "en",
+      "main_text": "Dexter Young / projects / photo-graph / Index Dark Photography / Data visualization Photo Node-Gallery A force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review. Launch experience Stack Next.js \u00b7 D3 \u00b7 Supabase Model selection Browsing photographs by colour. Photo archives are usually organised by time, place, or subject. This experiment asks whether colour can offer another route through the work: moving from one photograph to another through light, tone, and palette. An initial CIE76 graph was visually dense yet still split natural neighbours apart. I tested five models against seven reviewed query sets; Mean LAB with CIEDE2000 gave the strongest result using the existing image features, so it drives the live graph. Reviewed set 100 photographs / 7 queries Selected model Mean LAB / CIEDE2000 Reviewed top four 89% relevant / 263 edges / 0 isolates Select a query photograph Human-reviewed affinity set Q 01 / ID 14 Snow / pale neutral Q 02 / ID 46 Dense neutral texture Q 03 / ID 49 Magenta performance light Q 04 / ID 57 Dark monochrome Q 05 / ID 65 Warm amber interior Q 06 / ID 69 Woodland green Q 07 / ID 112 Deep blue atmosphere Active query / ID 14 Snow / pale neutral \u201cRelevant\u201d marks a reviewed match. P@4 is the share of the first four results judged relevant; pair agreement measures how closely a model follows the reviewed ranking. Unmarked results are unjudged, not automatically wrong. Model 01 Mean LAB / CIE76 Query / 14 1 . ID 20 2.18 2 . ID 12 2.79 3 . ID 11 3.08 4 . ID 45 4.24 5 . ID 94 4.83 Relevant 6 . ID 16 5.43 Relevant in top four 86% Ranking agreement 82% Graph 246 edges / 7 component s Build time 3.7 ms Model 02 Mean LAB / CIEDE2000 Best reviewed P@4 Query / 14 1 . ID 20 2.14 2 . ID 12 2.74 3 . ID 45 3.40 4 . ID 11 3.70 5 . ID 94 5.16 Relevant 6 . ID 16 5.25 Relevant in top four 89% Ranking agreement 82% Graph 263 edges / 1 component Build time 9.5 ms Model 03 Mean Oklab Query / 14 1 . ID 20 0.010 2 . ID 45 0.015 3 . ID 11 0.019 4 . ID 103 0.028 5 . ID 39 0.029 6 . ID 94 0.032 Relevant Relevant in top four 75% Ranking agreement 66% Graph 260 edges / 2 component s Build time 2.5 ms Model 04 Oklab Distribution / Hellinger Query / 14 1 . ID 11 0.039 2 . ID 94 0.067 Relevant 3 . ID 20 0.086 4 . ID 15 0.089 Relevant 5 . ID 29 0.095 6 . ID 45 0.108 Relevant in top four 82% Ranking agreement 76% Graph 291 edges / 1 component Build time 3.6 ms Model 05 Oklab Palette / Earth Mover Query / 14 1 . ID 94 0.065 Relevant 2 . ID 15 0.069 Relevant 3 . ID 11 0.072 4 . ID 103 0.073 5 . ID 29 0.075 6 . ID 20 0.079 Relevant in top four 71% Ranking agreement 65% Graph 274 edges / 2 component s Build time 152 ms Broad dominant-colour and tonal affinity, judged from the generated contact sheet. These are editorial judgments, not semantic labels or exhaustive relevance sets. Exact all-pairs benchmark / 4,950 pairs / generated 26 Aug 2026 Project readout A different way through the archive. The graph does not try to identify what a photograph depicts. Instead, it turns 100 photographs into a field of visual neighbours, then tests that field against 7 deliberately different reference images before anyone is asked to browse it. 01 / Index Photograph set The archive remains image-first. A feature pass records colour signals for every photograph, while the original image stays at the centre of the experience. 02 / Review Similarity test Seven query images define the kind of visual relationship worth preserving. Five colour models are checked against those judgments instead of assuming numerical closeness matches the eye. 03 / Browse Living graph The selected model becomes a force-directed gallery. It makes colour clusters and surprising near-neighbours available to browse as a field, rather than a fixed list of results.",
+      "main_characters": 3868,
+      "main_words": 722,
+      "links": [
+        {
+          "class": "flex min-h-7 items-center outline-none transition-opacity hover:underline hover:opacity-55 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80 w-fit min-w-0 truncate",
+          "href": "/portfolio"
+        },
+        {
+          "href": "/portfolio#projects",
+          "class": "transition-opacity outline-none hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80"
+        },
+        {
+          "class": "transition-opacity outline-none hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80",
+          "href": "/projects/photo-graph"
+        },
+        {
+          "class": "flex min-h-7 items-center transition-opacity hover:opacity-55",
+          "href": "/portfolio#projects"
+        },
+        {
+          "class": "inline-flex cursor-pointer appearance-none items-center justify-center gap-2 border text-center text-xs font-semibold tracking-[0.12em] uppercase no-underline transition-[background-color,color,border-color,opacity,transform] duration-150 ease-[var(--ease-out-quint)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink active:translate-y-px disabled:pointer-events-none disabled:opacity-45 border-ink bg-ink text-canvas hover:border-action-hover hover:bg-action-hover min-h-11 px-4 py-2",
+          "href": "/projects/photo-graph/experience"
+        }
+      ],
+      "ids": [
+        "overview",
+        "colour-model-study",
+        "colour-model-study-heading",
+        "query-heading",
+        "comparison-heading",
+        "project-readout-heading",
+        "_R_"
+      ],
+      "mixed_content_resources": []
+    },
+    "photo-graph-googlebot": {
+      "url": "https://dextery.dev/projects/photo-graph",
+      "status": 200,
+      "bytes": 105572,
+      "headers": {
+        "Age": "0",
+        "Cache-Control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "Content-Encoding": "gzip",
+        "Content-Type": "text/html; charset=utf-8",
+        "Date": "Wed, 28 Oct 2026 01:49:08 GMT",
+        "Link": "</_next/static/immutable/media/7ebf22b5a21034f8-s.p.3strvg7o-g5v2.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </_next/static/immutable/media/9e8fa6e4d0f4977e-s.p.13xt647a3hgi-.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </_next/static/immutable/media/RedHatDisplay_Italic_VariableFont_wght-s.p.0jojo_qbx9h_u.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatDisplay_VariableFont_wght-s.p.3ns3tq_s2jtg0.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatText_Italic_VariableFont_wght-s.p.28w5ssm1gdu12.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatText_VariableFont_wght-s.p.02hax2zqbmq-p.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/chunks/2-91vsmdhm_c1.css>; rel=preload; as=\"style\"",
+        "Permissions-Policy": "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Server": "Vercel",
+        "Strict-Transport-Security": "max-age=63072000",
+        "Vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+        "X-Matched-Path": "/projects/photo-graph",
+        "X-Powered-By": "Next.js",
+        "X-Vercel-Cache": "MISS",
+        "X-Vercel-Id": "yul1::iad1::nvdr4-1793152148281-59b0be1192d4",
+        "Transfer-Encoding": "chunked"
+      },
+      "titles": ["Photo Node-Gallery \u2014 Dexter Young"],
+      "descriptions": [
+        "A force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review."
+      ],
+      "canonicals": ["https://dextery.dev/projects/photo-graph"],
+      "robots": ["max-image-preview:large"],
+      "viewport": ["width=device-width, initial-scale=1"],
+      "h1": ["Photo Node-Gallery"],
+      "lang": "en",
+      "main_text": "Dexter Young / projects / photo-graph / Index Dark Photography / Data visualization Photo Node-Gallery A force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review. Launch experience Stack Next.js \u00b7 D3 \u00b7 Supabase Model selection Browsing photographs by colour. Photo archives are usually organised by time, place, or subject. This experiment asks whether colour can offer another route through the work: moving from one photograph to another through light, tone, and palette. An initial CIE76 graph was visually dense yet still split natural neighbours apart. I tested five models against seven reviewed query sets; Mean LAB with CIEDE2000 gave the strongest result using the existing image features, so it drives the live graph. Reviewed set 100 photographs / 7 queries Selected model Mean LAB / CIEDE2000 Reviewed top four 89% relevant / 263 edges / 0 isolates Select a query photograph Human-reviewed affinity set Q 01 / ID 14 Snow / pale neutral Q 02 / ID 46 Dense neutral texture Q 03 / ID 49 Magenta performance light Q 04 / ID 57 Dark monochrome Q 05 / ID 65 Warm amber interior Q 06 / ID 69 Woodland green Q 07 / ID 112 Deep blue atmosphere Active query / ID 14 Snow / pale neutral \u201cRelevant\u201d marks a reviewed match. P@4 is the share of the first four results judged relevant; pair agreement measures how closely a model follows the reviewed ranking. Unmarked results are unjudged, not automatically wrong. Model 01 Mean LAB / CIE76 Query / 14 1 . ID 20 2.18 2 . ID 12 2.79 3 . ID 11 3.08 4 . ID 45 4.24 5 . ID 94 4.83 Relevant 6 . ID 16 5.43 Relevant in top four 86% Ranking agreement 82% Graph 246 edges / 7 component s Build time 3.7 ms Model 02 Mean LAB / CIEDE2000 Best reviewed P@4 Query / 14 1 . ID 20 2.14 2 . ID 12 2.74 3 . ID 45 3.40 4 . ID 11 3.70 5 . ID 94 5.16 Relevant 6 . ID 16 5.25 Relevant in top four 89% Ranking agreement 82% Graph 263 edges / 1 component Build time 9.5 ms Model 03 Mean Oklab Query / 14 1 . ID 20 0.010 2 . ID 45 0.015 3 . ID 11 0.019 4 . ID 103 0.028 5 . ID 39 0.029 6 . ID 94 0.032 Relevant Relevant in top four 75% Ranking agreement 66% Graph 260 edges / 2 component s Build time 2.5 ms Model 04 Oklab Distribution / Hellinger Query / 14 1 . ID 11 0.039 2 . ID 94 0.067 Relevant 3 . ID 20 0.086 4 . ID 15 0.089 Relevant 5 . ID 29 0.095 6 . ID 45 0.108 Relevant in top four 82% Ranking agreement 76% Graph 291 edges / 1 component Build time 3.6 ms Model 05 Oklab Palette / Earth Mover Query / 14 1 . ID 94 0.065 Relevant 2 . ID 15 0.069 Relevant 3 . ID 11 0.072 4 . ID 103 0.073 5 . ID 29 0.075 6 . ID 20 0.079 Relevant in top four 71% Ranking agreement 65% Graph 274 edges / 2 component s Build time 152 ms Broad dominant-colour and tonal affinity, judged from the generated contact sheet. These are editorial judgments, not semantic labels or exhaustive relevance sets. Exact all-pairs benchmark / 4,950 pairs / generated 26 Aug 2026 Project readout A different way through the archive. The graph does not try to identify what a photograph depicts. Instead, it turns 100 photographs into a field of visual neighbours, then tests that field against 7 deliberately different reference images before anyone is asked to browse it. 01 / Index Photograph set The archive remains image-first. A feature pass records colour signals for every photograph, while the original image stays at the centre of the experience. 02 / Review Similarity test Seven query images define the kind of visual relationship worth preserving. Five colour models are checked against those judgments instead of assuming numerical closeness matches the eye. 03 / Browse Living graph The selected model becomes a force-directed gallery. It makes colour clusters and surprising near-neighbours available to browse as a field, rather than a fixed list of results.",
+      "main_characters": 3868,
+      "main_words": 722,
+      "links": [
+        {
+          "class": "flex min-h-7 items-center outline-none transition-opacity hover:underline hover:opacity-55 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80 w-fit min-w-0 truncate",
+          "href": "/portfolio"
+        },
+        {
+          "href": "/portfolio#projects",
+          "class": "transition-opacity outline-none hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80"
+        },
+        {
+          "class": "transition-opacity outline-none hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80",
+          "href": "/projects/photo-graph"
+        },
+        {
+          "class": "flex min-h-7 items-center transition-opacity hover:opacity-55",
+          "href": "/portfolio#projects"
+        },
+        {
+          "class": "inline-flex cursor-pointer appearance-none items-center justify-center gap-2 border text-center text-xs font-semibold tracking-[0.12em] uppercase no-underline transition-[background-color,color,border-color,opacity,transform] duration-150 ease-[var(--ease-out-quint)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink active:translate-y-px disabled:pointer-events-none disabled:opacity-45 border-ink bg-ink text-canvas hover:border-action-hover hover:bg-action-hover min-h-11 px-4 py-2",
+          "href": "/projects/photo-graph/experience"
+        }
+      ],
+      "ids": [
+        "overview",
+        "colour-model-study",
+        "colour-model-study-heading",
+        "query-heading",
+        "comparison-heading",
+        "project-readout-heading",
+        "_R_"
+      ],
+      "mixed_content_resources": []
+    },
+    "photo-graph-smartphone": {
+      "url": "https://dextery.dev/projects/photo-graph",
+      "status": 200,
+      "bytes": 105572,
+      "headers": {
+        "Age": "0",
+        "Cache-Control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "Content-Encoding": "gzip",
+        "Content-Type": "text/html; charset=utf-8",
+        "Date": "Wed, 28 Oct 2026 01:49:08 GMT",
+        "Link": "</_next/static/immutable/media/7ebf22b5a21034f8-s.p.3strvg7o-g5v2.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </_next/static/immutable/media/9e8fa6e4d0f4977e-s.p.13xt647a3hgi-.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </_next/static/immutable/media/RedHatDisplay_Italic_VariableFont_wght-s.p.0jojo_qbx9h_u.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatDisplay_VariableFont_wght-s.p.3ns3tq_s2jtg0.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatText_Italic_VariableFont_wght-s.p.28w5ssm1gdu12.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatText_VariableFont_wght-s.p.02hax2zqbmq-p.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/chunks/2-91vsmdhm_c1.css>; rel=preload; as=\"style\"",
+        "Permissions-Policy": "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Server": "Vercel",
+        "Strict-Transport-Security": "max-age=63072000",
+        "Vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+        "X-Matched-Path": "/projects/photo-graph",
+        "X-Powered-By": "Next.js",
+        "X-Vercel-Cache": "MISS",
+        "X-Vercel-Id": "yul1::iad1::gn9n5-1793152148780-8fc9970130de",
+        "Transfer-Encoding": "chunked"
+      },
+      "titles": ["Photo Node-Gallery \u2014 Dexter Young"],
+      "descriptions": [
+        "A force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review."
+      ],
+      "canonicals": ["https://dextery.dev/projects/photo-graph"],
+      "robots": ["max-image-preview:large"],
+      "viewport": ["width=device-width, initial-scale=1"],
+      "h1": ["Photo Node-Gallery"],
+      "lang": "en",
+      "main_text": "Dexter Young / projects / photo-graph / Index Dark Photography / Data visualization Photo Node-Gallery A force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review. Launch experience Stack Next.js \u00b7 D3 \u00b7 Supabase Model selection Browsing photographs by colour. Photo archives are usually organised by time, place, or subject. This experiment asks whether colour can offer another route through the work: moving from one photograph to another through light, tone, and palette. An initial CIE76 graph was visually dense yet still split natural neighbours apart. I tested five models against seven reviewed query sets; Mean LAB with CIEDE2000 gave the strongest result using the existing image features, so it drives the live graph. Reviewed set 100 photographs / 7 queries Selected model Mean LAB / CIEDE2000 Reviewed top four 89% relevant / 263 edges / 0 isolates Select a query photograph Human-reviewed affinity set Q 01 / ID 14 Snow / pale neutral Q 02 / ID 46 Dense neutral texture Q 03 / ID 49 Magenta performance light Q 04 / ID 57 Dark monochrome Q 05 / ID 65 Warm amber interior Q 06 / ID 69 Woodland green Q 07 / ID 112 Deep blue atmosphere Active query / ID 14 Snow / pale neutral \u201cRelevant\u201d marks a reviewed match. P@4 is the share of the first four results judged relevant; pair agreement measures how closely a model follows the reviewed ranking. Unmarked results are unjudged, not automatically wrong. Model 01 Mean LAB / CIE76 Query / 14 1 . ID 20 2.18 2 . ID 12 2.79 3 . ID 11 3.08 4 . ID 45 4.24 5 . ID 94 4.83 Relevant 6 . ID 16 5.43 Relevant in top four 86% Ranking agreement 82% Graph 246 edges / 7 component s Build time 3.7 ms Model 02 Mean LAB / CIEDE2000 Best reviewed P@4 Query / 14 1 . ID 20 2.14 2 . ID 12 2.74 3 . ID 45 3.40 4 . ID 11 3.70 5 . ID 94 5.16 Relevant 6 . ID 16 5.25 Relevant in top four 89% Ranking agreement 82% Graph 263 edges / 1 component Build time 9.5 ms Model 03 Mean Oklab Query / 14 1 . ID 20 0.010 2 . ID 45 0.015 3 . ID 11 0.019 4 . ID 103 0.028 5 . ID 39 0.029 6 . ID 94 0.032 Relevant Relevant in top four 75% Ranking agreement 66% Graph 260 edges / 2 component s Build time 2.5 ms Model 04 Oklab Distribution / Hellinger Query / 14 1 . ID 11 0.039 2 . ID 94 0.067 Relevant 3 . ID 20 0.086 4 . ID 15 0.089 Relevant 5 . ID 29 0.095 6 . ID 45 0.108 Relevant in top four 82% Ranking agreement 76% Graph 291 edges / 1 component Build time 3.6 ms Model 05 Oklab Palette / Earth Mover Query / 14 1 . ID 94 0.065 Relevant 2 . ID 15 0.069 Relevant 3 . ID 11 0.072 4 . ID 103 0.073 5 . ID 29 0.075 6 . ID 20 0.079 Relevant in top four 71% Ranking agreement 65% Graph 274 edges / 2 component s Build time 152 ms Broad dominant-colour and tonal affinity, judged from the generated contact sheet. These are editorial judgments, not semantic labels or exhaustive relevance sets. Exact all-pairs benchmark / 4,950 pairs / generated 26 Aug 2026 Project readout A different way through the archive. The graph does not try to identify what a photograph depicts. Instead, it turns 100 photographs into a field of visual neighbours, then tests that field against 7 deliberately different reference images before anyone is asked to browse it. 01 / Index Photograph set The archive remains image-first. A feature pass records colour signals for every photograph, while the original image stays at the centre of the experience. 02 / Review Similarity test Seven query images define the kind of visual relationship worth preserving. Five colour models are checked against those judgments instead of assuming numerical closeness matches the eye. 03 / Browse Living graph The selected model becomes a force-directed gallery. It makes colour clusters and surprising near-neighbours available to browse as a field, rather than a fixed list of results.",
+      "main_characters": 3868,
+      "main_words": 722,
+      "links": [
+        {
+          "class": "flex min-h-7 items-center outline-none transition-opacity hover:underline hover:opacity-55 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80 w-fit min-w-0 truncate",
+          "href": "/portfolio"
+        },
+        {
+          "href": "/portfolio#projects",
+          "class": "transition-opacity outline-none hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80"
+        },
+        {
+          "class": "transition-opacity outline-none hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80",
+          "href": "/projects/photo-graph"
+        },
+        {
+          "class": "flex min-h-7 items-center transition-opacity hover:opacity-55",
+          "href": "/portfolio#projects"
+        },
+        {
+          "class": "inline-flex cursor-pointer appearance-none items-center justify-center gap-2 border text-center text-xs font-semibold tracking-[0.12em] uppercase no-underline transition-[background-color,color,border-color,opacity,transform] duration-150 ease-[var(--ease-out-quint)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink active:translate-y-px disabled:pointer-events-none disabled:opacity-45 border-ink bg-ink text-canvas hover:border-action-hover hover:bg-action-hover min-h-11 px-4 py-2",
+          "href": "/projects/photo-graph/experience"
+        }
+      ],
+      "ids": [
+        "overview",
+        "colour-model-study",
+        "colour-model-study-heading",
+        "query-heading",
+        "comparison-heading",
+        "project-readout-heading",
+        "_R_"
+      ],
+      "mixed_content_resources": []
+    },
+    "grailed-plus-browser": {
+      "url": "https://dextery.dev/grailed-plus",
+      "status": 200,
+      "bytes": 36878,
+      "headers": {
+        "Age": "0",
+        "Cache-Control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "Content-Encoding": "gzip",
+        "Content-Type": "text/html; charset=utf-8",
+        "Date": "Wed, 28 Oct 2026 01:46:43 GMT",
+        "Link": "</_next/static/immutable/media/7ebf22b5a21034f8-s.p.3strvg7o-g5v2.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </_next/static/immutable/media/9e8fa6e4d0f4977e-s.p.13xt647a3hgi-.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </_next/static/immutable/media/RedHatDisplay_Italic_VariableFont_wght-s.p.0jojo_qbx9h_u.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatDisplay_VariableFont_wght-s.p.3ns3tq_s2jtg0.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatText_Italic_VariableFont_wght-s.p.28w5ssm1gdu12.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatText_VariableFont_wght-s.p.02hax2zqbmq-p.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\"",
+        "Permissions-Policy": "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Server": "Vercel",
+        "Strict-Transport-Security": "max-age=63072000",
+        "Vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+        "X-Matched-Path": "/grailed-plus",
+        "X-Powered-By": "Next.js",
+        "X-Vercel-Cache": "MISS",
+        "X-Vercel-Id": "yul1::iad1::94sb6-1793152003588-de8c0b6c8802",
+        "Transfer-Encoding": "chunked"
+      },
+      "titles": [
+        "Grailed Plus \u2014 Price Insights, Market Compare, Currency, and Dark Mode"
+      ],
+      "descriptions": [
+        "Explore live Grailed Plus demos for price insights, market comparison, custom currency conversion, seller context, and dark mode."
+      ],
+      "canonicals": ["https://dextery.dev/grailed-plus"],
+      "robots": ["max-image-preview:large"],
+      "viewport": ["width=device-width, initial-scale=1"],
+      "h1": ["Grailed Plus+"],
+      "lang": "en",
+      "main_text": "dextery.dev / grailed-plus / Index Install \u2197 Dark A sharper layer for Grailed Grailed Plus + Market context, local currency, and a native-feeling dark mode, directly inside the pages you already browse. Market compare Price intelligence Custom currency Dark mode View in Chrome Web Store Add to Chrome Explore features Installs from the official Chrome Web Store. Chrome extensions install on desktop. Open the Store now or revisit this page on your computer. Connecting to the current extension build Feature index Four upgrades. Zero workflow change. Grailed Plus works where the decision happens\u2014inside listings, search results, and messages\u2014not in another tab. Search beyond Grailed / 01 Market compare Compare candidates from eBay and Depop, then refine them locally with product and image similarity. Live demo loads as it approaches Buy with context / 02 Pricing insights Track price drops, estimate the next change, and see seller context without leaving the item page. Live demo loads as it approaches Think in your currency / 03 Site-wide conversion Choose the currency you actually use. Prices update across Grailed while the original USD value stays one hover away. Live demo loads as it approaches Browse after dark / 04 Native-feeling dark mode Match your device, keep dark mode always on, and tune the interface with a custom primary color\u2014without white flashes between pages. Live demo loads as it approaches Ready when you are Make every listing tell you more. View in Chrome Web Store Add to Chrome Official Chrome Web Store install. No subscription or hidden payments required. Grailed Plus is completely free to use. Grailed Plus for Chrome dextery.dev",
+      "main_characters": 1672,
+      "main_words": 267,
+      "links": [
+        {
+          "class": "flex min-h-7 items-center outline-none transition-opacity hover:underline hover:opacity-55 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80 w-fit min-w-0 truncate",
+          "href": "/portfolio"
+        },
+        {
+          "class": "transition-opacity outline-none hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80",
+          "href": "/grailed-plus"
+        },
+        {
+          "href": "#features",
+          "class": "hidden min-h-7 items-center transition-opacity hover:opacity-55 min-[430px]:flex"
+        },
+        {
+          "href": "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd",
+          "aria-busy": "false",
+          "aria-disabled": "false",
+          "class": "flex min-h-7 items-center transition-opacity hover:opacity-55"
+        },
+        {
+          "href": "#feature-market-compare",
+          "class": "inline-flex min-h-11 items-center underline-offset-4 transition-opacity hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+        },
+        {
+          "href": "#feature-pricing",
+          "class": "inline-flex min-h-11 items-center underline-offset-4 transition-opacity hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+        },
+        {
+          "href": "#feature-currency",
+          "class": "inline-flex min-h-11 items-center underline-offset-4 transition-opacity hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+        },
+        {
+          "href": "#feature-dark-mode",
+          "class": "inline-flex min-h-11 items-center underline-offset-4 transition-opacity hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+        },
+        {
+          "href": "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd",
+          "aria-busy": "false",
+          "aria-disabled": "false",
+          "class": "group inline-flex min-h-12 items-center justify-center gap-3 bg-ink px-6 py-3 text-center text-sm font-semibold tracking-[0.08em] text-canvas uppercase transition-[transform,background-color,color,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] outline-none hover:bg-action-hover hover:text-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink active:scale-[0.98] sm:px-8 hover:-translate-y-0.5"
+        },
+        {
+          "href": "#features",
+          "class": "group inline-flex min-h-12 items-center justify-center gap-3 border border-ink px-6 py-3 text-sm font-semibold tracking-[0.08em] text-ink uppercase transition-colors duration-200 outline-none hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        },
+        {
+          "href": "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd",
+          "aria-busy": "false",
+          "aria-disabled": "false",
+          "class": "group inline-flex min-h-12 items-center justify-center gap-3 bg-ink px-6 py-3 text-center text-sm font-semibold tracking-[0.08em] text-canvas uppercase transition-[transform,background-color,color,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] outline-none hover:bg-action-hover hover:text-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink active:scale-[0.98] sm:px-8 hover:-translate-y-0.5 w-full min-[430px]:w-auto"
+        },
+        {
+          "class": "decoration-rule w-fit font-medium underline underline-offset-4 transition-colors hover:text-action-hover",
+          "href": "/portfolio"
+        }
+      ],
+      "ids": [
+        "features",
+        "feature-market-compare",
+        "feature-pricing",
+        "feature-currency",
+        "feature-dark-mode",
+        "_R_"
+      ],
+      "mixed_content_resources": []
+    },
+    "grailed-plus-googlebot": {
+      "url": "https://dextery.dev/grailed-plus",
+      "status": 200,
+      "bytes": 36878,
+      "headers": {
+        "Age": "0",
+        "Cache-Control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "Content-Encoding": "gzip",
+        "Content-Type": "text/html; charset=utf-8",
+        "Date": "Wed, 28 Oct 2026 01:49:08 GMT",
+        "Link": "</_next/static/immutable/media/7ebf22b5a21034f8-s.p.3strvg7o-g5v2.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </_next/static/immutable/media/9e8fa6e4d0f4977e-s.p.13xt647a3hgi-.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </_next/static/immutable/media/RedHatDisplay_Italic_VariableFont_wght-s.p.0jojo_qbx9h_u.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatDisplay_VariableFont_wght-s.p.3ns3tq_s2jtg0.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatText_Italic_VariableFont_wght-s.p.28w5ssm1gdu12.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatText_VariableFont_wght-s.p.02hax2zqbmq-p.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\"",
+        "Permissions-Policy": "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Server": "Vercel",
+        "Strict-Transport-Security": "max-age=63072000",
+        "Vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+        "X-Matched-Path": "/grailed-plus",
+        "X-Powered-By": "Next.js",
+        "X-Vercel-Cache": "MISS",
+        "X-Vercel-Id": "yul1::iad1::5m425-1793152148797-a4c7d698a775",
+        "Transfer-Encoding": "chunked"
+      },
+      "titles": [
+        "Grailed Plus \u2014 Price Insights, Market Compare, Currency, and Dark Mode"
+      ],
+      "descriptions": [
+        "Explore live Grailed Plus demos for price insights, market comparison, custom currency conversion, seller context, and dark mode."
+      ],
+      "canonicals": ["https://dextery.dev/grailed-plus"],
+      "robots": ["max-image-preview:large"],
+      "viewport": ["width=device-width, initial-scale=1"],
+      "h1": ["Grailed Plus+"],
+      "lang": "en",
+      "main_text": "dextery.dev / grailed-plus / Index Install \u2197 Dark A sharper layer for Grailed Grailed Plus + Market context, local currency, and a native-feeling dark mode, directly inside the pages you already browse. Market compare Price intelligence Custom currency Dark mode View in Chrome Web Store Add to Chrome Explore features Installs from the official Chrome Web Store. Chrome extensions install on desktop. Open the Store now or revisit this page on your computer. Connecting to the current extension build Feature index Four upgrades. Zero workflow change. Grailed Plus works where the decision happens\u2014inside listings, search results, and messages\u2014not in another tab. Search beyond Grailed / 01 Market compare Compare candidates from eBay and Depop, then refine them locally with product and image similarity. Live demo loads as it approaches Buy with context / 02 Pricing insights Track price drops, estimate the next change, and see seller context without leaving the item page. Live demo loads as it approaches Think in your currency / 03 Site-wide conversion Choose the currency you actually use. Prices update across Grailed while the original USD value stays one hover away. Live demo loads as it approaches Browse after dark / 04 Native-feeling dark mode Match your device, keep dark mode always on, and tune the interface with a custom primary color\u2014without white flashes between pages. Live demo loads as it approaches Ready when you are Make every listing tell you more. View in Chrome Web Store Add to Chrome Official Chrome Web Store install. No subscription or hidden payments required. Grailed Plus is completely free to use. Grailed Plus for Chrome dextery.dev",
+      "main_characters": 1672,
+      "main_words": 267,
+      "links": [
+        {
+          "class": "flex min-h-7 items-center outline-none transition-opacity hover:underline hover:opacity-55 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80 w-fit min-w-0 truncate",
+          "href": "/portfolio"
+        },
+        {
+          "class": "transition-opacity outline-none hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80",
+          "href": "/grailed-plus"
+        },
+        {
+          "href": "#features",
+          "class": "hidden min-h-7 items-center transition-opacity hover:opacity-55 min-[430px]:flex"
+        },
+        {
+          "href": "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd",
+          "aria-busy": "false",
+          "aria-disabled": "false",
+          "class": "flex min-h-7 items-center transition-opacity hover:opacity-55"
+        },
+        {
+          "href": "#feature-market-compare",
+          "class": "inline-flex min-h-11 items-center underline-offset-4 transition-opacity hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+        },
+        {
+          "href": "#feature-pricing",
+          "class": "inline-flex min-h-11 items-center underline-offset-4 transition-opacity hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+        },
+        {
+          "href": "#feature-currency",
+          "class": "inline-flex min-h-11 items-center underline-offset-4 transition-opacity hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+        },
+        {
+          "href": "#feature-dark-mode",
+          "class": "inline-flex min-h-11 items-center underline-offset-4 transition-opacity hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+        },
+        {
+          "href": "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd",
+          "aria-busy": "false",
+          "aria-disabled": "false",
+          "class": "group inline-flex min-h-12 items-center justify-center gap-3 bg-ink px-6 py-3 text-center text-sm font-semibold tracking-[0.08em] text-canvas uppercase transition-[transform,background-color,color,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] outline-none hover:bg-action-hover hover:text-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink active:scale-[0.98] sm:px-8 hover:-translate-y-0.5"
+        },
+        {
+          "href": "#features",
+          "class": "group inline-flex min-h-12 items-center justify-center gap-3 border border-ink px-6 py-3 text-sm font-semibold tracking-[0.08em] text-ink uppercase transition-colors duration-200 outline-none hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        },
+        {
+          "href": "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd",
+          "aria-busy": "false",
+          "aria-disabled": "false",
+          "class": "group inline-flex min-h-12 items-center justify-center gap-3 bg-ink px-6 py-3 text-center text-sm font-semibold tracking-[0.08em] text-canvas uppercase transition-[transform,background-color,color,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] outline-none hover:bg-action-hover hover:text-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink active:scale-[0.98] sm:px-8 hover:-translate-y-0.5 w-full min-[430px]:w-auto"
+        },
+        {
+          "class": "decoration-rule w-fit font-medium underline underline-offset-4 transition-colors hover:text-action-hover",
+          "href": "/portfolio"
+        }
+      ],
+      "ids": [
+        "features",
+        "feature-market-compare",
+        "feature-pricing",
+        "feature-currency",
+        "feature-dark-mode",
+        "_R_"
+      ],
+      "mixed_content_resources": []
+    },
+    "grailed-plus-smartphone": {
+      "url": "https://dextery.dev/grailed-plus",
+      "status": 200,
+      "bytes": 36878,
+      "headers": {
+        "Age": "0",
+        "Cache-Control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "Content-Encoding": "gzip",
+        "Content-Type": "text/html; charset=utf-8",
+        "Date": "Wed, 28 Oct 2026 01:49:08 GMT",
+        "Link": "</_next/static/immutable/media/7ebf22b5a21034f8-s.p.3strvg7o-g5v2.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </_next/static/immutable/media/9e8fa6e4d0f4977e-s.p.13xt647a3hgi-.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </_next/static/immutable/media/RedHatDisplay_Italic_VariableFont_wght-s.p.0jojo_qbx9h_u.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatDisplay_VariableFont_wght-s.p.3ns3tq_s2jtg0.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatText_Italic_VariableFont_wght-s.p.28w5ssm1gdu12.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\", </_next/static/immutable/media/RedHatText_VariableFont_wght-s.p.02hax2zqbmq-p.ttf>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/ttf\"",
+        "Permissions-Policy": "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Server": "Vercel",
+        "Strict-Transport-Security": "max-age=63072000",
+        "Vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+        "X-Matched-Path": "/grailed-plus",
+        "X-Powered-By": "Next.js",
+        "X-Vercel-Cache": "MISS",
+        "X-Vercel-Id": "yul1::iad1::gn9n5-1793152148885-92d33a3afc22",
+        "Transfer-Encoding": "chunked"
+      },
+      "titles": [
+        "Grailed Plus \u2014 Price Insights, Market Compare, Currency, and Dark Mode"
+      ],
+      "descriptions": [
+        "Explore live Grailed Plus demos for price insights, market comparison, custom currency conversion, seller context, and dark mode."
+      ],
+      "canonicals": ["https://dextery.dev/grailed-plus"],
+      "robots": ["max-image-preview:large"],
+      "viewport": ["width=device-width, initial-scale=1"],
+      "h1": ["Grailed Plus+"],
+      "lang": "en",
+      "main_text": "dextery.dev / grailed-plus / Index Install \u2197 Dark A sharper layer for Grailed Grailed Plus + Market context, local currency, and a native-feeling dark mode, directly inside the pages you already browse. Market compare Price intelligence Custom currency Dark mode View in Chrome Web Store Add to Chrome Explore features Installs from the official Chrome Web Store. Chrome extensions install on desktop. Open the Store now or revisit this page on your computer. Connecting to the current extension build Feature index Four upgrades. Zero workflow change. Grailed Plus works where the decision happens\u2014inside listings, search results, and messages\u2014not in another tab. Search beyond Grailed / 01 Market compare Compare candidates from eBay and Depop, then refine them locally with product and image similarity. Live demo loads as it approaches Buy with context / 02 Pricing insights Track price drops, estimate the next change, and see seller context without leaving the item page. Live demo loads as it approaches Think in your currency / 03 Site-wide conversion Choose the currency you actually use. Prices update across Grailed while the original USD value stays one hover away. Live demo loads as it approaches Browse after dark / 04 Native-feeling dark mode Match your device, keep dark mode always on, and tune the interface with a custom primary color\u2014without white flashes between pages. Live demo loads as it approaches Ready when you are Make every listing tell you more. View in Chrome Web Store Add to Chrome Official Chrome Web Store install. No subscription or hidden payments required. Grailed Plus is completely free to use. Grailed Plus for Chrome dextery.dev",
+      "main_characters": 1672,
+      "main_words": 267,
+      "links": [
+        {
+          "class": "flex min-h-7 items-center outline-none transition-opacity hover:underline hover:opacity-55 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80 w-fit min-w-0 truncate",
+          "href": "/portfolio"
+        },
+        {
+          "class": "transition-opacity outline-none hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ink active:opacity-80",
+          "href": "/grailed-plus"
+        },
+        {
+          "href": "#features",
+          "class": "hidden min-h-7 items-center transition-opacity hover:opacity-55 min-[430px]:flex"
+        },
+        {
+          "href": "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd",
+          "aria-busy": "false",
+          "aria-disabled": "false",
+          "class": "flex min-h-7 items-center transition-opacity hover:opacity-55"
+        },
+        {
+          "href": "#feature-market-compare",
+          "class": "inline-flex min-h-11 items-center underline-offset-4 transition-opacity hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+        },
+        {
+          "href": "#feature-pricing",
+          "class": "inline-flex min-h-11 items-center underline-offset-4 transition-opacity hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+        },
+        {
+          "href": "#feature-currency",
+          "class": "inline-flex min-h-11 items-center underline-offset-4 transition-opacity hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+        },
+        {
+          "href": "#feature-dark-mode",
+          "class": "inline-flex min-h-11 items-center underline-offset-4 transition-opacity hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+        },
+        {
+          "href": "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd",
+          "aria-busy": "false",
+          "aria-disabled": "false",
+          "class": "group inline-flex min-h-12 items-center justify-center gap-3 bg-ink px-6 py-3 text-center text-sm font-semibold tracking-[0.08em] text-canvas uppercase transition-[transform,background-color,color,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] outline-none hover:bg-action-hover hover:text-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink active:scale-[0.98] sm:px-8 hover:-translate-y-0.5"
+        },
+        {
+          "href": "#features",
+          "class": "group inline-flex min-h-12 items-center justify-center gap-3 border border-ink px-6 py-3 text-sm font-semibold tracking-[0.08em] text-ink uppercase transition-colors duration-200 outline-none hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        },
+        {
+          "href": "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd",
+          "aria-busy": "false",
+          "aria-disabled": "false",
+          "class": "group inline-flex min-h-12 items-center justify-center gap-3 bg-ink px-6 py-3 text-center text-sm font-semibold tracking-[0.08em] text-canvas uppercase transition-[transform,background-color,color,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] outline-none hover:bg-action-hover hover:text-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink active:scale-[0.98] sm:px-8 hover:-translate-y-0.5 w-full min-[430px]:w-auto"
+        },
+        {
+          "class": "decoration-rule w-fit font-medium underline underline-offset-4 transition-colors hover:text-action-hover",
+          "href": "/portfolio"
+        }
+      ],
+      "ids": [
+        "features",
+        "feature-market-compare",
+        "feature-pricing",
+        "feature-currency",
+        "feature-dark-mode",
+        "_R_"
+      ],
+      "mixed_content_resources": []
+    }
+  },
+  "sitemap": [
+    {
+      "url": "https://dextery.dev/portfolio",
+      "lastmod": "2026-10-06",
+      "images": [
+        "https://dextery.dev/projects/posters/photo-graph.webp",
+        "https://dextery.dev/projects/posters/elliot-mairet.png",
+        "https://dextery.dev/projects/posters/bur1alrites.png",
+        "https://dextery.dev/projects/posters/grailed-plus.webp",
+        "https://dextery.dev/projects/posters/nepobabies.webp"
+      ]
+    },
+    {
+      "url": "https://dextery.dev/projects/photo-graph",
+      "lastmod": "2026-10-06",
+      "images": ["https://dextery.dev/projects/posters/photo-graph.webp"]
+    },
+    {
+      "url": "https://dextery.dev/grailed-plus",
+      "lastmod": "2026-10-06",
+      "images": ["https://dextery.dev/projects/posters/grailed-plus.webp"]
+    }
+  ],
+  "internal_links": [
+    {
+      "from": "https://dextery.dev/portfolio",
+      "href": "/portfolio",
+      "resolved": "https://dextery.dev/portfolio",
+      "target_status": 200,
+      "fragment_checked": false,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/portfolio",
+      "href": "/portfolio",
+      "resolved": "https://dextery.dev/portfolio",
+      "target_status": 200,
+      "fragment_checked": false,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/portfolio",
+      "href": "#contact",
+      "resolved": "https://dextery.dev/portfolio#contact",
+      "target_status": 200,
+      "fragment_checked": true,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/portfolio",
+      "href": "/projects/photo-graph",
+      "resolved": "https://dextery.dev/projects/photo-graph",
+      "target_status": 200,
+      "fragment_checked": false,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/portfolio",
+      "href": "/projects/photo-graph",
+      "resolved": "https://dextery.dev/projects/photo-graph",
+      "target_status": 200,
+      "fragment_checked": false,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/portfolio",
+      "href": "/grailed-plus",
+      "resolved": "https://dextery.dev/grailed-plus",
+      "target_status": 200,
+      "fragment_checked": false,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/portfolio",
+      "href": "/Dexter_Young_CV.pdf",
+      "resolved": "https://dextery.dev/Dexter_Young_CV.pdf",
+      "target_status": 200,
+      "fragment_checked": false,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/projects/photo-graph",
+      "href": "/portfolio",
+      "resolved": "https://dextery.dev/portfolio",
+      "target_status": 200,
+      "fragment_checked": false,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/projects/photo-graph",
+      "href": "/portfolio#projects",
+      "resolved": "https://dextery.dev/portfolio#projects",
+      "target_status": 200,
+      "fragment_checked": true,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/projects/photo-graph",
+      "href": "/projects/photo-graph",
+      "resolved": "https://dextery.dev/projects/photo-graph",
+      "target_status": 200,
+      "fragment_checked": false,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/projects/photo-graph",
+      "href": "/portfolio#projects",
+      "resolved": "https://dextery.dev/portfolio#projects",
+      "target_status": 200,
+      "fragment_checked": true,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/projects/photo-graph",
+      "href": "/projects/photo-graph/experience",
+      "resolved": "https://dextery.dev/projects/photo-graph/experience",
+      "target_status": 200,
+      "fragment_checked": false,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/grailed-plus",
+      "href": "/portfolio",
+      "resolved": "https://dextery.dev/portfolio",
+      "target_status": 200,
+      "fragment_checked": false,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/grailed-plus",
+      "href": "/grailed-plus",
+      "resolved": "https://dextery.dev/grailed-plus",
+      "target_status": 200,
+      "fragment_checked": false,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/grailed-plus",
+      "href": "#features",
+      "resolved": "https://dextery.dev/grailed-plus#features",
+      "target_status": 200,
+      "fragment_checked": true,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/grailed-plus",
+      "href": "#feature-market-compare",
+      "resolved": "https://dextery.dev/grailed-plus#feature-market-compare",
+      "target_status": 200,
+      "fragment_checked": true,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/grailed-plus",
+      "href": "#feature-pricing",
+      "resolved": "https://dextery.dev/grailed-plus#feature-pricing",
+      "target_status": 200,
+      "fragment_checked": true,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/grailed-plus",
+      "href": "#feature-currency",
+      "resolved": "https://dextery.dev/grailed-plus#feature-currency",
+      "target_status": 200,
+      "fragment_checked": true,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/grailed-plus",
+      "href": "#feature-dark-mode",
+      "resolved": "https://dextery.dev/grailed-plus#feature-dark-mode",
+      "target_status": 200,
+      "fragment_checked": true,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/grailed-plus",
+      "href": "#features",
+      "resolved": "https://dextery.dev/grailed-plus#features",
+      "target_status": 200,
+      "fragment_checked": true,
+      "passed": true
+    },
+    {
+      "from": "https://dextery.dev/grailed-plus",
+      "href": "/portfolio",
+      "resolved": "https://dextery.dev/portfolio",
+      "target_status": 200,
+      "fragment_checked": false,
+      "passed": true
+    }
+  ]
+}

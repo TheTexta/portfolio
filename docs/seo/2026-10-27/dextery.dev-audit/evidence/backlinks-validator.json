@@ -1,0 +1,30 @@
+{
+  "status": "REVIEW",
+  "data": {
+    "total_issues": 1,
+    "errors": 0,
+    "warnings": 1,
+    "infos": 0,
+    "issues": [
+      {
+        "severity": "warning",
+        "field": "reciprocal_links",
+        "message": "Reciprocal link pattern detected with 2 domain(s): elliotmairet.com, github.com. The site links TO these domains AND they link back. Flag in report.",
+        "domains": ["elliotmairet.com", "github.com"]
+      }
+    ]
+  },
+  "error": null,
+  "metadata": {
+    "source": "validate_backlink_report",
+    "checks_run": [
+      "schema_claims",
+      "verification_results",
+      "h1_claims",
+      "cc_claims",
+      "reciprocal_links",
+      "health_score",
+      "source_score_consistency"
+    ]
+  }
+}

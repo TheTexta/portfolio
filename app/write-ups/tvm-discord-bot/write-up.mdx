@@ -1,3 +1,5 @@
+import ShootLifecycle from "@/app/components/projects/discord-shoot-manager/shoot-lifecycle";
+
 <header data-write-up-header>
 
 # {props.project.title}
@@ -6,98 +8,146 @@
   <ProjectDetails project={props.project} />
   <nav aria-label={`${props.project.title} project links`}>
     <a href={props.project.sourceHref}>Source and setup</a>
-    <a href="https://github.com/TheTexta/discord-shoot-manager/blob/045de1ed714677147e6a8b74efe57f8619a70dee/test/roster-preview.test.js">
-      Roster recovery tests
-    </a>
-    <a href="https://github.com/TheTexta/discord-shoot-manager/actions/runs/40571855904">
-      Reviewed revision's CI run
-    </a>
   </nav>
 </ProjectMeta>
 
 <Lead>
   {
-    "Membership and production workflows with explicit recovery when a saved change loses its confirmation."
+    "A Discord bot for TVM, McGill’s student television service, connecting membership verification with private production workspaces. I extended an open-source verification bot with roster administration, shoot management and recovery from interrupted Discord operations."
   }
 </Lead>
 
 </header>
 
-The source project is now named **Discord Shoot Manager**. TVM's installation
-remains TVM Bot; the repository rename does not change its Discord identity or
-existing production workspaces.
+## Connecting membership with production
 
 TVM needs to connect its membership roster with Discord access and give production
-teams private spaces to organize shoots. I adapted
-[EmailVerify](https://github.com/lkaesberg/EmailVerify), an open-source verification
-bot, for those workflows. My TVM-specific work extends that foundation with roster
-administration, role reconciliation, and persistent production workspaces, using
-Node.js, discord.js, and SQLite.
+teams private spaces to organise shoots. These are related tasks, but they involve
+different information: who belongs to the organisation, which permissions they
+hold, and which productions they are participating in.
 
-## Reviewing a roster before replacing it
+I adapted [EmailVerify](https://github.com/lkaesberg/EmailVerify) as the verification
+foundation, then developed TVM’s roster-management and production workflows around
+it. **Discord Shoot Manager** uses Node.js, discord.js and SQLite.
 
-An administrator uploads a complete CSV roster and receives a private preview of
-additions, omissions, and tier changes. Replacement requires confirmation by the
-same administrator in the same channel. A preview expires and cannot overwrite a
-roster changed since it was prepared.
+The project extends beyond granting a role after email verification. It manages
+how access changes over time, how a production workspace moves from setup to
+archive, and what happens when Discord completes only part of an operation.
 
-An accepted replacement commits in a SQLite transaction and advances the roster
-version. Discord role synchronization follows. The bot records which roles it
-manages so that obsolete bot-owned roles can be removed while independently
-assigned privileges remain protected. Membership state and Discord state can
-therefore disagree temporarily without losing the intended final state.
+## Giving each shoot a lifecycle
 
-## When the write succeeds but the reply fails
+The production workflow has three main stages:
 
-A missing confirmation does not establish that the operation failed. Discord may
-be unavailable after a roster has already been saved. Repeating the replacement
-merely to receive a reply could apply an unintended second operation.
+1. **Set up.** An administrator enters a shoot name, location and optional call
+   time. The bot creates a private chat, pins the production details and publishes
+   an invitation in a shared channel.
+2. **Join.** Members can receive direct invitations or join by reacting to the
+   announcement. The bot checks their eligibility before granting access and
+   updates participation when they leave. Scheduled call times appear in each
+   viewer’s local timezone.
+3. **Archive.** Closing a shoot moves its chat into the archive. Ordinary
+   participants retain reading access without being able to continue posting,
+   preserving the discussion without leaving every production permanently active.
+   A shoot can also be reopened.
 
-<Figure
-  src="/projects/posters/tvm-discord-bot.png"
-  alt="Synthetic recovery example: a roster is saved in SQLite, Discord synchronization is pending, and the confirmation is unavailable. The operator inspects status and reconciles roles."
-  width={1600}
-  height={1000}
-  caption="Synthetic state diagram, with no member data. Database acceptance, Discord synchronization, and confirmation delivery are separate outcomes."
-/>
+<ShootLifecycle />
 
-The [administrative-operation wrapper](https://github.com/TheTexta/discord-shoot-manager/blob/045de1ed714677147e6a8b74efe57f8619a70dee/src/shared/AdminOperation.js)
-tracks a saved action separately from its reply. Operator feedback identifies a
-saved change awaiting synchronization or a completed action whose confirmation
-could not be delivered. Status, audit, and reconciliation commands support
-investigation and recovery.
+These transitions need more than channel creation commands. They need persistent
+records of the shoot, its participants and its intended state, so the workflow can
+continue after a restart or interrupted request.
+
+## Separating management from visibility
+
+Being allowed to manage the bot should not automatically mean being able to read
+every production conversation. The application treats administrative authority,
+ordinary participation and production-wide access separately. Administrators can
+manage shoots without receiving blanket visibility; a separately assigned
+production-access role provides that broader access when required.
+
+Membership synchronisation follows a similar ownership boundary. The bot records
+which membership roles it manages and removes obsolete bot-owned grants when the
+roster changes. Independently assigned roles remain protected. That distinction
+prevents roster automation from treating every existing permission as something
+it owns.
+
+Verification connects one roster email with one Discord account using expiring,
+attempt-limited codes. The member-facing acknowledgement is sent before eligibility
+lookup or mail delivery, so the reply does not reveal whether an address is on the
+roster. Delivery failures are reported privately to operators.
+
+## Reviewing changes before applying them
+
+A roster upload replaces the complete active membership list. An accidentally
+incomplete file could therefore remove eligibility from members who were simply
+omitted.
+
+Instead of applying an upload immediately, the bot shows a private preview of
+additions, omissions and tier changes. The same administrator must explicitly
+confirm the replacement in the original channel.
+
+The preview is also tied to a roster version. If another replacement happens before
+confirmation, the old preview is rejected rather than overwriting newer
+information.
+
+Once accepted, the replacement commits in a SQLite transaction. Updating Discord
+roles happens afterward. This keeps the saved membership decision distinct from
+the external work needed to reflect it.
+
+## Recovering without repeating the original action
+
+SQLite and Discord cannot participate in one shared transaction. The database can
+save a change while a Discord request fails, or Discord can complete an operation
+without its response reaching the bot.
+
+I handle those outcomes separately: **what was saved, what still needs
+synchronising, and whether confirmation reached the administrator.**
+
+For example, a roster replacement may already be accepted when its confirmation
+message fails. Repeating the replacement just to obtain a reply would be the wrong
+recovery action. Status and audit commands expose the accepted state, while
+reconciliation retries outstanding role updates.
+
+Shoot workspaces use the same underlying principle. Persistent state records the
+intended lifecycle transition, and recovery markers identify channels and messages
+created during interrupted operations. The bot can resume synchronisation without
+blindly creating another workspace.
+
+Not every missing resource should be recreated, however. A deleted shoot channel
+is reported as missing rather than silently replaced. The
+[persistence and recovery guide](https://github.com/TheTexta/discord-shoot-manager/blob/main/docs/architecture/persistence-and-recovery.md)
+describes these boundaries.
+
+## Testing the boundaries
+
+The tests use temporary SQLite databases and Discord and mail adapters, making
+failures reproducible without production member data.
 
 The [lost-confirmation regression](https://github.com/TheTexta/discord-shoot-manager/blob/045de1ed714677147e6a8b74efe57f8619a70dee/test/roster-preview.test.js#L167)
-makes confirmation delivery throw after accepting a replacement. It asserts that
-the saved roster remains at version two, reconciliation was scheduled once, and
-the consumed confirmation token cannot apply again. A neighboring test proves
-that stale and concurrent confirmations cannot overwrite an intervening snapshot.
-These assertions exercise state, rather than treating a displayed success message
-as proof of a committed change.
+deliberately makes confirmation delivery fail after a roster replacement has been
+accepted. It checks that the saved roster remains intact, reconciliation is
+scheduled once, and the same confirmation cannot apply the replacement again.
 
-## Access and private production spaces
+Other tests cover stale and concurrent confirmations, permission boundaries and
+interrupted shoot operations. The important assertions concern saved state and
+access, not merely whether a success message appeared. A
+[historical CI run](https://github.com/TheTexta/discord-shoot-manager/actions/runs/40571855904)
+passed the test and container jobs for the linked regression’s revision; it is not
+a live check of later deployments.
 
-Verification links one roster email to one Discord account using expiring,
-attempt-limited codes. The member-facing acknowledgement is sent before eligibility
-lookup or mail delivery, avoiding a different reply for an unlisted address.
-Delivery errors go to private operator reporting; an acknowledgement does not
-promise inbox delivery.
+The application deliberately runs as one process with one SQLite database per
+Discord server. Its coordination does not support overlapping replicas. That
+keeps the deployment bounded, but makes single-instance operation an explicit
+constraint.
 
-The production workflow creates private shoot chats, supports joining and direct
-invitations, and closes finished shoots into readable archives. Administrative
-management authority is separate from broad production visibility. Persisted state
-and resource markers support recovery after interrupted Discord operations.
+## From a TVM workflow to a reusable application
 
-## Operating within a clear boundary
+The result connects verified membership, deliberate roster changes and private
+shoot workspaces within Discord, with persistent state supporting recovery when
+external operations are interrupted.
 
-Tests use temporary SQLite databases and Discord and mail adapters. The linked CI
-run passed the test and container jobs for the reviewed revision
-`045de1ed714677147e6a8b74efe57f8619a70dee`; it is historical revision evidence,
-not a claim about every subsequent deployment. The
-[operations guide](https://github.com/TheTexta/discord-shoot-manager/blob/045de1ed714677147e6a8b74efe57f8619a70dee/docs/operations.md)
-documents migrations, health reporting, shutdown, and backups.
+I subsequently separated organisation-specific configuration from the shared
+application. Roles, wording and timezone can vary between independently hosted
+installations, and shoot management can run without email verification.
 
-The application deliberately runs as one replica. Coordination stays within one
-process, so deployments must avoid overlapping instances. The delivered software
-makes membership and production-access changes inspectable and recoverable; this
-case study does not infer active-user counts or time saved from TVM's membership.
+This preserves TVM’s workflow without requiring every organisation to inherit its
+membership setup, or introducing a centrally hosted, multi-server platform.

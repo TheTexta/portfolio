@@ -236,12 +236,12 @@ test("Grailed Plus experience has a return link to its case study", async ({
   page,
 }) => {
   await page.goto("/grailed-plus/experience");
-  await page
-    .getByRole("link", {
-      name: "Return to Grailed Plus case study",
-      exact: true,
-    })
-    .click();
+  const returnLink = page.getByRole("link", {
+    name: "Return to Grailed Plus case study",
+    exact: true,
+  });
+  await expect(returnLink).toHaveText("Return to Grailed Plus case study");
+  await returnLink.click();
   await expect(page).toHaveURL(/\/write-ups\/grailed-plus$/);
 });
 

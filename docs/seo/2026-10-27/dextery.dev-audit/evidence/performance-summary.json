@@ -1,0 +1,78 @@
+{
+  "source": "performance specialist's performance-browser-results.json and performance-browser-summary.jsonl, retained in the temporary working evidence directory",
+  "captured_at_utc": "2026-10-28T01:48:21Z/2026-10-28T01:48:43Z",
+  "browser": "Chromium 156.0.8078.4",
+  "conditions": {
+    "network_throttling": false,
+    "cpu_throttling": false,
+    "runs_per_condition": 1,
+    "capture": "approximately seven seconds after DOMContentLoaded, no scroll or interaction",
+    "mobile": "390x844 CSS px, DPR 3, viewport/touch simulation, default headless browser user-agent",
+    "desktop": "1440x900 CSS px, DPR 1",
+    "cache": "fresh contexts with request interception; browser HTTP cache disabled, edge/OS caches may be warm",
+    "safety": "Non-GET/HEAD/OPTIONS requests blocked; two Google Ads POST attempts blocked on Grailed Plus",
+    "bytes": "CDP encodedDataLength for completed responses, including protocol overhead; bounded lower bounds, OOPIF traffic may be omitted"
+  },
+  "field_cwv": { "lcp": null, "inp": null, "cls": null },
+  "lighthouse_score": null,
+  "performance_score": null,
+  "public_google_api_status": 429,
+  "observations": [
+    {
+      "url": "https://dextery.dev/portfolio",
+      "condition": "mobile viewport",
+      "status": 200,
+      "ttfb_ms": 46.3,
+      "fcp_ms": 148,
+      "observed_main_document_lcp_ms": 284,
+      "observed_cls": 0,
+      "completed_resources": 23,
+      "encoded_bytes": 542611,
+      "font_encoded_bytes": 246122,
+      "font_count": 6
+    },
+    {
+      "url": "https://dextery.dev/portfolio",
+      "condition": "desktop",
+      "status": 200,
+      "ttfb_ms": 29.6,
+      "fcp_ms": 112,
+      "observed_main_document_lcp_ms": 140,
+      "observed_cls": 0,
+      "completed_resources": 26,
+      "encoded_bytes": 563156
+    },
+    {
+      "url": "https://dextery.dev/projects/photo-graph",
+      "condition": "mobile viewport",
+      "status": 200,
+      "ttfb_ms": 78.2,
+      "fcp_ms": 352,
+      "observed_main_document_lcp_ms": 352,
+      "observed_cls": 0,
+      "load_event_ms": 3060.8,
+      "completed_resources": 151,
+      "encoded_bytes": 4839627,
+      "image_responses": 120,
+      "image_encoded_bytes": 4221724,
+      "canvas_images": { "responses": 103, "encoded_bytes": 2984361 },
+      "comparison_images": { "responses": 17, "encoded_bytes": 1237363 },
+      "long_tasks_ms": [57]
+    },
+    {
+      "url": "https://dextery.dev/grailed-plus",
+      "condition": "mobile viewport",
+      "status": 200,
+      "ttfb_ms": 33.2,
+      "fcp_ms": 208,
+      "observed_main_document_lcp_ms": 208,
+      "observed_cls": 0,
+      "completed_resources": 29,
+      "encoded_bytes_lower_bound": 677672,
+      "main_document_load_event_completed": false,
+      "iframe": "https://grailed-plus-demo.dextery.dev/?feature=overview",
+      "iframe_readiness": "unfinished at approximately seven seconds; separate longer visual captures reached unavailable fallback"
+    }
+  ],
+  "interpretation": "Not CrUX, Lighthouse, real-phone benchmarks, INP measurements, proof of complete iframe/canvas readiness, or a field Core Web Vitals pass/fail. Image byte buckets are not guaranteed savings."
+}

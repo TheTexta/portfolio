@@ -81,6 +81,9 @@ declare module "d3" {
     alpha(): number;
     alpha(value: number): this;
     alphaTarget(value: number): this;
+    alphaDecay(value: number): this;
+    randomSource(source: () => number): this;
+    tick(iterations?: number): this;
     restart(): this;
     stop(): this;
   }

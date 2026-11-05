@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+<url>
+<loc>https://dextery.dev/portfolio</loc>
+<image:image>
+<image:loc>https://dextery.dev/projects/posters/photo-graph.webp</image:loc>
+</image:image>
+<image:image>
+<image:loc>https://dextery.dev/projects/posters/elliot-mairet.png</image:loc>
+</image:image>
+<image:image>
+<image:loc>https://dextery.dev/projects/posters/bur1alrites.png</image:loc>
+</image:image>
+<image:image>
+<image:loc>https://dextery.dev/projects/posters/grailed-plus.webp</image:loc>
+</image:image>
+<image:image>
+<image:loc>https://dextery.dev/projects/posters/nepobabies.webp</image:loc>
+</image:image>
+<lastmod>2026-10-06</lastmod>
+</url>
+<url>
+<loc>https://dextery.dev/projects/photo-graph</loc>
+<image:image>
+<image:loc>https://dextery.dev/projects/posters/photo-graph.webp</image:loc>
+</image:image>
+<lastmod>2026-10-06</lastmod>
+</url>
+<url>
+<loc>https://dextery.dev/grailed-plus</loc>
+<image:image>
+<image:loc>https://dextery.dev/projects/posters/grailed-plus.webp</image:loc>
+</image:image>
+<lastmod>2026-10-06</lastmod>
+</url>
+</urlset>

@@ -1,0 +1,636 @@
+{
+  "captured_at_utc": "2026-10-28T01:49:13.599717+00:00",
+  "method": "GET",
+  "redirect_mode": "manual",
+  "cases": [
+    {
+      "name": "portfolio-googlebot",
+      "requested_url": "https://dextery.dev/portfolio",
+      "profile": "googlebot",
+      "status": 200,
+      "final_url": "https://dextery.dev/portfolio",
+      "location": null,
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "portfolio-smartphone",
+      "requested_url": "https://dextery.dev/portfolio",
+      "profile": "smartphone",
+      "status": 200,
+      "final_url": "https://dextery.dev/portfolio",
+      "location": null,
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "photo-graph-googlebot",
+      "requested_url": "https://dextery.dev/projects/photo-graph",
+      "profile": "googlebot",
+      "status": 200,
+      "final_url": "https://dextery.dev/projects/photo-graph",
+      "location": null,
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "photo-graph-smartphone",
+      "requested_url": "https://dextery.dev/projects/photo-graph",
+      "profile": "smartphone",
+      "status": 200,
+      "final_url": "https://dextery.dev/projects/photo-graph",
+      "location": null,
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "grailed-plus-googlebot",
+      "requested_url": "https://dextery.dev/grailed-plus",
+      "profile": "googlebot",
+      "status": 200,
+      "final_url": "https://dextery.dev/grailed-plus",
+      "location": null,
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "grailed-plus-smartphone",
+      "requested_url": "https://dextery.dev/grailed-plus",
+      "profile": "smartphone",
+      "status": 200,
+      "final_url": "https://dextery.dev/grailed-plus",
+      "location": null,
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "photo-graph-experience-browser",
+      "requested_url": "https://dextery.dev/projects/photo-graph/experience",
+      "profile": "browser",
+      "status": 200,
+      "final_url": "https://dextery.dev/projects/photo-graph/experience",
+      "location": null,
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "photo-graph-experience-googlebot",
+      "requested_url": "https://dextery.dev/projects/photo-graph/experience",
+      "profile": "googlebot",
+      "status": 200,
+      "final_url": "https://dextery.dev/projects/photo-graph/experience",
+      "location": null,
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "grailed-plus-experience-browser",
+      "requested_url": "https://dextery.dev/grailed-plus/experience",
+      "profile": "browser",
+      "status": 200,
+      "final_url": "https://dextery.dev/grailed-plus/experience",
+      "location": null,
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "grailed-plus-experience-googlebot",
+      "requested_url": "https://dextery.dev/grailed-plus/experience",
+      "profile": "googlebot",
+      "status": 200,
+      "final_url": "https://dextery.dev/grailed-plus/experience",
+      "location": null,
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "grailed-plus-hero-browser",
+      "requested_url": "https://dextery.dev/grailed-plus?view=hero",
+      "profile": "browser",
+      "status": 200,
+      "final_url": "https://dextery.dev/grailed-plus?view=hero",
+      "location": null,
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "grailed-plus-hero-googlebot",
+      "requested_url": "https://dextery.dev/grailed-plus?view=hero",
+      "profile": "googlebot",
+      "status": 200,
+      "final_url": "https://dextery.dev/grailed-plus?view=hero",
+      "location": null,
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "sitemap-browser",
+      "requested_url": "https://dextery.dev/sitemap.xml",
+      "profile": "browser",
+      "status": 200,
+      "final_url": "https://dextery.dev/sitemap.xml",
+      "location": null,
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": "/Users/dexteryoung/.claude/skills/seo/scripts/render_page.py:215: XMLParsedAsHTMLWarning: It looks like you're using an HTML parser to parse an XML document.\n\nAssuming this really is an XML document, what you're doing might work, but you should know that using an XML parser will be more reliable. To parse this document as XML, make sure you have the Python package 'lxml' installed, and pass the keyword argument `features=\"xml\"` into the BeautifulSoup constructor.\n\nIf you want or need to use an HTML parser on this document, you can make this warning go away by filtering it. To do that, run this code before calling the BeautifulSoup constructor:\n\n    from bs4 import XMLParsedAsHTMLWarning\n    import warnings\n\n    warnings.filterwarnings(\"ignore\", category=XMLParsedAsHTMLWarning)\n\n  soup = BeautifulSoup(html, \"html.parser\")\n"
+        }
+      ]
+    },
+    {
+      "name": "sitemap-googlebot",
+      "requested_url": "https://dextery.dev/sitemap.xml",
+      "profile": "googlebot",
+      "status": 200,
+      "final_url": "https://dextery.dev/sitemap.xml",
+      "location": null,
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": "/Users/dexteryoung/.claude/skills/seo/scripts/render_page.py:215: XMLParsedAsHTMLWarning: It looks like you're using an HTML parser to parse an XML document.\n\nAssuming this really is an XML document, what you're doing might work, but you should know that using an XML parser will be more reliable. To parse this document as XML, make sure you have the Python package 'lxml' installed, and pass the keyword argument `features=\"xml\"` into the BeautifulSoup constructor.\n\nIf you want or need to use an HTML parser on this document, you can make this warning go away by filtering it. To do that, run this code before calling the BeautifulSoup constructor:\n\n    from bs4 import XMLParsedAsHTMLWarning\n    import warnings\n\n    warnings.filterwarnings(\"ignore\", category=XMLParsedAsHTMLWarning)\n\n  soup = BeautifulSoup(html, \"html.parser\")\n"
+        }
+      ]
+    },
+    {
+      "name": "robots-googlebot",
+      "requested_url": "https://dextery.dev/robots.txt",
+      "profile": "googlebot",
+      "status": 200,
+      "final_url": "https://dextery.dev/robots.txt",
+      "location": null,
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "root",
+      "requested_url": "https://dextery.dev/",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "https://dextery.dev/",
+      "location": "/portfolio",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "spotify-case-study",
+      "requested_url": "https://dextery.dev/projects/spotify-nodify",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "https://dextery.dev/projects/spotify-nodify",
+      "location": "/portfolio#projects",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "spotify-experience",
+      "requested_url": "https://dextery.dev/projects/spotify-nodify/experience",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "https://dextery.dev/projects/spotify-nodify/experience",
+      "location": "/portfolio#projects",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "spotify-components",
+      "requested_url": "https://dextery.dev/components/projects/spotify-nodify",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "https://dextery.dev/components/projects/spotify-nodify",
+      "location": "/portfolio#projects",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "spotify-callback",
+      "requested_url": "https://dextery.dev/auth/spotify/callback",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "https://dextery.dev/auth/spotify/callback",
+      "location": "/portfolio#projects",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "photo-graph-components",
+      "requested_url": "https://dextery.dev/components/projects/photo-graph",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "https://dextery.dev/components/projects/photo-graph",
+      "location": "/projects/photo-graph",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "grailed-plus-components",
+      "requested_url": "https://dextery.dev/components/projects/grailed-plus",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "https://dextery.dev/components/projects/grailed-plus",
+      "location": "/grailed-plus",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "nepobabies-components",
+      "requested_url": "https://dextery.dev/components/projects/nepobabiesruntheunderground",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "https://dextery.dev/components/projects/nepobabiesruntheunderground",
+      "location": "https://thetexta.github.io/nepobabiesruntheunderground/",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "grailed-go",
+      "requested_url": "https://dextery.dev/go/grailed-plus",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "https://dextery.dev/go/grailed-plus",
+      "location": "/grailed-plus",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "grailed-old-project",
+      "requested_url": "https://dextery.dev/projects/grailed-plus",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "https://dextery.dev/projects/grailed-plus",
+      "location": "/grailed-plus",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "grailed-old-experience",
+      "requested_url": "https://dextery.dev/projects/grailed-plus/experience",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "https://dextery.dev/projects/grailed-plus/experience",
+      "location": "/grailed-plus/experience",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "removed-preview",
+      "requested_url": "https://dextery.dev/components/projects/nepobabiesruntheunderground/preview",
+      "profile": "browser",
+      "status": 404,
+      "final_url": "https://dextery.dev/components/projects/nepobabiesruntheunderground/preview",
+      "location": null,
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "portfolio-trailing-slash",
+      "requested_url": "https://dextery.dev/portfolio/",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "https://dextery.dev/portfolio/",
+      "location": "/portfolio",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "photo-graph-trailing-slash",
+      "requested_url": "https://dextery.dev/projects/photo-graph/",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "https://dextery.dev/projects/photo-graph/",
+      "location": "/projects/photo-graph",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "grailed-trailing-slash",
+      "requested_url": "https://dextery.dev/grailed-plus/",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "https://dextery.dev/grailed-plus/",
+      "location": "/grailed-plus",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "cv",
+      "requested_url": "https://dextery.dev/Dexter_Young_CV.pdf",
+      "profile": "browser",
+      "status": 200,
+      "final_url": "https://dextery.dev/Dexter_Young_CV.pdf",
+      "location": null,
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "http-root",
+      "requested_url": "http://dextery.dev/",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "http://dextery.dev/",
+      "location": "https://dextery.dev/",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "www-root",
+      "requested_url": "https://www.dextery.dev/",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "https://www.dextery.dev/",
+      "location": "https://dextery.dev/",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "http-www-root",
+      "requested_url": "http://www.dextery.dev/",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "http://www.dextery.dev/",
+      "location": "https://www.dextery.dev/",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "www-path-query",
+      "requested_url": "https://www.dextery.dev/grailed-plus?view=hero",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "https://www.dextery.dev/grailed-plus?view=hero",
+      "location": "https://dextery.dev/grailed-plus?view=hero",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "http-path-query",
+      "requested_url": "http://dextery.dev/grailed-plus?view=hero",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "http://dextery.dev/grailed-plus?view=hero",
+      "location": "https://dextery.dev/grailed-plus?view=hero",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "http-www-path-query",
+      "requested_url": "http://www.dextery.dev/grailed-plus?view=hero",
+      "profile": "browser",
+      "status": 308,
+      "final_url": "http://www.dextery.dev/grailed-plus?view=hero",
+      "location": "https://www.dextery.dev/grailed-plus?view=hero",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "returncode": 0,
+          "error": null,
+          "stderr": ""
+        }
+      ]
+    }
+  ]
+}

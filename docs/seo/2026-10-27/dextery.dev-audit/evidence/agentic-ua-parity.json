@@ -1,0 +1,58 @@
+{
+  "testedAt": "2026-10-28T01:53:16.433Z",
+  "note": "Unverified user-agent strings from audit host; not real crawler identity, indexing or AI visibility evidence.",
+  "results": [
+    {
+      "ua": "Mozilla/5.0 (compatible; AgentReadinessAudit/1.0)",
+      "url": "https://dextery.dev/portfolio",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "bytes": 56141,
+      "sha256": "30d8243c9c8b1ee3c1349f912eb154c0f9a59987bd475c3828218ef088f87ce7",
+      "hasTitle": true,
+      "hasProjectLink": true,
+      "hasContact": true,
+      "challengeHeader": null,
+      "hasChallengeText": false
+    },
+    {
+      "ua": "GPTBot/1.2",
+      "url": "https://dextery.dev/portfolio",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "bytes": 56141,
+      "sha256": "30d8243c9c8b1ee3c1349f912eb154c0f9a59987bd475c3828218ef088f87ce7",
+      "hasTitle": true,
+      "hasProjectLink": true,
+      "hasContact": true,
+      "challengeHeader": null,
+      "hasChallengeText": false
+    },
+    {
+      "ua": "OAI-SearchBot/1.3",
+      "url": "https://dextery.dev/portfolio",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "bytes": 56141,
+      "sha256": "30d8243c9c8b1ee3c1349f912eb154c0f9a59987bd475c3828218ef088f87ce7",
+      "hasTitle": true,
+      "hasProjectLink": true,
+      "hasContact": true,
+      "challengeHeader": null,
+      "hasChallengeText": false
+    },
+    {
+      "ua": "ChatGPT-User/1.0",
+      "url": "https://dextery.dev/portfolio",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "bytes": 56141,
+      "sha256": "30d8243c9c8b1ee3c1349f912eb154c0f9a59987bd475c3828218ef088f87ce7",
+      "hasTitle": true,
+      "hasProjectLink": true,
+      "hasContact": true,
+      "challengeHeader": null,
+      "hasChallengeText": false
+    }
+  ]
+}

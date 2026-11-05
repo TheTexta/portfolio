@@ -7,7 +7,7 @@ import {
   PUBLIC_PAGES,
 } from "@/lib/seo";
 
-import WriteUpContent from "./write-up.mdx";
+import WriteUpContent, { writeUpContents } from "./write-up.mdx";
 
 const project = getProject("tvm-discord-bot");
 const page = PUBLIC_PAGES.tvmDiscordBot;
@@ -16,7 +16,7 @@ export const metadata = createPageMetadata(page);
 
 export default function Page() {
   return (
-    <ProjectWriteUp project={project}>
+    <ProjectWriteUp project={project} contents={writeUpContents}>
       <StructuredData data={createPageStructuredData(page)} />
       <WriteUpContent project={project} />
     </ProjectWriteUp>

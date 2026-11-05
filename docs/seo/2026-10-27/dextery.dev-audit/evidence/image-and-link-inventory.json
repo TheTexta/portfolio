@@ -1,0 +1,414 @@
+[
+  {
+    "url": "https://dextery.dev/portfolio",
+    "status": 200,
+    "images": [
+      {
+        "src": "favicon.ico",
+        "alt": "",
+        "class": "mx-auto justify-center object-center align-middle hue-rotate-180 invert-100 dark:hue-rotate-0 dark:invert-0",
+        "style": "opacity:0"
+      },
+      {
+        "alt": "Force-directed Photo Node-Gallery with connected photography nodes",
+        "loading": "lazy",
+        "decoding": "async",
+        "data-nimg": "fill",
+        "class": "object-cover",
+        "style": "position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent",
+        "sizes": "calc(100vw - 1rem)",
+        "srcset": "/_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=64&q=75 64w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=96&q=75 96w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=128&q=75 128w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=160&q=75 160w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=192&q=75 192w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=220&q=75 220w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=256&q=75 256w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=320&q=75 320w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=384&q=75 384w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=448&q=75 448w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=512&q=75 512w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=640&q=75 640w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=750&q=75 750w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=828&q=75 828w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=1080&q=75 1080w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=1200&q=75 1200w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=1920&q=75 1920w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=2048&q=75 2048w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=3840&q=75 3840w",
+        "src": "/_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=3840&q=75"
+      },
+      {
+        "alt": "Force-directed Photo Node-Gallery with connected photography nodes",
+        "loading": "lazy",
+        "decoding": "async",
+        "data-nimg": "fill",
+        "class": "object-cover",
+        "style": "position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent",
+        "sizes": "calc(clamp(16rem, 26vw, 24rem) * 2)",
+        "srcset": "/_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=192&q=75 192w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=220&q=75 220w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=256&q=75 256w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=320&q=75 320w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=384&q=75 384w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=448&q=75 448w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=512&q=75 512w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=640&q=75 640w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=750&q=75 750w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=828&q=75 828w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=1080&q=75 1080w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=1200&q=75 1200w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=1920&q=75 1920w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=2048&q=75 2048w, /_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=3840&q=75 3840w",
+        "src": "/_next/image?url=%2Fprojects%2Fposters%2Fphoto-graph.webp&w=3840&q=75"
+      },
+      {
+        "alt": "Black-and-white Elliot Mairet photograph of people gathered beneath fabric",
+        "loading": "lazy",
+        "decoding": "async",
+        "data-nimg": "fill",
+        "class": "object-cover",
+        "style": "position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent",
+        "sizes": "calc(clamp(16rem, 26vw, 24rem) * 2)",
+        "srcset": "/_next/image?url=%2Fprojects%2Fposters%2Felliot-mairet.png&w=192&q=75 192w, /_next/image?url=%2Fprojects%2Fposters%2Felliot-mairet.png&w=220&q=75 220w, /_next/image?url=%2Fprojects%2Fposters%2Felliot-mairet.png&w=256&q=75 256w, /_next/image?url=%2Fprojects%2Fposters%2Felliot-mairet.png&w=320&q=75 320w, /_next/image?url=%2Fprojects%2Fposters%2Felliot-mairet.png&w=384&q=75 384w, /_next/image?url=%2Fprojects%2Fposters%2Felliot-mairet.png&w=448&q=75 448w, /_next/image?url=%2Fprojects%2Fposters%2Felliot-mairet.png&w=512&q=75 512w, /_next/image?url=%2Fprojects%2Fposters%2Felliot-mairet.png&w=640&q=75 640w, /_next/image?url=%2Fprojects%2Fposters%2Felliot-mairet.png&w=750&q=75 750w, /_next/image?url=%2Fprojects%2Fposters%2Felliot-mairet.png&w=828&q=75 828w, /_next/image?url=%2Fprojects%2Fposters%2Felliot-mairet.png&w=1080&q=75 1080w, /_next/image?url=%2Fprojects%2Fposters%2Felliot-mairet.png&w=1200&q=75 1200w, /_next/image?url=%2Fprojects%2Fposters%2Felliot-mairet.png&w=1920&q=75 1920w, /_next/image?url=%2Fprojects%2Fposters%2Felliot-mairet.png&w=2048&q=75 2048w, /_next/image?url=%2Fprojects%2Fposters%2Felliot-mairet.png&w=3840&q=75 3840w",
+        "src": "/_next/image?url=%2Fprojects%2Fposters%2Felliot-mairet.png&w=3840&q=75"
+      },
+      {
+        "alt": "BUR1ALRITES title over a grainy black moving-image scene",
+        "loading": "lazy",
+        "decoding": "async",
+        "data-nimg": "fill",
+        "class": "object-cover",
+        "style": "position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent",
+        "sizes": "calc(clamp(16rem, 26vw, 24rem) * 2)",
+        "srcset": "/_next/image?url=%2Fprojects%2Fposters%2Fbur1alrites.png&w=192&q=75 192w, /_next/image?url=%2Fprojects%2Fposters%2Fbur1alrites.png&w=220&q=75 220w, /_next/image?url=%2Fprojects%2Fposters%2Fbur1alrites.png&w=256&q=75 256w, /_next/image?url=%2Fprojects%2Fposters%2Fbur1alrites.png&w=320&q=75 320w, /_next/image?url=%2Fprojects%2Fposters%2Fbur1alrites.png&w=384&q=75 384w, /_next/image?url=%2Fprojects%2Fposters%2Fbur1alrites.png&w=448&q=75 448w, /_next/image?url=%2Fprojects%2Fposters%2Fbur1alrites.png&w=512&q=75 512w, /_next/image?url=%2Fprojects%2Fposters%2Fbur1alrites.png&w=640&q=75 640w, /_next/image?url=%2Fprojects%2Fposters%2Fbur1alrites.png&w=750&q=75 750w, /_next/image?url=%2Fprojects%2Fposters%2Fbur1alrites.png&w=828&q=75 828w, /_next/image?url=%2Fprojects%2Fposters%2Fbur1alrites.png&w=1080&q=75 1080w, /_next/image?url=%2Fprojects%2Fposters%2Fbur1alrites.png&w=1200&q=75 1200w, /_next/image?url=%2Fprojects%2Fposters%2Fbur1alrites.png&w=1920&q=75 1920w, /_next/image?url=%2Fprojects%2Fposters%2Fbur1alrites.png&w=2048&q=75 2048w, /_next/image?url=%2Fprojects%2Fposters%2Fbur1alrites.png&w=3840&q=75 3840w",
+        "src": "/_next/image?url=%2Fprojects%2Fposters%2Fbur1alrites.png&w=3840&q=75"
+      },
+      {
+        "alt": "Grailed listing with Grailed Plus pricing insights and market comparison",
+        "loading": "lazy",
+        "decoding": "async",
+        "data-nimg": "fill",
+        "class": "object-cover",
+        "style": "position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent",
+        "sizes": "calc(clamp(16rem, 26vw, 24rem) * 2)",
+        "srcset": "/_next/image?url=%2Fprojects%2Fposters%2Fgrailed-plus.webp&w=192&q=75 192w, /_next/image?url=%2Fprojects%2Fposters%2Fgrailed-plus.webp&w=220&q=75 220w, /_next/image?url=%2Fprojects%2Fposters%2Fgrailed-plus.webp&w=256&q=75 256w, /_next/image?url=%2Fprojects%2Fposters%2Fgrailed-plus.webp&w=320&q=75 320w, /_next/image?url=%2Fprojects%2Fposters%2Fgrailed-plus.webp&w=384&q=75 384w, /_next/image?url=%2Fprojects%2Fposters%2Fgrailed-plus.webp&w=448&q=75 448w, /_next/image?url=%2Fprojects%2Fposters%2Fgrailed-plus.webp&w=512&q=75 512w, /_next/image?url=%2Fprojects%2Fposters%2Fgrailed-plus.webp&w=640&q=75 640w, /_next/image?url=%2Fprojects%2Fposters%2Fgrailed-plus.webp&w=750&q=75 750w, /_next/image?url=%2Fprojects%2Fposters%2Fgrailed-plus.webp&w=828&q=75 828w, /_next/image?url=%2Fprojects%2Fposters%2Fgrailed-plus.webp&w=1080&q=75 1080w, /_next/image?url=%2Fprojects%2Fposters%2Fgrailed-plus.webp&w=1200&q=75 1200w, /_next/image?url=%2Fprojects%2Fposters%2Fgrailed-plus.webp&w=1920&q=75 1920w, /_next/image?url=%2Fprojects%2Fposters%2Fgrailed-plus.webp&w=2048&q=75 2048w, /_next/image?url=%2Fprojects%2Fposters%2Fgrailed-plus.webp&w=3840&q=75 3840w",
+        "src": "/_next/image?url=%2Fprojects%2Fposters%2Fgrailed-plus.webp&w=3840&q=75"
+      },
+      {
+        "alt": "Experimental nepobabiesruntheunderground website composition",
+        "loading": "lazy",
+        "decoding": "async",
+        "data-nimg": "fill",
+        "class": "object-cover",
+        "style": "position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent",
+        "sizes": "calc(clamp(16rem, 26vw, 24rem) * 2)",
+        "srcset": "/_next/image?url=%2Fprojects%2Fposters%2Fnepobabies.webp&w=192&q=75 192w, /_next/image?url=%2Fprojects%2Fposters%2Fnepobabies.webp&w=220&q=75 220w, /_next/image?url=%2Fprojects%2Fposters%2Fnepobabies.webp&w=256&q=75 256w, /_next/image?url=%2Fprojects%2Fposters%2Fnepobabies.webp&w=320&q=75 320w, /_next/image?url=%2Fprojects%2Fposters%2Fnepobabies.webp&w=384&q=75 384w, /_next/image?url=%2Fprojects%2Fposters%2Fnepobabies.webp&w=448&q=75 448w, /_next/image?url=%2Fprojects%2Fposters%2Fnepobabies.webp&w=512&q=75 512w, /_next/image?url=%2Fprojects%2Fposters%2Fnepobabies.webp&w=640&q=75 640w, /_next/image?url=%2Fprojects%2Fposters%2Fnepobabies.webp&w=750&q=75 750w, /_next/image?url=%2Fprojects%2Fposters%2Fnepobabies.webp&w=828&q=75 828w, /_next/image?url=%2Fprojects%2Fposters%2Fnepobabies.webp&w=1080&q=75 1080w, /_next/image?url=%2Fprojects%2Fposters%2Fnepobabies.webp&w=1200&q=75 1200w, /_next/image?url=%2Fprojects%2Fposters%2Fnepobabies.webp&w=1920&q=75 1920w, /_next/image?url=%2Fprojects%2Fposters%2Fnepobabies.webp&w=2048&q=75 2048w, /_next/image?url=%2Fprojects%2Fposters%2Fnepobabies.webp&w=3840&q=75 3840w",
+        "src": "/_next/image?url=%2Fprojects%2Fposters%2Fnepobabies.webp&w=3840&q=75"
+      }
+    ],
+    "links": [
+      "#contact",
+      "/Dexter_Young_CV.pdf",
+      "/grailed-plus",
+      "/portfolio",
+      "/projects/photo-graph",
+      "https://bur1alrites.vercel.app/",
+      "https://elliotmairet.com/",
+      "https://github.com/TheTexta",
+      "https://thetexta.github.io/nepobabiesruntheunderground/",
+      "https://www.linkedin.com/in/dexter-y",
+      "mailto:dextery777@gmail.com"
+    ]
+  },
+  {
+    "url": "https://dextery.dev/projects/photo-graph",
+    "status": 200,
+    "images": [
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/14.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "",
+        "width": "144",
+        "height": "144",
+        "class": "h-20 w-18 object-cover grayscale transition-[filter] duration-200 group-hover:grayscale-0"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/46.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "",
+        "width": "144",
+        "height": "144",
+        "class": "h-20 w-18 object-cover grayscale transition-[filter] duration-200 group-hover:grayscale-0"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/49.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "",
+        "width": "144",
+        "height": "144",
+        "class": "h-20 w-18 object-cover grayscale transition-[filter] duration-200 group-hover:grayscale-0"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/57.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "",
+        "width": "144",
+        "height": "144",
+        "class": "h-20 w-18 object-cover grayscale transition-[filter] duration-200 group-hover:grayscale-0"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/65.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "",
+        "width": "144",
+        "height": "144",
+        "class": "h-20 w-18 object-cover grayscale transition-[filter] duration-200 group-hover:grayscale-0"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/69.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "",
+        "width": "144",
+        "height": "144",
+        "class": "h-20 w-18 object-cover grayscale transition-[filter] duration-200 group-hover:grayscale-0"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/112.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "",
+        "width": "144",
+        "height": "144",
+        "class": "h-20 w-18 object-cover grayscale transition-[filter] duration-200 group-hover:grayscale-0"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/14.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Query 14: Snow / pale neutral",
+        "width": "560",
+        "height": "420",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/20.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 1, photo 20",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/12.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 2, photo 12",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/11.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 3, photo 11",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/45.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 4, photo 45",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/94.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 5, photo 94",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/16.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 6, photo 16",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/14.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Query 14: Snow / pale neutral",
+        "width": "560",
+        "height": "420",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/20.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 1, photo 20",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/12.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 2, photo 12",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/45.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 3, photo 45",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/11.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 4, photo 11",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/94.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 5, photo 94",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/16.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 6, photo 16",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/14.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Query 14: Snow / pale neutral",
+        "width": "560",
+        "height": "420",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/20.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 1, photo 20",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/45.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 2, photo 45",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/11.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 3, photo 11",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/103.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 4, photo 103",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/39.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 5, photo 39",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/94.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 6, photo 94",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/14.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Query 14: Snow / pale neutral",
+        "width": "560",
+        "height": "420",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/11.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 1, photo 11",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/94.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 2, photo 94",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/20.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 3, photo 20",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/15.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 4, photo 15",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/29.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 5, photo 29",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/45.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 6, photo 45",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/14.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Query 14: Snow / pale neutral",
+        "width": "560",
+        "height": "420",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/94.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 1, photo 94",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/15.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 2, photo 15",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/11.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 3, photo 11",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/103.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 4, photo 103",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/29.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 5, photo 29",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      },
+      {
+        "src": "https://images.dextery.dev/photo-graph/photography-images/20.png?width=560&quality=86&format=auto&resize=cover",
+        "alt": "Rank 6, photo 20",
+        "width": "280",
+        "height": "280",
+        "class": "size-full object-cover"
+      }
+    ],
+    "links": [
+      "/portfolio",
+      "/portfolio#projects",
+      "/projects/photo-graph",
+      "/projects/photo-graph/experience"
+    ]
+  },
+  {
+    "url": "https://dextery.dev/grailed-plus",
+    "status": 200,
+    "images": [],
+    "links": [
+      "#feature-currency",
+      "#feature-dark-mode",
+      "#feature-market-compare",
+      "#feature-pricing",
+      "#features",
+      "/grailed-plus",
+      "/portfolio",
+      "https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd"
+    ]
+  }
+]

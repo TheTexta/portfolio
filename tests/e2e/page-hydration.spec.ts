@@ -42,6 +42,10 @@ for (const reducedMotion of ["reduce", "no-preference"] as const) {
         "transform",
         /^(none|matrix\(1, 0, 0, 1, 0, 0\))$/,
       );
+      await expect(page.locator("[data-header-gutter-ticks]")).toHaveCSS(
+        "transform",
+        /^(none|matrix\(1, 0, 0, 1, 0, 0\))$/,
+      );
       expect(errors, `Hydration errors on ${path}`).toEqual([]);
     }
   });

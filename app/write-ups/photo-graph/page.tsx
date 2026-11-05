@@ -6,41 +6,59 @@ import {
   createPageStructuredData,
   PUBLIC_PAGES,
 } from "@/lib/seo";
-import benchmark from "@/public/projects/photo-graph/color-model-benchmark-v1.json";
 import gallery from "@/public/projects/photo-graph/write-up/gallery.json";
+import fixture from "@/public/projects/photo-graph/worked-example/fixture.json";
+import { ExampleProvider } from "./_components/example-context";
+import type { ExampleDataset } from "./_components/example-data";
+import { describeCandidate, format } from "./_components/example-data";
+import type { WorkedExample } from "./_components/example-types";
+import { settleExampleLayout } from "./_components/layout-engine";
 
-import WriteUpContent from "./write-up.mdx";
+import WriteUpContent, { writeUpContents } from "./write-up.mdx";
 
 const project = getProject("photo-graph");
-const selectedModel = benchmark.models.find(
-  (model) => model.id === "mean-lab-ciede2000",
-)!;
-const originalModel = benchmark.models.find(
-  (model) => model.id === "mean-lab-cie76",
-)!;
-const percent = (value: number) => `${(value * 100).toFixed(1)}%`;
+// JSON imports widen tuples; the frozen-fixture tests verify every triple.
+const snapshot = fixture as unknown as WorkedExample;
+// Keep the 4,950-pair audit matrix server-side, outside the hydration payload.
+const data: ExampleDataset = {
+  version: snapshot.version,
+  snapshotAt: snapshot.snapshotAt,
+  queryId: snapshot.queryId,
+  candidateIds: snapshot.candidateIds,
+  dataset: snapshot.dataset,
+  extraction: snapshot.extraction,
+  config: snapshot.config,
+  nodes: snapshot.nodes,
+  queryRanking: snapshot.queryRanking,
+  defaultGraph: snapshot.defaultGraph,
+};
+const positions = settleExampleLayout(data.nodes, data.defaultGraph.edges);
+const harbour = describeCandidate(data, data.defaultGraph, data.config, "27");
 
 export const metadata = createPageMetadata(PUBLIC_PAGES.photoGraph);
 
 export default function Page() {
   return (
-    <ProjectWriteUp project={project}>
+    <ProjectWriteUp project={project} contents={writeUpContents}>
       <StructuredData
         data={createPageStructuredData(PUBLIC_PAGES.photoGraph)}
       />
-      <WriteUpContent
-        project={project}
-        gallery={gallery}
-        benchmark={{
-          nodeCount: benchmark.nodeCount,
-          queryCount: benchmark.queryIds.length,
-          selectedPrecision: percent(selectedModel.metrics.precisionAtK),
-          originalPrecision: percent(originalModel.metrics.precisionAtK),
-          selectedComponents: selectedModel.metrics.components,
-          originalComponents: originalModel.metrics.components,
-          originalIsolates: originalModel.metrics.isolates,
-        }}
-      />
+      <ExampleProvider data={data} positions={positions}>
+        <WriteUpContent
+          project={project}
+          gallery={gallery}
+          example={{
+            date: new Date(data.snapshotAt).toLocaleDateString("en-GB", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+              timeZone: "UTC",
+            }),
+            harbourCiede2000: format(harbour.distance),
+            harbourWeight: format(harbour.weight),
+          }}
+        />
+      </ExampleProvider>
     </ProjectWriteUp>
   );
 }

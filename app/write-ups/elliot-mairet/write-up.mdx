@@ -1,3 +1,5 @@
+import PaletteExtraction from "@/app/components/projects/elliot-mairet/palette-extraction";
+
 <header data-write-up-header>
 
 # {props.project.title}
@@ -53,6 +55,11 @@ swatch changes the suggestions to photographs with a nearby colour. This gives
 visitors another route through the archive without a separate search interface.
 
 A five-colour palette is extracted during upload and stored with the photograph.
+The example below follows a reduced-resolution colour sample into five groups
+and the resulting swatches.
+
+<PaletteExtraction />
+
 Matching runs in the browser from cached palette data, so changing the selected
 colour does not need another server request. These are approximate colour
 relationships: they do not identify the same subject or location. When few close

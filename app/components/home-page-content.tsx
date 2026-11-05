@@ -42,7 +42,7 @@ function EditorialRule({ children }: { children: string }) {
   return (
     <div
       ref={ruleRef}
-      className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-5 sm:px-8 lg:px-12"
+      className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3"
     >
       <motion.span
         aria-hidden
@@ -196,7 +196,7 @@ export default function HomePageContent() {
       </SiteHeader>
 
       <section className="py-30 sm:py-20 lg:py-24">
-        <div className="space-y-2 sm:space-y-5">
+        <div className="space-y-2 px-5 sm:space-y-5 sm:px-8 lg:px-12">
           <EditorialRule>
             Software development + interactive media
           </EditorialRule>
@@ -258,11 +258,20 @@ export default function HomePageContent() {
                 find similar items across platforms.
               </p>
             </div>
-            <div className="flex min-w-0 flex-col gap-3 md:h-0 md:min-h-full">
-              <h3 className="text-xs font-semibold tracking-[0.18em] uppercase sm:text-sm">
-                Write ups
-              </h3>
-              <WriteUpList projects={writeUpProjects} />
+
+            <div className="flex min-w-0 flex-col md:h-0 md:min-h-full">
+              <BorderContainer
+                data-write-up-frame
+                className="h-auto grid-rows-[1.5rem_minmax(0,1fr)_1.5rem] md:h-full"
+                centerWidth="calc(100% - 2rem)"
+                topLabel={
+                  <h3 className="font-sans text-xs font-semibold tracking-[0.18em] uppercase sm:text-sm">
+                    Write ups
+                  </h3>
+                }
+              >
+                <WriteUpList projects={writeUpProjects} />
+              </BorderContainer>
             </div>
           </div>
         </div>

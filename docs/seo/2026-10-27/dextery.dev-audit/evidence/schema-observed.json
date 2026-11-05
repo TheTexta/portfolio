@@ -1,0 +1,157 @@
+{
+  "note": "Exact parsed JSON-LD values from supplied complete raw_content captures; formatting only normalized. shared is block 1 on all three pages; remaining entries are their block 2.",
+  "shared": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Person",
+        "@id": "https://dextery.dev/#person",
+        "name": "Dexter Young",
+        "url": "https://dextery.dev/portfolio",
+        "jobTitle": "Software developer and creative technologist",
+        "description": "Dexter Young’s portfolio of software, creative technology, photography, and design, including browser extensions and interactive image archives.",
+        "sameAs": [
+          "https://github.com/TheTexta",
+          "https://www.linkedin.com/in/dexter-y"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://dextery.dev/#website",
+        "url": "https://dextery.dev/",
+        "name": "Dexter Young",
+        "alternateName": "dextery.dev",
+        "description": "Dexter Young’s portfolio of software, creative technology, photography, and design, including browser extensions and interactive image archives.",
+        "publisher": { "@id": "https://dextery.dev/#person" }
+      }
+    ]
+  },
+  "portfolio": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "ImageObject",
+        "@id": "https://dextery.dev/portfolio#primary-image",
+        "contentUrl": "https://dextery.dev/projects/posters/photo-graph.webp",
+        "caption": "Force-directed Photo Node-Gallery with connected photography nodes",
+        "width": 3306,
+        "height": 1859
+      },
+      {
+        "@type": "CollectionPage",
+        "@id": "https://dextery.dev/portfolio#webpage",
+        "url": "https://dextery.dev/portfolio",
+        "name": "Dexter Young — Software Developer & Creative Technologist",
+        "description": "Dexter Young’s portfolio of software, creative technology, photography, and design, including browser extensions and interactive image archives.",
+        "isPartOf": { "@id": "https://dextery.dev/#website" },
+        "primaryImageOfPage": {
+          "@id": "https://dextery.dev/portfolio#primary-image"
+        },
+        "about": { "@id": "https://dextery.dev/#person" },
+        "mainEntity": {
+          "@type": "ItemList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Photo Node-Gallery",
+              "url": "https://dextery.dev/projects/photo-graph"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Elliot Mairet",
+              "url": "https://elliotmairet.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "bur1alrites",
+              "url": "https://bur1alrites.vercel.app/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 4,
+              "name": "Grailed Plus",
+              "url": "https://dextery.dev/grailed-plus"
+            },
+            {
+              "@type": "ListItem",
+              "position": 5,
+              "name": "nepobabiesruntheunderground",
+              "url": "https://thetexta.github.io/nepobabiesruntheunderground/"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "photoGraph": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "ImageObject",
+        "@id": "https://dextery.dev/projects/photo-graph#primary-image",
+        "contentUrl": "https://dextery.dev/projects/posters/photo-graph.webp",
+        "caption": "Force-directed Photo Node-Gallery with connected photography nodes",
+        "width": 3306,
+        "height": 1859
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://dextery.dev/projects/photo-graph#webpage",
+        "url": "https://dextery.dev/projects/photo-graph",
+        "name": "Photo Node-Gallery — Dexter Young",
+        "description": "A force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review.",
+        "isPartOf": { "@id": "https://dextery.dev/#website" },
+        "primaryImageOfPage": {
+          "@id": "https://dextery.dev/projects/photo-graph#primary-image"
+        },
+        "about": { "@id": "https://dextery.dev/#person" },
+        "mainEntity": {
+          "@type": "CreativeWork",
+          "name": "Photo Node-Gallery",
+          "description": "A force-directed photo archive that uses colour similarity to surface unexpected visual neighbours, then tests those relationships against human review.",
+          "url": "https://dextery.dev/projects/photo-graph",
+          "creator": { "@id": "https://dextery.dev/#person" },
+          "image": {
+            "@id": "https://dextery.dev/projects/photo-graph#primary-image"
+          }
+        }
+      }
+    ]
+  },
+  "grailedPlus": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "ImageObject",
+        "@id": "https://dextery.dev/grailed-plus#primary-image",
+        "contentUrl": "https://dextery.dev/projects/posters/grailed-plus.webp",
+        "caption": "Grailed listing with Grailed Plus pricing insights and market comparison",
+        "width": 1440,
+        "height": 820
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://dextery.dev/grailed-plus#webpage",
+        "url": "https://dextery.dev/grailed-plus",
+        "name": "Grailed Plus — Price Insights, Market Compare, Currency, and Dark Mode",
+        "description": "Explore live Grailed Plus demos for price insights, market comparison, custom currency conversion, seller context, and dark mode.",
+        "isPartOf": { "@id": "https://dextery.dev/#website" },
+        "primaryImageOfPage": {
+          "@id": "https://dextery.dev/grailed-plus#primary-image"
+        },
+        "about": { "@id": "https://dextery.dev/#person" },
+        "mainEntity": {
+          "@type": "CreativeWork",
+          "name": "Grailed Plus",
+          "description": "Cross-market comparison, price context, local currency, seller metadata, and dark mode inside Grailed.",
+          "url": "https://dextery.dev/grailed-plus",
+          "creator": { "@id": "https://dextery.dev/#person" },
+          "image": { "@id": "https://dextery.dev/grailed-plus#primary-image" }
+        }
+      }
+    ]
+  }
+}

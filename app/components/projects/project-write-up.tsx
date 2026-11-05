@@ -8,6 +8,7 @@ import {
   type ProjectDefinition,
 } from "./project-catalog";
 import { PROJECT_ROUTES } from "./project-routes";
+import WriteUpContents from "./write-up-contents";
 import {
   BorderContainer,
   BORDER_CONTAINER_TEXT_SCALE_CLASS,
@@ -15,13 +16,16 @@ import {
 } from "@/app/components/ui/editorial";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
 import { cn } from "@/lib/cn";
+import type { WriteUpContentsEntry } from "@/lib/mdx/write-up-contents";
 
 export default function ProjectWriteUp({
   children,
   project,
+  contents,
 }: {
   children: ReactNode;
   project: ProjectDefinition;
+  contents: WriteUpContentsEntry[];
 }) {
   const writeUps = projectCatalog.filter((entry) => entry.writeUpHref);
   const index = writeUps.findIndex((entry) => entry.id === project.id);
@@ -29,7 +33,7 @@ export default function ProjectWriteUp({
   const next = writeUps[(index + 1) % writeUps.length];
 
   return (
-    <main className="min-h-dvh bg-canvas text-ink">
+    <main className="relative min-h-dvh bg-canvas text-ink">
       <SiteHeader ariaLabel={`${project.title} navigation`}>
         <Link
           href={PROJECT_ROUTES.portfolioProjects}
@@ -40,18 +44,18 @@ export default function ProjectWriteUp({
         <ThemeToggle />
       </SiteHeader>
 
+      <aside className="group/contents absolute inset-y-0 right-[calc(50%+21rem)] hidden w-[clamp(9.5rem,calc(50vw-22.5rem),15rem)] pr-8 lg:block print:hidden">
+        <WriteUpContents entries={contents} title={project.title} />
+      </aside>
       <article
-        className="mx-auto w-[calc(100%-2.5rem)] max-w-2xl pt-20 pb-28 text-base leading-[1.8] wrap-break-word sm:w-[calc(100%-4rem)] lg:w-2/3"
+        id="write-up-article"
+        tabIndex={-1}
+        className="mx-auto w-[calc(100%-2.5rem)] max-w-2xl scroll-mt-20 pt-20 pb-28 text-base leading-[1.8] wrap-break-word outline-none sm:w-[calc(100%-4rem)] lg:w-2/3"
         aria-labelledby="write-up-title"
       >
         <div
-          className={cn(
-            "flow-root [&>:first-child]:mt-0 [&>:last-child]:mb-0",
-            "[&>h2]:mt-12 [&>h2]:mb-5 [&>h2]:text-2xl [&>h2]:leading-tight [&>h2]:font-semibold [&>h2]:text-balance",
-            "[&>h3]:mt-8 [&>h3]:mb-3 [&>h3]:text-lg [&>h3]:leading-[1.4] [&>h3]:font-semibold",
-            "[&_li+li]:mt-2 [&_ol]:list-decimal [&_ol]:ps-5 [&_ul]:list-disc [&_ul]:ps-5 [&>ol]:my-5 [&>p:not([data-write-up-lead])]:my-5 [&>ul]:my-5",
-            "[&>:not([data-write-up-preview])_a]:underline [&>:not([data-write-up-preview])_a]:underline-offset-[0.2em]",
-          )}
+          id="write-up-body"
+          className="flow-root [&>:first-child]:mt-0 [&>:last-child]:mb-0 [&>[data-write-up-header]_a]:underline [&>[data-write-up-header]_a]:underline-offset-[0.2em]"
         >
           {children}
         </div>
@@ -85,6 +89,24 @@ export default function ProjectWriteUp({
         </footer>
       </article>
     </main>
+  );
+}
+
+export function WriteUpBody({ children }: { children: ReactNode }) {
+  return (
+    <div
+      id="write-up-content"
+      className={cn(
+        "flow-root [&>:last-child]:mb-0",
+        "[&_[data-write-up-heading]]:scroll-mt-20 [&_[data-write-up-heading]]:outline-none",
+        "[&>h2]:mt-12 [&>h2]:mb-5 [&>h2]:text-2xl [&>h2]:leading-tight [&>h2]:font-semibold [&>h2]:text-balance",
+        "[&>h3]:mt-8 [&>h3]:mb-3 [&>h3]:text-lg [&>h3]:leading-[1.4] [&>h3]:font-semibold",
+        "[&_li+li]:mt-2 [&_ol]:list-decimal [&_ol]:ps-5 [&_ul]:list-disc [&_ul]:ps-5 [&>ol]:my-5 [&>p:not([data-write-up-lead])]:my-5 [&>ul]:my-5",
+        "[&>:not([data-write-up-preview])_a]:underline [&>:not([data-write-up-preview])_a]:underline-offset-[0.2em]",
+      )}
+    >
+      {children}
+    </div>
   );
 }
 

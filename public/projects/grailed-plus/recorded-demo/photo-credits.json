@@ -1,0 +1,68 @@
+[
+  {
+    "id": "source",
+    "title": "Levi's 506 front",
+    "author": "M62",
+    "source": "https://commons.wikimedia.org/wiki/File:Levi%27s_506_front.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/2/2c/Levi%27s_506_front.jpg",
+    "originalSha256": "a3694005e44de126968d6f9a12ff6a2ef214badc5c941c543137a92af42046ba",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "changes": "Resized and converted to WebP; displayed uncropped."
+  },
+  {
+    "id": "501xx",
+    "title": "501xx-front",
+    "author": "Tokunori",
+    "source": "https://commons.wikimedia.org/wiki/File:501xx-front.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/c/c7/501xx-front.jpg",
+    "originalSha256": "c5694d0f681465ba2178818fbeb65facf66b2234457322d35f98f4a9ed7a794b",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "changes": "Rotated 90 degrees counterclockwise, resized and converted to WebP; displayed uncropped."
+  },
+  {
+    "id": "jeans",
+    "title": "Jeans",
+    "author": "Oktaeder",
+    "source": "https://commons.wikimedia.org/wiki/File:Jeans.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Jeans.jpg",
+    "originalSha256": "b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c",
+    "license": "Public domain",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Jeans.jpg#Licensing",
+    "changes": "Resized and converted to WebP; displayed uncropped."
+  },
+  {
+    "id": "overzeas",
+    "title": "Overzeas longpocket jeans",
+    "author": "Gigano",
+    "source": "https://commons.wikimedia.org/wiki/File:Overzeas_longpocket_jeans.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/1/19/Overzeas_longpocket_jeans.jpg",
+    "originalSha256": "b1a38f7bd8c4df4c2a9fca6970b7de14d0cd8abd4cf39ffa5307c4a481c2fa7e",
+    "license": "Public domain",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Overzeas_longpocket_jeans.jpg#Licensing",
+    "changes": "Resized and converted to WebP; displayed uncropped."
+  },
+  {
+    "id": "met",
+    "title": "Jeans MET 1978.175.3 F",
+    "author": "Metropolitan Museum of Art",
+    "source": "https://commons.wikimedia.org/wiki/File:Jeans_MET_1978.175.3_F.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Jeans_MET_1978.175.3_F.jpg",
+    "originalSha256": "e1b15a4887d84675a78bcafe86942d86a2f4c620300d766bc43865566ef499bf",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Resized and converted to WebP; displayed uncropped."
+  },
+  {
+    "id": "akings",
+    "title": "Stretch Jeans from AKINGS",
+    "author": "CMFong2",
+    "source": "https://commons.wikimedia.org/wiki/File:Stretch_Jeans_from_AKINGS.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/6/65/Stretch_Jeans_from_AKINGS.jpg",
+    "originalSha256": "cf82b1146b8f24fc871df114e8c10d1fbeadba33ea4170de685544a54cf09101",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "changes": "Resized and converted to WebP; displayed uncropped."
+  }
+]

@@ -9,6 +9,10 @@ import { actionStyles, Eyebrow } from "@/app/components/ui/editorial";
 import { useElementSize } from "@/app/hooks/use-element-size";
 import { useIframeOpenOnClick } from "@/app/hooks/use-iframe-open-on-click";
 import { cn } from "@/lib/cn";
+import {
+  getPreviewFrameSize,
+  PREVIEW_SCROLLBAR_GUTTER,
+} from "../preview-frame";
 
 type GrailedPlusPreviewProps = {
   className?: string;
@@ -32,7 +36,8 @@ export default function GrailedPlusPreview({
   );
   const frameSize = useElementSize(frameRef);
 
-  const previewScale = frameSize.width / DESKTOP_PREVIEW_WIDTH;
+  const previewScale =
+    frameSize.width / (DESKTOP_PREVIEW_WIDTH - PREVIEW_SCROLLBAR_GUTTER);
   const hasMeasuredFrame = previewScale > 0;
   const isNarrowFrame =
     hasMeasuredFrame && frameSize.width < NARROW_PREVIEW_BREAKPOINT;
@@ -95,8 +100,11 @@ export default function GrailedPlusPreview({
           style={
             hasMeasuredFrame
               ? {
-                  width: `${DESKTOP_PREVIEW_WIDTH}px`,
-                  height: `${frameSize.height / previewScale}px`,
+                  ...getPreviewFrameSize(
+                    frameSize.width,
+                    frameSize.height,
+                    previewScale,
+                  ),
                   transform: `scale(${previewScale})`,
                   transformOrigin: "top left",
                 }

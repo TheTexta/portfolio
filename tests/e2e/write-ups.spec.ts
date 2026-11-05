@@ -57,7 +57,6 @@ test.beforeEach(async ({ context }) => {
 });
 
 const writeUps = [
-  { path: "/write-ups/photo-graph", title: "Photo Node-Gallery", figures: 3 },
   { path: "/write-ups/elliot-mairet", title: "Elliot Mairet", figures: 3 },
   { path: "/write-ups/bur1alrites", title: "bur1alrites", figures: 4 },
 ];
@@ -107,14 +106,10 @@ for (const { path, title, figures } of writeUps) {
     });
     await expect(preview).toBeVisible();
     await expect(preview).toHaveCSS("margin-top", "40px");
-    if (path === "/write-ups/photo-graph") {
-      await expect(preview.locator("canvas").first()).toBeVisible();
-    } else {
-      await expect(preview.locator("iframe")).toHaveAttribute(
-        "referrerpolicy",
-        "no-referrer",
-      );
-    }
+    await expect(preview.locator("iframe")).toHaveAttribute(
+      "referrerpolicy",
+      "no-referrer",
+    );
     await expect(article.locator("figure")).toHaveCount(figures);
     await expect(article.locator("figcaption p")).toHaveCount(0);
     await expect(
@@ -208,49 +203,26 @@ test("Elliot's preview keeps controls, keyboard input, scrolling, and links in t
   await expect(page).toHaveURL(/\/write-ups\/elliot-mairet$/);
 });
 
-test("Photo Graph's write-up preview opens and closes photograph inspection in place", async ({
-  page,
-}) => {
-  await page.goto("/write-ups/photo-graph");
-  const preview = page.getByRole("region", {
-    name: "Photo Node-Gallery interactive preview",
-    exact: true,
-  });
-  const canvas = preview.locator("canvas").first();
-  await expect(canvas).toBeVisible();
-  await expect(preview.getByRole("status")).toHaveCount(0);
-  // A single fixture node settles at the canvas centre.
-  await expect(async () => {
-    await canvas.click();
-    await expect(
-      page.getByRole("dialog", { name: "Inspect photograph write-up-test" }),
-    ).toBeVisible({ timeout: 1000 });
-  }).toPass();
-  const dialog = page.getByRole("dialog", {
-    name: "Inspect photograph write-up-test",
-  });
-  await expect(dialog.locator("p").first()).toHaveCSS("margin-top", "0px");
-  await expect(dialog.locator("a").first()).toHaveCSS(
-    "text-decoration-line",
-    "none",
-  );
-  await page.getByRole("button", { name: "Close inspect overlay" }).click();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(page).toHaveURL(/\/write-ups\/photo-graph$/);
-});
-
 test("Photo Graph preserves the benchmark context and separate experience", async ({
   page,
 }) => {
   await page.goto("/write-ups/photo-graph");
   const article = page.getByRole("article");
+  await expect(article).toContainText(
+    "25 of 28 positive top-four judged slots",
+  );
+  await expect(article).toContainText("24 of 28");
+  await expect(article).toContainText("not a general accuracy improvement");
+  await article
+    .getByText("Saved benchmark methodology and reproducibility", {
+      exact: true,
+    })
+    .click();
   await expect(article).toContainText("26 August 2026");
   await expect(article).toContainText(
-    "100 photographs and 7 reviewed query images",
+    "100 photographs and seven hand-picked queries",
   );
-  await expect(article).toContainText("89.3%");
-  await expect(article).toContainText("85.7%");
-  await expect(article).toContainText("unjudged, not automatically wrong");
+  await expect(article).toContainText("unjudged, not necessarily wrong");
   await expect(
     article.getByRole("link", { name: "Launch experience" }),
   ).toHaveAttribute("href", "/projects/photo-graph/experience");
@@ -293,32 +265,27 @@ test("write-up media and text share the same width and horizontal inset", async 
   }
 });
 
-test("Photo Graph renders individual review images and ranked comparison rows", async ({
+test("Photo Graph retains the historical review gallery separately from the new example", async ({
   page,
 }) => {
   await page.goto("/write-ups/photo-graph");
+  await page
+    .getByText("Saved benchmark methodology and reproducibility", {
+      exact: true,
+    })
+    .click();
   const review = page.locator("[data-write-up-gallery]");
   await expect(review.getByRole("listitem")).toHaveCount(7);
   await expect(review.getByRole("img")).toHaveCount(7);
-  const comparison = page.locator("[data-write-up-comparison]");
-  await expect(comparison.getByRole("img")).toHaveCount(9);
-  await expect(
-    comparison.getByRole("heading", { name: "Mean Oklab", exact: true }),
-  ).toBeVisible();
-  await expect(
-    comparison.getByRole("heading", {
-      name: "Mean LAB / CIEDE2000",
-      exact: true,
-    }),
-  ).toBeVisible();
-  const images = await comparison.getByRole("img").evaluateAll((elements) =>
+  await expect(page.locator("[data-write-up-comparison]")).toHaveCount(0);
+  const images = await review.getByRole("img").evaluateAll((elements) =>
     elements.map((image) => {
       const src = new URL(image.getAttribute("src")!, location.href);
       return src.searchParams.get("url") ?? src.pathname;
     }),
   );
   expect(images).toEqual(
-    ["112", "75", "27", "105", "13", "75", "27", "24", "32"].map(
+    ["14", "46", "49", "57", "65", "69", "112"].map(
       (id) => `/projects/photo-graph/write-up/photographs/${id}.webp`,
     ),
   );

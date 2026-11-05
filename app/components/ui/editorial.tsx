@@ -203,12 +203,14 @@ export const BORDER_CONTAINER_TEXT_SCALE_CLASS =
 
 type BorderContainerProps = HTMLAttributes<HTMLDivElement> & {
   centerWidth?: string;
+  topLabel?: ReactNode;
 };
 
 export function BorderContainer({
   className,
   children,
   centerWidth = "70%",
+  topLabel,
   style,
   ...props
 }: BorderContainerProps) {
@@ -216,6 +218,7 @@ export function BorderContainer({
     <AnimatedBorderContainer
       className={className}
       centerWidth={centerWidth}
+      topLabel={topLabel}
       style={style}
       {...props}
     >
@@ -246,6 +249,7 @@ type EditorialHeaderBarProps = {
   className?: string;
   sticky?: boolean;
   ariaLabel?: string;
+  gutterTicks?: boolean;
 };
 
 export function EditorialHeaderBar({
@@ -255,6 +259,7 @@ export function EditorialHeaderBar({
   className,
   sticky = false,
   ariaLabel = "Navigation",
+  gutterTicks = false,
 }: EditorialHeaderBarProps) {
   return (
     <header
@@ -266,7 +271,10 @@ export function EditorialHeaderBar({
     >
       <nav
         aria-label={ariaLabel}
-        className="mx-0 grid min-h-8 w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 text-[0.6875rem] font-semibold tracking-[0.16em] uppercase sm:grid-cols-3 sm:gap-4 sm:px-8 lg:px-4"
+        className={cn(
+          "mx-0 grid min-h-8 w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 text-[0.6875rem] font-semibold tracking-[0.16em] uppercase sm:grid-cols-3 sm:gap-4 sm:px-8 lg:px-4",
+          gutterTicks && "lg:px-12",
+        )}
       >
         {leading}
         <div className="hidden min-h-7 items-center justify-center text-center text-[0.6875rem] font-semibold tracking-[0.16em] text-ink normal-case sm:flex">
@@ -276,7 +284,7 @@ export function EditorialHeaderBar({
           {children}
         </div>
       </nav>
-      <AnimatedHorizontalRule edge="bottom" />
+      <AnimatedHorizontalRule edge="bottom" gutterTicks={gutterTicks} />
     </header>
   );
 }
@@ -304,6 +312,7 @@ export function SiteHeader({
   return (
     <EditorialHeaderBar
       sticky={sticky}
+      gutterTicks
       className={className}
       ariaLabel={ariaLabel}
       leading={
