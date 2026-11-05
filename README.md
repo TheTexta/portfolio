@@ -200,7 +200,9 @@ of the article across sections of different lengths.
 When that highlighted window overlaps a dot, the dot morphs into a horizontal tick
 extending 5px on either side, matching the active line's thickness and colour. It
 returns to a dot when the window leaves.
-The rail fills the viewport below the live site header. Its title is a fixed row;
+The rail fills the viewport below the live site header, with its track inset 32px
+below the header and aligned to the shared 48px desktop page gutter. Its title is
+a fixed row;
 section spacing and any introductory spacer are measured from article content,
 excluding the title frame, project metadata and lead. The MDX pipeline creates
 that separate content container automatically, without changing article authoring.

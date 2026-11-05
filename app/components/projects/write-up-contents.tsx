@@ -192,7 +192,7 @@ export default function WriteUpContents({
     <nav
       ref={navigation}
       aria-label="Table of contents"
-      className="sticky top-[var(--write-up-header-height,2rem)] -ml-1 h-[calc(100dvh-var(--write-up-header-height,2rem))] [scrollbar-width:thin] [scrollbar-color:var(--color-muted)_var(--color-canvas)] overflow-x-hidden overflow-y-auto overscroll-contain px-2 pt-[22px] text-[0.8125rem] leading-normal"
+      className="sticky top-[var(--write-up-header-height,2rem)] -ml-2 h-[calc(100dvh-var(--write-up-header-height,2rem))] [scrollbar-width:thin] [scrollbar-color:var(--color-muted)_var(--color-canvas)] overflow-x-hidden overflow-y-auto overscroll-contain px-2 pt-8 text-[0.8125rem] leading-normal"
     >
       <ol
         ref={track}

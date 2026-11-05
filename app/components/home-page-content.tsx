@@ -200,15 +200,12 @@ export default function HomePageContent() {
           <EditorialRule>
             Software development + interactive media
           </EditorialRule>
-          <div className="mx-auto max-w-200 pt-5 sm:hidden">
-            <MobileFavicon />
-          </div>
           <div className="mx-auto h-60 w-[calc(100%-2.5rem)] max-w-200 py-12 sm:h-82.5 sm:w-[calc(100%-4rem)] lg:w-[calc(100%-6rem)] lg:max-w-225">
             <BorderContainer>
               <h1
                 className={cn(
                   BORDER_CONTAINER_TEXT_SCALE_CLASS,
-                  "object-center px-4 py-5 text-center font-display leading-[0.7705] font-semibold tracking-tighter whitespace-nowrap lg:py-8",
+                  "object-center px-4 py-5 text-center font-display leading-[0.7705] font-semibold tracking-tighter lg:py-8",
                 )}
               >
                 Dexter Young

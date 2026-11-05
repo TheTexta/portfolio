@@ -12,6 +12,7 @@ import WriteUpContents from "./write-up-contents";
 import {
   BorderContainer,
   BORDER_CONTAINER_TEXT_SCALE_CLASS,
+  EDITORIAL_GUTTER_CLASS,
   SiteHeader,
 } from "@/app/components/ui/editorial";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
@@ -44,7 +45,12 @@ export default function ProjectWriteUp({
         <ThemeToggle />
       </SiteHeader>
 
-      <aside className="group/contents absolute inset-y-0 right-[calc(50%+21rem)] hidden w-[clamp(9.5rem,calc(50vw-22.5rem),15rem)] pr-8 lg:block print:hidden">
+      <aside
+        className={cn(
+          EDITORIAL_GUTTER_CLASS,
+          "group/contents absolute inset-y-0 left-0 hidden w-[calc(50%-21rem)] lg:block lg:pr-8 print:hidden",
+        )}
+      >
         <WriteUpContents entries={contents} title={project.title} />
       </aside>
       <article

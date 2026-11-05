@@ -130,6 +130,17 @@ for (const slug of articles) {
         const sidebar = await contents.boundingBox();
         expect(sidebar!.x).toBeGreaterThanOrEqual(20);
         expect(sidebar!.x + sidebar!.width).toBeLessThan(article!.x - 20);
+        const gutter = await page
+          .locator("main > header > nav")
+          .evaluate(
+            (navigation) =>
+              navigation.getBoundingClientRect().left +
+              parseFloat(getComputedStyle(navigation).paddingLeft),
+          );
+        expect((await contents.locator("ol").boundingBox())!.x).toBeCloseTo(
+          gutter,
+          1,
+        );
       }
     }
   });
@@ -321,7 +332,13 @@ test("contents follows scrolling, native anchor navigation and browser history",
   );
   await expect(links.last()).toHaveAttribute("aria-current", "location");
   await expect(page).toHaveURL(new RegExp(`${secondHref}$`));
-  expect((await contents.boundingBox())!.y).toBeGreaterThanOrEqual(32);
+  const headerBounds = (await page.locator("main > header").boundingBox())!;
+  // Document-end scroll rounding can move the sticky boundary by a subpixel.
+  expect(
+    Math.abs(
+      (await contents.boundingBox())!.y - headerBounds.y - headerBounds.height,
+    ),
+  ).toBeLessThan(1);
 
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(contents.locator("[data-contents-title]")).toHaveAttribute(
@@ -493,7 +510,7 @@ test("rail uses the live header height and scales only the post content", async 
     0,
   );
   expect((await contents.locator("ol").boundingBox())!.y).toBeCloseTo(
-    headerBounds.height + 22,
+    headerBounds.height + 32,
     0,
   );
   expect((await body.boundingBox())!.y).toBeCloseTo(
@@ -553,6 +570,7 @@ test("rail uses the live header height and scales only the post content", async 
     .poll(async () => (await contents.boundingBox())!.y)
     .toBeCloseTo(96, 0);
   expect((await contents.boundingBox())!.height).toBeCloseTo(804, 0);
+  expect((await contents.locator("ol").boundingBox())!.y).toBeCloseTo(128, 0);
   (await weights()).forEach((weight, index) =>
     expect(weight).toBeCloseTo(expected.sections[index], 3),
   );

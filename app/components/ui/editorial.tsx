@@ -198,8 +198,7 @@ export function EditorialSection({
     />
   );
 }
-export const BORDER_CONTAINER_TEXT_SCALE_CLASS =
-  "text-4xl sm:text-6xl lg:text-8xl";
+export const BORDER_CONTAINER_TEXT_SCALE_CLASS = "text-7xl lg:text-8xl";
 
 type BorderContainerProps = HTMLAttributes<HTMLDivElement> & {
   centerWidth?: string;

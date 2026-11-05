@@ -85,14 +85,15 @@ the state instantly.
 The marker's fixed 1px canvas-coloured clearance remains above and below it in
 both states, keeping the rail and active segment separated from the dot/tick.
 This uses window/marker overlap, independently of `aria-current`, so several ticks
-can be expanded at once. The marker bounds and article/label layout do not change;
-an extra 4px of internal gutter prevents clipping without moving the rail itself.
+can be expanded at once. The marker bounds and article/label layout do not change.
+An 8px internal inset leaves room for expanded ticks without shifting the track
+away from the shared 48px desktop page gutter.
 Only explicit anchor navigation changes the fragment and browser history.
 The rail's sticky top follows the actual site-header boundary, and its height is
 the remaining viewport below that boundary, instead of subtracting a fixed 144px
-allowance. The track retains the source's 22px top inset. Header, content,
-font and viewport changes are observed and remeasured. There is no fixed comment
-footer on the portfolio, so no comment-footer allowance is reserved.
+allowance. The track uses a 32px top inset for more clearance below the header.
+Header, content, font and viewport changes are observed and remeasured. There is
+no fixed comment footer on the portfolio, so no comment-footer allowance is reserved.
 The list can scroll independently on short viewports and is omitted from print.
 Label fades respect reduced motion. Clicked sections use Framer Motion's numeric
 `animate` to move the document over 450ms with the portfolio's existing ease-out
