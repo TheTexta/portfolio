@@ -248,11 +248,10 @@ export default function HomePageContent() {
                 150 members.
               </p>
               <p>
-                I’m also interested in making second-hand shopping easier
-                through better discovery and comparison tools. My browser
-                extension, Grailed Plus, builds on an open-source tool with
-                resale comparisons and on-device image matching to help people
-                find similar items across platforms.
+                I’m also interested in making second-hand shopping easier. I
+                develop Grailed Plus, an open-source browser extension that
+                helps shoppers compare resale listings across marketplaces and
+                uses on-device image matching to find similar items.
               </p>
             </div>
 
