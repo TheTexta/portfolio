@@ -1,3 +1,49 @@
+.shell {
+  --graph-hover-background: var(--color-ink);
+  --graph-hover-foreground: var(--color-canvas);
+}
+
+.checkbox {
+  display: grid;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  place-content: center;
+  margin: 0;
+  appearance: none;
+  border: 1px solid currentColor;
+  border-radius: 0;
+  background: var(--color-canvas);
+  cursor: pointer;
+}
+
+.checkbox:checked {
+  background: var(--color-ink);
+}
+
+/* The enclosing label supplies the square keyboard-focus outline. */
+.checkbox:focus-visible {
+  outline: none;
+}
+
+.checkbox:checked::before {
+  width: 0.625rem;
+  height: 0.625rem;
+  background: var(--color-canvas);
+  clip-path: polygon(0 45%, 17% 28%, 39% 52%, 84% 5%, 100% 21%, 39% 88%);
+  content: "";
+}
+
+@media (forced-colors: active) {
+  .checkbox {
+    appearance: auto;
+  }
+
+  .checkbox::before {
+    display: none;
+  }
+}
+
 .slider {
   display: block;
   appearance: none;
@@ -30,7 +76,7 @@
   margin-top: -5px;
   appearance: none;
   border: 0;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--color-ink);
 }
 
@@ -38,6 +84,75 @@
   width: 1rem;
   height: 1rem;
   border: 0;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--color-ink);
+}
+
+@media (hover: hover) {
+  .shell
+    :where(
+      button:not(:disabled),
+      a:not([aria-disabled="true"]),
+      summary,
+      select
+    ):hover,
+  .invertingControl:not(:has(:disabled)):hover {
+    border-color: var(--graph-hover-foreground);
+    background: var(--graph-hover-background);
+    color: var(--graph-hover-foreground);
+  }
+
+  .invertingControl:hover .checkbox {
+    background: var(--graph-hover-background);
+  }
+
+  .invertingControl:hover .checkbox:checked {
+    background: var(--graph-hover-foreground);
+  }
+
+  .invertingControl:hover .checkbox:checked::before {
+    background: var(--graph-hover-background);
+  }
+
+  .invertingControl:not(:has(:disabled)):hover > span[aria-hidden="true"] {
+    border-color: currentColor;
+    background: transparent;
+  }
+
+  .invertingControl:not(:has(:disabled)):hover
+    > span[aria-hidden="true"]
+    > span {
+    background: var(--graph-hover-foreground);
+  }
+
+  .invertingControl:has(input:checked):not(:has(:disabled)):hover
+    > span[aria-hidden="true"] {
+    background: var(--graph-hover-foreground);
+  }
+
+  .invertingControl:has(input:checked):not(:has(:disabled)):hover
+    > span[aria-hidden="true"]
+    > span {
+    background: var(--graph-hover-background);
+  }
+
+  .slider:hover::-webkit-slider-runnable-track {
+    border-color: var(--color-canvas);
+    background: var(--color-ink);
+  }
+
+  .slider:hover::-moz-range-track {
+    border-color: var(--color-canvas);
+    background: var(--color-ink);
+  }
+
+  .slider:hover::-webkit-slider-thumb {
+    border: 1px solid var(--color-ink);
+    background: var(--color-canvas);
+  }
+
+  .slider:hover::-moz-range-thumb {
+    border: 1px solid var(--color-ink);
+    background: var(--color-canvas);
+  }
 }

@@ -67,7 +67,7 @@ async function enable3D(page: Page) {
     timeout: 30_000,
   });
   await expect(
-    page.getByRole("button", { name: "Reset view", exact: true }),
+    page.getByRole("button", { name: "Reset", exact: true }),
   ).toBeVisible();
   return graphRequests.get(page)!.length;
 }
@@ -103,9 +103,10 @@ test("3D shares the theme switch styling without usage instructions", async ({
     ),
   ).toHaveCount(0);
   await expect(
-    page.getByRole("button", { name: "Reset view", exact: true }),
+    page.getByRole("button", { name: "Reset", exact: true }),
   ).toBeVisible();
   await toggle(page).uncheck();
+  await page.mouse.move(0, page.viewportSize()!.height - 1);
   await expect
     .poll(
       async () =>
@@ -264,6 +265,8 @@ test("orbiting and dragging work, and both modes restore their own camera and la
     .getByRole("button", { name: "Close graph controls", exact: true })
     .click();
   await expect(twoD).toBeVisible();
+  // Canvas screenshots include the overlaid controls; compare neutral hover states.
+  await page.mouse.move(bounds.width * 0.7, bounds.height * 0.7);
   await expect
     .poll(async () =>
       pixelDifference(before2D, await twoD.screenshot({ scale: "css" })),
@@ -275,6 +278,7 @@ test("orbiting and dragging work, and both modes restore their own camera and la
     .getByRole("button", { name: "Close graph controls", exact: true })
     .click();
   await expect(threeD).toBeVisible();
+  await page.mouse.move(bounds.width * 0.7, bounds.height * 0.7);
   await expect
     .poll(async () =>
       pixelDifference(before3D, await threeD.screenshot({ scale: "css" })),
@@ -334,7 +338,7 @@ test("the saved 100-photo archive renders in both themes and resizes without rel
   await expect(mode(page, "3d").locator("canvas")).toBeVisible();
   await openSettings(page);
   await expect(
-    page.getByRole("button", { name: "Reset view", exact: true }),
+    page.getByRole("button", { name: "Reset", exact: true }),
   ).toBeVisible();
   await expect(toggle(page)).toBeChecked();
   expect(errors.get(page)).toEqual([]);
@@ -383,7 +387,7 @@ test("3D photographs inspect through the shared overlay and settings survive swi
   await page
     .getByRole("checkbox", { name: "Show connecting lines", exact: true })
     .uncheck();
-  await page.getByRole("button", { name: "Reset view", exact: true }).click();
+  await page.getByRole("button", { name: "Reset", exact: true }).click();
   await page
     .getByRole("button", { name: "Close graph controls", exact: true })
     .click();
@@ -416,6 +420,398 @@ test("3D photographs inspect through the shared overlay and settings survive swi
   expect(graphRequests.get(page)).toHaveLength(initialRequests);
   expect(errors.get(page)).toEqual([]);
 });
+
+test("reset stays beside compact in both modes without overlapping narrow controls", async ({
+  page,
+}) => {
+  await page.goto(experience);
+  const reset = page.getByRole("button", { name: "Reset", exact: true });
+  const compact = page.getByRole("link", {
+    name: "Return to project write up",
+    exact: true,
+  });
+  await expect(reset).toBeEnabled();
+  for (const width of [320, 390, 844, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    const resetBox = (await reset.boundingBox())!;
+    const compactBox = (await compact.boundingBox())!;
+    const controlsBox = (await page
+      .getByRole("button", { name: "Open graph controls", exact: true })
+      .locator("../..")
+      .boundingBox())!;
+    expect(resetBox.x + resetBox.width).toBeLessThan(compactBox.x);
+    expect(resetBox.y).toBe(compactBox.y);
+    expect(controlsBox.x + controlsBox.width).toBeLessThan(resetBox.x);
+  }
+  await openSettings(page);
+  await toggle(page).check();
+  await expect(mode(page, "3d").locator("canvas")).toBeVisible({
+    timeout: 30_000,
+  });
+  await page
+    .getByRole("button", { name: "Close graph controls", exact: true })
+    .click();
+  await expect(reset).toBeVisible();
+  expect(errors.get(page)).toEqual([]);
+});
+
+test("controls have square inputs and invert hover in either theme", async ({
+  page,
+  isMobile,
+}, info) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto(experience);
+  await openSettings(page);
+  const checkbox = page.getByRole("checkbox", {
+    name: "Show connecting lines",
+    exact: true,
+  });
+  await expect(checkbox).toHaveCSS("border-radius", "0px");
+  await expect(checkbox).toHaveCSS("appearance", "none");
+  await checkbox.focus();
+  await page.keyboard.press("Space");
+  await expect(checkbox).not.toBeChecked();
+  const slider = page.getByRole("slider", {
+    name: "Repel strength",
+    exact: true,
+  });
+  const thumbRadii = await slider.evaluate((input) => {
+    const selectors = (input as HTMLInputElement).className
+      .split(/\s+/)
+      .map((name) => `.${CSS.escape(name)}::-`);
+    return Array.from(document.styleSheets)
+      .flatMap((sheet) => Array.from(sheet.cssRules))
+      .filter(
+        (rule): rule is CSSStyleRule =>
+          rule instanceof CSSStyleRule &&
+          selectors.some((selector) =>
+            rule.selectorText.startsWith(selector),
+          ) &&
+          rule.selectorText.includes("::-webkit-slider-thumb"),
+      )
+      .map((rule) => rule.style.borderRadius);
+  });
+  // Chromium omits unsupported Gecko pseudo-elements from its CSSOM.
+  expect(thumbRadii).toEqual(["0px"]);
+  for (const colorScheme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme });
+    await expect(page.locator("html")).toHaveClass(
+      colorScheme === "dark" ? /dark/ : /^(?!.*dark)/,
+    );
+    if (!isMobile) {
+      const reset = page.getByRole("button", { name: "Reset", exact: true });
+      const original = await reset.evaluate(() => {
+        const tokens = getComputedStyle(document.documentElement);
+        const color = (token: string) =>
+          `rgb(${tokens.getPropertyValue(token).trim().split(/\s+/).join(", ")})`;
+        return { background: color("--canvas-rgb"), color: color("--ink-rgb") };
+      });
+      await expect(reset).toHaveCSS("background-color", original.background);
+      await expect(reset).toHaveCSS("color", original.color);
+      await reset.hover();
+      await expect(reset).toHaveCSS("background-color", original.color);
+      await expect(reset).toHaveCSS("color", original.background);
+      await checkbox.locator("..").hover();
+      await expect(checkbox.locator("..")).toHaveCSS(
+        "background-color",
+        original.color,
+      );
+      await expect(checkbox.locator("..")).toHaveCSS(
+        "color",
+        original.background,
+      );
+      await page.mouse.move(500, 500);
+    }
+    await page
+      .getByRole("button", { name: "Close graph controls", exact: true })
+      .locator("../..")
+      .screenshot({
+        path: `.tmp/playwright-results/photo-graph-square-${info.project.name}-${colorScheme}.png`,
+        animations: "disabled",
+      });
+  }
+  expect(errors.get(page)).toEqual([]);
+});
+
+test("3D uses real antialiasing and upgrades zoomed tiles to larger GPU textures", async ({
+  context,
+  page,
+}) => {
+  await context.route("**/api/photo-graph/graph", (route) =>
+    route.fulfill({
+      json: {
+        nodes: [-2400, 0, 2400].map((x, index) => ({
+          id: String(index + 1),
+          sourceUrl: `https://media.dextery.dev/photo-graph/photography-images/${index + 1}.webp`,
+          storagePath: `photography-images/${index + 1}.webp`,
+          storageProvider: "r2",
+          baseSize: 100,
+          aspectRatio: 1.6,
+          hasKnownAspectRatio: true,
+          layerNoise: 0,
+          w: 160,
+          h: 100,
+          renderArea: 16000,
+          x,
+          y: 0,
+          z: 0,
+        })),
+        links: [],
+        defaultGraphControls: {
+          ...DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS,
+          chargeMult: 0,
+          collideStrength: 0,
+          collideIterations: 0,
+        },
+      },
+    }),
+  );
+  const widths: number[] = [];
+  await context.route("https://images.dextery.dev/photo-graph/**", (route) => {
+    const width = Number(
+      new URL(route.request().url()).searchParams.get("width"),
+    );
+    widths.push(width);
+    return route.fulfill({
+      contentType: "image/svg+xml",
+      headers: { "access-control-allow-origin": "*" },
+      body: `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${Math.round(width / 1.6)}"><rect width="100%" height="100%" fill="#c43b2c"/><path d="M0 0L${width} ${Math.round(width / 1.6)}" stroke="#f2a168" stroke-width="2"/></svg>`,
+    });
+  });
+  await page.addInitScript(() => {
+    const uploads: number[] = [];
+    Object.assign(window, { graphTextureWidths: uploads });
+    const original = WebGL2RenderingContext.prototype.texSubImage2D;
+    WebGL2RenderingContext.prototype.texSubImage2D = function (
+      this: WebGL2RenderingContext,
+      ...args: Parameters<typeof original>
+    ) {
+      const image = args.at(-1);
+      if (image instanceof HTMLCanvasElement) uploads.push(image.width);
+      return Reflect.apply(original, this, args);
+    } as typeof original;
+  });
+  await enable3D(page);
+  const canvas = mode(page, "3d").locator("canvas");
+  expect(
+    await canvas.evaluate(
+      (element) =>
+        (element as HTMLCanvasElement)
+          .getContext("webgl2")
+          ?.getContextAttributes()?.antialias,
+    ),
+  ).toBe(true);
+  const uploadedWidths = () =>
+    page.evaluate(
+      () =>
+        (window as unknown as { graphTextureWidths: number[] })
+          .graphTextureWidths,
+    );
+  await expect
+    .poll(async () => (await uploadedWidths()).length)
+    .toBeGreaterThanOrEqual(3);
+  const initialWidth = Math.max(...(await uploadedWidths()));
+  await page
+    .getByRole("button", { name: "Close graph controls", exact: true })
+    .click();
+  const bounds = (await canvas.boundingBox())!;
+  await page.mouse.move(
+    bounds.x + bounds.width / 2,
+    bounds.y + bounds.height * 0.75,
+  );
+  for (let step = 0; step < 8; step += 1) {
+    await canvas.dispatchEvent("wheel", {
+      deltaY: -500,
+      deltaMode: 0,
+      ctrlKey: false,
+    });
+  }
+  await expect
+    .poll(async () => Math.max(...(await uploadedWidths())), {
+      timeout: 15_000,
+    })
+    .toBeGreaterThan(initialWidth);
+  expect(Math.max(...widths)).toBeGreaterThan(initialWidth);
+  expect(Math.max(...(await uploadedWidths()))).toBeLessThanOrEqual(1280);
+  const count = widths.length;
+  await page.waitForTimeout(1600);
+  expect(widths).toHaveLength(count);
+  expect(errors.get(page)).toEqual([]);
+});
+
+for (const reducedMotion of ["no-preference", "reduce"] as const) {
+  test(`reset moves the camera without reloading, with ${reducedMotion} motion`, async ({
+    context,
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion });
+    await context.route("**/api/photo-graph/graph", (route) =>
+      route.fulfill({
+        json: {
+          nodes: [-600, 0, 600].map((x, index) => ({
+            id: String(index),
+            sourceUrl: `/__photo-graph-test.svg?id=${index}`,
+            baseSize: 100,
+            aspectRatio: 1.6,
+            hasKnownAspectRatio: true,
+            layerNoise: 0,
+            w: 160,
+            h: 100,
+            renderArea: 16000,
+            x,
+            y: 0,
+            z: 0,
+          })),
+          links: [],
+          defaultGraphControls: {
+            ...DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS,
+            chargeMult: 0,
+            collideStrength: 0,
+            collideIterations: 0,
+          },
+        },
+      }),
+    );
+    await page.addInitScript(() => {
+      type Sample = { mode: string; value: number; time: number };
+      const state: { samples: Sample[]; tracking: boolean } = {
+        samples: [],
+        tracking: false,
+      };
+      Object.assign(window, { graphResetSamples: state });
+      const drawImage = CanvasRenderingContext2D.prototype.drawImage;
+      CanvasRenderingContext2D.prototype.drawImage = function (
+        this: CanvasRenderingContext2D,
+        ...args: Parameters<typeof drawImage>
+      ) {
+        if (state.tracking && this.canvas.closest('[data-graph-mode="2d"]'))
+          state.samples.push({
+            mode: "2d",
+            value: this.getTransform().a,
+            time: performance.now(),
+          });
+        return Reflect.apply(drawImage, this, args);
+      } as typeof drawImage;
+      const locations = new WeakSet<WebGLUniformLocation>();
+      const getUniformLocation =
+        WebGL2RenderingContext.prototype.getUniformLocation;
+      WebGL2RenderingContext.prototype.getUniformLocation = function (
+        this: WebGL2RenderingContext,
+        ...args: Parameters<typeof getUniformLocation>
+      ) {
+        const location = Reflect.apply(getUniformLocation, this, args);
+        if (location && args[1] === "modelViewMatrix") locations.add(location);
+        return location;
+      };
+      const uniformMatrix = WebGL2RenderingContext.prototype.uniformMatrix4fv;
+      WebGL2RenderingContext.prototype.uniformMatrix4fv = function (
+        this: WebGL2RenderingContext,
+        ...args: Parameters<typeof uniformMatrix>
+      ) {
+        if (state.tracking && args[0] && locations.has(args[0]))
+          state.samples.push({
+            mode: "3d",
+            value: Number((args[2] as Float32Array)[14]),
+            time: performance.now(),
+          });
+        return Reflect.apply(uniformMatrix, this, args);
+      } as typeof uniformMatrix;
+    });
+    await page.goto(experience);
+    await expect(
+      page.getByRole("button", { name: "Reset", exact: true }),
+    ).toBeEnabled();
+    const initialRequests = graphRequests.get(page)!.length;
+    for (const name of ["2d", "3d"] as const) {
+      if (name === "3d") {
+        await openSettings(page);
+        await toggle(page).check();
+        await expect(mode(page, "3d").locator("canvas")).toBeVisible({
+          timeout: 30_000,
+        });
+        await page
+          .getByRole("button", { name: "Close graph controls", exact: true })
+          .click();
+        await photographPoint(page);
+      }
+      const canvas = mode(page, name).locator("canvas").first();
+      await expect(canvas).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Reset", exact: true }),
+      ).toBeEnabled();
+      const bounds = (await canvas.boundingBox())!;
+      await page.mouse.move(
+        bounds.x + bounds.width / 2,
+        bounds.y + bounds.height * 0.75,
+      );
+      const before = await canvas.screenshot({ scale: "css" });
+      await canvas.dispatchEvent("wheel", {
+        deltaY: -1200,
+        deltaMode: 0,
+        ctrlKey: false,
+      });
+      await expect
+        .poll(async () =>
+          pixelDifference(before, await canvas.screenshot({ scale: "css" })),
+        )
+        .toBeGreaterThan(0.1);
+      // Let wheel damping finish before measuring only the reset action.
+      let previous = await canvas.screenshot({ scale: "css" });
+      await expect
+        .poll(async () => {
+          const next = await canvas.screenshot({ scale: "css" });
+          const difference = await pixelDifference(previous, next);
+          previous = next;
+          return difference;
+        })
+        .toBeLessThan(0.01);
+      await page.evaluate(() => {
+        const state = (
+          window as unknown as {
+            graphResetSamples: { samples: unknown[]; tracking: boolean };
+          }
+        ).graphResetSamples;
+        state.samples = [];
+        state.tracking = true;
+      });
+      await page.getByRole("button", { name: "Reset", exact: true }).click();
+      await page.waitForTimeout(750);
+      const samples = await page.evaluate((mode) => {
+        const state = (
+          window as unknown as {
+            graphResetSamples: {
+              samples: { mode: string; value: number; time: number }[];
+              tracking: boolean;
+            };
+          }
+        ).graphResetSamples;
+        state.tracking = false;
+        const unique = new Map<string, number>();
+        for (const sample of state.samples.filter(
+          (sample) => sample.mode === mode,
+        ))
+          if (!unique.has(sample.value.toFixed(4)))
+            unique.set(sample.value.toFixed(4), sample.time);
+        return [...unique.values()];
+      }, name);
+      expect(samples.length).toBeGreaterThan(0);
+      expect(
+        await pixelDifference(
+          previous,
+          await canvas.screenshot({ scale: "css" }),
+        ),
+      ).toBeGreaterThan(0.1);
+      if (reducedMotion === "reduce")
+        expect(samples.length).toBeLessThanOrEqual(2);
+      else {
+        expect(samples.length).toBeGreaterThanOrEqual(4);
+        expect(samples.at(-1)! - samples[0]).toBeGreaterThan(150);
+      }
+      expect(graphRequests.get(page)).toHaveLength(initialRequests);
+    }
+    expect(errors.get(page)).toEqual([]);
+  });
+}
 
 test("repeated switches release owned WebGL contexts and never accumulate canvases", async ({
   page,

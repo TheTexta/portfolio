@@ -14,6 +14,7 @@ import {
   PHOTO_GRAPH_TEXTURE_BUDGET,
   PHOTO_GRAPH_MAX_TEXTURE_SIDE,
   photoGraphTextureSideLimit,
+  photoGraphTextureRequest,
 } from "@/app/components/projects/photo-graph/texture-budget";
 
 function graph(): PhotoGraphData {
@@ -153,6 +154,40 @@ describe("Photo Graph renderer isolation", () => {
 });
 
 describe("3D texture admission", () => {
+  it("compares actual admitted pixels rather than rounded request tiers", () => {
+    expect(photoGraphTextureRequest(500, 1, 349)).toEqual({
+      width: 384,
+      residentWidth: 349,
+    });
+    expect(photoGraphTextureRequest(500, 0.625, 349)).toEqual({
+      width: 224,
+      residentWidth: 218,
+    });
+  });
+
+  it("can upgrade again after budget downscaling, up to the close-up tier", () => {
+    const crowded = photoGraphTextureRequest(
+      1200,
+      1,
+      photoGraphTextureSideLimit(103),
+    );
+    const closeUp = photoGraphTextureRequest(
+      1200,
+      1,
+      photoGraphTextureSideLimit(3),
+    );
+    expect(crowded.residentWidth).toBe(349);
+    expect(closeUp.residentWidth).toBe(1280);
+    expect(closeUp.residentWidth).toBeGreaterThan(crowded.residentWidth);
+  });
+
+  it("does not repeatedly upgrade a small original beyond its real dimensions", () => {
+    expect(photoGraphTextureRequest(1200, 1.6, 1280, 160)).toEqual({
+      width: 160,
+      residentWidth: 160,
+    });
+  });
+
   it("fits the worst-case square RGBA cost without evicting visible photos", () => {
     for (const count of [1, 3, 45, 100, 103, 300, 1000, 10000]) {
       const side = photoGraphTextureSideLimit(count);

@@ -159,6 +159,7 @@ export default function PhotoGraph2DRenderer({
   onInspect,
   snapshot,
   onSaveSnapshot,
+  resetViewKey,
 }: Props) {
   const restoredSnapshot = useMemo(
     () => (snapshot?.data === sourceData ? snapshot : null),
@@ -182,6 +183,7 @@ export default function PhotoGraph2DRenderer({
     typeof animate
   > | null>(null);
   const fitToCanvasAppliedRef = useRef(false);
+  const resetRef = useRef(resetViewKey);
   const connectionRevealProgress = useMotionValue(0);
 
   const [graphMounted, setGraphMounted] = useState(false);
@@ -192,6 +194,31 @@ export default function PhotoGraph2DRenderer({
   const [preparedGraphData, setPreparedGraphData] = useState<PhotoGraphData>(
     EMPTY_PHOTO_GRAPH_DATA,
   );
+  useEffect(() => {
+    const graph = fgRef.current;
+    if (
+      resetRef.current === resetViewKey ||
+      !graphMounted ||
+      !graph ||
+      !preparedGraphData.nodes.length
+    )
+      return;
+    resetRef.current = resetViewKey;
+    fitGraphToWeightedCenter(
+      graph,
+      preparedGraphData.nodes,
+      dimensions.width,
+      dimensions.height,
+      reducedMotion ? 0 : GRAPH_CONFIG.resetViewDurationMs,
+    );
+  }, [
+    resetViewKey,
+    graphMounted,
+    preparedGraphData.nodes,
+    dimensions.width,
+    dimensions.height,
+    reducedMotion,
+  ]);
   const { configureRuntimeForces, reinitializeCollisionForce } =
     usePhotoGraphForces({
       fgRef,
@@ -488,11 +515,7 @@ export default function PhotoGraph2DRenderer({
   ]);
 
   return (
-    <div
-      ref={rootRef}
-      className="size-full [image-rendering:pixelated] [&_canvas]:[image-rendering:pixelated]"
-      data-graph-mode="2d"
-    >
+    <div ref={rootRef} className="size-full" data-graph-mode="2d">
       <ForceGraph2D
         ref={fgRef as MutableRefObject<PhotoGraphInstance | undefined>}
         graphData={preparedGraphData}

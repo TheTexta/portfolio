@@ -11,10 +11,7 @@ import {
 import type { ForceGraphMethods } from "react-force-graph-3d";
 
 import { sizePhotoGraphNode } from "@/lib/photo-graph/force-graph";
-import {
-  buildOptimizedImageCandidates,
-  pickAllowedWidth,
-} from "./imageOptimizer";
+import { buildOptimizedImageCandidates } from "./imageOptimizer";
 import { GRAPH_CONFIG } from "./config";
 import type { PhotoGraphLink, PhotoGraphNode } from "./types";
 import { loadImage } from "./utils";
@@ -22,10 +19,16 @@ import {
   PHOTO_GRAPH_TEXTURE_BUDGET,
   PHOTO_GRAPH_MAX_TEXTURE_SIDE,
   photoGraphTextureSideLimit,
+  photoGraphTextureRequest,
 } from "./texture-budget";
 
 type PhotoSprite = Sprite & {
-  userData: { loadedWidth?: number; loadedAt?: number; bytes?: number };
+  userData: {
+    loadedWidth?: number;
+    sourceMaxWidth?: number;
+    loadedAt?: number;
+    bytes?: number;
+  };
 };
 
 type Props = {
@@ -93,7 +96,7 @@ export function usePhotoGraphTextures({
       sprite: PhotoSprite,
       id: string,
       image: CanvasImageSource & { width: number; height: number },
-      width: number,
+      sourceMaxWidth = sprite.userData.sourceMaxWidth,
     ) => {
       const scale = Math.min(
         1,
@@ -106,26 +109,20 @@ export function usePhotoGraphTextures({
       if (!context) return;
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
       const bytes = canvas.width * canvas.height * 4;
-      sprite.material.map?.dispose();
-      sprite.material.map = null;
-      sprite.userData.bytes = 0;
-      if (!trimTextures(bytes, id)) {
-        sprite.material.color.set(0x888888);
-        sprite.material.needsUpdate = true;
-        sprite.userData = {};
-        return;
-      }
+      if (!trimTextures(bytes - (sprite.userData.bytes ?? 0), id)) return;
       const texture = new Texture(canvas);
       texture.colorSpace = SRGBColorSpace;
       texture.generateMipmaps = false;
       texture.minFilter = LinearFilter;
       texture.magFilter = LinearFilter;
       texture.needsUpdate = true;
+      sprite.material.map?.dispose();
       sprite.material.map = texture;
       sprite.material.color.set(0xffffff);
       sprite.material.needsUpdate = true;
       sprite.userData = {
-        loadedWidth: width,
+        loadedWidth: canvas.width,
+        sourceMaxWidth,
         loadedAt: performance.now(),
         bytes,
       };
@@ -157,7 +154,15 @@ export function usePhotoGraphTextures({
           }
           // Even the provider-aware original fallback must not upload an
           // unbounded archival image to the GPU.
-          attachImage(sprite, node.id, image, width);
+          attachImage(
+            sprite,
+            node.id,
+            image,
+            image.naturalWidth < width ||
+              (url === candidates.at(-1) && candidates.length > 1)
+              ? image.naturalWidth
+              : sprite.userData.sourceMaxWidth,
+          );
           return;
         } catch {
           if (abort.signal.aborted) return;
@@ -215,12 +220,10 @@ export function usePhotoGraphTextures({
         visible.add(node.id);
         const sprite = sprites.get(node.id);
         if (!sprite) continue;
-        const desired = Math.min(
-          PHOTO_GRAPH_MAX_TEXTURE_SIDE,
+        const desired =
           halfWidth *
-            dimensions.width *
-            Math.min(window.devicePixelRatio || 1, 1.5),
-        );
+          dimensions.width *
+          Math.min(window.devicePixelRatio || 1, 1.5);
         projected.push({
           node,
           width: desired,
@@ -233,34 +236,25 @@ export function usePhotoGraphTextures({
         const image = sprite.material.map?.image as
           HTMLCanvasElement | undefined;
         if (image && Math.max(image.width, image.height) > textureSideLimit) {
-          attachImage(
-            sprite,
-            node.id,
-            image,
-            pickAllowedWidth(
-              Math.min(
-                sprite.userData.loadedWidth ?? image.width,
-                textureSideLimit * Math.min(1, node.aspectRatio),
-              ),
-            ),
-          );
+          attachImage(sprite, node.id, image);
         }
       }
       queue = projected
         .map((request) => ({
           ...request,
-          width: pickAllowedWidth(
-            Math.min(
-              textureSideLimit * Math.min(1, request.node.aspectRatio),
-              request.width,
-            ),
+          ...photoGraphTextureRequest(
+            request.width,
+            request.node.aspectRatio,
+            textureSideLimit,
+            sprites.get(request.node.id)?.userData.sourceMaxWidth,
           ),
         }))
         .filter(
-          ({ node, width }) =>
+          ({ node, residentWidth }) =>
             !failed.has(node.id) &&
             !pending.has(node.id) &&
-            (sprites.get(node.id)?.userData.loadedWidth ?? 0) < width,
+            (sprites.get(node.id)?.userData.loadedWidth ?? 0) + 1 <
+              residentWidth,
         )
         .sort((a, b) => a.distance - b.distance);
       pump();

@@ -493,9 +493,12 @@ control-enabled embedded graphs, not the standalone canvas.
 In 3D, photographs are camera-facing rectangles in an XYZ force simulation.
 Drag empty space to orbit, scroll/pinch to zoom, and right-drag or use two fingers
 to pan. Drag photographs to reposition them or select one to open the existing
-inspection/download overlay. **Reset view** fits the graph again. Distance
+inspection/download overlay. **Reset**, beside the top-right compact control,
+smoothly fits the current graph in either 2D or 3D without changing its settings.
+The action remains visible when graph controls are closed. Distance
 settings use world units in 3D, not screen pixels. Reduced motion disables camera
-damping and pre-settles the initial layout; there is no automatic camera orbit.
+damping and camera-reset animation, and pre-settles the initial layout; there is
+no automatic camera orbit.
 
 `PhotoGraphCanvas` owns data loading, settings and inspection. Its separate
 `PhotoGraph2DRenderer` and lazily imported `PhotoGraph3DRenderer` own independent
@@ -508,9 +511,13 @@ migration. Only the standalone route opts in with `allow3D`.
 
 Three.js and `react-force-graph-3d` are downloaded only after activation. The 3D
 renderer bounds image concurrency, uses screen-projected texture sizes with a
-768px longest-side limit and a fair-share resolution cap for visible photographs,
+1280px longest-side limit and a fair-share resolution cap for visible photographs,
 caps retained RGBA textures at 48 MiB, and limits render
-pixel ratio to 1.5. Full-resolution originals remain in the inspection overlay.
+pixel ratio to 1.5, with native WebGL antialiasing. Resolution tracking uses actual
+uploaded texture dimensions so budget-downscaled photographs can upgrade again
+when zoomed, without repeatedly requesting rounded image-size tiers.
+The 2D canvas uses normal image smoothing rather than forced pixelated scaling.
+Full-resolution originals remain in the inspection overlay.
 Its bounding-sphere collision prevents world-space intersections, not every
 screen-space overlap. Disabling 3D aborts texture requests and releases the owned
 WebGL context; the graph library disposes attached scene resources. Unsupported

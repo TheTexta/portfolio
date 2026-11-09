@@ -23,6 +23,7 @@ type PhotoGraphControlsProps = {
   menuOpen: boolean;
   controls: GraphControls;
   reserveNavigationSpace?: boolean;
+  reserveResetSpace?: boolean;
   showTheme?: boolean;
   show3D?: boolean;
   threeDEnabled?: boolean;
@@ -30,7 +31,6 @@ type PhotoGraphControlsProps = {
   threeDDisabled?: boolean;
   modeMessage?: string;
   on3DChange?: (enabled: boolean) => void;
-  onResetView?: () => void;
   onMenuOpen: () => void;
   onMenuClose: () => void;
   onControlChange: (key: keyof GraphControls, value: boolean | number) => void;
@@ -40,6 +40,7 @@ export default function PhotoGraphControls({
   menuOpen,
   controls,
   reserveNavigationSpace = false,
+  reserveResetSpace = false,
   showTheme = false,
   show3D = false,
   threeDEnabled = false,
@@ -47,7 +48,6 @@ export default function PhotoGraphControls({
   threeDDisabled = false,
   modeMessage = "",
   on3DChange,
-  onResetView,
   onMenuOpen,
   onMenuClose,
   onControlChange,
@@ -56,8 +56,9 @@ export default function PhotoGraphControls({
 
   return (
     <div
-      className={`w-[min(18rem,calc(100%-1rem))] border select-none data-[reserve-navigation=true]:w-[min(18rem,calc(100%-4.25rem))] ${photoGraphControlsPositionClass} ${photoGraphPanelClass}`}
+      className={`w-[min(18rem,calc(100%-1rem))] border select-none data-[reserve-navigation=true]:w-[min(18rem,calc(100%-4.25rem))] data-[reserve-reset=true]:w-[min(18rem,calc(100%-8.75rem))] ${photoGraphControlsPositionClass} ${photoGraphPanelClass}`}
       data-reserve-navigation={reserveNavigationSpace || undefined}
+      data-reserve-reset={reserveResetSpace || undefined}
     >
       <div
         className={`flex w-full shrink-0 items-stretch justify-between ${photoGraphControlRowClass} ${menuOpen ? "border-b border-ink" : ""}`}
@@ -74,7 +75,7 @@ export default function PhotoGraphControls({
         </ControlButton>
 
         <label
-          className={`flex min-w-0 flex-1 cursor-pointer items-center justify-end gap-2 px-3 text-right has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-ink ${photoGraphControlTextClass} ${photoGraphControlRowClass}`}
+          className={`${styles.invertingControl} flex min-w-0 flex-1 cursor-pointer items-center justify-end gap-2 px-3 text-right has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-ink ${photoGraphControlTextClass} ${photoGraphControlRowClass}`}
         >
           <span>Show connecting lines</span>
           <input
@@ -83,7 +84,7 @@ export default function PhotoGraphControls({
             onChange={(event) =>
               onControlChange("hideConnections", !event.target.checked)
             }
-            className="m-0 size-4 shrink-0 accent-ink"
+            className={styles.checkbox}
           />
         </label>
       </div>
@@ -96,7 +97,7 @@ export default function PhotoGraphControls({
               checked={threeDEnabled}
               disabled={threeDDisabled}
               onChange={(enabled) => on3DChange?.(enabled)}
-              className={`w-full justify-between ${photoGraphControlRowClass}`}
+              className={`${styles.invertingControl} w-full justify-between ${photoGraphControlRowClass}`}
             />
             <p
               role="status"
@@ -105,24 +106,12 @@ export default function PhotoGraphControls({
             >
               {threeDLoading ? "Loading 3D view…" : modeMessage}
             </p>
-            {threeDEnabled && !threeDLoading && (
-              <div className="pb-3">
-                <ControlButton
-                  layout="action"
-                  size="sm"
-                  className={`w-full ${photoGraphControlRowClass}`}
-                  onClick={onResetView}
-                >
-                  Reset view
-                </ControlButton>
-              </div>
-            )}
           </div>
         )}
         {showTheme && (
           <div className="border-b border-ink px-3">
             <ThemeToggle
-              className={`w-full justify-between ${photoGraphControlRowClass}`}
+              className={`${styles.invertingControl} w-full justify-between ${photoGraphControlRowClass}`}
             />
           </div>
         )}

@@ -24,6 +24,7 @@ export const GRAPH_CONFIG = {
   settleAlpha: 0.001,
   connectionIntroDragDistancePx: 8,
   fitToCanvasDurationMs: 250,
+  resetViewDurationMs: 450,
   fitToCanvasPaddingRatio: 0.08,
   fitToCanvasMinWidth: 1024,
   viewportBufferRatio: 0.15,

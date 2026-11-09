@@ -1,6 +1,7 @@
 "use client";
 
 import { Maximize2, Minimize } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { useTheme } from "@/app/components/theme/theme-provider";
 import { ActionButton, ActionLink } from "@/app/components/ui/editorial";
@@ -15,6 +16,7 @@ type ExperienceNavProps = {
   className?: string;
   showTheme?: boolean;
   ariaLabel?: string;
+  children?: ReactNode;
 };
 
 export default function ExperienceNav({
@@ -25,6 +27,7 @@ export default function ExperienceNav({
   className,
   showTheme = false,
   ariaLabel = "Experience controls",
+  children,
 }: ExperienceNavProps) {
   const { darkMode, toggleTheme } = useTheme();
 
@@ -36,6 +39,7 @@ export default function ExperienceNav({
         className,
       )}
     >
+      {children}
       {showTheme ? (
         <ActionButton
           size="sm"

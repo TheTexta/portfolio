@@ -36,6 +36,7 @@ import type {
 import type { PhotoGraph3DRendererProps } from "./PhotoGraph3DRenderer";
 import type { PhotoGraphViewSnapshot } from "./view-state";
 import { usePhotoGraphData } from "./usePhotoGraphData";
+import styles from "./photo-graph-controls.module.css";
 
 function buildInspectPreviewUrl(node: PhotoGraphNode) {
   if (!node.storagePath) return node.sourceUrl;
@@ -193,7 +194,7 @@ export default function PhotoGraphCanvas({
 
   return (
     <div
-      className={`static size-full transition-colors ${photoGraphShellClass}`}
+      className={`${styles.shell} static size-full transition-colors ${photoGraphShellClass}`}
     >
       <div
         aria-hidden={inspectTarget ? true : undefined}
@@ -204,6 +205,9 @@ export default function PhotoGraphCanvas({
             menuOpen={menuOpen}
             controls={activeControls}
             reserveNavigationSpace={showNavigation}
+            reserveResetSpace={
+              showNavigation && isFullPageRoute && showControls
+            }
             showTheme={isFullPageRoute && forcedDarkMode === undefined}
             show3D={canUse3D}
             threeDEnabled={canUse3D && mode !== "2d"}
@@ -211,7 +215,6 @@ export default function PhotoGraphCanvas({
             threeDDisabled={loadStatus !== "ready"}
             modeMessage={menuOpen ? modeMessage : ""}
             on3DChange={changeMode}
-            onResetView={() => setResetViewKey((key) => key + 1)}
             onMenuOpen={() => setMenuOpen(true)}
             onMenuClose={() => setMenuOpen(false)}
             onControlChange={setControlValue}
@@ -228,7 +231,19 @@ export default function PhotoGraphCanvas({
             showWriteUpLabel={false}
             ariaLabel="Photo graph controls"
             className="[&>*]:min-h-8"
-          />
+          >
+            {isFullPageRoute && showControls && (
+              <ControlButton
+                layout="action"
+                size="sm"
+                className={photoGraphControlRowClass}
+                disabled={loadStatus !== "ready" || mode === "loading"}
+                onClick={() => setResetViewKey((key) => key + 1)}
+              >
+                Reset
+              </ControlButton>
+            )}
+          </ExperienceNav>
         )}
         <div
           ref={containerRef}
@@ -270,6 +285,7 @@ export default function PhotoGraphCanvas({
                 onSelect={setSelectedPhotoId}
                 snapshot={twoDSnapshot}
                 onSaveSnapshot={setTwoDSnapshot}
+                resetViewKey={resetViewKey}
               />
             ))}
           {loadStatus !== "ready" && (

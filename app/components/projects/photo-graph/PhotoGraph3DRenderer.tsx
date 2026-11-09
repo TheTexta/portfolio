@@ -11,6 +11,7 @@ import {
 import ForceGraph3D, { type ForceGraphMethods } from "react-force-graph-3d";
 import { PerspectiveCamera, Sprite, SpriteMaterial } from "three";
 import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { animate } from "framer-motion";
 
 import {
   computePhotoGraphLinkDistance,
@@ -35,12 +36,11 @@ import {
 import { usePhotoGraphTextures } from "./usePhotoGraphTextures";
 
 const EMPTY_GRAPH: PhotoGraphData = { nodes: [], links: [] };
-const RENDERER_CONFIG = { antialias: false, alpha: false };
+const RENDERER_CONFIG = { antialias: true, alpha: false };
 
 export type PhotoGraph3DRendererProps = PhotoGraphRendererProps & {
   snapshot: PhotoGraphViewSnapshot | null;
   onSaveSnapshot: (snapshot: PhotoGraphViewSnapshot) => void;
-  resetViewKey: number;
   onFailure: () => void;
 };
 
@@ -73,6 +73,7 @@ export default function PhotoGraph3DRenderer({
   const configuredRef = useRef<string | null>(null);
   const initializedCameraRef = useRef(false);
   const resetRef = useRef(resetViewKey);
+  const resetAnimationRef = useRef<ReturnType<typeof animate> | null>(null);
   const forceSettings = photoGraphForceSettingsKey(controls);
   const retainLayout = restoredSnapshot?.forceSettings === forceSettings;
 
@@ -141,23 +142,50 @@ export default function PhotoGraph3DRenderer({
     forceSettings,
   ]);
 
-  const fitView = useCallback(() => {
-    const graph = graphRef.current;
-    const camera = graph?.camera();
-    if (!graph || !(camera instanceof PerspectiveCamera)) return;
-    const view = fitPhotoGraph3DView(
-      data.nodes,
-      dimensions.width / dimensions.height,
-      camera.fov,
-    );
-    if (view) graph.cameraPosition(view.camera, view.target, 0);
-  }, [data.nodes, dimensions.width, dimensions.height]);
+  const fitView = useCallback(
+    (duration = 0) => {
+      const graph = graphRef.current;
+      const camera = graph?.camera();
+      if (!graph || !(camera instanceof PerspectiveCamera)) return;
+      const view = fitPhotoGraph3DView(
+        data.nodes,
+        dimensions.width / dimensions.height,
+        camera.fov,
+      );
+      if (!view) return;
+      resetAnimationRef.current?.stop();
+      resetAnimationRef.current = null;
+      const orbit = graph.controls() as OrbitControls;
+      orbit.enableDamping = !reducedMotion;
+      if (!duration) {
+        graph.cameraPosition(view.camera, view.target, 0);
+        return;
+      }
+      const fromCamera = camera.position.clone();
+      const fromTarget = orbit.target.clone();
+      orbit.enableDamping = false;
+      resetAnimationRef.current = animate(0, 1, {
+        duration: duration / 1000,
+        ease: [0.22, 1, 0.36, 1],
+        onUpdate: (progress) => {
+          camera.position.lerpVectors(fromCamera, view.camera, progress);
+          orbit.target.lerpVectors(fromTarget, view.target, progress);
+          orbit.update();
+        },
+        onComplete: () => {
+          orbit.enableDamping = !reducedMotion;
+          resetAnimationRef.current = null;
+        },
+      });
+    },
+    [data.nodes, dimensions.width, dimensions.height, reducedMotion],
+  );
 
   useEffect(() => {
     if (resetRef.current === resetViewKey) return;
     resetRef.current = resetViewKey;
-    fitView();
-  }, [resetViewKey, fitView]);
+    fitView(reducedMotion ? 0 : GRAPH_CONFIG.resetViewDurationMs);
+  }, [resetViewKey, fitView, reducedMotion]);
 
   useEffect(() => {
     const graph = graphRef.current;
@@ -169,6 +197,13 @@ export default function PhotoGraph3DRenderer({
     const orbit = graph.controls() as OrbitControls;
     orbit.enableDamping = !reducedMotion;
     orbit.autoRotate = false;
+    const stopReset = () => {
+      resetAnimationRef.current?.stop();
+      resetAnimationRef.current = null;
+      orbit.enableDamping = !reducedMotion;
+    };
+    if (reducedMotion) stopReset();
+    orbit.addEventListener("start", stopReset);
     const canvas = renderer.domElement;
     const contextLost = (event: Event) => {
       if (!canvas.isConnected) return;
@@ -176,7 +211,11 @@ export default function PhotoGraph3DRenderer({
       onFailure();
     };
     canvas.addEventListener("webglcontextlost", contextLost);
-    return () => canvas.removeEventListener("webglcontextlost", contextLost);
+    return () => {
+      stopReset();
+      orbit.removeEventListener("start", stopReset);
+      canvas.removeEventListener("webglcontextlost", contextLost);
+    };
   }, [ready, reducedMotion, onFailure]);
 
   useLayoutEffect(() => {

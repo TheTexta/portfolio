@@ -72,6 +72,7 @@ export type PhotoGraphRendererProps = {
   activeDarkMode: boolean;
   reducedMotion: boolean;
   onInspect: (node: PhotoGraphNode) => void;
+  resetViewKey: number;
 };
 
 export type GraphControls = PhotoGraphRuntimeControls;
