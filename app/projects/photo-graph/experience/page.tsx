@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <ProjectPageShell>
-      <PhotoGraphCanvas fitToCanvas />
+      <PhotoGraphCanvas fitToCanvas allow3D />
     </ProjectPageShell>
   );
 }

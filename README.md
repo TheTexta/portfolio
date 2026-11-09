@@ -475,11 +475,51 @@ keyboard scrolling. This works for cross-origin sites without changing or
 deploying them. The Grailed Plus hero keeps its fixed 1280px iframe viewport;
 canvas previews and the narrow-screen static launch panel are unchanged.
 
-The full Photo Graph experience has a keyboard photograph selector, an open
+Control-enabled embedded Photo Graph views have a keyboard photograph selector, an open
 control and connected-photo buttons synchronized with canvas selection. Closing
 inspection restores its trigger. Labels currently identify archive IDs and image
 orientation; subject descriptions and a real screen-reader assessment remain
 follow-up work.
+
+### Optional Photo Graph 3D view
+
+At `/projects/photo-graph/experience`, open graph controls and enable **3D view**.
+The default remains 2D; homepage, article, and admin previews remain 2D. The view
+choice lasts only while that experience is mounted. The standalone experience
+retains its compact controls and icon-only return link, without a photograph
+browser panel; the keyboard selector described above is currently confined to
+control-enabled embedded graphs, not the standalone canvas.
+
+In 3D, photographs are camera-facing rectangles in an XYZ force simulation.
+Drag empty space to orbit, scroll/pinch to zoom, and right-drag or use two fingers
+to pan. Drag photographs to reposition them or select one to open the existing
+inspection/download overlay. **Reset view** fits the graph again. Distance
+settings use world units in 3D, not screen pixels. Reduced motion disables camera
+damping and pre-settles the initial layout; there is no automatic camera orbit.
+
+`PhotoGraphCanvas` owns data loading, settings and inspection. Its separate
+`PhotoGraph2DRenderer` and lazily imported `PhotoGraph3DRenderer` own independent
+mutable graphs and save numeric layout/camera snapshots in memory between mode
+switches. Both use the same public payload, links and provider-aware media URLs.
+If force settings changed in the other mode, the returning view settles and fits
+the updated layout rather than freezing it at the old coordinates.
+This adds no persisted coordinates, database settings, feature model, or media
+migration. Only the standalone route opts in with `allow3D`.
+
+Three.js and `react-force-graph-3d` are downloaded only after activation. The 3D
+renderer bounds image concurrency, uses screen-projected texture sizes with a
+768px longest-side limit and a fair-share resolution cap for visible photographs,
+caps retained RGBA textures at 48 MiB, and limits render
+pixel ratio to 1.5. Full-resolution originals remain in the inspection overlay.
+Its bounding-sphere collision prevents world-space intersections, not every
+screen-space overlap. Disabling 3D aborts texture requests and releases the owned
+WebGL context; the graph library disposes attached scene resources. Unsupported
+WebGL, initialization/import failure, or context loss restores 2D with a retry
+explanation. Switching modes does not refetch the graph.
+
+`tests/e2e/photo-graph-3d.spec.ts` uses intercepted local graph/image fixtures and
+real Chromium WebGL, not production services. Run it with
+`npm run test:e2e -- tests/e2e/photo-graph-3d.spec.ts`.
 
 ## Portfolio evidence and résumé
 

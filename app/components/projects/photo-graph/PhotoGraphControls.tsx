@@ -5,6 +5,7 @@ import { useId } from "react";
 
 import { ControlButton } from "@/app/components/ui/control";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
+import Toggle from "@/app/components/ui/toggle";
 
 import GraphSliderField from "./GraphSliderField";
 import {
@@ -23,6 +24,13 @@ type PhotoGraphControlsProps = {
   controls: GraphControls;
   reserveNavigationSpace?: boolean;
   showTheme?: boolean;
+  show3D?: boolean;
+  threeDEnabled?: boolean;
+  threeDLoading?: boolean;
+  threeDDisabled?: boolean;
+  modeMessage?: string;
+  on3DChange?: (enabled: boolean) => void;
+  onResetView?: () => void;
   onMenuOpen: () => void;
   onMenuClose: () => void;
   onControlChange: (key: keyof GraphControls, value: boolean | number) => void;
@@ -33,6 +41,13 @@ export default function PhotoGraphControls({
   controls,
   reserveNavigationSpace = false,
   showTheme = false,
+  show3D = false,
+  threeDEnabled = false,
+  threeDLoading = false,
+  threeDDisabled = false,
+  modeMessage = "",
+  on3DChange,
+  onResetView,
   onMenuOpen,
   onMenuClose,
   onControlChange,
@@ -74,6 +89,36 @@ export default function PhotoGraphControls({
       </div>
 
       <div id={panelId} hidden={!menuOpen}>
+        {show3D && (
+          <div className="border-b border-ink px-3">
+            <Toggle
+              label="3D view"
+              checked={threeDEnabled}
+              disabled={threeDDisabled}
+              onChange={(enabled) => on3DChange?.(enabled)}
+              className={`w-full justify-between ${photoGraphControlRowClass}`}
+            />
+            <p
+              role="status"
+              aria-live="polite"
+              className="text-xs leading-relaxed empty:hidden"
+            >
+              {threeDLoading ? "Loading 3D view…" : modeMessage}
+            </p>
+            {threeDEnabled && !threeDLoading && (
+              <div className="pb-3">
+                <ControlButton
+                  layout="action"
+                  size="sm"
+                  className={`w-full ${photoGraphControlRowClass}`}
+                  onClick={onResetView}
+                >
+                  Reset view
+                </ControlButton>
+              </div>
+            )}
+          </div>
+        )}
         {showTheme && (
           <div className="border-b border-ink px-3">
             <ThemeToggle
@@ -86,7 +131,17 @@ export default function PhotoGraphControls({
           {GRAPH_CONTROL_SLIDERS.map((config) => (
             <GraphSliderField
               key={config.key}
-              config={config}
+              config={
+                threeDEnabled &&
+                !threeDLoading &&
+                (config.key === "distMinMult" || config.key === "distMaxMult")
+                  ? {
+                      ...config,
+                      formatValue: (value) =>
+                        config.formatValue(value).replace(" px", " units"),
+                    }
+                  : config
+              }
               controls={controls}
               idPrefix={panelId}
               onChange={onControlChange}

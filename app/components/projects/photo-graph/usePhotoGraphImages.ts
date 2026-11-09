@@ -21,6 +21,7 @@ import type {
   PhotoGraphNode,
 } from "./types";
 import { getCurrentDevicePixelRatio, isAbortError, loadImage } from "./utils";
+import type { PhotoGraphViewSnapshot } from "./view-state";
 
 type UsePhotoGraphImagesArgs = {
   activeDarkMode: boolean;
@@ -29,6 +30,7 @@ type UsePhotoGraphImagesArgs = {
   hideConnections: boolean;
   nodes: PhotoGraphNode[];
   onNodeMutation: (resortNodes?: boolean) => void;
+  initialView?: PhotoGraphViewSnapshot | null;
 };
 
 type InFlightImageRequest = {
@@ -43,6 +45,7 @@ export function usePhotoGraphImages({
   hideConnections,
   nodes,
   onNodeMutation,
+  initialView,
 }: UsePhotoGraphImagesArgs) {
   const errorLogRef = useRef<Set<string>>(new Set());
   const inFlightRef = useRef<Map<string, InFlightImageRequest>>(new Map());
@@ -287,6 +290,12 @@ export function usePhotoGraphImages({
       node.image = undefined;
       node.loadedWidth = undefined;
     }
+
+    const requests = inFlightRef.current;
+    return () => {
+      for (const request of requests.values()) request.controller.abort();
+      requests.clear();
+    };
   }, [nodes]);
 
   useEffect(() => {
@@ -302,10 +311,11 @@ export function usePhotoGraphImages({
     }
 
     initialViewAppliedRef.current = true;
-    graph.centerAt(0, 0, 0);
-    graph.zoom(GRAPH_CONFIG.initialZoom, 0);
+    const zoom = initialView?.zoom ?? GRAPH_CONFIG.initialZoom;
+    graph.centerAt(initialView?.camera.x ?? 0, initialView?.camera.y ?? 0, 0);
+    graph.zoom(zoom, 0);
     transformRef.current = {
-      k: GRAPH_CONFIG.initialZoom,
+      k: zoom,
       x: 0,
       y: 0,
     };
@@ -325,6 +335,7 @@ export function usePhotoGraphImages({
     getInitialNodeTargetWidth,
     nodes,
     queueNodes,
+    initialView,
   ]);
 
   useEffect(() => {

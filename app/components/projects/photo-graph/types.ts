@@ -13,6 +13,9 @@ import type {
 type PhotoGraphNodeRuntimeState = {
   image?: HTMLImageElement;
   loadedWidth?: number;
+  z?: number;
+  vz?: number;
+  fz?: number;
 };
 
 export type PhotoGraphNode = NodeObject<
@@ -51,6 +54,7 @@ export type RectangleCollisionForce = {
 export type GraphTransform = { k: number; x: number; y: number };
 
 export type PhotoGraphCanvasProps = {
+  allow3D?: boolean;
   controls?: GraphControls;
   defaultControls?: GraphControls;
   forcedDarkMode?: boolean;
@@ -59,6 +63,15 @@ export type PhotoGraphCanvasProps = {
   onControlsChange?: (controls: GraphControls) => void;
   showControls?: boolean;
   showNavigation?: boolean;
+};
+
+export type PhotoGraphRendererProps = {
+  graphData: PhotoGraphData;
+  dimensions: { width: number; height: number };
+  controls: GraphControls;
+  activeDarkMode: boolean;
+  reducedMotion: boolean;
+  onInspect: (node: PhotoGraphNode) => void;
 };
 
 export type GraphControls = PhotoGraphRuntimeControls;

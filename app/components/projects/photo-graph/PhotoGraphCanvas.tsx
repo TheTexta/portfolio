@@ -1,150 +1,44 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { animate, useMotionValue } from "framer-motion";
 import { usePathname } from "next/navigation";
-
 import {
-  type MutableRefObject,
-  type ReactElement,
   useCallback,
   useEffect,
   useRef,
   useState,
+  type ComponentType,
 } from "react";
 
 import { useTheme } from "@/app/components/theme/theme-provider";
 import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import { ControlButton } from "@/app/components/ui/control";
 import ExperienceNav from "@/app/components/ui/experience-nav";
-import {
-  getPhotoGraphLinkValue,
-  sortPhotoGraphNodesForRender,
-} from "@/lib/photo-graph/force-graph";
 import { photoGraphMediaUrl } from "@/lib/photo-graph/media-url";
+import { useReducedMotion } from "@/app/hooks/use-reduced-motion";
 
-import PhotoGraphBrowser from "./PhotoGraphBrowser";
+import PhotoGraph2DRenderer from "./PhotoGraph2DRenderer";
 import PhotoGraphControls from "./PhotoGraphControls";
 import PhotoGraphInspectOverlay from "./PhotoGraphInspectOverlay";
+import PhotoGraphRendererBoundary from "./PhotoGraphRendererBoundary";
 import {
   DEFAULT_GRAPH_CONTROLS,
-  GRAPH_CONFIG,
-  PHOTO_GRAPH_ALPHA_DECAY,
   PHOTO_GRAPH_INSPECT_PREVIEW_QUALITY,
   PHOTO_GRAPH_INSPECT_PREVIEW_WIDTH,
-  PHOTO_GRAPH_VISIBLE_SETTLE_TICKS,
   photoGraphControlRowClass,
   photoGraphShellClass,
 } from "./config";
 import type {
   GraphControls,
   InspectTarget,
-  PhotoGraphData,
   PhotoGraphCanvasProps,
-  PhotoGraphInstance,
-  PhotoGraphLink,
   PhotoGraphNode,
 } from "./types";
+import type { PhotoGraph3DRendererProps } from "./PhotoGraph3DRenderer";
+import type { PhotoGraphViewSnapshot } from "./view-state";
 import { usePhotoGraphData } from "./usePhotoGraphData";
-import { usePhotoGraphForces } from "./usePhotoGraphForces";
-import { usePhotoGraphImages } from "./usePhotoGraphImages";
-import { usePhotoGraphIntro } from "./usePhotoGraphIntro";
-
-const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
-  ssr: false,
-  loading: () => <div className="size-full bg-canvas" />,
-}) as unknown as (props: Record<string, unknown>) => ReactElement;
-
-const EMPTY_PHOTO_GRAPH_DATA: PhotoGraphData = { nodes: [], links: [] };
-
-type ConnectionIntroAnchor = {
-  node: PhotoGraphNode;
-  previousFx: number | undefined;
-  previousFy: number | undefined;
-  pinnedFx: number;
-  pinnedFy: number;
-};
-
-function fitGraphToWeightedCenter(
-  graph: PhotoGraphInstance,
-  nodes: PhotoGraphNode[],
-  width: number,
-  height: number,
-  durationOverride?: number,
-) {
-  // Keep the desktop camera scale on narrow screens. Mobile should reveal a
-  // pannable slice of the gallery instead of shrinking every photo to fit.
-  const fitWidth = Math.max(width, GRAPH_CONFIG.fitToCanvasMinWidth);
-  const padding = Math.round(
-    Math.min(fitWidth, height) * GRAPH_CONFIG.fitToCanvasPaddingRatio,
-  );
-  const availableHalfWidth = Math.max(1, (fitWidth - padding * 2) / 2);
-  const availableHalfHeight = Math.max(1, (height - padding * 2) / 2);
-
-  let totalWeight = 0;
-  let weightedX = 0;
-  let weightedY = 0;
-  let minLeft = Number.POSITIVE_INFINITY;
-  let maxRight = Number.NEGATIVE_INFINITY;
-  let minTop = Number.POSITIVE_INFINITY;
-  let maxBottom = Number.NEGATIVE_INFINITY;
-
-  for (const node of nodes) {
-    const x = node.x ?? 0;
-    const y = node.y ?? 0;
-    const halfWidth = node.w / 2;
-    const halfHeight = node.h / 2;
-    const weight = Math.max(1, node.renderArea || node.w * node.h || 1);
-
-    totalWeight += weight;
-    weightedX += x * weight;
-    weightedY += y * weight;
-
-    minLeft = Math.min(minLeft, x - halfWidth);
-    maxRight = Math.max(maxRight, x + halfWidth);
-    minTop = Math.min(minTop, y - halfHeight);
-    maxBottom = Math.max(maxBottom, y + halfHeight);
-  }
-
-  if (
-    !Number.isFinite(totalWeight) ||
-    totalWeight <= 0 ||
-    !Number.isFinite(minLeft) ||
-    !Number.isFinite(maxRight) ||
-    !Number.isFinite(minTop) ||
-    !Number.isFinite(maxBottom)
-  ) {
-    return;
-  }
-
-  const centerX = weightedX / totalWeight;
-  const centerY = weightedY / totalWeight;
-  const extentX = Math.max(centerX - minLeft, maxRight - centerX, 1);
-  const extentY = Math.max(centerY - minTop, maxBottom - centerY, 1);
-  const zoom = Math.max(
-    GRAPH_CONFIG.zoomExtent[0],
-    Math.min(
-      GRAPH_CONFIG.zoomExtent[1],
-      availableHalfWidth / extentX,
-      availableHalfHeight / extentY,
-    ),
-  );
-
-  const duration =
-    durationOverride ??
-    (window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      ? 0
-      : GRAPH_CONFIG.fitToCanvasDurationMs);
-
-  graph.centerAt(centerX, centerY, duration);
-  graph.zoom(zoom, duration);
-}
 
 function buildInspectPreviewUrl(node: PhotoGraphNode) {
-  if (!node.storagePath) {
-    return node.sourceUrl;
-  }
-
+  if (!node.storagePath) return node.sourceUrl;
   try {
     return (
       photoGraphMediaUrl(
@@ -164,6 +58,7 @@ function buildInspectPreviewUrl(node: PhotoGraphNode) {
 }
 
 export default function PhotoGraphCanvas({
+  allow3D = false,
   controls: controlledControls,
   defaultControls = DEFAULT_GRAPH_CONTROLS,
   forcedDarkMode,
@@ -176,255 +71,111 @@ export default function PhotoGraphCanvas({
   const { darkMode: siteDarkMode } = useTheme();
   const activeDarkMode = forcedDarkMode ?? siteDarkMode;
   const isFullPageRoute = usePathname() === PROJECT_ROUTES.photoGraphExperience;
-
-  const fgRef = useRef<PhotoGraphInstance | undefined>(undefined);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const graphMountedRef = useRef(false);
-  const preparedGraphDataRef = useRef<PhotoGraphData>(EMPTY_PHOTO_GRAPH_DATA);
-  const reducedMotionRef = useRef(false);
-  const connectionIntroStartedRef = useRef(false);
-  const connectionIntroRunningRef = useRef(false);
-  const connectionIntroAnchorRef = useRef<ConnectionIntroAnchor | null>(null);
-  const connectionRevealProgressRef = useRef(0);
-  const connectionRevealAnimationRef = useRef<ReturnType<
-    typeof animate
-  > | null>(null);
-  const fitToCanvasAppliedRef = useRef(false);
-  const connectionRevealProgress = useMotionValue(0);
-
+  const canUse3D = allow3D && isFullPageRoute;
+  const reducedMotion = useReducedMotion();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [twoDSnapshot, setTwoDSnapshot] =
+    useState<PhotoGraphViewSnapshot | null>(null);
+  const [threeDSnapshot, setThreeDSnapshot] =
+    useState<PhotoGraphViewSnapshot | null>(null);
+  const modeRequestRef = useRef(0);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [graphMounted, setGraphMounted] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState<boolean | null>(null);
-  const [preparedGraphData, setPreparedGraphData] = useState<PhotoGraphData>(
-    EMPTY_PHOTO_GRAPH_DATA,
-  );
-  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [uncontrolledControls, setUncontrolledControls] =
-    useState<GraphControls>({
-      ...defaultControls,
-    });
-  const [hasLocalControlOverride, setHasLocalControlOverride] = useState(false);
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [inspectTarget, setInspectTarget] = useState<InspectTarget | null>(
     null,
   );
-  const {
-    defaultGraphControls: fetchedDefaultGraphControls,
-    graphData,
-    loadStatus,
-    retry,
-  } = usePhotoGraphData(graphUrl);
+  const [uncontrolledControls, setUncontrolledControls] = useState({
+    ...defaultControls,
+  });
+  const [hasLocalControlOverride, setHasLocalControlOverride] = useState(false);
+  const [mode, setMode] = useState<"2d" | "loading" | "3d">("2d");
+  const [modeMessage, setModeMessage] = useState("");
+  const [resetViewKey, setResetViewKey] = useState(0);
+  const [ThreeDRenderer, setThreeDRenderer] =
+    useState<ComponentType<PhotoGraph3DRendererProps> | null>(null);
+  const { defaultGraphControls, graphData, loadStatus, retry } =
+    usePhotoGraphData(graphUrl);
   const activeControls =
     controlledControls ??
     (hasLocalControlOverride
       ? uncontrolledControls
-      : (fetchedDefaultGraphControls ?? uncontrolledControls));
-  const { configureRuntimeForces, reinitializeCollisionForce } =
-    usePhotoGraphForces({
-      fgRef,
-      nodes: graphData.nodes,
-      controls: activeControls,
-    });
-
-  const releaseConnectionIntroAnchor = useCallback(() => {
-    const anchor = connectionIntroAnchorRef.current;
-    if (!anchor) {
-      return;
-    }
-
-    if (
-      anchor.node.fx === anchor.pinnedFx &&
-      anchor.node.fy === anchor.pinnedFy
-    ) {
-      anchor.node.fx = anchor.previousFx;
-      anchor.node.fy = anchor.previousFy;
-    }
-    connectionIntroAnchorRef.current = null;
-  }, []);
-
-  const handleGraphReady = useCallback(() => {
-    const graph = fgRef.current;
-    if (!graph || graphMountedRef.current) {
-      return;
-    }
-
-    graphMountedRef.current = true;
-    setGraphMounted(true);
-  }, []);
-
-  useEffect(() => {
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    let cancelled = false;
-    queueMicrotask(() => {
-      if (!cancelled) {
-        reducedMotionRef.current = prefersReducedMotion;
-        setReducedMotion(prefersReducedMotion);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    const graph = fgRef.current;
-    if (!graphMounted || !graph) {
-      return;
-    }
-
-    configureRuntimeForces(graph);
-    reinitializeCollisionForce(graphData.nodes);
-
-    if (preparedGraphDataRef.current !== graphData) {
-      releaseConnectionIntroAnchor();
-      preparedGraphDataRef.current = graphData;
-      connectionIntroStartedRef.current = false;
-      connectionRevealAnimationRef.current?.stop();
-      connectionRevealProgress.set(reducedMotionRef.current ? 1 : 0);
-      let cancelled = false;
-      queueMicrotask(() => {
-        if (!cancelled) {
-          setPreparedGraphData(graphData);
-        }
-      });
-
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    if (graphData.nodes.length) {
-      graph.d3ReheatSimulation();
-    }
-  }, [
-    configureRuntimeForces,
-    graphData,
-    graphMounted,
-    connectionRevealProgress,
-    releaseConnectionIntroAnchor,
-    reinitializeCollisionForce,
-  ]);
-
-  useEffect(() => {
-    const unsubscribe = connectionRevealProgress.on("change", (value) => {
-      connectionRevealProgressRef.current = value;
-      fgRef.current?.resumeAnimation();
-    });
-
-    return () => {
-      unsubscribe();
-      connectionRevealAnimationRef.current?.stop();
-    };
-  }, [connectionRevealProgress]);
-
-  const handleNodeMutation = useCallback(
-    (resortNodes = false) => {
-      if (!resortNodes) {
-        return;
-      }
-
-      sortPhotoGraphNodesForRender(preparedGraphData.nodes);
-      reinitializeCollisionForce(preparedGraphData.nodes);
-    },
-    [preparedGraphData.nodes, reinitializeCollisionForce],
-  );
-
-  const {
-    handleZoom,
-    handleZoomEnd,
-    linkVisibility,
-    nodeCanvasObject,
-    nodePointerAreaPaint,
-    queueVisibleImages,
-    showPointerCursor,
-  } = usePhotoGraphImages({
-    activeDarkMode,
-    dimensions,
-    fgRef,
-    hideConnections: activeControls.hideConnections,
-    nodes: preparedGraphData.nodes,
-    onNodeMutation: handleNodeMutation,
-  });
-
-  useEffect(() => {
-    fitToCanvasAppliedRef.current = false;
-  }, [
-    dimensions.height,
-    dimensions.width,
-    preparedGraphData.nodes,
-    fitToCanvas,
-  ]);
+      : (defaultGraphControls ?? uncontrolledControls));
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) {
-      return;
-    }
-
-    const updateDimensions = (width: number, height: number) => {
-      const nextWidth = Math.max(1, Math.round(width));
-      const nextHeight = Math.max(1, Math.round(height));
-
+    if (!container) return;
+    const update = (width: number, height: number) => {
+      const next = {
+        width: Math.max(1, Math.round(width)),
+        height: Math.max(1, Math.round(height)),
+      };
       setDimensions((current) =>
-        current.width === nextWidth && current.height === nextHeight
+        current.width === next.width && current.height === next.height
           ? current
-          : { width: nextWidth, height: nextHeight },
+          : next,
       );
     };
-
-    const initialBounds = container.getBoundingClientRect();
-    updateDimensions(initialBounds.width, initialBounds.height);
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) {
-        return;
-      }
-
-      updateDimensions(entry.contentRect.width, entry.contentRect.height);
+    const bounds = container.getBoundingClientRect();
+    update(bounds.width, bounds.height);
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) update(entry.contentRect.width, entry.contentRect.height);
     });
-
-    resizeObserver.observe(container);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
+    observer.observe(container);
+    return () => observer.disconnect();
   }, []);
 
-  const linkColor = useCallback(
-    (link: PhotoGraphLink) => {
-      const alpha = getPhotoGraphLinkValue(link);
-
-      return activeDarkMode
-        ? `rgba(255, 255, 255, ${0.72 * alpha})`
-        : `rgba(0, 0, 0, ${alpha})`;
+  useEffect(
+    () => () => {
+      modeRequestRef.current += 1;
     },
-    [activeDarkMode],
+    [],
   );
-  const { linkCanvasObject } = usePhotoGraphIntro({
-    revealProgressRef: connectionRevealProgressRef,
-    linkColor,
-  });
+
+  const changeMode = useCallback(
+    async (enabled: boolean) => {
+      const request = ++modeRequestRef.current;
+      setModeMessage("");
+      if (!enabled || !canUse3D) {
+        setMode("2d");
+        return;
+      }
+      setMode("loading");
+      try {
+        // Import the entire renderer only in a browser event. Its dependencies
+        // access window at module evaluation and must never enter the SSR path.
+        const renderer = await import("./PhotoGraph3DRenderer");
+        if (modeRequestRef.current !== request) return;
+        setThreeDRenderer(() => renderer.default);
+        setMode("3d");
+      } catch {
+        if (modeRequestRef.current !== request) return;
+        setMode("2d");
+        setModeMessage(
+          "3D could not load. Showing 2D; enable 3D view to try again.",
+        );
+      }
+    },
+    [canUse3D],
+  );
+
+  const handle3DFailure = useCallback(() => {
+    modeRequestRef.current += 1;
+    setMode("2d");
+    setModeMessage(
+      "3D is unavailable on this device. Showing 2D; you can try 3D view again.",
+    );
+  }, []);
 
   const setControlValue = useCallback(
     (key: keyof GraphControls, value: boolean | number) => {
-      const nextControls = {
-        ...activeControls,
-        [key]: value,
-      } as GraphControls;
-
+      const next = { ...activeControls, [key]: value } as GraphControls;
       if (controlledControls) {
-        onControlsChange?.(nextControls);
-        return;
+        onControlsChange?.(next);
+      } else {
+        setHasLocalControlOverride(true);
+        setUncontrolledControls(next);
       }
-
-      setHasLocalControlOverride(true);
-      setUncontrolledControls((current) =>
-        current[key] === value ? current : nextControls,
-      );
     },
     [activeControls, controlledControls, onControlsChange],
   );
@@ -437,119 +188,8 @@ export default function PhotoGraphCanvas({
       previewUrl: buildInspectPreviewUrl(node),
     });
   }, []);
-
-  const handleInspectCloseComplete = useCallback(() => {
-    setInspectTarget(null);
-  }, []);
-
-  const handleEngineTick = useCallback(() => {
-    if (!connectionIntroRunningRef.current) {
-      return;
-    }
-
-    fgRef.current?.resumeAnimation();
-  }, []);
-
-  const handleRenderFramePre = useCallback(() => {
-    handleGraphReady();
-
-    if (!fitToCanvas || fitToCanvasAppliedRef.current || !fgRef.current) {
-      // The intro can still run in embedded canvases that keep their own camera.
-    } else {
-      const positionedNodes = preparedGraphData.nodes.filter(
-        (node) => Number.isFinite(node.x) && Number.isFinite(node.y),
-      );
-      if (positionedNodes.length) {
-        fitToCanvasAppliedRef.current = true;
-        fitGraphToWeightedCenter(
-          fgRef.current,
-          positionedNodes,
-          dimensions.width,
-          dimensions.height,
-          0,
-        );
-      }
-    }
-
-    const graph = fgRef.current;
-    if (
-      !graph ||
-      reducedMotionRef.current ||
-      connectionIntroStartedRef.current ||
-      preparedGraphData.links.length === 0
-    ) {
-      return;
-    }
-
-    const anchorNode = preparedGraphData.nodes.reduce<PhotoGraphNode | null>(
-      (closest, node) => {
-        if (!Number.isFinite(node.x) || !Number.isFinite(node.y)) {
-          return closest;
-        }
-        if (!closest) {
-          return node;
-        }
-
-        const nodePoint = graph.graph2ScreenCoords(node.x ?? 0, node.y ?? 0);
-        const closestPoint = graph.graph2ScreenCoords(
-          closest.x ?? 0,
-          closest.y ?? 0,
-        );
-        const centerX = dimensions.width / 2;
-        const centerY = dimensions.height / 2;
-        return Math.hypot(nodePoint.x - centerX, nodePoint.y - centerY) <
-          Math.hypot(closestPoint.x - centerX, closestPoint.y - centerY)
-          ? node
-          : closest;
-      },
-      null,
-    );
-    if (!anchorNode) {
-      return;
-    }
-
-    const zoom = Math.max(graph.zoom(), Number.EPSILON);
-    const pinnedFx =
-      (anchorNode.x ?? 0) + GRAPH_CONFIG.connectionIntroDragDistancePx / zoom;
-    const pinnedFy = anchorNode.y ?? 0;
-    connectionIntroAnchorRef.current = {
-      node: anchorNode,
-      previousFx: anchorNode.fx,
-      previousFy: anchorNode.fy,
-      pinnedFx,
-      pinnedFy,
-    };
-    anchorNode.x = pinnedFx;
-    anchorNode.y = pinnedFy;
-    anchorNode.fx = pinnedFx;
-    anchorNode.fy = pinnedFy;
-    connectionIntroStartedRef.current = true;
-    connectionIntroRunningRef.current = true;
-    connectionRevealAnimationRef.current?.stop();
-    connectionRevealProgress.set(0);
-    connectionRevealAnimationRef.current = animate(
-      connectionRevealProgress,
-      1,
-      {
-        duration: 1.3,
-        ease: [0.22, 1, 0.36, 1],
-      },
-    );
-    connectionRevealAnimationRef.current.then(() => {
-      releaseConnectionIntroAnchor();
-      connectionIntroRunningRef.current = false;
-    });
-    graph.d3ReheatSimulation();
-  }, [
-    dimensions.height,
-    dimensions.width,
-    fitToCanvas,
-    handleGraphReady,
-    preparedGraphData.links.length,
-    preparedGraphData.nodes,
-    releaseConnectionIntroAnchor,
-    connectionRevealProgress,
-  ]);
+  const closeInspect = useCallback(() => setInspectTarget(null), []);
+  const is3D = canUse3D && mode === "3d" && ThreeDRenderer !== null;
 
   return (
     <div
@@ -557,9 +197,7 @@ export default function PhotoGraphCanvas({
     >
       <div
         aria-hidden={inspectTarget ? true : undefined}
-        className={`size-full transition-opacity duration-200 motion-reduce:transition-none ${
-          inspectTarget ? "pointer-events-none opacity-35" : "opacity-100"
-        }`}
+        className={`size-full transition-opacity duration-200 motion-reduce:transition-none ${inspectTarget ? "pointer-events-none opacity-35" : "opacity-100"}`}
       >
         {showControls && (
           <PhotoGraphControls
@@ -567,12 +205,18 @@ export default function PhotoGraphCanvas({
             controls={activeControls}
             reserveNavigationSpace={showNavigation}
             showTheme={isFullPageRoute && forcedDarkMode === undefined}
+            show3D={canUse3D}
+            threeDEnabled={canUse3D && mode !== "2d"}
+            threeDLoading={mode === "loading"}
+            threeDDisabled={loadStatus !== "ready"}
+            modeMessage={menuOpen ? modeMessage : ""}
+            on3DChange={changeMode}
+            onResetView={() => setResetViewKey((key) => key + 1)}
             onMenuOpen={() => setMenuOpen(true)}
             onMenuClose={() => setMenuOpen(false)}
             onControlChange={setControlValue}
           />
         )}
-
         {showNavigation && (
           <ExperienceNav
             writeUpHref={
@@ -586,70 +230,48 @@ export default function PhotoGraphCanvas({
             className="[&>*]:min-h-8"
           />
         )}
-
         <div
           ref={containerRef}
           role="region"
           aria-label="Interactive photograph graph"
           tabIndex={-1}
-          className="relative size-full bg-canvas [image-rendering:pixelated] [&_canvas]:[image-rendering:pixelated]"
+          className="relative size-full bg-canvas"
         >
           {dimensions.width > 0 &&
             dimensions.height > 0 &&
-            reducedMotion !== null && (
-              <ForceGraph2D
-                ref={fgRef as MutableRefObject<PhotoGraphInstance | undefined>}
-                graphData={preparedGraphData}
-                width={dimensions.width}
-                height={dimensions.height}
-                minZoom={GRAPH_CONFIG.zoomExtent[0]}
-                maxZoom={GRAPH_CONFIG.zoomExtent[1]}
-                d3AlphaMin={0}
-                d3AlphaDecay={PHOTO_GRAPH_ALPHA_DECAY}
-                warmupTicks={
-                  reducedMotion
-                    ? GRAPH_CONFIG.settleTicks
-                    : GRAPH_CONFIG.warmupTicks
+            (is3D ? (
+              <PhotoGraphRendererBoundary onFailure={handle3DFailure}>
+                <ThreeDRenderer
+                  graphData={graphData}
+                  dimensions={dimensions}
+                  controls={activeControls}
+                  activeDarkMode={activeDarkMode}
+                  reducedMotion={reducedMotion}
+                  onInspect={inspectNode}
+                  snapshot={threeDSnapshot}
+                  onSaveSnapshot={setThreeDSnapshot}
+                  resetViewKey={resetViewKey}
+                  onFailure={handle3DFailure}
+                />
+              </PhotoGraphRendererBoundary>
+            ) : (
+              <PhotoGraph2DRenderer
+                graphData={graphData}
+                dimensions={dimensions}
+                controls={activeControls}
+                activeDarkMode={activeDarkMode}
+                reducedMotion={reducedMotion}
+                onInspect={inspectNode}
+                fitToCanvas={fitToCanvas}
+                showBrowser={
+                  showControls && !isFullPageRoute && loadStatus === "ready"
                 }
-                cooldownTicks={
-                  reducedMotion ? 0 : PHOTO_GRAPH_VISIBLE_SETTLE_TICKS
-                }
-                cooldownTime={Infinity}
-                // Photo nodes repaint asynchronously as images load in.
-                autoPauseRedraw={false}
-                onRenderFramePre={handleRenderFramePre}
-                nodeCanvasObjectMode={() => "replace"}
-                nodeCanvasObject={nodeCanvasObject}
-                nodePointerAreaPaint={nodePointerAreaPaint}
-                linkColor={linkColor}
-                linkCanvasObjectMode={() => "replace"}
-                linkCanvasObject={linkCanvasObject}
-                linkVisibility={linkVisibility}
-                showPointerCursor={showPointerCursor}
-                onNodeClick={inspectNode}
-                onEngineTick={handleEngineTick}
-                onEngineStop={queueVisibleImages}
-                onZoom={handleZoom}
-                onZoomEnd={handleZoomEnd}
+                selectedPhotoId={selectedPhotoId}
+                onSelect={setSelectedPhotoId}
+                snapshot={twoDSnapshot}
+                onSaveSnapshot={setTwoDSnapshot}
               />
-            )}
-          {showControls && !isFullPageRoute && loadStatus === "ready" && (
-            <PhotoGraphBrowser
-              graph={graphData}
-              selectedId={selectedPhotoId}
-              onSelect={(node) => {
-                setSelectedPhotoId(node.id);
-                if (Number.isFinite(node.x) && Number.isFinite(node.y)) {
-                  fgRef.current?.centerAt(
-                    node.x,
-                    node.y,
-                    reducedMotion ? 0 : 250,
-                  );
-                }
-              }}
-              onOpen={inspectNode}
-            />
-          )}
+            ))}
           {loadStatus !== "ready" && (
             <div
               className="absolute inset-0 z-4 flex items-center justify-center bg-canvas/90 px-6 text-center"
@@ -675,13 +297,21 @@ export default function PhotoGraphCanvas({
               </div>
             </div>
           )}
+          {modeMessage && !menuOpen && (
+            <p
+              role="status"
+              aria-live="polite"
+              className="absolute bottom-2 left-2 z-4 max-w-[calc(100%-1rem)] border border-ink bg-canvas p-3 text-xs leading-relaxed"
+            >
+              {modeMessage}
+            </p>
+          )}
         </div>
       </div>
-
       <PhotoGraphInspectOverlay
         target={inspectTarget}
         returnFocusRef={containerRef}
-        onCloseComplete={handleInspectCloseComplete}
+        onCloseComplete={closeInspect}
       />
     </div>
   );
