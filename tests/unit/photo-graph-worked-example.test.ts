@@ -63,7 +63,9 @@ describe("one frozen Photo Graph worked example", () => {
         photo.analysis.sums.map((sum) => sum / (photo.analysis.weightSum || 1)),
       );
       expect(photo.lab).toEqual(
-        rgbToLab([...photo.rgb] as [number, number, number]),
+        rgbToLab([...photo.rgb] as [number, number, number]).map((value) =>
+          expect.closeTo(value, 12),
+        ),
       );
       expect(hash(await readFile(publicFile(photo.src)))).toBe(
         photo.assetSha256,
@@ -106,15 +108,18 @@ describe("one frozen Photo Graph worked example", () => {
       const right = photos.get(pair.target)!;
       const feature = (photo: typeof left) =>
         featureFromRgb(photo.rgb, photo.longSide);
-      expect(pair.cie76).toBe(
+      // Transcendental results vary by a few ULPs across JS runtimes.
+      expect(pair.cie76).toBeCloseTo(
         computePhotoGraphModelDistance(
           feature(left),
           feature(right),
           "mean-lab-cie76",
         ),
+        12,
       );
-      expect(pair.ciede2000).toBe(
+      expect(pair.ciede2000).toBeCloseTo(
         traceDeltaE2000(left.lab, right.lab).distance,
+        12,
       );
     }
   });
@@ -135,8 +140,19 @@ describe("one frozen Photo Graph worked example", () => {
       false,
     );
     const graph = buildExampleGraph(data.nodes, data.config);
-    expect(graph.nominations).toEqual(data.defaultGraph.nominations);
-    expect(graph.edges).toEqual(data.defaultGraph.edges);
+    expect(graph.nominations).toEqual(
+      data.defaultGraph.nominations.map((row) => ({
+        ...row,
+        distance: expect.closeTo(row.distance, 12),
+        correlation: expect.closeTo(row.correlation, 12),
+      })),
+    );
+    expect(graph.edges).toEqual(
+      data.defaultGraph.edges.map((edge) => ({
+        ...edge,
+        weight: expect.closeTo(edge.weight, 12),
+      })),
+    );
     expect(graph.edges).toHaveLength(252);
     expect(graph.edges.every((edge) => edge.weight > 0)).toBe(true);
     const harbour = describeCandidate(data, graph, data.config, "27");
@@ -152,7 +168,7 @@ describe("one frozen Photo Graph worked example", () => {
       weight: 0,
       status: "Beyond cutoff",
     });
-    expect(harbour.weight).toBe(1 - harbour.distance / 16);
+    expect(harbour.weight).toBeCloseTo(1 - harbour.distance / 16, 12);
   });
   it("regenerates neighbour settings without mutating the stored descriptors or audit outputs", () => {
     const before = JSON.stringify(data);

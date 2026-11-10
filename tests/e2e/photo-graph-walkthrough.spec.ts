@@ -81,7 +81,7 @@ test("five engineering sections open with the real graph and exactly two support
     "Defining what “similar” means",
     "Turning similarity into a useful graph",
     "Making the graph usable",
-    "Operating the archive and evaluating the result",
+    "Updating the archive",
   ]);
   const preview = article.getByRole("region", {
     name: "Photo Node-Gallery interactive preview",

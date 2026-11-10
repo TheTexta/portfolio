@@ -110,12 +110,13 @@ for (const { path, title, figures } of writeUps) {
       "referrerpolicy",
       "no-referrer",
     );
-    await expect(article.locator("figure")).toHaveCount(figures);
+    const staticFigures = article.locator(
+      "figure:not(:has([data-animation-player]))",
+    );
+    await expect(staticFigures).toHaveCount(figures);
     await expect(article.locator("figcaption p")).toHaveCount(0);
     await expect(
-      article.locator(
-        "figure iframe, figure canvas, figure button, figure video, figure select, figure input",
-      ),
+      staticFigures.locator("iframe, canvas, button, video, select, input"),
     ).toHaveCount(0);
     for (const image of await article.getByRole("img").all()) {
       await image.scrollIntoViewIfNeeded();
@@ -208,21 +209,29 @@ test("Photo Graph preserves the benchmark context and separate experience", asyn
 }) => {
   await page.goto("/write-ups/photo-graph");
   const article = page.getByRole("article");
+  const benchmark = article.getByRole("table", {
+    name: "Positive results among the first four judged candidates per query.",
+  });
+  await expect(
+    benchmark.getByRole("row", { name: /Mean LAB \/ CIEDE2000/ }),
+  ).toContainText("25 / 28");
+  await expect(
+    benchmark.getByRole("row", { name: /Mean LAB \/ CIE76/ }),
+  ).toContainText("24 / 28");
   await expect(article).toContainText(
-    "25 of 28 positive top-four judged slots",
+    "the counts do not describe the first four neighbours from the complete archive",
   );
-  await expect(article).toContainText("24 of 28");
-  await expect(article).toContainText("not a general accuracy improvement");
-  await article
-    .getByText("Saved benchmark methodology and reproducibility", {
-      exact: true,
-    })
-    .click();
+  await expect(
+    article.getByRole("heading", {
+      name: "Colour-model comparison and review method",
+    }),
+  ).toBeVisible();
   await expect(article).toContainText("26 August 2026");
+  await expect(article).toContainText("100 photographs");
+  await expect(article).toContainText("seven hand-picked queries");
   await expect(article).toContainText(
-    "100 photographs and seven hand-picked queries",
+    "Unjudged photographs were excluded from the score rather than counted as incorrect",
   );
-  await expect(article).toContainText("unjudged, not necessarily wrong");
   await expect(
     article.getByRole("link", { name: "Launch experience" }),
   ).toHaveAttribute("href", "/projects/photo-graph/experience");
@@ -269,11 +278,11 @@ test("Photo Graph retains the historical review gallery separately from the new 
   page,
 }) => {
   await page.goto("/write-ups/photo-graph");
-  await page
-    .getByText("Saved benchmark methodology and reproducibility", {
-      exact: true,
-    })
-    .click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Colour-model comparison and review method",
+    }),
+  ).toBeVisible();
   const review = page.locator("[data-write-up-gallery]");
   await expect(review.getByRole("listitem")).toHaveCount(7);
   await expect(review.getByRole("img")).toHaveCount(7);
@@ -328,7 +337,9 @@ test("Elliot's completed write-up is linked, illustrated, and indexable", async 
   const article = page.getByRole("article");
   await expect(article).not.toContainText(/in progress|placeholder/i);
   await expect(article).not.toContainText("Mairêt");
-  await expect(article.locator("figure img")).toHaveCount(3);
+  await expect(
+    article.locator("figure:not(:has([data-animation-player])) img"),
+  ).toHaveCount(3);
   const robots = await page
     .locator('meta[name="robots"], meta[name="googlebot"]')
     .evaluateAll((metas) => metas.map((meta) => meta.getAttribute("content")));

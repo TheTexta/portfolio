@@ -132,7 +132,7 @@ export function WriteUpTitle({
         id="write-up-title"
         className={cn(
           BORDER_CONTAINER_TEXT_SCALE_CLASS,
-          "m-0 px-4 py-5 text-center font-display leading-[0.7705] font-semibold tracking-[-0.04586em] text-balance",
+          "m-0 px-4 py-5 text-center font-display leading-[0.7705] font-semibold tracking-[-0.04586em] text-balance max-sm:text-4xl",
           className,
         )}
       >

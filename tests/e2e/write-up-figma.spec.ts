@@ -43,7 +43,9 @@ test("Elliot's shared article matches the reference frame and preview geometry",
     expect(bounds.height).toBeCloseTo(20, 0);
     await expect(separator).toHaveJSProperty("naturalWidth", 20);
   }
-  const images = article.locator("figure img");
+  const images = article.locator(
+    "figure:not(:has([data-animation-player])) img",
+  );
   await expect(images).toHaveCount(3);
   for (const image of await images.all()) {
     await image.scrollIntoViewIfNeeded();

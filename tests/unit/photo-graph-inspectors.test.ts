@@ -19,8 +19,12 @@ import { settleExampleLayout } from "@/app/write-ups/photo-graph/_components/lay
 const data = fixture as unknown as ExampleDataset;
 describe("decision-led Photo Graph inspectors", () => {
   it("ranks alternative queries with the production distance, self-exclusion and deterministic ties", () => {
+    // Keep identities and ranks exact, allowing only cross-platform float noise.
     expect(rankExampleCandidates(data.nodes, data.queryId)).toEqual(
-      data.queryRanking,
+      data.queryRanking.map((row) => ({
+        ...row,
+        distance: expect.closeTo(row.distance, 12),
+      })),
     );
     const ranking = rankExampleCandidates(data.nodes, "27");
     expect(ranking).toHaveLength(99);
@@ -71,6 +75,8 @@ describe("decision-led Photo Graph inspectors", () => {
       "utf8",
     );
     expect(article.match(/^## /gm)).toHaveLength(5);
+    expect(article).toContain('<ProjectPreview projectId="photo-graph" />');
+    expect(article).toContain("<ComparisonDemo />");
     expect(article.indexOf("<ProjectPreview")).toBeLessThan(
       article.indexOf("<ComparisonDemo"),
     );
@@ -78,7 +84,9 @@ describe("decision-led Photo Graph inspectors", () => {
     expect(article).not.toMatch(
       /<PhotographDemo|<VectorsDemo|<LayoutDemo|A vector is an ordered|first figure deliberately|expanded default figure/,
     );
-    expect(article).toContain("revision mismatch");
+    const copy = article.replace(/\s+/g, " ");
+    expect(copy).toContain("revision check handles concurrent updates");
+    expect(copy).toContain("registration rejects the stale work");
     expect(article).toContain("database transaction");
     expect(article).toContain("recovery journal");
     expect(article).toContain("held-out review");
@@ -89,14 +97,19 @@ describe("decision-led Photo Graph inspectors", () => {
       new URL("../../app/write-ups/photo-graph/write-up.mdx", import.meta.url),
       "utf8",
     );
-    expect(article).toContain("printed photographs on my bedroom wall");
-    expect(article).toContain(
-      "Complementary colours worked well at the borders",
+    const copy = article.replace(/\s+/g, " ");
+    expect(copy).toContain("photographs on my bedroom wall");
+    expect(copy).toContain(
+      "Complementary colours helped neighbouring groups meet",
     );
-    expect(article).toContain("The digital version starts with similar-colour");
+    expect(copy).toContain("models similar-colour connections");
+    expect(copy).toContain(
+      "the complementary relationships on the wall remain outside its comparison model",
+    );
     expect(article).toContain(
       'src="/projects/photo-graph/write-up/bedroom-wall.webp"',
     );
+    expect(article).toContain('<ProjectPreview projectId="photo-graph" />');
     expect(article.indexOf("bedroom-wall.webp")).toBeGreaterThan(
       article.indexOf("<ProjectPreview"),
     );

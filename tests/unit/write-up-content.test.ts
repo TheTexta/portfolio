@@ -82,17 +82,23 @@ describe("write-up source and contribution copy", () => {
     expect(article).not.toMatch(/\[Place |\[Use a |TODO/);
   });
 
-  it("describes Grailed Plus's authored product work without fork framing or invented percentages", async () => {
+  it("distinguishes Grailed Plus's authored comparison work from inherited price history and unmeasured demo claims", async () => {
     const article = await readFile(
       new URL("../../app/write-ups/grailed-plus/write-up.mdx", import.meta.url),
       "utf8",
     );
-    expect(article).toContain("I built Grailed Plus");
-    expect(article).not.toMatch(/RVRX|\bfork\b|99\s*%/i);
+    const copy = article.replace(/\s+/g, " ");
+    expect(copy).toContain(
+      "I extended Grailed Plus with cross-market comparison and local image matching",
+    );
+    expect(copy).toContain(
+      "price-history functionality originated in [RVRX/grailed-plus](https://github.com/RVRX/grailed-plus)",
+    );
+    expect(copy).not.toMatch(/99\s*%/i);
     expect(getProject("grailed-plus").role).toBe(
       "Design and product development",
     );
-    expect(article).toContain("deterministic sample listings");
-    expect(article).toContain("not measured latency");
+    expect(copy).toContain("deterministic sample listings");
+    expect(copy).toContain("not measured inference latency");
   });
 });

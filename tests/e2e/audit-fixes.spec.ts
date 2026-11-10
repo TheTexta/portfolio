@@ -38,7 +38,7 @@ test("write-up-only projects stay out of cards and the opening follows owner cop
   await expect(page.locator("[data-about-introduction] > p")).toHaveText([
     "I’m a software developer studying computer science at McGill, with a minor in music technology. I’m interested in how software shapes the way people present and explore visual media. My projects include photography galleries organised around colour and node graphs, alongside interactive 3D portfolios.",
     "At TVM, McGill’s student television service, I develop a Discord bot that supports membership and production workflows. As Technical Director, I also manage a CAD $15,000 equipment budget, maintain servers and lead workshops for a community of 150 members.",
-    "I’m also interested in making second-hand shopping easier through better discovery and comparison tools. My browser extension, Grailed Plus, builds on an open-source tool with resale comparisons and on-device image matching to help people find similar items across platforms.",
+    "I’m also interested in making second-hand shopping easier. I develop Grailed Plus, an open-source browser extension that helps shoppers compare resale listings across marketplaces and uses on-device image matching to find similar items.",
   ]);
 });
 
@@ -224,7 +224,7 @@ test("Figma write-up metadata and links share a wrapping row above the lead", as
   }
 });
 
-test("framed write-up titles and live example share homepage scaling without overflow", async ({
+test("framed write-up titles stay readable on mobile and share larger-screen scaling with the homepage", async ({
   page,
 }) => {
   const widths = [320, 390, 640, 768, 1024, 1440];
@@ -273,7 +273,7 @@ test("framed write-up titles and live example share homepage scaling without ove
           };
         });
       expect(dimensions, `${project.title} at ${width}px`).toMatchObject({
-        fontSize: homepageSizes.get(width),
+        fontSize: width < 640 ? "36px" : homepageSizes.get(width),
         fitsText: true,
         fitsFrame: true,
         pageOverflows: false,
@@ -341,7 +341,14 @@ test("every marketplace demo discloses sample data before interaction", async ({
 }) => {
   await page.goto("/grailed-plus");
   const notes = page.getByText(/Interactive demo using sample listings/);
-  await expect(notes).toHaveCount(5);
+  await expect(notes).toHaveCount(4);
+  const recordingNote = page.getByText(
+    "Recorded MobileCLIP-S1 comparison · sample metadata.",
+  );
+  await expect(recordingNote).toHaveCount(1);
+  await expect(recordingNote).toContainText(
+    "No live search or model download.",
+  );
   for (const frame of await page
     .locator('iframe[title*="sample listings"]')
     .all()) {
@@ -541,10 +548,14 @@ test("embedding refusal retains a direct-open recovery path", async ({
   await expect(
     controls.getByText("Elliot Mairet", { exact: true }),
   ).toBeVisible();
-  const frameBounds = (await preview.locator("iframe").boundingBox())!;
+  // The iframe extends past the clipped media to hide native scrollbars.
+  const mediaBounds = (await preview
+    .locator(":scope > div")
+    .first()
+    .boundingBox())!;
   const controlsBounds = (await controls.boundingBox())!;
   expect(controlsBounds.y).toBeGreaterThanOrEqual(
-    frameBounds.y + frameBounds.height - 1,
+    mediaBounds.y + mediaBounds.height - 1,
   );
   await expect(preview.locator("details")).toHaveCount(0);
   await expect(preview.getByRole("button")).toHaveCount(0);

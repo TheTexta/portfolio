@@ -305,8 +305,11 @@ inside interactive inspectors.
 
 All seven articles follow the owner's Figma frame `36:149` in file
 `QccgILPVCw0Uofge2n2i3e`. Every title reuses the homepage's animated
-`BorderContainer` and its 36/60/96px responsive scale. At desktop width a one-line
+`BorderContainer`. Article titles use a compact 36px scale below 640px, then the
+shared 72px/96px larger-screen scale. At desktop width a one-line
 title has a 330px frame with a 584px centre; longer titles grow rather than clip.
+The compact mobile scale keeps whole title words readable without clipping or
+mid-word breaks; the homepage and live frame example keep their larger scale.
 `ProjectMeta` places `ProjectDetails` and the project links in a wrapping row
 above the introduction. Metadata has screen-reader labels and vertical separators
 on larger screens, not a bordered card. On mobile it wraps without separators.
