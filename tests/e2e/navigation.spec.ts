@@ -11,6 +11,15 @@ import {
 const writeUps = browserProjects.filter((project) => project.writeUpHref);
 
 test.beforeEach(async ({ context }) => {
+  // Keep navigation geometry independent of the separately tested demo resize.
+  await context.route(
+    "**/projects/grailed-plus/recorded-demo/index.html*",
+    (route) =>
+      route.fulfill({
+        contentType: "text/html",
+        body: "<p>Recorded comparison preview</p>",
+      }),
+  );
   await context.route("https://**/*", (route) =>
     route.request().resourceType() === "document"
       ? route.fulfill({

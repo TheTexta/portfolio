@@ -2200,93 +2200,103 @@ test("force sliders still rearrange a restored view, including settings changed 
   expect(errors.get(page)).toEqual([]);
 });
 
-test("texture-budget pressure downscales visible photos without repeatedly fetching them", async ({
-  context,
-  page,
-}) => {
-  await context.route("**/api/photo-graph/graph", (route) =>
-    route.fulfill({
-      json: {
-        nodes: Array.from({ length: 103 }, (_, index) => ({
-          id: String(index),
-          sourceUrl: `/__photo-graph-test.svg?id=${index}`,
-          baseSize: 1000,
-          aspectRatio: 1,
-          hasKnownAspectRatio: true,
-          layerNoise: 0,
-          w: 1000,
-          h: 1000,
-          renderArea: 1000000,
-          x: 0,
-          y: 0,
-          z: 0,
-        })),
-        links: [],
-        defaultGraphControls: {
-          ...DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS,
-          chargeMult: 0,
-          collideStrength: 0,
-          collideIterations: 0,
+test.describe("bounded texture budget", () => {
+  // Keep desktop at 1x and mobile at 2x; native DPR has separate coverage.
+  test.use({
+    deviceScaleFactor: async ({ isMobile }, provide) => {
+      await provide(isMobile ? 2 : 1);
+    },
+  });
+
+  test("texture-budget pressure downscales visible photos without repeatedly fetching them", async ({
+    context,
+    page,
+  }) => {
+    await context.route("**/api/photo-graph/graph", (route) =>
+      route.fulfill({
+        json: {
+          nodes: Array.from({ length: 103 }, (_, index) => ({
+            id: String(index),
+            sourceUrl: `/__photo-graph-test.svg?id=${index}`,
+            baseSize: 1000,
+            aspectRatio: 1,
+            hasKnownAspectRatio: true,
+            layerNoise: 0,
+            w: 1000,
+            h: 1000,
+            renderArea: 1000000,
+            x: 0,
+            y: 0,
+            z: 0,
+          })),
+          links: [],
+          defaultGraphControls: {
+            ...DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS,
+            chargeMult: 0,
+            collideStrength: 0,
+            collideIterations: 0,
+          },
         },
-      },
-    }),
-  );
-  await context.route("**/__photo-graph-test.svg*", (route) =>
-    route.fulfill({
-      contentType: "image/svg+xml",
-      body: '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024" fill="#c43b2c"/></svg>',
-    }),
-  );
-  const requests: string[] = [];
-  page.on("request", (request) => {
-    if (request.url().includes("__photo-graph-test.svg"))
-      requests.push(request.url());
-  });
-  await page.addInitScript(() => {
-    const uploads: { width: number; height: number }[] = [];
-    Object.assign(window, { graphTextureUploads: uploads });
-    const original = WebGL2RenderingContext.prototype.texSubImage2D;
-    WebGL2RenderingContext.prototype.texSubImage2D = function (
-      this: WebGL2RenderingContext,
-      ...args: Parameters<typeof original>
-    ) {
-      const image = args.at(-1);
-      if (image instanceof HTMLCanvasElement)
-        uploads.push({ width: image.width, height: image.height });
-      return Reflect.apply(original, this, args);
-    } as typeof original;
-  });
-  await enable3D(page);
-  // Native Retina DPR plus 103 overlapping sprites is expensive in software
-  // WebGL. Let the bounded upload queue finish; keep the budget and no-refetch
-  // assertions below just as strict once all photographs have reached the GPU.
-  await expect
-    .poll(
+      }),
+    );
+    await context.route("**/__photo-graph-test.svg*", (route) =>
+      route.fulfill({
+        contentType: "image/svg+xml",
+        // 103 x 512² RGBA pixels still exceed 48 MiB, without 1024² decode cost.
+        body: '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><rect width="512" height="512" fill="#c43b2c"/></svg>',
+      }),
+    );
+    const requests: string[] = [];
+    page.on("request", (request) => {
+      if (request.url().includes("__photo-graph-test.svg"))
+        requests.push(request.url());
+    });
+    await page.addInitScript(() => {
+      const uploads: { width: number; height: number }[] = [];
+      Object.assign(window, { graphTextureUploads: uploads });
+      const original = WebGL2RenderingContext.prototype.texSubImage2D;
+      WebGL2RenderingContext.prototype.texSubImage2D = function (
+        this: WebGL2RenderingContext,
+        ...args: Parameters<typeof original>
+      ) {
+        const image = args.at(-1);
+        if (image instanceof HTMLCanvasElement)
+          uploads.push({ width: image.width, height: image.height });
+        return Reflect.apply(original, this, args);
+      } as typeof original;
+    });
+    await enable3D(page);
+    // Retina DPR plus 103 overlapping sprites is expensive in software
+    // WebGL. Let the bounded upload queue finish; keep the budget and no-refetch
+    // assertions below just as strict once all photographs have reached the GPU.
+    await expect
+      .poll(
+        () =>
+          page.evaluate(
+            () =>
+              (window as unknown as { graphTextureUploads: unknown[] })
+                .graphTextureUploads.length,
+          ),
+        { timeout: 40_000 },
+      )
+      .toBeGreaterThanOrEqual(103);
+    const uploads = await page.evaluate(
       () =>
-        page.evaluate(
-          () =>
-            (window as unknown as { graphTextureUploads: unknown[] })
-              .graphTextureUploads.length,
-        ),
-      { timeout: 40_000 },
-    )
-    .toBeGreaterThanOrEqual(103);
-  const uploads = await page.evaluate(
-    () =>
-      (
-        window as unknown as {
-          graphTextureUploads: { width: number; height: number }[];
-        }
-      ).graphTextureUploads,
-  );
-  expect(
-    uploads.every(({ width, height }) => width <= 349 && height <= 349),
-  ).toBe(true);
-  const count = requests.length;
-  // Observe several real 500 ms budget scans; a static viewport must stay quiet.
-  await page.waitForTimeout(1600);
-  expect(requests).toHaveLength(count);
-  expect(errors.get(page)).toEqual([]);
+        (
+          window as unknown as {
+            graphTextureUploads: { width: number; height: number }[];
+          }
+        ).graphTextureUploads,
+    );
+    expect(
+      uploads.every(({ width, height }) => width <= 349 && height <= 349),
+    ).toBe(true);
+    const count = requests.length;
+    // Observe several real 500 ms budget scans; a static viewport must stay quiet.
+    await page.waitForTimeout(1600);
+    expect(requests).toHaveLength(count);
+    expect(errors.get(page)).toEqual([]);
+  });
 });
 
 test("unsupported WebGL falls back without breaking graph controls", async ({
@@ -2310,7 +2320,8 @@ test("unsupported WebGL falls back without breaking graph controls", async ({
   await page.goto(experience);
   await openSettings(page);
   await expect(toggle(page)).toBeEnabled();
-  await toggle(page).check();
+  // Failure can reset the checkbox before check() verifies its checked state.
+  await toggle(page).click();
   await expect(page.getByText(/3D is unavailable on this device/)).toBeVisible({
     timeout: 30_000,
   });
@@ -2329,7 +2340,8 @@ test("a failed lazy chunk retains 2D and reports how to retry", async ({
   await page.goto(experience);
   await openSettings(page);
   await expect(toggle(page)).toBeEnabled();
-  await toggle(page).check();
+  // A fast import rejection can restore 2D before the click finishes.
+  await toggle(page).click();
   await expect(page.getByText(/3D could not load/)).toBeVisible({
     timeout: 30_000,
   });
