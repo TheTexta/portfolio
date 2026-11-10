@@ -3,6 +3,14 @@
   --graph-hover-foreground: var(--color-canvas);
 }
 
+.headerButton {
+  height: auto;
+}
+
+.shell output {
+  white-space: nowrap;
+}
+
 .checkbox {
   display: grid;
   width: 1rem;

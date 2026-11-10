@@ -2,7 +2,7 @@
 
 import { useEffect, type RefObject } from "react";
 import {
-  LinearFilter,
+  NearestFilter,
   SRGBColorSpace,
   Texture,
   Vector3,
@@ -115,14 +115,15 @@ export function usePhotoGraphTextures({
       canvas.height = Math.max(1, Math.floor(image.height * scale));
       const context = canvas.getContext("2d");
       if (!context) return;
+      context.imageSmoothingEnabled = false;
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
       const bytes = canvas.width * canvas.height * 4;
       if (!trimTextures(bytes - (sprite.userData.bytes ?? 0), id)) return;
       const texture = new Texture(canvas);
       texture.colorSpace = SRGBColorSpace;
       texture.generateMipmaps = false;
-      texture.minFilter = LinearFilter;
-      texture.magFilter = LinearFilter;
+      texture.minFilter = NearestFilter;
+      texture.magFilter = NearestFilter;
       texture.needsUpdate = true;
       sprite.material.map?.dispose();
       sprite.material.map = texture;

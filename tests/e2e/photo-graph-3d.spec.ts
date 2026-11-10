@@ -1,4 +1,10 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import {
+  expect,
+  test,
+  type BrowserContext,
+  type Locator,
+  type Page,
+} from "@playwright/test";
 import sharp from "sharp";
 import { DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS } from "../../lib/photo-graph/graph-controls";
 import archive from "../../public/projects/photo-graph/worked-example/fixture.json";
@@ -15,7 +21,7 @@ const experience = "/projects/photo-graph/experience";
 const mode = (page: Page, name: "2d" | "3d") =>
   page.locator(`[data-graph-mode="${name}"]`);
 const toggle = (page: Page) =>
-  page.getByRole("checkbox", { name: "3D view", exact: true });
+  page.getByRole("checkbox", { name: "3D", exact: true });
 const errors = new WeakMap<Page, string[]>();
 const graphRequests = new WeakMap<Page, string[]>();
 
@@ -210,6 +216,539 @@ async function pixelDifference(first: Buffer, second: Buffer) {
   );
 }
 
+async function staticCameraScene(context: BrowserContext, page: Page) {
+  await context.route("**/api/photo-graph/graph", (route) =>
+    route.fulfill({
+      json: {
+        nodes: [-350, 0, 350].map((x, index) => ({
+          id: String(index),
+          sourceUrl: `/__photo-graph-test.svg?id=${index}`,
+          baseSize: 100,
+          aspectRatio: 1.6,
+          hasKnownAspectRatio: true,
+          layerNoise: 0,
+          w: 160,
+          h: 100,
+          renderArea: 16000,
+          x,
+          y: 0,
+          z: 0,
+        })),
+        links: [],
+        defaultGraphControls: {
+          ...DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS,
+          chargeMult: 0,
+          collideStrength: 0,
+          collideIterations: 0,
+        },
+      },
+    }),
+  );
+  await page.addInitScript(() => {
+    const state = { view: [] as number[], pointerId: 0 };
+    Object.assign(window, { photoGraphCameraProbe: state });
+    document.addEventListener(
+      "pointerdown",
+      (event) => {
+        if ((event.target as Element)?.closest('[data-graph-mode="3d"]'))
+          state.pointerId = event.pointerId;
+      },
+      true,
+    );
+    const names = new WeakMap<WebGLUniformLocation, string>();
+    const location = WebGL2RenderingContext.prototype.getUniformLocation;
+    WebGL2RenderingContext.prototype.getUniformLocation = function (...args) {
+      const result = Reflect.apply(location, this, args);
+      if (result) names.set(result, args[1]);
+      return result;
+    };
+    const matrix = WebGL2RenderingContext.prototype.uniformMatrix4fv;
+    let modelView: number[] = [];
+    WebGL2RenderingContext.prototype.uniformMatrix4fv = function (...args) {
+      const name = args[0] && names.get(args[0]);
+      const values = args[2] as Float32Array;
+      if (name === "modelViewMatrix") modelView = [...values];
+      if (name === "modelMatrix" && modelView.length === 16) {
+        // Sprites have diagonal scale and translation. Recover the camera view
+        // independently of which photograph moved or was rendered last.
+        const view = Array<number>(16).fill(0);
+        view[15] = 1;
+        for (let column = 0; column < 3; column += 1) {
+          for (let row = 0; row < 3; row += 1)
+            view[column * 4 + row] =
+              modelView[column * 4 + row] / values[column * 4 + column];
+        }
+        for (let row = 0; row < 3; row += 1)
+          view[12 + row] =
+            modelView[12 + row] -
+            view[row] * values[12] -
+            view[4 + row] * values[13] -
+            view[8 + row] * values[14];
+        state.view = view;
+      }
+      return Reflect.apply(matrix, this, args);
+    };
+  });
+}
+
+const cameraView = (page: Page) =>
+  page.evaluate(
+    () =>
+      (window as unknown as { photoGraphCameraProbe: { view: number[] } })
+        .photoGraphCameraProbe.view,
+  );
+const orientation = (matrix: number[]) =>
+  [0, 1, 2, 4, 5, 6, 8, 9, 10].map((index) => matrix[index]);
+const difference = (first: number[], second: number[]) =>
+  Math.max(...first.map((value, index) => Math.abs(value - second[index])));
+const twoFrames = (page: Page) =>
+  page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
+
+test("Shift changes an ongoing camera drag between orbit and pan without jumps", async ({
+  context,
+  page,
+}) => {
+  await staticCameraScene(context, page);
+  await enable3D(page);
+  await photographPoint(page);
+  await page
+    .getByRole("button", { name: "Close graph controls", exact: true })
+    .click();
+  const bounds = (await mode(page, "3d").locator("canvas").boundingBox())!;
+  let x = bounds.x + bounds.width - 30;
+  let y = bounds.y + bounds.height - 30;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  const initial = await cameraView(page);
+  x -= 25;
+  y -= 10;
+  await page.mouse.move(x, y, { steps: 4 });
+  await expect
+    .poll(async () =>
+      difference(orientation(initial), orientation(await cameraView(page))),
+    )
+    .toBeGreaterThan(0.01);
+  for (let pass = 0; pass < 2; pass += 1) {
+    const beforeShift = await cameraView(page);
+    await page.keyboard.down("Shift");
+    await twoFrames(page);
+    expect(difference(beforeShift, await cameraView(page))).toBeLessThan(0.001);
+    x -= 20;
+    y -= 10;
+    await page.mouse.move(x, y, { steps: 4 });
+    await expect
+      .poll(async () =>
+        difference(
+          beforeShift.slice(12, 15),
+          (await cameraView(page)).slice(12, 15),
+        ),
+      )
+      .toBeGreaterThan(0.01);
+    const panned = await cameraView(page);
+    expect(
+      difference(orientation(beforeShift), orientation(panned)),
+    ).toBeLessThan(0.001);
+    await page.keyboard.up("Shift");
+    await twoFrames(page);
+    expect(difference(panned, await cameraView(page))).toBeLessThan(0.001);
+    x -= 20;
+    await page.mouse.move(x, y, { steps: 4 });
+    await expect
+      .poll(async () =>
+        difference(orientation(panned), orientation(await cameraView(page))),
+      )
+      .toBeGreaterThan(0.01);
+  }
+  await page.mouse.up();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect(errors.get(page)).toEqual([]);
+});
+
+test("a Shift-started drag can resume orbit and Ctrl/right drags retain native panning", async ({
+  context,
+  page,
+}) => {
+  await staticCameraScene(context, page);
+  await enable3D(page);
+  await photographPoint(page);
+  await page
+    .getByRole("button", { name: "Close graph controls", exact: true })
+    .click();
+  const bounds = (await mode(page, "3d").locator("canvas").boundingBox())!;
+  const x = bounds.x + bounds.width - 30;
+  const y = bounds.y + bounds.height - 30;
+  await page.mouse.move(x, y);
+  await page.keyboard.down("Shift");
+  await page.mouse.down();
+  const initial = await cameraView(page);
+  await page.mouse.move(x - 25, y - 10, { steps: 4 });
+  await twoFrames(page);
+  expect(
+    difference(orientation(initial), orientation(await cameraView(page))),
+  ).toBeLessThan(0.001);
+  await page.keyboard.up("Shift");
+  const panned = await cameraView(page);
+  await page.mouse.move(x - 50, y - 10, { steps: 4 });
+  await expect
+    .poll(async () =>
+      difference(orientation(panned), orientation(await cameraView(page))),
+    )
+    .toBeGreaterThan(0.01);
+  await page.mouse.up();
+  for (const kind of ["Control", "right"] as const) {
+    await page.mouse.move(x, y);
+    if (kind === "Control") await page.keyboard.down("Control");
+    await page.mouse.down({ button: kind === "right" ? "right" : "left" });
+    const before = await cameraView(page);
+    await page.keyboard.down("Shift");
+    await page.keyboard.up("Shift");
+    await page.mouse.move(x - 20, y - 10, { steps: 4 });
+    await twoFrames(page);
+    expect(
+      difference(orientation(before), orientation(await cameraView(page))),
+    ).toBeLessThan(0.001);
+    expect(
+      difference(before.slice(12, 15), (await cameraView(page)).slice(12, 15)),
+    ).toBeGreaterThan(0.01);
+    await page.mouse.up({ button: kind === "right" ? "right" : "left" });
+    if (kind === "Control") await page.keyboard.up("Control");
+  }
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect(errors.get(page)).toEqual([]);
+});
+
+test("mid-drag mode changes stop cross-mode inertia when damping is enabled", async ({
+  context,
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await staticCameraScene(context, page);
+  await enable3D(page);
+  await photographPoint(page);
+  await page
+    .getByRole("button", { name: "Close graph controls", exact: true })
+    .click();
+  const bounds = (await mode(page, "3d").locator("canvas").boundingBox())!;
+  const x = bounds.x + bounds.width - 30;
+  const y = bounds.y + bounds.height - 30;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x - 30, y - 10, { steps: 3 });
+  await page.keyboard.down("Shift");
+  await twoFrames(page);
+  const panning = await cameraView(page);
+  await page.mouse.move(x - 60, y - 20, { steps: 3 });
+  await twoFrames(page);
+  expect(
+    difference(orientation(panning), orientation(await cameraView(page))),
+  ).toBeLessThan(0.001);
+  await page.keyboard.up("Shift");
+  await twoFrames(page);
+  const stopped = await cameraView(page);
+  await twoFrames(page);
+  expect(difference(stopped, await cameraView(page))).toBeLessThan(0.001);
+  await page.mouse.up();
+  expect(errors.get(page)).toEqual([]);
+});
+
+test("native touch orbit, two-finger pan and pinch still work after cancellation", async ({
+  context,
+  page,
+  isMobile,
+}) => {
+  test.skip(!isMobile, "Requires the touch-enabled mobile context");
+  await staticCameraScene(context, page);
+  await enable3D(page);
+  await photographPoint(page);
+  await page
+    .getByRole("button", { name: "Close graph controls", exact: true })
+    .click();
+  const bounds = (await mode(page, "3d").locator("canvas").boundingBox())!;
+  const x = bounds.x + bounds.width - 100;
+  const y = bounds.y + bounds.height - 80;
+  const cdp = await context.newCDPSession(page);
+  const initial = await cameraView(page);
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ id: 1, x, y }],
+  });
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [{ id: 1, x: x - 30, y: y - 10 }],
+  });
+  await expect
+    .poll(async () =>
+      difference(orientation(initial), orientation(await cameraView(page))),
+    )
+    .toBeGreaterThan(0.01);
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchCancel",
+    touchPoints: [],
+  });
+  await twoFrames(page);
+  const pannedFrom = await cameraView(page);
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [
+      { id: 1, x: x - 20, y },
+      { id: 2, x: x + 20, y },
+    ],
+  });
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [
+      { id: 1, x: x - 40, y: y - 10 },
+      { id: 2, x, y: y - 10 },
+    ],
+  });
+  await twoFrames(page);
+  const panned = await cameraView(page);
+  expect(difference(orientation(pannedFrom), orientation(panned))).toBeLessThan(
+    0.001,
+  );
+  expect(
+    difference(pannedFrom.slice(12, 15), panned.slice(12, 15)),
+  ).toBeGreaterThan(0.01);
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [
+      { id: 1, x: x - 60, y: y - 10 },
+      { id: 2, x: x + 20, y: y - 10 },
+    ],
+  });
+  await twoFrames(page);
+  expect(
+    difference(panned.slice(12, 15), (await cameraView(page)).slice(12, 15)),
+  ).toBeGreaterThan(0.01);
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
+  await cdp.detach();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect(errors.get(page)).toEqual([]);
+});
+
+test("Shift does not move the camera during photograph dragging and blur releases the gesture", async ({
+  context,
+  page,
+}) => {
+  await staticCameraScene(context, page);
+  await enable3D(page);
+  await page
+    .getByRole("button", { name: "Close graph controls", exact: true })
+    .click();
+  const photo = await photographPoint(page);
+  const before = await cameraView(page);
+  await page.mouse.move(photo.x, photo.y);
+  await page.mouse.down();
+  await page.keyboard.down("Shift");
+  await page.mouse.move(photo.x + 30, photo.y + 15, { steps: 6 });
+  await twoFrames(page);
+  expect(difference(before, await cameraView(page))).toBeLessThan(0.001);
+  await page.evaluate(() => window.dispatchEvent(new Event("blur")));
+  await page.keyboard.up("Shift");
+  await page.mouse.up();
+  await twoFrames(page);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  const canvas = mode(page, "3d").locator("canvas");
+  const bounds = (await canvas.boundingBox())!;
+  const current = await cameraView(page);
+  await page.mouse.move(
+    bounds.x + bounds.width - 30,
+    bounds.y + bounds.height - 30,
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    bounds.x + bounds.width - 60,
+    bounds.y + bounds.height - 40,
+    { steps: 4 },
+  );
+  await page.mouse.up();
+  await expect
+    .poll(async () =>
+      difference(orientation(current), orientation(await cameraView(page))),
+    )
+    .toBeGreaterThan(0.01);
+  expect(errors.get(page)).toEqual([]);
+});
+
+test("cancelling a photograph press never inspects on late release or loses the next click", async ({
+  context,
+  page,
+}) => {
+  await staticCameraScene(context, page);
+  await enable3D(page);
+  await page
+    .getByRole("button", { name: "Close graph controls", exact: true })
+    .click();
+  const canvas = mode(page, "3d").locator("canvas");
+  for (const cancellation of ["blur", "pointercancel"] as const) {
+    const point = await photographPoint(page);
+    await page.mouse.move(point.x, point.y);
+    await expect(canvas).toHaveCSS("cursor", /pointer|grab/);
+    await page.mouse.down();
+    if (cancellation === "blur")
+      await page.evaluate(() => window.dispatchEvent(new Event("blur")));
+    else
+      await canvas.evaluate((element) => {
+        const pointerId = (
+          window as unknown as { photoGraphCameraProbe: { pointerId: number } }
+        ).photoGraphCameraProbe.pointerId;
+        element.dispatchEvent(
+          new PointerEvent("pointercancel", {
+            pointerId,
+            pointerType: "mouse",
+            bubbles: true,
+          }),
+        );
+      });
+    // The real mouse is still held. Its movement must not re-latch dragging.
+    await page.mouse.move(point.x + 2, point.y + 2);
+    await page.mouse.up();
+    await twoFrames(page);
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    const fresh = await photographPoint(page);
+    await page.mouse.move(fresh.x, fresh.y);
+    await expect(canvas).toHaveCSS("cursor", /pointer|grab/);
+    await page.mouse.click(fresh.x, fresh.y);
+    await expect(
+      page.getByRole("dialog", { name: /Inspect photograph/ }),
+    ).toBeVisible();
+    await page.keyboard.press("Escape");
+  }
+  expect(errors.get(page)).toEqual([]);
+});
+
+test("control typography and spacing stay consistent at desktop and narrow widths", async ({
+  page,
+}, info) => {
+  await enable3D(page);
+  const close = page.getByRole("button", {
+    name: "Close graph controls",
+    exact: true,
+  });
+  const panel = close.locator("../..");
+  const reset = page.getByRole("button", { name: "Reset", exact: true });
+  for (const width of [1280, 390, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const threeD of [false, true]) {
+      await toggle(page).setChecked(threeD);
+      await expect(
+        mode(page, threeD ? "3d" : "2d")
+          .locator("canvas")
+          .first(),
+      ).toBeVisible();
+      const metrics = await panel.evaluate((element) => {
+        const style = (node: Element) => {
+          const css = getComputedStyle(node);
+          return {
+            size: css.fontSize,
+            height: css.lineHeight,
+            weight: css.fontWeight,
+            tracking: css.letterSpacing,
+          };
+        };
+        const labels = [...element.querySelectorAll("label, output")];
+        const fields = [...element.querySelectorAll('input[type="range"]')].map(
+          (input) => {
+            const field = input.parentElement!;
+            const row = field.firstElementChild!;
+            const bounds = field.getBoundingClientRect();
+            return {
+              x: bounds.x,
+              right: bounds.right,
+              top: bounds.top,
+              bottom: bounds.bottom,
+              gap:
+                input.getBoundingClientRect().top -
+                row.getBoundingClientRect().bottom,
+              textGap: getComputedStyle(row).columnGap,
+            };
+          },
+        );
+        const header = element.firstElementChild!;
+        const headerButton = header.firstElementChild!;
+        return {
+          text: labels.map(style),
+          fields,
+          fieldGap: fields[1].top - fields[0].bottom,
+          rowHeights: [
+            ...element.querySelectorAll("label:has(input[type=checkbox])"),
+          ].map((label) => label.getBoundingClientRect().height),
+          headerHeight: header.getBoundingClientRect().height,
+          buttonHeight: headerButton.getBoundingClientRect().height,
+          overflow: element.scrollWidth > element.clientWidth,
+          valueWrapping: [...element.querySelectorAll("output")].map(
+            (output) => getComputedStyle(output).whiteSpace,
+          ),
+        };
+      });
+      const size = width < 768 ? 14 : 12;
+      const expected = {
+        size: `${size}px`,
+        height: width < 768 ? "20px" : "16px",
+        weight: "500",
+        tracking: `${size * 0.04}px`,
+      };
+      expect(metrics.text.length).toBeGreaterThan(6);
+      for (const text of metrics.text) expect(text).toEqual(expected);
+      expect(
+        await reset.evaluate((element) => {
+          const css = getComputedStyle(element);
+          return {
+            size: css.fontSize,
+            height: css.lineHeight,
+            weight: css.fontWeight,
+            tracking: css.letterSpacing,
+          };
+        }),
+      ).toEqual(expected);
+      expect(metrics.overflow).toBe(false);
+      expect(metrics.valueWrapping.every((value) => value === "nowrap")).toBe(
+        true,
+      );
+      expect(
+        Math.abs(metrics.headerHeight - metrics.buttonHeight),
+      ).toBeLessThanOrEqual(1);
+      for (const height of metrics.rowHeights)
+        expect(height).toBeGreaterThanOrEqual(
+          width < 768 || info.project.name === "mobile" ? 44 : 32,
+        );
+      expect(metrics.fieldGap).toBe(12);
+      for (const field of metrics.fields) {
+        expect(field.gap).toBe(8);
+        expect(field.textGap).toBe("12px");
+        expect(field.x).toBe(metrics.fields[0].x);
+        expect(field.right).toBe(metrics.fields[0].right);
+      }
+    }
+    await page.screenshot({
+      path: `.tmp/playwright-results/photo-graph-controls-${width}-${info.project.name}.png`,
+    });
+  }
+  await close.click();
+  const point = await photographPoint(page);
+  await page.mouse.move(point.x, point.y);
+  await expect(mode(page, "3d").locator("canvas")).toHaveCSS(
+    "cursor",
+    /pointer|grab/,
+  );
+  await page.mouse.click(point.x, point.y);
+  const dialog = page.getByRole("dialog", { name: /Inspect photograph/ });
+  await expect(dialog).toBeVisible();
+  const download = dialog.getByRole("link", { name: "Download Original" });
+  await expect(download).toHaveCSS("font-size", "14px");
+  await expect(download).toHaveCSS("line-height", "20px");
+  await expect(download).toHaveCSS("font-weight", "500");
+  expect(errors.get(page)).toEqual([]);
+});
+
 test("orbiting and dragging work, and both modes restore their own camera and layout", async ({
   page,
 }) => {
@@ -376,7 +915,7 @@ test("2D is default; 3D loads only on activation and is absent from article prev
   await expect(mode(page, "2d").locator("canvas").first()).toBeVisible();
   await page.goto("/write-ups/photo-graph");
   await expect(page.getByRole("article")).toBeVisible();
-  await expect(page.getByLabel("3D view", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("3D", { exact: true })).toHaveCount(0);
   expect(errors.get(page)).toEqual([]);
 });
 
@@ -867,7 +1406,7 @@ test("slider wheel input handles fractional gestures and bounds without hijackin
   expect(errors.get(page)).toEqual([]);
 });
 
-test("3D uses real antialiasing and upgrades zoomed tiles to larger GPU textures", async ({
+test("3D uses nearest-neighbour images with real antialiasing and upgrades zoomed GPU textures", async ({
   context,
   page,
 }) => {
@@ -901,11 +1440,13 @@ test("3D uses real antialiasing and upgrades zoomed tiles to larger GPU textures
     }),
   );
   const widths: number[] = [];
+  const textureRequests: string[] = [];
   await context.route("https://images.dextery.dev/photo-graph/**", (route) => {
     const width = Number(
       new URL(route.request().url()).searchParams.get("width"),
     );
     widths.push(width);
+    textureRequests.push(route.request().url());
     return route.fulfill({
       contentType: "image/svg+xml",
       headers: { "access-control-allow-origin": "*" },
@@ -914,14 +1455,25 @@ test("3D uses real antialiasing and upgrades zoomed tiles to larger GPU textures
   });
   await page.addInitScript(() => {
     const uploads: number[] = [];
-    Object.assign(window, { graphTextureWidths: uploads });
+    const samples: { min: number; mag: number; smoothing: boolean }[] = [];
+    Object.assign(window, {
+      graphTextureWidths: uploads,
+      graphTextureSamples: samples,
+    });
     const original = WebGL2RenderingContext.prototype.texSubImage2D;
     WebGL2RenderingContext.prototype.texSubImage2D = function (
       this: WebGL2RenderingContext,
       ...args: Parameters<typeof original>
     ) {
       const image = args.at(-1);
-      if (image instanceof HTMLCanvasElement) uploads.push(image.width);
+      if (image instanceof HTMLCanvasElement) {
+        uploads.push(image.width);
+        samples.push({
+          min: this.getTexParameter(this.TEXTURE_2D, this.TEXTURE_MIN_FILTER),
+          mag: this.getTexParameter(this.TEXTURE_2D, this.TEXTURE_MAG_FILTER),
+          smoothing: image.getContext("2d")!.imageSmoothingEnabled,
+        });
+      }
       return Reflect.apply(original, this, args);
     } as typeof original;
   });
@@ -975,6 +1527,7 @@ test("3D uses real antialiasing and upgrades zoomed tiles to larger GPU textures
     bounds.x + bounds.width / 2,
     bounds.y + bounds.height * 0.75,
   );
+  const zoomRequestStart = textureRequests.length;
   for (let step = 0; step < 8; step += 1) {
     await canvas.dispatchEvent("wheel", {
       deltaY: -500,
@@ -991,9 +1544,43 @@ test("3D uses real antialiasing and upgrades zoomed tiles to larger GPU textures
   expect(Math.max(...(await uploadedWidths()))).toBeLessThanOrEqual(
     PHOTO_GRAPH_MAX_TEXTURE_SIDE,
   );
+  // Zoom can pass through several legitimate tiers. Wait for both requests and
+  // GPU uploads to settle before checking that periodic allocation stays quiet.
+  let lastActivity = Date.now();
+  let previousActivity = "";
+  await expect
+    .poll(
+      async () => {
+        const activity = `${widths.length}:${(await uploadedWidths()).length}`;
+        if (activity !== previousActivity) {
+          previousActivity = activity;
+          lastActivity = Date.now();
+        }
+        return Date.now() - lastActivity;
+      },
+      { timeout: 15_000 },
+    )
+    .toBeGreaterThan(1000);
   const count = widths.length;
   await page.waitForTimeout(1600);
   expect(widths).toHaveLength(count);
+  const zoomRequests = textureRequests.slice(zoomRequestStart);
+  expect(new Set(zoomRequests).size).toBe(zoomRequests.length);
+  const samples = await page.evaluate(
+    () =>
+      (
+        window as unknown as {
+          graphTextureSamples: {
+            min: number;
+            mag: number;
+            smoothing: boolean;
+          }[];
+        }
+      ).graphTextureSamples,
+  );
+  expect(samples.length).toBeGreaterThanOrEqual(3);
+  for (const sample of samples)
+    expect(sample).toEqual({ min: 0x2600, mag: 0x2600, smoothing: false }); // WebGL NEAREST
   expect(errors.get(page)).toEqual([]);
 });
 
@@ -1670,6 +2257,9 @@ test("texture-budget pressure downscales visible photos without repeatedly fetch
     } as typeof original;
   });
   await enable3D(page);
+  // Native Retina DPR plus 103 overlapping sprites is expensive in software
+  // WebGL. Let the bounded upload queue finish; keep the budget and no-refetch
+  // assertions below just as strict once all photographs have reached the GPU.
   await expect
     .poll(
       () =>
@@ -1678,7 +2268,7 @@ test("texture-budget pressure downscales visible photos without repeatedly fetch
             (window as unknown as { graphTextureUploads: unknown[] })
               .graphTextureUploads.length,
         ),
-      { timeout: 20_000 },
+      { timeout: 40_000 },
     )
     .toBeGreaterThanOrEqual(103);
   const uploads = await page.evaluate(

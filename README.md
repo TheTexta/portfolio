@@ -483,7 +483,7 @@ follow-up work.
 
 ### Optional Photo Graph 3D view
 
-At `/projects/photo-graph/experience`, open graph controls and enable **3D view**.
+At `/projects/photo-graph/experience`, open graph controls and enable **3D**.
 The default remains 2D; homepage, article, and admin previews remain 2D. The view
 choice lasts only while that experience is mounted. The standalone experience
 retains its compact controls and icon-only return link, without a photograph
@@ -492,7 +492,10 @@ control-enabled embedded graphs, not the standalone canvas.
 
 In 3D, photographs are camera-facing rectangles in an XYZ force simulation.
 Drag empty space to orbit, scroll/pinch to zoom, and right-drag or use two fingers
-to pan. Drag photographs to reposition them or select one to open the existing
+to pan. Hold **Shift** during a left-mouse camera drag to pan; release it to resume
+orbit without releasing the mouse. This also works when Shift changes mid-drag;
+photograph dragging and Ctrl/Meta-started panning retain their native behavior.
+Drag photographs to reposition them or select one to open the existing
 inspection/download overlay. **Reset**, beside the top-right compact control,
 smoothly fits the current graph over 900ms in either 2D or 3D without changing its settings.
 The action remains visible when graph controls are closed. Distance
@@ -504,6 +507,8 @@ Drag a slider's square handle, scroll horizontally over its field with a trackpa
 or use its keyboard controls to adjust it. Horizontal scrolling moves the value
 in the swipe direction; vertical scrolling and pinch-to-zoom remain native.
 Clicking or dragging the track does not change the value.
+Photo Graph control text shares a 12px desktop / 14px mobile scale, medium weight,
+and consistent 8px/12px spacing; its minimum control rows remain 32px/44px.
 
 `PhotoGraphCanvas` owns data loading, settings and inspection. Its separate
 `PhotoGraph2DRenderer` and lazily imported `PhotoGraph3DRenderer` own independent
@@ -526,6 +531,9 @@ drawing buffer follows viewport and screen-density changes; projected texture
 requests use the renderer's actual pixel ratio. Resolution tracking uses actual
 uploaded texture dimensions so budget-downscaled photographs can upgrade again
 when zoomed, without repeatedly requesting rounded image-size tiers.
+3D photograph textures use nearest-neighbour minification/magnification and disable
+canvas smoothing during texture preparation; geometry antialiasing, native pixel
+ratio and the existing resolution/memory budgets remain unchanged.
 The 2D canvas uses normal image smoothing rather than forced pixelated scaling.
 Full-resolution originals remain in the inspection overlay.
 The larger 1536/1920/2560/3200/3840px request tiers are 3D-only; 2D tiers are
@@ -544,7 +552,9 @@ explanation. Switching modes does not refetch the graph.
 real Chromium WebGL, not production services. Crowded-scene coverage zooms a
 foreground photograph with 102 background photographs at normal and Retina
 density, checks actual uploaded resolution and retained texture memory, then
-resets and upgrades again without repeated requests. Run it with
+resets and upgrades again without repeated requests. Additional checks cover GPU
+nearest-neighbour samplers, mid-drag Shift changes with and without damping,
+cancelled gestures, native touch navigation and responsive control spacing. Run it with
 `npm run test:e2e -- tests/e2e/photo-graph-3d.spec.ts`.
 
 ## Portfolio evidence and résumé

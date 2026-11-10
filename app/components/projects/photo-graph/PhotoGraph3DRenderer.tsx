@@ -35,6 +35,7 @@ import {
 } from "./view-state";
 import { usePhotoGraphTextures } from "./usePhotoGraphTextures";
 import { photoGraphRenderPixelRatio } from "./render-quality";
+import { attachPhotoGraphPanModifier } from "./drag-pan-modifier";
 
 const EMPTY_GRAPH: PhotoGraphData = { nodes: [], links: [] };
 const RENDERER_CONFIG = { antialias: true, alpha: false };
@@ -254,6 +255,7 @@ export default function PhotoGraph3DRenderer({
     if (reducedMotion) stopReset();
     orbit.addEventListener("start", stopReset);
     const canvas = renderer.domElement;
+    const detachPanModifier = attachPhotoGraphPanModifier(orbit, canvas);
     const contextLost = (event: Event) => {
       if (!canvas.isConnected) return;
       event.preventDefault();
@@ -261,6 +263,7 @@ export default function PhotoGraph3DRenderer({
     };
     canvas.addEventListener("webglcontextlost", contextLost);
     return () => {
+      detachPanModifier();
       stopReset();
       orbit.removeEventListener("start", stopReset);
       canvas.removeEventListener("webglcontextlost", contextLost);

@@ -42,7 +42,7 @@ export const PHOTO_GRAPH_CONNECTION_REVEAL_TICKS = Math.ceil(
 export const photoGraphControlsPositionClass =
   "absolute top-2 left-2 z-[5] flex max-h-[calc(100%-1rem)] flex-col overflow-y-auto";
 export const photoGraphControlTextClass =
-  "m-0 p-0 text-sm md:text-xs font-medium tracking-[0.04em]";
+  "text-sm leading-5 font-medium tracking-[0.04em] md:text-xs md:leading-4";
 export const photoGraphIconControlClass =
   "max-md:size-11 [@media(hover:none)]:size-11 [@media(orientation:landscape)_and_(max-width:1023px)_and_(max-height:500px)]:size-11 [@media(pointer:coarse)]:size-11";
 export const photoGraphControlRowClass =

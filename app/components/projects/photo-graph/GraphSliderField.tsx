@@ -13,6 +13,7 @@ type GraphSliderFieldProps = {
   onChange: (key: GraphSliderConfig["key"], value: number) => void;
   compact?: boolean;
   horizontalScroll?: boolean;
+  textClassName?: string;
   inputClassName?: string;
 };
 
@@ -23,6 +24,7 @@ export default function GraphSliderField({
   onChange,
   compact = false,
   horizontalScroll = false,
+  textClassName,
   inputClassName,
 }: GraphSliderFieldProps) {
   const { key, label, min, max, scale = 1, formatValue } = config;
@@ -96,10 +98,17 @@ export default function GraphSliderField({
   return (
     <div ref={fieldRef} className={compact ? "contents" : "space-y-2"}>
       <div className="flex items-center justify-between gap-3">
-        <label htmlFor={inputId} className="text-sm font-medium">
+        <label
+          htmlFor={inputId}
+          className={cn("text-sm font-medium", textClassName)}
+        >
           {label}
         </label>
-        <output id={valueId} htmlFor={inputId} className="text-sm opacity-70">
+        <output
+          id={valueId}
+          htmlFor={inputId}
+          className={cn("text-sm opacity-70", textClassName)}
+        >
           {valueText}
         </output>
       </div>

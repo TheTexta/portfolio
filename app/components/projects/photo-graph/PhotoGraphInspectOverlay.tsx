@@ -299,7 +299,7 @@ export default function PhotoGraphInspectOverlay({
             download={inspectMetadata?.filename}
             layout="action"
             size="md"
-            className={`shrink-0 gap-1 border-y-0 border-r-0 text-xs focus-visible:-outline-offset-2 ${photoGraphControlRowClass} ${
+            className={`shrink-0 gap-2 border-y-0 border-r-0 focus-visible:-outline-offset-2 ${photoGraphControlRowClass} ${photoGraphControlTextClass} ${
               inspectMetadata?.downloadUrl
                 ? ""
                 : "pointer-events-none opacity-50"

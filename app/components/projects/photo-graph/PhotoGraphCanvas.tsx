@@ -25,6 +25,7 @@ import {
   PHOTO_GRAPH_INSPECT_PREVIEW_QUALITY,
   PHOTO_GRAPH_INSPECT_PREVIEW_WIDTH,
   photoGraphControlRowClass,
+  photoGraphControlTextClass,
   photoGraphShellClass,
 } from "./config";
 import type {
@@ -153,7 +154,7 @@ export default function PhotoGraphCanvas({
         if (modeRequestRef.current !== request) return;
         setMode("2d");
         setModeMessage(
-          "3D could not load. Showing 2D; enable 3D view to try again.",
+          "3D could not load. Showing 2D; enable 3D to try again.",
         );
       }
     },
@@ -164,7 +165,7 @@ export default function PhotoGraphCanvas({
     modeRequestRef.current += 1;
     setMode("2d");
     setModeMessage(
-      "3D is unavailable on this device. Showing 2D; you can try 3D view again.",
+      "3D is unavailable on this device. Showing 2D; you can try 3D again.",
     );
   }, []);
 
@@ -236,7 +237,7 @@ export default function PhotoGraphCanvas({
               <ControlButton
                 layout="action"
                 size="sm"
-                className={photoGraphControlRowClass}
+                className={`px-3 py-0 ${photoGraphControlRowClass} ${photoGraphControlTextClass}`}
                 disabled={loadStatus !== "ready" || mode === "loading"}
                 onClick={() => setResetViewKey((key) => key + 1)}
               >

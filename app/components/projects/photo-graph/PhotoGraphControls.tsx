@@ -56,7 +56,7 @@ export default function PhotoGraphControls({
 
   return (
     <div
-      className={`w-[min(18rem,calc(100%-1rem))] border select-none data-[reserve-navigation=true]:w-[min(18rem,calc(100%-4.25rem))] data-[reserve-reset=true]:w-[min(18rem,calc(100%-8.75rem))] ${photoGraphControlsPositionClass} ${photoGraphPanelClass}`}
+      className={`w-[min(18rem,calc(100%-1rem))] border select-none data-[reserve-navigation=true]:w-[min(18rem,calc(100%-4.25rem))] data-[reserve-reset=true]:w-[min(18rem,calc(100%-9.25rem))] ${photoGraphControlsPositionClass} ${photoGraphPanelClass}`}
       data-reserve-navigation={reserveNavigationSpace || undefined}
       data-reserve-reset={reserveResetSpace || undefined}
     >
@@ -66,7 +66,7 @@ export default function PhotoGraphControls({
         <ControlButton
           onClick={menuOpen ? onMenuClose : onMenuOpen}
           size="sm"
-          className={`shrink-0 border-y-0 border-l-0 focus-visible:-outline-offset-2 ${photoGraphIconControlClass}`}
+          className={`${styles.headerButton} shrink-0 border-y-0 border-l-0 focus-visible:-outline-offset-2 ${photoGraphIconControlClass}`}
           aria-label={menuOpen ? "Close graph controls" : "Open graph controls"}
           aria-expanded={menuOpen}
           aria-controls={panelId}
@@ -93,16 +93,16 @@ export default function PhotoGraphControls({
         {show3D && (
           <div className="border-b border-ink px-3">
             <Toggle
-              label="3D view"
+              label="3D"
               checked={threeDEnabled}
               disabled={threeDDisabled}
               onChange={(enabled) => on3DChange?.(enabled)}
-              className={`w-full justify-between ${photoGraphControlRowClass}`}
+              className={`w-full justify-between ${photoGraphControlRowClass} ${photoGraphControlTextClass}`}
             />
             <p
               role="status"
               aria-live="polite"
-              className="text-xs leading-relaxed empty:hidden"
+              className={`pb-3 empty:hidden ${photoGraphControlTextClass}`}
             >
               {threeDLoading ? "Loading 3D view…" : modeMessage}
             </p>
@@ -111,7 +111,7 @@ export default function PhotoGraphControls({
         {showTheme && (
           <div className="border-b border-ink px-3">
             <ThemeToggle
-              className={`w-full justify-between ${photoGraphControlRowClass}`}
+              className={`w-full justify-between ${photoGraphControlRowClass} ${photoGraphControlTextClass}`}
             />
           </div>
         )}
@@ -135,6 +135,7 @@ export default function PhotoGraphControls({
               idPrefix={panelId}
               onChange={onControlChange}
               horizontalScroll
+              textClassName={`${photoGraphControlTextClass} tabular-nums`}
               inputClassName={`${styles.slider} ${photoGraphControlRowClass}`}
             />
           ))}
