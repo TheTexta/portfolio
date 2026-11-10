@@ -436,6 +436,10 @@ test("write-up synopses expand on hover, keyboard focus and touch without losing
     )
     .toBe(true);
   await expect(navigation.locator('a[aria-expanded="true"]')).toHaveCount(1);
+  if (info.project.name === "desktop") {
+    // Animated rows must not keep sending hover events during keyboard checks.
+    await page.mouse.move(0, 0);
+  }
   await navigation.focus();
   await page.keyboard.press("Tab");
   await expect(first.getByRole("link")).toBeFocused();

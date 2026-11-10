@@ -67,12 +67,74 @@ export function useIframeOpenOnClick(
     [clearFallback, fallbackHref, previewSrc],
   );
 
+  const attachFrameClick = useCallback(() => {
+    if (!enabled) return;
+
+    removeFrameClickRef.current?.();
+    removeFrameClickRef.current = null;
+
+    // Same-origin links can be read directly; external sites use postMessage.
+    const frame = iframeRef.current;
+    let frameDocument: Document | null | undefined;
+    try {
+      frameDocument = frame?.contentDocument;
+    } catch {
+      return;
+    }
+    if (
+      !frame ||
+      !frameDocument ||
+      frameDocument.readyState !== "complete" ||
+      frameDocument.URL === "about:blank"
+    ) {
+      return;
+    }
+
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target as Element | null;
+      const anchor = target?.closest?.<HTMLAnchorElement>("a[href]");
+      const navigationButton = target?.closest?.<HTMLElement>(
+        "[data-preview-href]",
+      );
+      const declaredHref =
+        anchor?.href ?? navigationButton?.getAttribute("data-preview-href");
+      let href: string | null = null;
+      if (declaredHref) {
+        try {
+          href = new URL(declaredHref, frameDocument.baseURI).href;
+        } catch {
+          // An invalid destination opens the project's main site.
+        }
+      }
+
+      if (getPageHref(href)) {
+        event.preventDefault();
+        openPage(href);
+      } else if (href?.startsWith("mailto:") || href?.startsWith("tel:")) {
+        clearFallback();
+      } else {
+        event.preventDefault();
+        event.stopPropagation();
+        openFallback();
+      }
+    };
+
+    frameDocument.addEventListener("click", handleClick, true);
+    removeFrameClickRef.current = () =>
+      frameDocument.removeEventListener("click", handleClick, true);
+    bridgeReadyRef.current = true;
+    frame.dataset.previewNavigationReady = "true";
+    clearFallback();
+  }, [clearFallback, enabled, iframeRef, openFallback, openPage]);
+
   useEffect(() => {
     if (!enabled) {
       return;
     }
 
     bridgeReadyRef.current = false;
+    const frame = iframeRef.current;
+    if (frame) delete frame.dataset.previewNavigationReady;
     const previewOrigin = new URL(previewSrc, window.location.href).origin;
 
     const handleMessage = (event: MessageEvent) => {
@@ -90,6 +152,8 @@ export function useIframeOpenOnClick(
 
       if (event.data.type === "ready") {
         bridgeReadyRef.current = true;
+        const currentFrame = iframeRef.current;
+        if (currentFrame) currentFrame.dataset.previewNavigationReady = "true";
         clearFallback();
         return;
       }
@@ -128,70 +192,28 @@ export function useIframeOpenOnClick(
 
     window.addEventListener("message", handleMessage);
     window.addEventListener("blur", handleWindowBlur);
+    // A cached same-origin iframe may load before this effect subscribes.
+    attachFrameClick();
     return () => {
       window.removeEventListener("message", handleMessage);
       window.removeEventListener("blur", handleWindowBlur);
       removeFrameClickRef.current?.();
+      removeFrameClickRef.current = null;
+      if (frame) delete frame.dataset.previewNavigationReady;
       clearFallback();
     };
-  }, [clearFallback, enabled, iframeRef, openFallback, openPage, previewSrc]);
+  }, [
+    attachFrameClick,
+    clearFallback,
+    enabled,
+    iframeRef,
+    openFallback,
+    openPage,
+    previewSrc,
+  ]);
 
   return {
-    onLoad: () => {
-      if (!enabled) {
-        return;
-      }
-
-      removeFrameClickRef.current?.();
-      removeFrameClickRef.current = null;
-
-      // The Grailed Plus iframe shares this origin, so its links can be read
-      // without changing the embedded page. External sites use postMessage.
-      let frameDocument: Document | null | undefined;
-      try {
-        frameDocument = iframeRef.current?.contentDocument;
-      } catch {
-        return;
-      }
-      if (!frameDocument) {
-        return;
-      }
-
-      bridgeReadyRef.current = true;
-
-      const handleClick = (event: MouseEvent) => {
-        const target = event.target as Element | null;
-        const anchor = target?.closest?.<HTMLAnchorElement>("a[href]");
-        const navigationButton = target?.closest?.<HTMLElement>(
-          "[data-preview-href]",
-        );
-        const declaredHref =
-          anchor?.href ?? navigationButton?.getAttribute("data-preview-href");
-        let href: string | null = null;
-        if (declaredHref) {
-          try {
-            href = new URL(declaredHref, frameDocument.baseURI).href;
-          } catch {
-            // An invalid destination opens the project's main site.
-          }
-        }
-
-        if (getPageHref(href)) {
-          event.preventDefault();
-          openPage(href);
-        } else if (href?.startsWith("mailto:") || href?.startsWith("tel:")) {
-          clearFallback();
-        } else {
-          event.preventDefault();
-          event.stopPropagation();
-          openFallback();
-        }
-      };
-
-      frameDocument.addEventListener("click", handleClick, true);
-      removeFrameClickRef.current = () =>
-        frameDocument.removeEventListener("click", handleClick, true);
-    },
+    onLoad: attachFrameClick,
     onPointerEnter: () => {
       pointerInsideRef.current = true;
     },

@@ -301,6 +301,9 @@ test("Grailed Plus overview preview links open the full product destination", as
       .click();
     await expect(page).toHaveURL(/\/grailed-plus$/);
   } else {
+    await expect(
+      page.locator('iframe[title="Grailed Plus product hero preview"]'),
+    ).toHaveAttribute("data-preview-navigation-ready", "true");
     await page
       .frameLocator('iframe[title="Grailed Plus product hero preview"]')
       .getByRole("link", { name: "Price intelligence", exact: true })
