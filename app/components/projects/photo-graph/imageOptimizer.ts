@@ -8,18 +8,21 @@ type OptimizableNode = {
   w: number;
 };
 
-export function pickAllowedWidth(targetWidth: number) {
+export function pickAllowedWidth(
+  targetWidth: number,
+  widths: readonly number[] = PHOTO_GRAPH_IMAGE_WIDTHS,
+) {
   if (!Number.isFinite(targetWidth) || targetWidth <= 0) {
-    return PHOTO_GRAPH_IMAGE_WIDTHS[0];
+    return widths[0];
   }
 
-  for (const width of PHOTO_GRAPH_IMAGE_WIDTHS) {
+  for (const width of widths) {
     if (width >= targetWidth) {
       return width;
     }
   }
 
-  return PHOTO_GRAPH_IMAGE_WIDTHS[PHOTO_GRAPH_IMAGE_WIDTHS.length - 1];
+  return widths[widths.length - 1];
 }
 
 export function getNodeScreenWidth(node: OptimizableNode, zoom: number) {

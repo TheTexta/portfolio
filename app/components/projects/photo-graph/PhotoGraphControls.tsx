@@ -75,7 +75,7 @@ export default function PhotoGraphControls({
         </ControlButton>
 
         <label
-          className={`${styles.invertingControl} flex min-w-0 flex-1 cursor-pointer items-center justify-end gap-2 px-3 text-right has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-ink ${photoGraphControlTextClass} ${photoGraphControlRowClass}`}
+          className={`flex min-w-0 flex-1 cursor-pointer items-center justify-end gap-2 px-3 text-right has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-ink ${photoGraphControlTextClass} ${photoGraphControlRowClass}`}
         >
           <span>Show connecting lines</span>
           <input
@@ -97,7 +97,7 @@ export default function PhotoGraphControls({
               checked={threeDEnabled}
               disabled={threeDDisabled}
               onChange={(enabled) => on3DChange?.(enabled)}
-              className={`${styles.invertingControl} w-full justify-between ${photoGraphControlRowClass}`}
+              className={`w-full justify-between ${photoGraphControlRowClass}`}
             />
             <p
               role="status"
@@ -111,7 +111,7 @@ export default function PhotoGraphControls({
         {showTheme && (
           <div className="border-b border-ink px-3">
             <ThemeToggle
-              className={`${styles.invertingControl} w-full justify-between ${photoGraphControlRowClass}`}
+              className={`w-full justify-between ${photoGraphControlRowClass}`}
             />
           </div>
         )}
@@ -134,6 +134,7 @@ export default function PhotoGraphControls({
               controls={controls}
               idPrefix={panelId}
               onChange={onControlChange}
+              horizontalScroll
               inputClassName={`${styles.slider} ${photoGraphControlRowClass}`}
             />
           ))}

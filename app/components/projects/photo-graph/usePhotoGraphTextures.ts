@@ -18,8 +18,8 @@ import { loadImage } from "./utils";
 import {
   PHOTO_GRAPH_TEXTURE_BUDGET,
   PHOTO_GRAPH_MAX_TEXTURE_SIDE,
-  photoGraphTextureSideLimit,
-  photoGraphTextureRequest,
+  allocatePhotoGraphTextures,
+  photoGraphTextureNeedsUpgrade,
 } from "./texture-budget";
 
 type PhotoSprite = Sprite & {
@@ -58,7 +58,11 @@ export function usePhotoGraphTextures({
     let queue: { node: PhotoGraphNode; width: number }[] = [];
     let visible = new Set<string>();
     let active = 0;
-    let textureSideLimit = PHOTO_GRAPH_MAX_TEXTURE_SIDE;
+    let allocations = allocatePhotoGraphTextures([]);
+    const textureSideLimit = Math.min(
+      PHOTO_GRAPH_MAX_TEXTURE_SIDE,
+      graph.renderer().capabilities.maxTextureSize,
+    );
     let timer: ReturnType<typeof setTimeout> | undefined;
     const camera = graph.camera();
     const center = new Vector3();
@@ -76,8 +80,7 @@ export function usePhotoGraphTextures({
             id !== keepId && !visible.has(id) && sprite.material.map,
         )
         .sort(
-          ([idA, a], [idB, b]) =>
-            Number(visible.has(idA)) - Number(visible.has(idB)) ||
+          ([, a], [, b]) =>
             (a.userData.loadedAt ?? 0) - (b.userData.loadedAt ?? 0),
         );
       for (const [, sprite] of candidates) {
@@ -98,9 +101,14 @@ export function usePhotoGraphTextures({
       image: CanvasImageSource & { width: number; height: number },
       sourceMaxWidth = sprite.userData.sourceMaxWidth,
     ) => {
+      const allocation = allocations.get(id);
+      // A request may finish after a pan/zoom changes the visible set or budget.
+      // Admit against the latest allocation, never a stale request's dimensions.
+      if (!allocation) return;
       const scale = Math.min(
         1,
-        textureSideLimit / Math.max(image.width, image.height),
+        allocation.residentWidth / image.width,
+        allocation.residentHeight / image.height,
       );
       const canvas = document.createElement("canvas");
       canvas.width = Math.max(1, Math.floor(image.width * scale));
@@ -194,6 +202,7 @@ export function usePhotoGraphTextures({
       if (abort.signal.aborted) return;
       camera.updateMatrixWorld();
       right.setFromMatrixColumn(camera.matrixWorld, 0);
+      const pixelRatio = graph.renderer().getPixelRatio();
       const projected: {
         node: PhotoGraphNode;
         width: number;
@@ -220,43 +229,54 @@ export function usePhotoGraphTextures({
         visible.add(node.id);
         const sprite = sprites.get(node.id);
         if (!sprite) continue;
-        const desired =
-          halfWidth *
-          dimensions.width *
-          Math.min(window.devicePixelRatio || 1, 1.5);
+        const desired = halfWidth * dimensions.width * pixelRatio;
         projected.push({
           node,
           width: desired,
           distance: Math.hypot(center.x, center.y),
         });
       }
-      textureSideLimit = photoGraphTextureSideLimit(visible.size);
+      allocations = allocatePhotoGraphTextures(
+        projected.map(({ node, width }) => ({
+          id: node.id,
+          projectedWidth: width,
+          aspectRatio: node.aspectRatio,
+          sourceMaxWidth: sprites.get(node.id)?.userData.sourceMaxWidth,
+        })),
+        textureSideLimit,
+      );
       for (const { node } of projected) {
         const sprite = sprites.get(node.id)!;
         const image = sprite.material.map?.image as
           HTMLCanvasElement | undefined;
-        if (image && Math.max(image.width, image.height) > textureSideLimit) {
+        const allocation = allocations.get(node.id)!;
+        if (
+          image &&
+          (image.width > allocation.residentWidth ||
+            image.height > allocation.residentHeight)
+        ) {
           attachImage(sprite, node.id, image);
         }
       }
       queue = projected
         .map((request) => ({
           ...request,
-          ...photoGraphTextureRequest(
-            request.width,
-            request.node.aspectRatio,
-            textureSideLimit,
-            sprites.get(request.node.id)?.userData.sourceMaxWidth,
-          ),
+          ...allocations.get(request.node.id)!,
         }))
         .filter(
           ({ node, residentWidth }) =>
             !failed.has(node.id) &&
             !pending.has(node.id) &&
-            (sprites.get(node.id)?.userData.loadedWidth ?? 0) + 1 <
+            photoGraphTextureNeedsUpgrade(
+              sprites.get(node.id)?.userData.loadedWidth,
               residentWidth,
+              node.aspectRatio,
+            ),
         )
-        .sort((a, b) => a.distance - b.distance);
+        .sort(
+          (a, b) =>
+            b.residentWidth - a.residentWidth || a.distance - b.distance,
+        );
       pump();
     };
     const schedule = () => {

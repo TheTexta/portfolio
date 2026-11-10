@@ -48,7 +48,7 @@
   display: block;
   appearance: none;
   background: transparent;
-  cursor: pointer;
+  pointer-events: none;
 }
 
 .slider:focus-visible {
@@ -75,84 +75,42 @@
   height: 1rem;
   margin-top: -5px;
   appearance: none;
-  border: 0;
+  border: 1px solid var(--color-ink);
   border-radius: 0;
   background: var(--color-ink);
+  cursor: grab;
+  pointer-events: auto;
 }
 
 .slider::-moz-range-thumb {
   width: 1rem;
   height: 1rem;
-  border: 0;
+  border: 1px solid var(--color-ink);
   border-radius: 0;
   background: var(--color-ink);
+  cursor: grab;
+  pointer-events: auto;
+}
+
+.slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+}
+
+.slider::-moz-range-thumb:active {
+  cursor: grabbing;
 }
 
 @media (hover: hover) {
-  .shell
-    :where(
-      button:not(:disabled),
-      a:not([aria-disabled="true"]),
-      summary,
-      select
-    ):hover,
-  .invertingControl:not(:has(:disabled)):hover {
-    border-color: var(--graph-hover-foreground);
+  .shell :where(button:not(:disabled), a:not([aria-disabled="true"])):hover {
     background: var(--graph-hover-background);
     color: var(--graph-hover-foreground);
   }
 
-  .invertingControl:hover .checkbox {
-    background: var(--graph-hover-background);
-  }
-
-  .invertingControl:hover .checkbox:checked {
-    background: var(--graph-hover-foreground);
-  }
-
-  .invertingControl:hover .checkbox:checked::before {
-    background: var(--graph-hover-background);
-  }
-
-  .invertingControl:not(:has(:disabled)):hover > span[aria-hidden="true"] {
-    border-color: currentColor;
-    background: transparent;
-  }
-
-  .invertingControl:not(:has(:disabled)):hover
-    > span[aria-hidden="true"]
-    > span {
-    background: var(--graph-hover-foreground);
-  }
-
-  .invertingControl:has(input:checked):not(:has(:disabled)):hover
-    > span[aria-hidden="true"] {
-    background: var(--graph-hover-foreground);
-  }
-
-  .invertingControl:has(input:checked):not(:has(:disabled)):hover
-    > span[aria-hidden="true"]
-    > span {
-    background: var(--graph-hover-background);
-  }
-
-  .slider:hover::-webkit-slider-runnable-track {
-    border-color: var(--color-canvas);
-    background: var(--color-ink);
-  }
-
-  .slider:hover::-moz-range-track {
-    border-color: var(--color-canvas);
-    background: var(--color-ink);
-  }
-
-  .slider:hover::-webkit-slider-thumb {
-    border: 1px solid var(--color-ink);
+  .slider::-webkit-slider-thumb:hover {
     background: var(--color-canvas);
   }
 
-  .slider:hover::-moz-range-thumb {
-    border: 1px solid var(--color-ink);
+  .slider::-moz-range-thumb:hover {
     background: var(--color-canvas);
   }
 }

@@ -13,9 +13,15 @@ import { DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS } from "@/lib/photo-graph/graph-co
 import {
   PHOTO_GRAPH_TEXTURE_BUDGET,
   PHOTO_GRAPH_MAX_TEXTURE_SIDE,
-  photoGraphTextureSideLimit,
+  allocatePhotoGraphTextures,
   photoGraphTextureRequest,
+  photoGraphTextureNeedsUpgrade,
 } from "@/app/components/projects/photo-graph/texture-budget";
+import {
+  PHOTO_GRAPH_RENDER_PIXEL_BUDGET,
+  photoGraphRenderPixelRatio,
+} from "@/app/components/projects/photo-graph/render-quality";
+import { pickAllowedWidth } from "@/app/components/projects/photo-graph/imageOptimizer";
 
 function graph(): PhotoGraphData {
   return {
@@ -166,19 +172,52 @@ describe("3D texture admission", () => {
   });
 
   it("can upgrade again after budget downscaling, up to the close-up tier", () => {
-    const crowded = photoGraphTextureRequest(
-      1200,
-      1,
-      photoGraphTextureSideLimit(103),
-    );
-    const closeUp = photoGraphTextureRequest(
-      1200,
-      1,
-      photoGraphTextureSideLimit(3),
-    );
+    const demands = Array.from({ length: 103 }, (_, index) => ({
+      id: String(index),
+      projectedWidth: 1200,
+      aspectRatio: 1,
+    }));
+    const crowded = allocatePhotoGraphTextures(demands).get("0")!;
+    const closeUp = allocatePhotoGraphTextures(
+      demands.map((demand, index) => ({
+        ...demand,
+        projectedWidth: index === 0 ? 1200 : 48,
+      })),
+    ).get("0")!;
     expect(crowded.residentWidth).toBe(349);
     expect(closeUp.residentWidth).toBe(1280);
     expect(closeUp.residentWidth).toBeGreaterThan(crowded.residentWidth);
+  });
+
+  it.each([1, 2, 3])(
+    "gives a close-up native pixels with 102 background thumbnails at density %i",
+    (density) => {
+      const allocations = allocatePhotoGraphTextures([
+        { id: "hero", projectedWidth: 1224 * density, aspectRatio: 1.6 },
+        ...Array.from({ length: 102 }, (_, index) => ({
+          id: String(index),
+          projectedWidth: 48 * density,
+          aspectRatio: 0.8,
+        })),
+      ]);
+      const hero = allocations.get("hero")!;
+      expect(hero.residentWidth).toBeGreaterThanOrEqual(1224 * density);
+      expect(hero.residentHeight).toBeGreaterThanOrEqual(765 * density);
+      expect(allocations.get("0")!.residentWidth).toBeLessThanOrEqual(
+        48 * density,
+      );
+    },
+  );
+
+  it("bounds portrait close-ups by the GPU side limit without changing 2D tiers", () => {
+    const hero = allocatePhotoGraphTextures(
+      [{ id: "hero", projectedWidth: 2448, aspectRatio: 0.8 }],
+      2048,
+    ).get("hero")!;
+    expect(hero.residentHeight).toBeLessThanOrEqual(2048);
+    expect(hero.residentWidth).toBe(1638);
+    expect(hero.width).toBe(1920);
+    expect(pickAllowedWidth(2448)).toBe(1280);
   });
 
   it("does not repeatedly upgrade a small original beyond its real dimensions", () => {
@@ -188,15 +227,79 @@ describe("3D texture admission", () => {
     });
   });
 
-  it("fits the worst-case square RGBA cost without evicting visible photos", () => {
-    for (const count of [1, 3, 45, 100, 103, 300, 1000, 10000]) {
-      const side = photoGraphTextureSideLimit(count);
-      expect(side).toBeGreaterThan(0);
-      expect(side).toBeLessThanOrEqual(PHOTO_GRAPH_MAX_TEXTURE_SIDE);
-      expect(count * side * side * 4).toBeLessThanOrEqual(
-        PHOTO_GRAPH_TEXTURE_BUDGET,
-      );
+  it("does not refetch rounded provider heights or budget-fitted textures", () => {
+    for (const count of [1, 3, 103]) {
+      for (const aspectRatio of [0.625, 1.01, 1.81, 2.27, 3.97, 4.82]) {
+        const allocation = allocatePhotoGraphTextures(
+          Array.from({ length: count }, (_, index) => ({
+            id: String(index),
+            projectedWidth: 3200,
+            aspectRatio,
+          })),
+        ).get("0")!;
+        const providerHeight = Math.round(allocation.width / aspectRatio);
+        const scale = Math.min(
+          1,
+          allocation.residentWidth / allocation.width,
+          allocation.residentHeight / providerHeight,
+        );
+        const actualWidth = Math.floor(allocation.width * scale);
+        expect(
+          photoGraphTextureNeedsUpgrade(
+            actualWidth,
+            allocation.residentWidth,
+            aspectRatio,
+          ),
+        ).toBe(false);
+        expect(
+          photoGraphTextureNeedsUpgrade(
+            Math.floor(actualWidth / 2),
+            allocation.residentWidth,
+            aspectRatio,
+          ),
+        ).toBe(true);
+      }
     }
-    expect(photoGraphTextureSideLimit(0)).toBe(PHOTO_GRAPH_MAX_TEXTURE_SIDE);
+    expect(photoGraphTextureNeedsUpgrade(undefined, 1, 1)).toBe(true);
+  });
+
+  it("fits total RGBA demand without evicting visible photos", () => {
+    for (const count of [1, 3, 45, 100, 103, 300, 1000, 10000]) {
+      const allocations = allocatePhotoGraphTextures(
+        Array.from({ length: count }, (_, index) => ({
+          id: String(index),
+          projectedWidth: 10000,
+          aspectRatio: [0.625, 1, 1.6, 4][index % 4],
+        })),
+      );
+      let bytes = 0;
+      for (const { residentWidth, residentHeight } of allocations.values()) {
+        expect(residentWidth).toBeGreaterThan(0);
+        expect(residentHeight).toBeGreaterThan(0);
+        expect(Math.max(residentWidth, residentHeight)).toBeLessThanOrEqual(
+          PHOTO_GRAPH_MAX_TEXTURE_SIDE,
+        );
+        bytes += residentWidth * residentHeight * 4;
+      }
+      expect(bytes).toBeLessThanOrEqual(PHOTO_GRAPH_TEXTURE_BUDGET);
+    }
+    expect(allocatePhotoGraphTextures([]).size).toBe(0);
+  });
+});
+
+describe("3D drawing-buffer resolution", () => {
+  it("matches native Retina and mobile density instead of capping at 1.5", () => {
+    expect(photoGraphRenderPixelRatio(1440, 900, 2)).toBe(2);
+    expect(photoGraphRenderPixelRatio(390, 844, 3)).toBe(3);
+    expect(photoGraphRenderPixelRatio(1280, 720, 1)).toBe(1);
+  });
+
+  it("bounds very large framebuffers without changing small viewport density", () => {
+    const ratio = photoGraphRenderPixelRatio(3840, 2160, 3);
+    expect(ratio).toBeLessThan(3);
+    expect(3840 * 2160 * ratio ** 2).toBeLessThanOrEqual(
+      PHOTO_GRAPH_RENDER_PIXEL_BUDGET + 1,
+    );
+    expect(photoGraphRenderPixelRatio(0, 0, 0)).toBe(1);
   });
 });

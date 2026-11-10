@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import ForceGraph3D, { type ForceGraphMethods } from "react-force-graph-3d";
-import { PerspectiveCamera, Sprite, SpriteMaterial } from "three";
+import { PerspectiveCamera, Sprite, SpriteMaterial, Vector2 } from "three";
 import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { animate } from "framer-motion";
 
@@ -34,6 +34,7 @@ import {
   fitPhotoGraph3DView,
 } from "./view-state";
 import { usePhotoGraphTextures } from "./usePhotoGraphTextures";
+import { photoGraphRenderPixelRatio } from "./render-quality";
 
 const EMPTY_GRAPH: PhotoGraphData = { nodes: [], links: [] };
 const RENDERER_CONFIG = { antialias: true, alpha: false };
@@ -187,13 +188,61 @@ export default function PhotoGraph3DRenderer({
     fitView(reducedMotion ? 0 : GRAPH_CONFIG.resetViewDurationMs);
   }, [resetViewKey, fitView, reducedMotion]);
 
+  useLayoutEffect(() => {
+    const graph = graphRef.current;
+    if (!ready || !graph) return;
+    let resolutionQuery: MediaQueryList | undefined;
+    const updateResolution = () => {
+      const dpr = window.devicePixelRatio || 1;
+      const pixelRatio = photoGraphRenderPixelRatio(
+        dimensions.width,
+        dimensions.height,
+        dpr,
+      );
+      const renderer = graph.renderer();
+      const composer = graph.postProcessingComposer();
+      const currentSize = renderer.getSize(new Vector2());
+      // Lower density before changing dimensions. Cover both axes' old/new
+      // maxima so canvas width/height setters cannot briefly over-allocate.
+      const transitionRatio = Math.min(
+        renderer.getPixelRatio(),
+        photoGraphRenderPixelRatio(
+          Math.max(currentSize.x, dimensions.width),
+          Math.max(currentSize.y, dimensions.height),
+          pixelRatio,
+        ),
+      );
+      if (renderer.getPixelRatio() !== transitionRatio) {
+        renderer.setPixelRatio(transitionRatio);
+        composer.setPixelRatio(transitionRatio);
+      }
+      if (
+        currentSize.x !== dimensions.width ||
+        currentSize.y !== dimensions.height
+      ) {
+        renderer.setSize(dimensions.width, dimensions.height);
+        composer.setSize(dimensions.width, dimensions.height);
+      }
+      if (pixelRatio !== transitionRatio) {
+        renderer.setPixelRatio(pixelRatio);
+        composer.setPixelRatio(pixelRatio);
+      }
+      resolutionQuery?.removeEventListener("change", updateResolution);
+      resolutionQuery = window.matchMedia(`(resolution: ${dpr}dppx)`);
+      resolutionQuery.addEventListener("change", updateResolution);
+    };
+    updateResolution();
+    window.addEventListener("resize", updateResolution);
+    return () => {
+      resolutionQuery?.removeEventListener("change", updateResolution);
+      window.removeEventListener("resize", updateResolution);
+    };
+  }, [ready, dimensions.width, dimensions.height]);
+
   useEffect(() => {
     const graph = graphRef.current;
     if (!ready || !graph) return;
     const renderer = graph.renderer();
-    const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
-    renderer.setPixelRatio(pixelRatio);
-    graph.postProcessingComposer().setPixelRatio(pixelRatio);
     const orbit = graph.controls() as OrbitControls;
     orbit.enableDamping = !reducedMotion;
     orbit.autoRotate = false;

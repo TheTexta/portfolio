@@ -494,11 +494,16 @@ In 3D, photographs are camera-facing rectangles in an XYZ force simulation.
 Drag empty space to orbit, scroll/pinch to zoom, and right-drag or use two fingers
 to pan. Drag photographs to reposition them or select one to open the existing
 inspection/download overlay. **Reset**, beside the top-right compact control,
-smoothly fits the current graph in either 2D or 3D without changing its settings.
+smoothly fits the current graph over 900ms in either 2D or 3D without changing its settings.
 The action remains visible when graph controls are closed. Distance
 settings use world units in 3D, not screen pixels. Reduced motion disables camera
 damping and camera-reset animation, and pre-settles the initial layout; there is
 no automatic camera orbit.
+
+Drag a slider's square handle, scroll horizontally over its field with a trackpad,
+or use its keyboard controls to adjust it. Horizontal scrolling moves the value
+in the swipe direction; vertical scrolling and pinch-to-zoom remain native.
+Clicking or dragging the track does not change the value.
 
 `PhotoGraphCanvas` owns data loading, settings and inspection. Its separate
 `PhotoGraph2DRenderer` and lazily imported `PhotoGraph3DRenderer` own independent
@@ -510,14 +515,25 @@ This adds no persisted coordinates, database settings, feature model, or media
 migration. Only the standalone route opts in with `allow3D`.
 
 Three.js and `react-force-graph-3d` are downloaded only after activation. The 3D
-renderer bounds image concurrency, uses screen-projected texture sizes with a
-1280px longest-side limit and a fair-share resolution cap for visible photographs,
-caps retained RGBA textures at 48 MiB, and limits render
-pixel ratio to 1.5, with native WebGL antialiasing. Resolution tracking uses actual
+renderer bounds image concurrency and allocates textures from each photograph's
+screen-projected size, with a 3840px longest-side limit (also bounded by the GPU).
+Small background photographs do not reduce close-up resolution unless their
+combined demand exceeds the 48 MiB retained RGBA budget. Under pressure, texture
+dimensions scale proportionally to demand; superseded allocations shrink before
+upgrades, and offscreen textures are evicted as needed. It matches native pixel ratio
+with a 16-megapixel drawing-buffer budget and native WebGL antialiasing. The
+drawing buffer follows viewport and screen-density changes; projected texture
+requests use the renderer's actual pixel ratio. Resolution tracking uses actual
 uploaded texture dimensions so budget-downscaled photographs can upgrade again
 when zoomed, without repeatedly requesting rounded image-size tiers.
 The 2D canvas uses normal image smoothing rather than forced pixelated scaling.
 Full-resolution originals remain in the inspection overlay.
+The larger 1536/1920/2560/3200/3840px request tiers are 3D-only; 2D tiers are
+unchanged. Before releasing this app change, publish the matching Photo Graph
+allowlist from `dextery-infrastructure/cloudflare-assets/worker.mjs` with separate
+deployment approval. Publish the Worker first so new requests do not fall back to
+archival originals because the older Worker rejects their widths. Existing
+projects' transform allowlists, media routes, and private staging stay unchanged.
 Its bounding-sphere collision prevents world-space intersections, not every
 screen-space overlap. Disabling 3D aborts texture requests and releases the owned
 WebGL context; the graph library disposes attached scene resources. Unsupported
@@ -525,7 +541,10 @@ WebGL, initialization/import failure, or context loss restores 2D with a retry
 explanation. Switching modes does not refetch the graph.
 
 `tests/e2e/photo-graph-3d.spec.ts` uses intercepted local graph/image fixtures and
-real Chromium WebGL, not production services. Run it with
+real Chromium WebGL, not production services. Crowded-scene coverage zooms a
+foreground photograph with 102 background photographs at normal and Retina
+density, checks actual uploaded resolution and retained texture memory, then
+resets and upgrades again without repeated requests. Run it with
 `npm run test:e2e -- tests/e2e/photo-graph-3d.spec.ts`.
 
 ## Portfolio evidence and résumé

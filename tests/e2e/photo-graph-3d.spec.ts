@@ -2,6 +2,14 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import sharp from "sharp";
 import { DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS } from "../../lib/photo-graph/graph-controls";
 import archive from "../../public/projects/photo-graph/worked-example/fixture.json";
+import {
+  PHOTO_GRAPH_RENDER_PIXEL_BUDGET,
+  photoGraphRenderPixelRatio,
+} from "../../app/components/projects/photo-graph/render-quality";
+import {
+  PHOTO_GRAPH_MAX_TEXTURE_SIDE,
+  PHOTO_GRAPH_TEXTURE_BUDGET,
+} from "../../app/components/projects/photo-graph/texture-budget";
 
 const experience = "/projects/photo-graph/experience";
 const mode = (page: Page, name: "2d" | "3d") =>
@@ -455,7 +463,7 @@ test("reset stays beside compact in both modes without overlapping narrow contro
   expect(errors.get(page)).toEqual([]);
 });
 
-test("controls have square inputs and invert hover in either theme", async ({
+test("only buttons and square slider handles invert, with stable borders and tracks", async ({
   page,
   isMobile,
 }, info) => {
@@ -489,7 +497,8 @@ test("controls have square inputs and invert hover in either theme", async ({
           ) &&
           rule.selectorText.includes("::-webkit-slider-thumb"),
       )
-      .map((rule) => rule.style.borderRadius);
+      .map((rule) => rule.style.borderRadius)
+      .filter(Boolean);
   });
   // Chromium omits unsupported Gecko pseudo-elements from its CSSOM.
   expect(thumbRadii).toEqual(["0px"]);
@@ -508,19 +517,84 @@ test("controls have square inputs and invert hover in either theme", async ({
       });
       await expect(reset).toHaveCSS("background-color", original.background);
       await expect(reset).toHaveCSS("color", original.color);
+      const border = await reset.evaluate(
+        (element) => getComputedStyle(element).borderColor,
+      );
       await reset.hover();
       await expect(reset).toHaveCSS("background-color", original.color);
       await expect(reset).toHaveCSS("color", original.background);
-      await checkbox.locator("..").hover();
-      await expect(checkbox.locator("..")).toHaveCSS(
-        "background-color",
-        original.color,
+      await expect(reset).toHaveCSS("border-color", border);
+      const compact = page.getByRole("link", {
+        name: "Return to project write up",
+        exact: true,
+      });
+      await compact.hover();
+      await expect(compact).toHaveCSS("background-color", original.color);
+      await expect(compact).toHaveCSS("border-color", original.color);
+      const appearance = (input: Locator) =>
+        input.locator("..").evaluate((label) => {
+          const style = getComputedStyle(label);
+          const checkbox = label.querySelector("input")!;
+          return {
+            background: style.backgroundColor,
+            color: style.color,
+            inputBackground: getComputedStyle(checkbox).backgroundColor,
+          };
+        });
+      for (const input of [
+        checkbox,
+        toggle(page),
+        page.getByRole("checkbox", { name: /^(Light|Dark)$/ }),
+      ]) {
+        await page.mouse.move(0, page.viewportSize()!.height - 1);
+        const before = await appearance(input);
+        const switchBefore =
+          input === checkbox ? null : await switchAppearance(input);
+        await input.locator("..").hover();
+        expect(await appearance(input)).toEqual(before);
+        if (switchBefore)
+          expect(await switchAppearance(input)).toEqual(switchBefore);
+      }
+      const bounds = (await slider.boundingBox())!;
+      const fraction = await slider.evaluate((input) => {
+        const range = input as HTMLInputElement;
+        return (
+          (range.valueAsNumber - Number(range.min)) /
+          (Number(range.max) - Number(range.min))
+        );
+      });
+      const thumbX = 8 + (bounds.width - 16) * fraction;
+      const samples = async () => {
+        const { data, info } = await sharp(
+          await slider.screenshot({ scale: "css", animations: "disabled" }),
+        )
+          .removeAlpha()
+          .raw()
+          .toBuffer({ resolveWithObject: true });
+        const pixel = (x: number) => [
+          ...data.subarray(
+            (Math.floor(info.height / 2) * info.width + Math.round(x)) *
+              info.channels,
+            (Math.floor(info.height / 2) * info.width + Math.round(x)) *
+              info.channels +
+              3,
+          ),
+        ];
+        return { thumb: pixel(thumbX), track: pixel(info.width - 4) };
+      };
+      await page.mouse.move(0, page.viewportSize()!.height - 1);
+      const beforeSlider = await samples();
+      await page.mouse.move(bounds.x + thumbX, bounds.y + bounds.height / 2);
+      await expect.poll(samples).toEqual({
+        thumb: original.background.match(/\d+/g)!.map(Number),
+        track: beforeSlider.track,
+      });
+      await page.mouse.move(
+        bounds.x + bounds.width - 4,
+        bounds.y + bounds.height / 2,
       );
-      await expect(checkbox.locator("..")).toHaveCSS(
-        "color",
-        original.background,
-      );
-      await page.mouse.move(500, 500);
+      await expect.poll(samples).toEqual(beforeSlider);
+      await page.mouse.move(0, page.viewportSize()!.height - 1);
     }
     await page
       .getByRole("button", { name: "Close graph controls", exact: true })
@@ -530,6 +604,266 @@ test("controls have square inputs and invert hover in either theme", async ({
         animations: "disabled",
       });
   }
+  expect(errors.get(page)).toEqual([]);
+});
+
+test("only slider handles drag, tracks do not seek, and keyboard control remains", async ({
+  page,
+  context,
+  isMobile,
+}) => {
+  await page.goto(experience);
+  await openSettings(page);
+  const slider = page.getByRole("slider", {
+    name: "Repel strength",
+    exact: true,
+  });
+  const initialValue = await slider.inputValue();
+  const bounds = (await slider.boundingBox())!;
+  const fraction = await slider.evaluate((input) => {
+    const range = input as HTMLInputElement;
+    return (
+      (range.valueAsNumber - Number(range.min)) /
+      (Number(range.max) - Number(range.min))
+    );
+  });
+  const thumb = {
+    x: bounds.x + 8 + (bounds.width - 16) * fraction,
+    y: bounds.y + bounds.height / 2,
+  };
+  const track = { x: bounds.x + bounds.width - 8, y: thumb.y };
+  expect(
+    await page.evaluate(
+      ({ x, y }) =>
+        document.elementFromPoint(x, y)?.matches('input[type="range"]'),
+      thumb,
+    ),
+  ).toBe(true);
+  expect(
+    await page.evaluate(
+      ({ x, y }) =>
+        document.elementFromPoint(x, y)?.matches('input[type="range"]'),
+      track,
+    ),
+  ).toBe(false);
+  if (isMobile) await page.touchscreen.tap(track.x, track.y);
+  else {
+    await page.mouse.click(track.x, track.y);
+    await page.mouse.down();
+    await page.mouse.move(track.x - 40, track.y, { steps: 4 });
+    await page.mouse.up();
+  }
+  await expect(slider).toHaveValue(initialValue);
+  if (isMobile) {
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [thumb],
+    });
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x: thumb.x + 40, y: thumb.y }],
+    });
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+    await cdp.detach();
+  } else {
+    await page.mouse.move(thumb.x, thumb.y);
+    await page.mouse.down();
+    await page.mouse.move(thumb.x + 40, thumb.y, { steps: 8 });
+    await page.mouse.up();
+  }
+  await expect(slider).not.toHaveValue(initialValue);
+  const draggedValue = Number(await slider.inputValue());
+  await slider.focus();
+  await page.keyboard.press("ArrowRight");
+  expect(Number(await slider.inputValue())).toBe(draggedValue + 1);
+  expect(errors.get(page)).toEqual([]);
+});
+
+test("horizontal trackpad scrolling adjusts only the hovered slider in both modes", async ({
+  page,
+}) => {
+  await page.goto(experience);
+  await openSettings(page);
+  await expect(toggle(page)).toBeEnabled();
+  const slider = page.getByRole("slider", {
+    name: "Repel strength",
+    exact: true,
+  });
+  const sliders = page.getByRole("slider");
+  for (const graphMode of ["2d", "3d"] as const) {
+    if (graphMode === "3d") {
+      await toggle(page).check();
+      await expect(mode(page, "3d").locator("canvas")).toBeVisible({
+        timeout: 30_000,
+      });
+    }
+    const otherValues = await sliders.evaluateAll((inputs) =>
+      inputs.slice(1).map((input) => (input as HTMLInputElement).value),
+    );
+    const initial = Number(await slider.inputValue());
+    const bounds = (await slider.boundingBox())!;
+    // The track itself is not draggable, but its field still accepts wheel input.
+    await page.mouse.move(
+      bounds.x + bounds.width - 4,
+      bounds.y + bounds.height / 2,
+    );
+    await page.mouse.wheel(48, 0);
+    await expect
+      .poll(async () => Number(await slider.inputValue()))
+      .toBeGreaterThan(initial);
+    const increased = Number(await slider.inputValue());
+    await expect(slider).toHaveAttribute(
+      "aria-valuetext",
+      `${(increased * 0.1).toFixed(1)}x`,
+    );
+    await page.mouse.wheel(-48, 0);
+    await expect
+      .poll(async () => Number(await slider.inputValue()))
+      .toBeLessThan(increased);
+    expect(
+      await sliders.evaluateAll((inputs) =>
+        inputs.slice(1).map((input) => (input as HTMLInputElement).value),
+      ),
+    ).toEqual(otherValues);
+    await expect(slider).not.toBeFocused();
+  }
+  expect(errors.get(page)).toEqual([]);
+});
+
+test("slider wheel input handles fractional gestures and bounds without hijacking vertical scroll or pinch", async ({
+  page,
+}) => {
+  await page.goto(experience);
+  await openSettings(page);
+  await expect(toggle(page)).toBeEnabled();
+  const slider = page.getByRole("slider", {
+    name: "Repel strength",
+    exact: true,
+  });
+  const initial = await slider.inputValue();
+  for (const delta of [
+    { deltaX: 0, deltaY: 60 },
+    { deltaX: 8, deltaY: 60 },
+    { deltaX: 60, deltaY: 0, ctrlKey: true },
+  ]) {
+    expect(
+      await slider.evaluate((input, delta) => {
+        const event = new WheelEvent("wheel", {
+          bubbles: true,
+          cancelable: true,
+          ...delta,
+        });
+        input.parentElement!.dispatchEvent(event);
+        return event.defaultPrevented;
+      }, delta),
+    ).toBe(false);
+    await expect(slider).toHaveValue(initial);
+  }
+  await slider.focus();
+  await page.keyboard.press("Home");
+  const min = Number(await slider.getAttribute("min"));
+  await slider.evaluate((input) => {
+    const range = input as HTMLInputElement;
+    const deltaX =
+      ((range.getBoundingClientRect().width /
+        (Number(range.max) - Number(range.min))) *
+        2.5) /
+      20;
+    for (let index = 0; index < 20; index += 1)
+      range.parentElement!.dispatchEvent(
+        new WheelEvent("wheel", { bubbles: true, cancelable: true, deltaX }),
+      );
+  });
+  await expect(slider).toHaveValue(String(min + 2));
+  expect(
+    await slider.evaluate((input) => {
+      const event = new WheelEvent("wheel", {
+        bubbles: true,
+        cancelable: true,
+        deltaX: 1,
+        deltaMode: WheelEvent.DOM_DELTA_PAGE,
+      });
+      input.parentElement!.dispatchEvent(event);
+      return event.defaultPrevented;
+    }),
+  ).toBe(true);
+  const max = Number(await slider.getAttribute("max"));
+  await expect(slider).toHaveValue(String(max));
+  await slider.evaluate((input) =>
+    input.parentElement!.dispatchEvent(
+      new WheelEvent("wheel", {
+        bubbles: true,
+        cancelable: true,
+        deltaX: 100000,
+      }),
+    ),
+  );
+  await expect(slider).toHaveValue(String(max));
+  await slider.evaluate((input) => {
+    const range = input as HTMLInputElement;
+    const pixelsPerStep =
+      range.getBoundingClientRect().width /
+      (Number(range.max) - Number(range.min));
+    for (let index = 0; index < 10; index += 1)
+      range.parentElement!.dispatchEvent(
+        new WheelEvent("wheel", {
+          bubbles: true,
+          cancelable: true,
+          deltaX: pixelsPerStep * 0.05,
+        }),
+      );
+    range.parentElement!.dispatchEvent(
+      new WheelEvent("wheel", {
+        bubbles: true,
+        cancelable: true,
+        deltaX: -pixelsPerStep * 1.25,
+      }),
+    );
+  });
+  await expect(slider).toHaveValue(String(max - 1));
+  await slider.evaluate((input) =>
+    input.parentElement!.dispatchEvent(
+      new WheelEvent("wheel", {
+        bubbles: true,
+        cancelable: true,
+        deltaX: -1,
+        deltaMode: WheelEvent.DOM_DELTA_PAGE,
+      }),
+    ),
+  );
+  await expect(slider).toHaveValue(String(min));
+  await slider.evaluate((input) =>
+    input.parentElement!.dispatchEvent(
+      new WheelEvent("wheel", {
+        bubbles: true,
+        cancelable: true,
+        deltaX: 1,
+        deltaMode: WheelEvent.DOM_DELTA_LINE,
+      }),
+    ),
+  );
+  await expect
+    .poll(async () => Number(await slider.inputValue()))
+    .toBeGreaterThan(min);
+  await page.setViewportSize({ width: 1000, height: 280 });
+  const panel = page
+    .getByRole("button", { name: "Close graph controls", exact: true })
+    .locator("../..");
+  const beforeVertical = await slider.inputValue();
+  const bounds = (await slider.boundingBox())!;
+  await page.mouse.move(
+    bounds.x + bounds.width - 4,
+    bounds.y + bounds.height / 2,
+  );
+  await page.mouse.wheel(0, 80);
+  await expect
+    .poll(() => panel.evaluate((element) => element.scrollTop))
+    .toBeGreaterThan(0);
+  await expect(slider).toHaveValue(beforeVertical);
   expect(errors.get(page)).toEqual([]);
 });
 
@@ -593,6 +927,28 @@ test("3D uses real antialiasing and upgrades zoomed tiles to larger GPU textures
   });
   await enable3D(page);
   const canvas = mode(page, "3d").locator("canvas");
+  const resolution = await canvas.evaluate((element) => {
+    const canvas = element as HTMLCanvasElement;
+    const bounds = canvas.getBoundingClientRect();
+    return {
+      width: canvas.width,
+      height: canvas.height,
+      cssWidth: bounds.width,
+      cssHeight: bounds.height,
+      dpr: devicePixelRatio,
+    };
+  });
+  const ratio = photoGraphRenderPixelRatio(
+    resolution.cssWidth,
+    resolution.cssHeight,
+    resolution.dpr,
+  );
+  expect(Math.abs(resolution.width - resolution.cssWidth * ratio)).toBeLessThan(
+    1,
+  );
+  expect(
+    Math.abs(resolution.height - resolution.cssHeight * ratio),
+  ).toBeLessThan(1);
   expect(
     await canvas.evaluate(
       (element) =>
@@ -632,11 +988,344 @@ test("3D uses real antialiasing and upgrades zoomed tiles to larger GPU textures
     })
     .toBeGreaterThan(initialWidth);
   expect(Math.max(...widths)).toBeGreaterThan(initialWidth);
-  expect(Math.max(...(await uploadedWidths()))).toBeLessThanOrEqual(1280);
+  expect(Math.max(...(await uploadedWidths()))).toBeLessThanOrEqual(
+    PHOTO_GRAPH_MAX_TEXTURE_SIDE,
+  );
   const count = widths.length;
   await page.waitForTimeout(1600);
   expect(widths).toHaveLength(count);
   expect(errors.get(page)).toEqual([]);
+});
+
+for (const density of [1, 2]) {
+  test.describe(`crowded close-ups at density ${density}`, () => {
+    test.use({ deviceScaleFactor: density });
+
+    test("a viewport-filling photo upgrades with 102 visible background photos", async ({
+      page,
+      context,
+    }) => {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      const aspectRatio = 1.81;
+      await context.route("**/api/photo-graph/graph", (route) =>
+        route.fulfill({
+          json: {
+            nodes: Array.from({ length: 103 }, (_, index) => ({
+              id: String(index + 1),
+              sourceUrl: `https://media.dextery.dev/photo-graph/photography-images/${index + 1}.webp`,
+              storagePath: `photography-images/${index + 1}.webp`,
+              storageProvider: "r2",
+              baseSize: 100,
+              aspectRatio,
+              hasKnownAspectRatio: true,
+              layerNoise: 0,
+              w: 160,
+              h: 160 / aspectRatio,
+              renderArea: (160 * 160) / aspectRatio,
+              x: index === 0 ? 0 : (((index - 1) % 17) - 8) * 50,
+              y: index === 0 ? 0 : (Math.floor((index - 1) / 17) - 2.5) * 50,
+              z: index === 0 ? 0 : -2500,
+            })),
+            links: [],
+            defaultGraphControls: {
+              ...DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS,
+              chargeMult: 0,
+              collideStrength: 0,
+              collideIterations: 0,
+            },
+          },
+        }),
+      );
+      const requests: string[] = [];
+      await context.route(
+        "https://images.dextery.dev/photo-graph/**",
+        (route) => {
+          const url = new URL(route.request().url());
+          const width = Number(url.searchParams.get("width"));
+          requests.push(url.toString());
+          return route.fulfill({
+            contentType: "image/svg+xml",
+            headers: { "access-control-allow-origin": "*" },
+            body: `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${Math.round(width / aspectRatio)}"><rect width="100%" height="100%" fill="#c43b2c"/></svg>`,
+          });
+        },
+      );
+      await page.addInitScript(() => {
+        const state = {
+          heroScreenWidth: 0,
+          peakBytes: 0,
+          textures: new Map<
+            WebGLTexture,
+            { id: string; width: number; height: number }
+          >(),
+        };
+        Object.assign(window, { crowdedGraphTextures: state });
+        const sources = new WeakMap<HTMLCanvasElement, string>();
+        const drawImage = CanvasRenderingContext2D.prototype.drawImage;
+        CanvasRenderingContext2D.prototype.drawImage = function (
+          this: CanvasRenderingContext2D,
+          ...args: Parameters<typeof drawImage>
+        ) {
+          const image = args[0];
+          const id =
+            image instanceof HTMLImageElement
+              ? new URL(image.src, location.href).pathname.match(
+                  /\/(\d+)\.webp$/,
+                )?.[1]
+              : image instanceof HTMLCanvasElement
+                ? sources.get(image)
+                : undefined;
+          if (id) sources.set(this.canvas, id);
+          return Reflect.apply(drawImage, this, args);
+        } as typeof drawImage;
+        const upload = WebGL2RenderingContext.prototype.texSubImage2D;
+        WebGL2RenderingContext.prototype.texSubImage2D = function (
+          this: WebGL2RenderingContext,
+          ...args: Parameters<typeof upload>
+        ) {
+          const image = args.at(-1);
+          if (image instanceof HTMLCanvasElement && sources.has(image)) {
+            const texture = this.getParameter(
+              this.TEXTURE_BINDING_2D,
+            ) as WebGLTexture;
+            state.textures.set(texture, {
+              id: sources.get(image)!,
+              width: image.width,
+              height: image.height,
+            });
+            state.peakBytes = Math.max(
+              state.peakBytes,
+              [...state.textures.values()].reduce(
+                (sum, entry) => sum + entry.width * entry.height * 4,
+                0,
+              ),
+            );
+          }
+          return Reflect.apply(upload, this, args);
+        } as typeof upload;
+        const remove = WebGL2RenderingContext.prototype.deleteTexture;
+        WebGL2RenderingContext.prototype.deleteTexture = function (texture) {
+          if (texture) state.textures.delete(texture);
+          return remove.call(this, texture);
+        };
+        const names = new WeakMap<WebGLUniformLocation, string>();
+        const getUniformLocation =
+          WebGL2RenderingContext.prototype.getUniformLocation;
+        WebGL2RenderingContext.prototype.getUniformLocation = function (
+          ...args
+        ) {
+          const result = Reflect.apply(getUniformLocation, this, args);
+          if (result) names.set(result, args[1]);
+          return result;
+        };
+        let projection = 0;
+        const matrix = WebGL2RenderingContext.prototype.uniformMatrix4fv;
+        WebGL2RenderingContext.prototype.uniformMatrix4fv = function (...args) {
+          const name = args[0] && names.get(args[0]);
+          const values = args[2] as Float32Array;
+          if (name === "projectionMatrix") projection = values[0];
+          // Only the foreground photograph is centred on both camera axes.
+          if (
+            name === "modelViewMatrix" &&
+            Math.abs(values[12]) < 0.01 &&
+            Math.abs(values[13]) < 0.01 &&
+            values[14] < 0
+          ) {
+            state.heroScreenWidth =
+              (Math.abs((values[0] * projection) / values[14]) *
+                (this.canvas as HTMLCanvasElement).clientWidth) /
+              2;
+          }
+          return Reflect.apply(matrix, this, args);
+        };
+      });
+      await enable3D(page);
+      const canvas = mode(page, "3d").locator("canvas");
+      const sample = () =>
+        page.evaluate(() => {
+          const state = (
+            window as unknown as {
+              crowdedGraphTextures: {
+                heroScreenWidth: number;
+                peakBytes: number;
+                textures: Map<
+                  WebGLTexture,
+                  { id: string; width: number; height: number }
+                >;
+              };
+            }
+          ).crowdedGraphTextures;
+          return {
+            screenWidth: state.heroScreenWidth,
+            hero: [...state.textures.values()].find(({ id }) => id === "1"),
+            count: state.textures.size,
+            peakBytes: state.peakBytes,
+          };
+        });
+      await expect
+        .poll(async () => (await sample()).count, { timeout: 20_000 })
+        .toBe(103);
+      const initialWidth = (await sample()).hero!.width;
+      await page
+        .getByRole("button", { name: "Close graph controls", exact: true })
+        .click();
+      for (let pass = 0; pass < 2; pass += 1) {
+        for (let step = 0; step < 80; step += 1) {
+          const before = (await sample()).screenWidth;
+          if (before >= 1440 * 0.8) break;
+          await canvas.dispatchEvent("wheel", {
+            deltaY: before < 1440 * 0.4 ? -100 : -10,
+            deltaMode: 0,
+            ctrlKey: false,
+          });
+          await expect
+            .poll(async () => (await sample()).screenWidth)
+            .toBeGreaterThan(before);
+        }
+        const screenWidth = (await sample()).screenWidth;
+        expect(screenWidth).toBeGreaterThanOrEqual(1440 * 0.8);
+        expect(screenWidth).toBeLessThan(1440 * 1.05);
+        await expect
+          .poll(async () => (await sample()).hero?.width ?? 0, {
+            timeout: 15_000,
+          })
+          .toBeGreaterThanOrEqual(Math.floor(screenWidth * density) - 1);
+        const closeUp = await sample();
+        expect(closeUp.hero!.width).toBeGreaterThan(initialWidth);
+        expect(closeUp.count).toBe(103);
+        expect(closeUp.peakBytes).toBeLessThanOrEqual(
+          PHOTO_GRAPH_TEXTURE_BUDGET,
+        );
+        if (density === 2) expect(closeUp.hero!.width).toBeGreaterThan(1280);
+        // A static crowded scene must not keep fetching its rounded tiers.
+        await page.waitForTimeout(600);
+        const count = requests.length;
+        await page.waitForTimeout(1600);
+        expect(requests).toHaveLength(count);
+        if (pass === 0) {
+          await page
+            .getByRole("button", { name: "Reset", exact: true })
+            .click();
+          await expect
+            .poll(async () => (await sample()).hero?.width ?? Infinity)
+            .toBeLessThan(initialWidth + 2);
+        }
+      }
+      expect(errors.get(page)).toEqual([]);
+    });
+  });
+}
+
+test.describe("Retina rendering", () => {
+  test.use({ deviceScaleFactor: 2 });
+
+  test("3D keeps a sharp backing buffer through density, viewport and mode changes", async ({
+    page,
+    context,
+    isMobile,
+  }) => {
+    await page.addInitScript(() => {
+      const state = { tracking: false, allocations: [] as number[] };
+      Object.assign(window, { graphBufferAllocations: state });
+      for (const property of ["width", "height"] as const) {
+        const descriptor = Object.getOwnPropertyDescriptor(
+          HTMLCanvasElement.prototype,
+          property,
+        )!;
+        Object.defineProperty(HTMLCanvasElement.prototype, property, {
+          ...descriptor,
+          set(this: HTMLCanvasElement, value: number) {
+            descriptor.set!.call(this, value);
+            if (state.tracking && this.closest('[data-graph-mode="3d"]'))
+              state.allocations.push(this.width * this.height);
+          },
+        });
+      }
+    });
+    await enable3D(page);
+    const expectResolution = async (dpr: number) => {
+      await expect
+        .poll(async () => {
+          const size = await mode(page, "3d")
+            .locator("canvas")
+            .evaluate((element) => {
+              const canvas = element as HTMLCanvasElement;
+              const bounds = canvas.getBoundingClientRect();
+              const gl = canvas.getContext("webgl2")!;
+              return {
+                width: canvas.width,
+                height: canvas.height,
+                cssWidth: bounds.width,
+                cssHeight: bounds.height,
+                dpr: devicePixelRatio,
+                viewport: [...(gl.getParameter(gl.VIEWPORT) as Int32Array)],
+              };
+            });
+          const ratio = photoGraphRenderPixelRatio(
+            size.cssWidth,
+            size.cssHeight,
+            dpr,
+          );
+          return {
+            dpr: size.dpr,
+            widthError: size.width - Math.floor(size.cssWidth * ratio),
+            heightError: size.height - Math.floor(size.cssHeight * ratio),
+            viewportMatches:
+              size.viewport.join(",") ===
+              [0, 0, size.width, size.height].join(","),
+          };
+        })
+        .toEqual({ dpr, widthError: 0, heightError: 0, viewportMatches: true });
+    };
+    await expectResolution(2);
+    await page.evaluate(() => {
+      (
+        window as unknown as { graphBufferAllocations: { tracking: boolean } }
+      ).graphBufferAllocations.tracking = true;
+    });
+    const viewport = page.viewportSize()!;
+    const cdp = await context.newCDPSession(page);
+    // Change density without changing CSS dimensions, like moving between screens.
+    for (const deviceScaleFactor of [1, 2]) {
+      await cdp.send("Emulation.setDeviceMetricsOverride", {
+        ...viewport,
+        deviceScaleFactor,
+        mobile: isMobile,
+      });
+      // CDP changes density without emitting the real browser's screen-change
+      // notification, even though resolution queries now have different matches.
+      await page.evaluate(() => window.dispatchEvent(new Event("resize")));
+      await expectResolution(deviceScaleFactor);
+    }
+    for (const viewport of [
+      { width: 3840, height: 2160 },
+      { width: 1920, height: 1080 },
+      { width: 1600, height: 2400 },
+      { width: 2400, height: 1600 },
+      { width: 844, height: 390 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await expectResolution(2);
+    }
+    await toggle(page).uncheck();
+    await expect(mode(page, "2d").locator("canvas").first()).toBeVisible();
+    await toggle(page).check();
+    await expectResolution(2);
+    const allocations = await page.evaluate(
+      () =>
+        (
+          window as unknown as {
+            graphBufferAllocations: { allocations: number[] };
+          }
+        ).graphBufferAllocations.allocations,
+    );
+    expect(allocations.length).toBeGreaterThan(0);
+    expect(Math.max(...allocations)).toBeLessThanOrEqual(
+      PHOTO_GRAPH_RENDER_PIXEL_BUDGET,
+    );
+    await cdp.detach();
+    expect(errors.get(page)).toEqual([]);
+  });
 });
 
 for (const reducedMotion of ["no-preference", "reduce"] as const) {
@@ -775,7 +1464,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
         state.tracking = true;
       });
       await page.getByRole("button", { name: "Reset", exact: true }).click();
-      await page.waitForTimeout(750);
+      await page.waitForTimeout(1100);
       const samples = await page.evaluate((mode) => {
         const state = (
           window as unknown as {
@@ -805,7 +1494,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
         expect(samples.length).toBeLessThanOrEqual(2);
       else {
         expect(samples.length).toBeGreaterThanOrEqual(4);
-        expect(samples.at(-1)! - samples[0]).toBeGreaterThan(150);
+        expect(samples.at(-1)! - samples[0]).toBeGreaterThan(600);
       }
       expect(graphRequests.get(page)).toHaveLength(initialRequests);
     }
