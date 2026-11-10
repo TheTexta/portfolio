@@ -58,8 +58,11 @@ If port 3107 is already occupied, use `PORTFOLIO_TEST_PORT=3157 npm run test:e2e
 instead of stopping another session's server. The fixture and browser use the same
 override; the suite never reuses an unknown existing server.
 GitHub Actions runs checks, tests, Auth validation, and a production build on
-pull requests and pushes to `main`. Linux CI wraps the browser suite in
-`xvfb-run -a` to retain headed native pointer-lock coverage.
+pull requests and pushes to `main`. Desktop and mobile browser projects run in
+separate jobs after validation; the final `check` gate requires all three to pass.
+Each browser job keeps its own failure artifacts and a bounded test timeout.
+Linux CI wraps the browser suite in `xvfb-run -a` to retain headed native
+pointer-lock coverage.
 
 Elliot's write-up reuses the shared animation player for a three-stage
 photograph-to-palette example, recorded with the real OKLab extractor. Its

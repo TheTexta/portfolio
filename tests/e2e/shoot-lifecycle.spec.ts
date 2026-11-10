@@ -203,16 +203,17 @@ test("sharing poster is captured from the archived scene", async ({
     await context.route("https://**/*", (route) => route.abort());
     const page = await context.newPage();
     await page.goto("/write-ups/tvm-discord-bot");
+    // Wait for the client renderer before changing React-owned DOM geometry.
+    await expect(page.locator("[data-shoot-lifecycle]")).toHaveAttribute(
+      "data-scene-stage",
+      "archive",
+    );
     await page.evaluate(async () => {
       await document.fonts.ready;
       document.querySelector<HTMLElement>("article")!.style.width = "640px";
     });
     const scene = page.locator("[data-shoot-scene]");
     await scene.scrollIntoViewIfNeeded();
-    await expect(page.locator("[data-shoot-lifecycle]")).toHaveAttribute(
-      "data-scene-stage",
-      "archive",
-    );
     const box = (await scene.boundingBox())!;
     expect(box.width).toBe(640);
     expect(box.height).toBe(400);

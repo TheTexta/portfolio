@@ -82,6 +82,10 @@ test("wide equations scroll locally without clipping their start or widening the
   for (const colorScheme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme });
     await page.goto(route);
+    // This ssr:false preview marks hydration of the article's client subtree.
+    await expect(
+      page.getByRole("region", { name: "Interactive photograph graph" }),
+    ).toBeAttached();
     await page.locator("#write-up-content").evaluate((element, markup) => {
       const fixture = document.createElement("div");
       fixture.dataset.mathOverflowFixture = "";

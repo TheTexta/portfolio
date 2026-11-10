@@ -6,7 +6,7 @@ on:
 permissions:
   contents: read
 jobs:
-  check:
+  validate:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -18,14 +18,43 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm test
-      - run: npx playwright install --with-deps chromium
-      - run: xvfb-run -a npm run test:e2e
       - run: npm run admin:validate-auth
       - run: npm run build
+
+  browser:
+    needs: validate
+    name: Browser (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [desktop, mobile]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: xvfb-run -a npm run test:e2e -- --project=${{ matrix.project }} --reporter=line
+        timeout-minutes: 20
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: browser-test-results
+          name: browser-test-results-${{ matrix.project }}
           path: .tmp/playwright-results/
           include-hidden-files: true
           retention-days: 7
+
+  check:
+    if: always()
+    needs: [validate, browser]
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Require validation and both browser projects to pass
+        run: |
+          test "${{ needs.validate.result }}" = "success"
+          test "${{ needs.browser.result }}" = "success"
