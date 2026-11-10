@@ -51,7 +51,7 @@ function EditorialRule({ children }: { children: string }) {
         animate={{ scaleX: lineScale }}
         transition={getHomeTransition(shouldReduceMotion)}
       />
-      <p className="text-center text-xs font-semibold tracking-[0.18em] uppercase sm:text-sm">
+      <p className="text-center text-xs font-semibold tracking-[0.18em] uppercase">
         {children}
       </p>
       <motion.span
@@ -186,26 +186,20 @@ export default function HomePageContent() {
         >
           About
         </a>
-        <a
-          href="#contact"
-          className="flex min-h-7 items-center transition-opacity hover:opacity-55"
-        >
-          Contact
-        </a>
         <ThemeToggle className="hidden sm:inline-flex" />
       </SiteHeader>
 
-      <section className="py-30 sm:py-20 lg:py-24">
-        <div className="space-y-2 px-5 sm:space-y-5 sm:px-8 lg:px-12">
+      <section className="py-36 sm:py-20 lg:py-24">
+        <div className="space-y-12 px-5 sm:space-y-4 sm:px-8 lg:px-12">
           <EditorialRule>
             Software development + interactive media
           </EditorialRule>
-          <div className="mx-auto h-60 w-[calc(100%-2.5rem)] max-w-200 py-12 sm:h-82.5 sm:w-[calc(100%-4rem)] lg:w-[calc(100%-6rem)] lg:max-w-225">
-            <BorderContainer>
+          <div className="mx-auto w-[calc(100%-2.5rem)] max-w-200 py-12 sm:h-82.5 sm:w-[calc(100%-4rem)] lg:w-[calc(100%-6rem)] lg:max-w-225">
+            <BorderContainer className="h-auto grid-rows-[minmax(1.5rem,1fr)_auto_minmax(1.5rem,1fr)] sm:h-full">
               <h1
                 className={cn(
                   BORDER_CONTAINER_TEXT_SCALE_CLASS,
-                  "object-center px-4 py-5 text-center font-display leading-[0.7705] font-semibold tracking-tighter lg:py-8",
+                  "object-center px-4 py-5 text-center font-display leading-[0.7705] font-semibold tracking-tighter max-sm:text-[clamp(3rem,15vw,4.5rem)] lg:py-8",
                 )}
               >
                 Dexter Young

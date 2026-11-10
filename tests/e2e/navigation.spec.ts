@@ -126,22 +126,20 @@ test("directory home and projects links reset the focused homepage", async ({
 });
 
 for (const reducedMotion of ["reduce", "no-preference"] as const) {
-  test(`section links leave project focus at the requested section with ${reducedMotion} motion`, async ({
+  test(`About link leaves project focus at the requested section with ${reducedMotion} motion`, async ({
     page,
   }) => {
     await page.emulateMedia({ reducedMotion });
-    for (const label of ["About", "Contact"]) {
-      await page.goto("/portfolio#project-elliotmairet");
-      await expect(page.locator(".project-focus-view")).toBeVisible();
-      await page
-        .getByRole("navigation", { name: "Site navigation" })
-        .getByRole("link", { name: label, exact: true })
-        .click();
-      await expectSection(page, label.toLowerCase());
-      await page.goBack();
-      await expect(page).toHaveURL(/#project-elliotmairet$/);
-      await expect(page.locator(".project-focus-view")).toBeVisible();
-    }
+    await page.goto("/portfolio#project-elliotmairet");
+    await expect(page.locator(".project-focus-view")).toBeVisible();
+    await page
+      .getByRole("navigation", { name: "Site navigation" })
+      .getByRole("link", { name: "About", exact: true })
+      .click();
+    await expectSection(page, "about");
+    await page.goBack();
+    await expect(page).toHaveURL(/#project-elliotmairet$/);
+    await expect(page.locator(".project-focus-view")).toBeVisible();
   });
 }
 
@@ -177,50 +175,43 @@ for (const project of writeUps) {
   });
 }
 
-test("keyboard section links preserve their destination after opening a rail project", async ({
+test("keyboard About link preserves its destination after opening a rail project", async ({
   page,
 }, info) => {
-  for (const label of ["About", "Contact"]) {
-    await page.goto("/portfolio#projects");
-    if (info.project.name === "mobile") {
-      const accordion = page.getByRole("button", {
-        name: "Photo Node-Gallery",
-        exact: true,
-      });
-      if ((await accordion.getAttribute("aria-expanded")) !== "true")
-        await accordion.click();
-    }
-    const trigger = page.getByRole("button", {
-      name:
-        info.project.name === "mobile"
-          ? "Open Photo Node-Gallery focus view"
-          : "Show Photo Node-Gallery in focus view",
+  await page.goto("/portfolio#projects");
+  if (info.project.name === "mobile") {
+    const accordion = page.getByRole("button", {
+      name: "Photo Node-Gallery",
       exact: true,
     });
-    await trigger.focus();
-    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
-    await trigger.press("Enter");
-    await expect(page.locator(".project-focus-view")).toBeFocused();
-    await page
-      .getByRole("navigation", { name: "Site navigation" })
-      .getByRole("link", { name: label, exact: true })
-      .press("Enter");
-    await expectSection(page, label.toLowerCase());
-    await page.keyboard.press("Tab");
-    if (label === "About")
-      await expect(
-        page.getByRole("navigation", { name: "Project write-ups" }),
-      ).toBeFocused();
-    else
-      await expect(
-        page.locator("#contact").getByRole("link", { name: /GitHub/ }),
-      ).toBeFocused();
-    await page.goBack();
-    await expect(page).toHaveURL(/#project-photo-graph$/);
-    await expect(page.locator(".project-focus-view")).toBeFocused();
-    await page.goForward();
-    await expectSection(page, label.toLowerCase());
+    if ((await accordion.getAttribute("aria-expanded")) !== "true")
+      await accordion.click();
   }
+  const trigger = page.getByRole("button", {
+    name:
+      info.project.name === "mobile"
+        ? "Open Photo Node-Gallery focus view"
+        : "Show Photo Node-Gallery in focus view",
+    exact: true,
+  });
+  await trigger.focus();
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  await trigger.press("Enter");
+  await expect(page.locator(".project-focus-view")).toBeFocused();
+  await page
+    .getByRole("navigation", { name: "Site navigation" })
+    .getByRole("link", { name: "About", exact: true })
+    .press("Enter");
+  await expectSection(page, "about");
+  await page.keyboard.press("Tab");
+  await expect(
+    page.getByRole("navigation", { name: "Project write-ups" }),
+  ).toBeFocused();
+  await page.goBack();
+  await expect(page).toHaveURL(/#project-photo-graph$/);
+  await expect(page.locator(".project-focus-view")).toBeFocused();
+  await page.goForward();
+  await expectSection(page, "about");
 });
 
 test("Grailed Plus header and footer return to a reset homepage", async ({

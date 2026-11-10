@@ -148,6 +148,89 @@ test("site header rails and inner ticks follow the shared padding and content co
   }
 });
 
+test("homepage header keeps About without a Contact link", async ({ page }) => {
+  await page.goto("/portfolio");
+  const navigation = page.getByRole("navigation", { name: "Site navigation" });
+  await expect(
+    navigation.getByRole("link", { name: "About", exact: true }),
+  ).toHaveAttribute("href", "#about");
+  await expect(
+    navigation.getByRole("link", { name: "Contact", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.locator("#contact").getByRole("heading", { name: "Contact" }),
+  ).toBeVisible();
+});
+
+for (const reducedMotion of ["reduce", "no-preference"] as const) {
+  test(`homepage name keeps its frame corners and fits with ${reducedMotion} motion`, async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion });
+    await page.goto("/portfolio");
+    await page.evaluate(() => document.fonts.ready);
+    const heading = page.getByRole("heading", {
+      name: "Dexter Young",
+      level: 1,
+    });
+    const frame = heading.locator("..").locator("..");
+    const corners = frame.locator(':scope > span[aria-hidden="true"]');
+    await expect(corners).toHaveCount(4);
+
+    for (const width of [320, 375, 390, 430, 639, 640, 768, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await heading.scrollIntoViewIfNeeded();
+      const frameBounds = (await frame.boundingBox())!;
+      for (const corner of await corners.all()) {
+        const bounds = (await corner.boundingBox())!;
+        expect(
+          bounds.height,
+          `Corner height at ${width}px`,
+        ).toBeGreaterThanOrEqual(24);
+        expect(bounds.width).toBeGreaterThan(0);
+        expect(bounds.y).toBeGreaterThanOrEqual(frameBounds.y);
+        expect(bounds.y + bounds.height).toBeLessThanOrEqual(
+          frameBounds.y + frameBounds.height + 1,
+        );
+        for (const line of await corner.locator("span").all()) {
+          await expect(line).toHaveCSS(
+            "transform",
+            /^(none|matrix\(1, 0, 0, 1, 0, 0\))$/,
+          );
+        }
+      }
+
+      const text = await heading.evaluate((element) => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        const bounds = element.getBoundingClientRect();
+        const textBounds = range.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return {
+          left: textBounds.left,
+          right: textBounds.right,
+          innerLeft: bounds.left + parseFloat(style.paddingLeft),
+          innerRight: bounds.right - parseFloat(style.paddingRight),
+        };
+      });
+      expect(text.left, `Name left edge at ${width}px`).toBeGreaterThanOrEqual(
+        text.innerLeft - 1,
+      );
+      expect(text.right, `Name right edge at ${width}px`).toBeLessThanOrEqual(
+        text.innerRight + 1,
+      );
+      expect(await page.evaluate(() => document.body.scrollWidth)).toBe(width);
+      if (width >= 640) {
+        await expect(heading).toHaveCSS(
+          "font-size",
+          width >= 1024 ? "96px" : "72px",
+        );
+        expect(frameBounds.height).toBeCloseTo(234, 0);
+      }
+    }
+  });
+}
+
 test("project browsing omits per-project number labels", async ({
   page,
 }, info) => {
