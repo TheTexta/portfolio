@@ -2,13 +2,14 @@
 
 The review is implemented as one coherent site, not separate websites for each
 role. Editable CV facts remain in `docs/resume/resume.json`; `variants.json`
-selects the opening and ordering without inventing new experience.
+selects four projects and their order without inventing new experience. The
+Jake-template build and PDF checks are documented in `docs/resume/README.md`.
 
-| Application           | CV download                        | Lead evidence                                                                                  |
-| --------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Software / full stack | `/Dexter_Young_CV.pdf`             | Grailed Plus, Discord Shoot Manager, Photo Graph or Elliot                                     |
-| Applied ML            | `/Dexter_Young_CV_ml.pdf`          | Grailed inference integration, Bot or Not evaluation workflow, Photo Graph's scoped comparison |
-| Interactive media     | `/Dexter_Young_CV_interactive.pdf` | bur1alrites, Photo Graph, Elliot and the browser product                                       |
+| Application           | CV download                        | Lead evidence                                                                                 |
+| --------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------- |
+| Software / full stack | `/Dexter_Young_CV.pdf`             | Grailed Plus, Discord Shoot Manager, Photo Graph and Elliot                                   |
+| Applied ML            | `/Dexter_Young_CV_ml.pdf`          | Bot or Not evaluation/overlap audit, Grailed inference, Photo Graph and Discord Shoot Manager |
+| Interactive media     | `/Dexter_Young_CV_interactive.pdf` | bur1alrites, Photo Graph, Grailed Plus and Discord Shoot Manager                              |
 
 The existing source documentation records the owner's confirmation of Summer
 2027 availability and expected June 2028 graduation. No finer availability dates,

@@ -1,166 +1,165 @@
-"""Build the public one-page CV from resume.json using ReportLab and Carlito.
+"""Build a one-page Jake-template CV from the shared JSON content using pdfLaTeX.
 
-Run from any directory: python3 docs/resume/build_resume.py --font-dir /path/to/Carlito
-The default output is public/Dexter_Young_CV.pdf. See README.md beside this script.
+Run: python3 docs/resume/build_resume.py [--variant software|ml|interactive]
+Use --output /path/to/review.pdf to leave the public download unchanged.
 """
 
 from argparse import ArgumentParser
-from html import escape
 import json
-import os
 from pathlib import Path
-
-from reportlab.lib import colors
-from reportlab.lib.enums import TA_LEFT
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import ParagraphStyle
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfgen.canvas import Canvas
-from reportlab.platypus import Paragraph
+import re
+import shutil
+import subprocess
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = Path(__file__).with_name("resume.json")
-NAVY = colors.HexColor("#213F68")
-MARGIN = 35.1
-WIDTH, HEIGHT = A4
-CONTENT_WIDTH = WIDTH - 2 * MARGIN
+TEMPLATE = Path(__file__).with_name("template.tex")
 
 
-def font_directory(explicit):
-    candidates = [
-        Path(explicit) if explicit else None,
-        Path(os.environ["RESUME_FONT_DIR"]) if os.environ.get("RESUME_FONT_DIR") else None,
-        Path("/usr/share/fonts/truetype/crosextra"),
-        Path("/usr/share/fonts/truetype/carlito"),
-        Path.home() / ".cache/codex-runtimes/codex-primary-runtime/dependencies/native/"
-        "libreoffice-headless/libreoffice/LibreOfficeDev.app/Contents/Resources/fonts/truetype",
-    ]
-    for candidate in candidates:
-        if candidate and all((candidate / name).exists() for name in (
-            "Carlito-Regular.ttf", "Carlito-Bold.ttf", "Carlito-Italic.ttf"
-        )):
-            return candidate
-    raise SystemExit("Carlito fonts not found. Set --font-dir or RESUME_FONT_DIR; see docs/resume/README.md.")
+def latex_escape(text):
+    replacements = {
+        "\\": r"\textbackslash{}",
+        "&": r"\&",
+        "%": r"\%",
+        "$": r"\$",
+        "#": r"\#",
+        "_": r"\_",
+        "{": r"\{",
+        "}": r"\}",
+        "~": r"\textasciitilde{}",
+        "^": r"\textasciicircum{}",
+        "–": "--",
+        "—": "---",
+    }
+    return "".join(replacements.get(character, character) for character in text)
+
+
+def item_list(bullets):
+    return "\n".join([
+        r"\resumeItemListStart",
+        *(rf"\resumeItem{{{latex_escape(text)}}}" for text in bullets),
+        r"\resumeItemListEnd",
+    ])
+
+
+def render_resume(data, variant):
+    projects = {project["title"]: project for project in data["projects"]}
+    titles = variant["projects"]
+    if len(titles) != 4 or len(set(titles)) != len(titles) or any(
+        title not in projects for title in titles
+    ):
+        raise ValueError("Each variant must select four distinct, existing projects")
+
+    contact = []
+    for item in data["contact"]:
+        label = latex_escape(item["label"])
+        if item.get("href"):
+            label = rf"\href{{{latex_escape(item['href'])}}}{{\underline{{{label}}}}}"
+        contact.append(label)
+
+    education = data["education"]
+    experience = data["experience"]
+    roles = []
+    for index, role in enumerate(experience["roles"]):
+        title, date = latex_escape(role["title"]), latex_escape(role["date"])
+        if index == 0:
+            roles.append(
+                rf"\resumeSubheading{{{latex_escape(experience['title'])}}}"
+                rf"{{{latex_escape(experience['location'])}}}{{{title}}}{{{date}}}"
+            )
+        else:
+            roles.append(rf"\resumeSubSubheading{{{title}}}{{{date}}}")
+        roles.append(item_list(role["bullets"]))
+
+    entries = []
+    for title in titles:
+        project = projects[title]
+        heading = (
+            rf"\textbf{{\href{{{latex_escape(project['href'])}}}"
+            rf"{{\underline{{{latex_escape(title)}}}}}}} $|$ "
+            rf"\emph{{{latex_escape(project['technologies'])}}}"
+        )
+        entries.append(rf"\resumeProjectHeading{{{heading}}}{{{latex_escape(project['date'])}}}")
+        entries.append(item_list(project["bullets"]))
+
+    values = {
+        "NAME": latex_escape(data["name"]),
+        "TITLE": latex_escape(variant["title"]),
+        "CONTACT": " $|$ ".join(contact),
+        "PROFILE": latex_escape(variant["profile"]),
+        "EDUCATION": (
+            rf"\resumeSubheading{{{latex_escape(education['title'])}}}"
+            rf"{{{latex_escape(education['location'])}}}"
+            rf"{{{latex_escape(education['subtitle'])}}}{{{latex_escape(education['date'])}}}"
+        ),
+        "EXPERIENCE": "\n".join(roles),
+        "PROJECTS": "\n".join(entries),
+        "ADDITIONAL": "\n".join(
+            rf"\resumeItem{{\textbf{{{latex_escape(item['label'])}}}, {latex_escape(item['text'])}}}"
+            for item in data["additional"]
+        ),
+        "SKILLS": " \\\\\n".join(
+            rf"\textbf{{{latex_escape(item['label'])}}}: {latex_escape(item['text'])}"
+            for item in data["skills"]
+        ),
+    }
+    return re.sub(r"@@([A-Z]+)@@", lambda match: values[match[1]], TEMPLATE.read_text())
+
+
+def build_pdf(document, output):
+    compiler = shutil.which("pdflatex")
+    if compiler is None:
+        raise RuntimeError("pdfLaTeX not found. Install MacTeX/BasicTeX or TeX Live; see docs/resume/README.md.")
+
+    with TemporaryDirectory(prefix="dexter-resume-") as directory:
+        work = Path(directory)
+        (work / "resume.tex").write_text(document)
+        for _ in range(2):
+            result = subprocess.run(
+                [compiler, "-no-shell-escape", "-interaction=nonstopmode", "-halt-on-error",
+                 "-file-line-error", "resume.tex"],
+                cwd=work, capture_output=True, text=True, timeout=60,
+            )
+            if result.returncode:
+                raise RuntimeError("pdfLaTeX failed:\n" + result.stdout[-6000:] + result.stderr)
+
+        log = (work / "resume.log").read_text()
+        pages = re.search(r"Output written on resume\.pdf \((\d+) pages?\b", log)
+        if not pages or int(pages[1]) != 1:
+            raise RuntimeError("Resume must fit one page. Shorten content; do not shrink type.")
+        if re.search(r"Overfull \\[hv]box", log):
+            raise RuntimeError("Resume has overflowing content. Shorten the affected text; do not shrink type.")
+
+        # Replace only after successful compilation and layout checks. Keep a failed
+        # build from truncating the existing public download.
+        output.parent.mkdir(parents=True, exist_ok=True)
+        with NamedTemporaryFile(dir=output.parent, prefix=".resume-", suffix=".pdf", delete=False) as staged:
+            staged_path = Path(staged.name)
+        try:
+            shutil.copyfile(work / "resume.pdf", staged_path)
+            staged_path.chmod(0o644)
+            staged_path.replace(output)
+        finally:
+            staged_path.unlink(missing_ok=True)
 
 
 def main():
     parser = ArgumentParser(description=__doc__)
-    parser.add_argument("--font-dir")
     parser.add_argument("--variant", choices=("software", "ml", "interactive"), default="software")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    if args.output is None:
-        filename = "Dexter_Young_CV.pdf" if args.variant == "software" else f"Dexter_Young_CV_{args.variant}.pdf"
-        args.output = ROOT / "public" / filename
-    fonts = font_directory(args.font_dir)
-    for name, filename in (
-        ("Carlito", "Carlito-Regular.ttf"),
-        ("Carlito-Bold", "Carlito-Bold.ttf"),
-        ("Carlito-Italic", "Carlito-Italic.ttf"),
-    ):
-        pdfmetrics.registerFont(TTFont(name, str(fonts / filename)))
-    pdfmetrics.registerFontFamily("Carlito", normal="Carlito", bold="Carlito-Bold", italic="Carlito-Italic")
+    output = args.output or ROOT / "public" / (
+        "Dexter_Young_CV.pdf" if args.variant == "software" else f"Dexter_Young_CV_{args.variant}.pdf"
+    )
     data = json.loads(SOURCE.read_text())
     variant = json.loads(SOURCE.with_name("variants.json").read_text())[args.variant]
-    projects = {project["title"]: project for project in data["projects"]}
-    if len(set(variant["projects"])) != len(variant["projects"]) or any(
-        title not in projects for title in variant["projects"]
-    ):
-        raise SystemExit("Variant contains duplicate or unknown project titles")
-    data["profile"] = variant["profile"]
-    data["projects"] = [projects[title] for title in variant["projects"]]
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    canvas = Canvas(str(args.output), pagesize=A4, pageCompression=1, invariant=1)
-    canvas.setTitle(f"Dexter Young - {variant['title']} CV")
-    canvas.setAuthor("Dexter Young")
-    canvas.setSubject("Summer 2027 internships; expected graduation June 2028")
-    body = ParagraphStyle("body", fontName="Carlito", fontSize=10, leading=11.6, alignment=TA_LEFT)
-    y = HEIGHT - 43
-
-    def paragraph(text, *, font="Carlito", size=10, leading=11.6, indent=0):
-        nonlocal y
-        style = ParagraphStyle("line", parent=body, fontName=font, fontSize=size, leading=leading)
-        item = Paragraph(text, style)
-        _, height = item.wrap(CONTENT_WIDTH - indent, HEIGHT)
-        item.drawOn(canvas, MARGIN + indent, y - height + size)
-        y -= height
-
-    def section(title):
-        nonlocal y
-        y -= 7
-        canvas.setFillColor(NAVY)
-        canvas.setFont("Carlito-Bold", 10.5)
-        canvas.drawString(MARGIN, y, title)
-        canvas.setStrokeColor(NAVY)
-        canvas.setLineWidth(0.4)
-        canvas.line(MARGIN, y - 4, WIDTH - MARGIN, y - 4)
-        canvas.setFillColor(colors.black)
-        y -= 16.2
-
-    def heading(item):
-        nonlocal y
-        canvas.setFillColor(colors.black)
-        canvas.setFont("Carlito-Bold", 10)
-        canvas.drawString(MARGIN, y, item["title"])
-        if item.get("href"):
-            title_width = pdfmetrics.stringWidth(item["title"], "Carlito-Bold", 10)
-            canvas.linkURL(item["href"], (MARGIN, y - 2, MARGIN + title_width, y + 9), relative=0)
-        canvas.setFont("Carlito", 10)
-        canvas.drawRightString(WIDTH - MARGIN, y, item["date"])
-        y -= 11.6
-        paragraph(escape(item["subtitle"]), font="Carlito-Italic")
-
-    def bullet(text, *, markup=False):
-        nonlocal y
-        canvas.setFont("Carlito", 10)
-        canvas.drawString(MARGIN + 2.5, y, "\u2022")
-        paragraph(text if markup else escape(text), indent=10)
-        y -= 0.6
-
-    canvas.setFillColor(NAVY)
-    canvas.setFont("Carlito-Bold", 17)
-    canvas.drawString(MARGIN, y, data["name"])
-    y -= 15.3
-    contact = []
-    for item in data["contact"]:
-        label = escape(item["label"])
-        if item.get("href"):
-            label = f'<link href="{escape(item["href"], quote=True)}" color="#213F68"><u>{label}</u></link>'
-        contact.append(label)
-    paragraph("  |  ".join(contact), size=9, leading=10.4)
-    canvas.setStrokeColor(NAVY)
-    canvas.setLineWidth(0.8)
-    canvas.line(MARGIN, y + 2, WIDTH - MARGIN, y + 2)
-    y -= 7
-
-    section("PROFILE")
-    paragraph(escape(data["profile"]))
-    section("EDUCATION")
-    heading(data["education"])
-    section("TECHNICAL EXPERIENCE")
-    heading(data["experience"])
-    for text in data["experience"]["bullets"]:
-        bullet(text)
-    section("SOFTWARE AND CREATIVE TECHNOLOGY PROJECTS")
-    for index, project in enumerate(data["projects"]):
-        if index:
-            y -= 3
-        heading(project)
-        for text in project["bullets"]:
-            bullet(text)
-    section("ADDITIONAL EXPERIENCE AND LEADERSHIP")
-    for item in data["additional"]:
-        bullet(f'<b>{escape(item["label"])}:</b> {escape(item["text"])}', markup=True)
-    section("TECHNICAL SKILLS")
-    for item in data["skills"]:
-        paragraph(f'<b>{escape(item["label"])}:</b> {escape(item["text"])}')
-    if y < MARGIN:
-        raise SystemExit(f"Resume exceeds one-page content area by {MARGIN - y:.1f}pt. Shorten content; do not shrink type.")
-    canvas.showPage()
-    canvas.save()
-    print(f"Wrote {args.output} (one A4 page; bottom text baseline approximately {y:.1f}pt)")
+    try:
+        build_pdf(render_resume(data, variant), output)
+    except (ValueError, RuntimeError, subprocess.TimeoutExpired) as error:
+        raise SystemExit(str(error)) from error
+    print(f"Wrote {output} (one US Letter page; Jake template)")
 
 
 if __name__ == "__main__":

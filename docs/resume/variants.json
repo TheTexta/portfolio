@@ -1,38 +1,32 @@
 {
   "software": {
-    "title": "Software Development",
-    "profile": "McGill Artificial Intelligence and Computer Science undergraduate with a Music Technology minor, focused on software development and interactive media. I build browser tools and publishing systems. Available for Summer 2027 internships.",
+    "title": "Software Engineering",
+    "profile": "McGill computer science student seeking a Summer 2027 software engineering internship.",
     "projects": [
       "Grailed Plus",
       "Discord Shoot Manager",
       "Photo Node-Gallery",
-      "Bot or Not",
-      "bur1alrites",
       "Elliot Mairet photography archive"
     ]
   },
   "ml": {
     "title": "Applied ML and Software",
-    "profile": "McGill Artificial Intelligence and Computer Science undergraduate with a Music Technology minor. My projects span local model inference, classifier evaluation and interactive image systems. Available for Summer 2027 internships.",
+    "profile": "McGill computer science student seeking a Summer 2027 software engineering internship in applied ML.",
     "projects": [
-      "Grailed Plus",
       "Bot or Not",
+      "Grailed Plus",
       "Photo Node-Gallery",
-      "Discord Shoot Manager",
-      "Elliot Mairet photography archive",
-      "bur1alrites"
+      "Discord Shoot Manager"
     ]
   },
   "interactive": {
     "title": "Interactive Media and Software",
-    "profile": "McGill Artificial Intelligence and Computer Science undergraduate with a Music Technology minor. I build video-led interfaces, interactive image systems and browser tools. Available for Summer 2027 internships.",
+    "profile": "McGill computer science student seeking a Summer 2027 software engineering internship in interactive media.",
     "projects": [
       "bur1alrites",
       "Photo Node-Gallery",
-      "Elliot Mairet photography archive",
       "Grailed Plus",
-      "Discord Shoot Manager",
-      "Bot or Not"
+      "Discord Shoot Manager"
     ]
   }
 }

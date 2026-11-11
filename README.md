@@ -580,8 +580,13 @@ original experiment, run `npm run photo-graph:annotate-benchmark`; this preserve
 scores, timings, rankings and the original generation date. A new experiment uses
 `npm run photo-graph:benchmark-colors` and retains its own provenance.
 
-The résumé PDF has editable content and a generator under `docs/resume/`.
-Confirmed availability is Summer 2027, with expected graduation June 2028.
+The three résumé PDFs share editable JSON content and a reproducible Jake-template
+LaTeX build under `docs/resume/`; see [`docs/resume/README.md`](docs/resume/README.md)
+for local Python/pdfLaTeX requirements and checks. Each variant selects four
+projects, and the portfolio's default download remains `/Dexter_Young_CV.pdf`.
+Confirmed availability is Summer 2027, with expected graduation June 2028. TVM
+experience records the owner-confirmed progression from Assistant Technical
+Director (March–May 2026) to Technical Director (June 2026–Present).
 See `docs/portfolio-review-implementation.md` for the cross-repository findings
 and `docs/portfolio-review-delivery.md` for local verification and the remaining
 publication, independent-evidence and owner-action gates. Prepared procedures are

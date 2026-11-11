@@ -1,61 +1,81 @@
 # Editing the public CV
 
-`resume.json` is the editable source for `public/Dexter_Young_CV.pdf`.
-`build_resume.py` recreates its A4 layout with the original Carlito typeface,
-10 pt body text and 11.6 pt line spacing. It refuses content that would exceed
-one page; shorten or select content instead of shrinking the type.
+`resume.json` holds shared facts and project bullets; `variants.json` selects four
+projects and the opening sentence for each application lane. `template.tex` is
+the Jake Gutierrez layout, imported from the owner's editable LaTeX source with
+its MIT notice preserved. It keeps the existing US Letter page, Computer Modern
+type, 11 pt document size, and visibly underlined project links.
 
-Install ReportLab (`python3 -m pip install reportlab`) and the open-source
-Carlito regular, bold and italic TrueType fonts, then run from the repository:
+`build_resume.py` escapes JSON content into that single template and compiles it
+with pdfLaTeX twice in a temporary directory. It rejects multiple pages and
+overfull boxes before atomically replacing the requested output. Shorten or select
+content instead of shrinking the type. ReportLab and Carlito are no longer used.
+
+## Build
+
+Use Python 3 and pdfLaTeX from MacTeX/BasicTeX or TeX Live. A minimal TeX installation
+also needs the `preprint` (for `fullpage`), `titlesec`, `marvosym`, `enumitem` and
+`fancyhdr` packages, in addition to the standard LaTeX tools, fonts and `hyperref`.
+Install missing packages through your TeX package manager, for example
+`tlmgr install preprint titlesec marvosym enumitem fancyhdr` with suitable local
+permissions. Do not change production or hosting dependencies for this local build.
+
+Run from the repository:
 
 ```bash
-python3 docs/resume/build_resume.py --font-dir /path/to/carlito
-```
-
-The generator also checks common Linux font locations and the Codex bundled
-LibreOffice fonts. `RESUME_FONT_DIR` can supply another location. Use `--output`
-to render a review copy without replacing the public file.
-
-`variants.json` selects and orders the same source projects for software, applied
-ML and interactive-media applications. It changes the opening and ordering, not
-graduation, contribution, skill level or evaluation claims. Generate the two
-role-specific downloads with the same type size and one-page overflow guard:
-
-```bash
+python3 docs/resume/build_resume.py
 python3 docs/resume/build_resume.py --variant ml
 python3 docs/resume/build_resume.py --variant interactive
 ```
 
-These write `public/Dexter_Young_CV_ml.pdf` and
-`public/Dexter_Young_CV_interactive.pdf`. The default software selection still
-writes `public/Dexter_Young_CV.pdf`. Choose the appropriate file in an application;
-the site keeps one coherent default. Skills such as C/C++ and Java are background
-claims, not evidence of a shipped lower-level graphics system. Tailor them only
-to existing coursework or projects the owner can discuss; do not invent a source
-link or new experience to match a posting.
+The script also works from another directory when invoked by its absolute path.
+Use `--output /path/to/review.pdf` to review a build without replacing a public file.
 
-After editing, render the PDF to an image with Poppler and inspect it at normal
-reading size. Check page count, links and text extraction before publishing:
+| Variant              | Public output                            | Projects in order                                                      |
+| -------------------- | ---------------------------------------- | ---------------------------------------------------------------------- |
+| `software` (default) | `public/Dexter_Young_CV.pdf`             | Grailed Plus, Discord Shoot Manager, Photo Node-Gallery, Elliot Mairet |
+| `ml`                 | `public/Dexter_Young_CV_ml.pdf`          | Bot or Not, Grailed Plus, Photo Node-Gallery, Discord Shoot Manager    |
+| `interactive`        | `public/Dexter_Young_CV_interactive.pdf` | bur1alrites, Photo Node-Gallery, Grailed Plus, Discord Shoot Manager   |
+
+The portfolio keeps its existing `/Dexter_Young_CV.pdf` download URL. Regenerate all
+three outputs when shared facts, bullets, links or layout change. The six-project
+library remains available for tailoring; each application receives four entries.
+
+## Checks
+
+Run the offline generator and content regression tests:
 
 ```bash
-pdftoppm -scale-to 1800 -png -singlefile public/Dexter_Young_CV.pdf /tmp/dexter-cv
+python3 -m unittest discover -s docs/resume
+npx vitest run tests/unit/resume-evidence.test.ts
+npm run check
+npm run test:e2e -- tests/e2e/resume-download.spec.ts
+```
+
+After building, inspect each PDF at normal reading size. Verify one US Letter
+page, no clipping, sensible text extraction order and working contact/project
+links. Poppler provides an optional inspection workflow (repeat for each variant):
+
+```bash
+pdftoppm -scale-to 1800 -png -singlefile public/Dexter_Young_CV.pdf /path/to/review/dexter-cv
 pdfinfo public/Dexter_Young_CV.pdf
 pdftotext public/Dexter_Young_CV.pdf -
 ```
 
-The October 2026 revision uses the owner's confirmed Summer 2027 availability
-and expected June 2028 graduation. It leads with the extension and bot, points
-project titles to portfolio explanations, and removes obsolete image-cache and
-reload-resumability wording. The former Bot or Not practice F1 values remain in
-their original run artifacts and are contextualised on the project page; they
-are not presented as independent generalisation results on this CV.
+## Fact and evidence boundaries
 
-The November route update changes only project hyperlink destinations to the
-canonical `/write-ups/` namespace; the former `/projects/` URLs remain redirects.
-Regenerate all three downloads when changing these links in `resume.json`.
+The owner confirmed Summer 2027 availability, expected June 2028 graduation, and
+the TVM progression: Assistant Technical Director in March–May 2026, then Technical
+Director from June 2026. Contact details match the current Jake-template source,
+not the superseded ReportLab JSON.
 
-This is a software-focused selection. Secondary school, the Coursera course and
-the combined Arnaud/Elliot entry were shortened or omitted to make room for the
-bot and current engineering evidence. The original PDF had no editable source
-in this repository. The replacement preserves its contact details, typography
-and section hierarchy while making future changes reproducible.
+Project bullets lead with what the software does, followed by specific engineering
+behaviour. Photo Graph's 100-photo/seven-search comparison describes the saved
+benchmark, not the current catalogue size or a broad retrieval-quality result.
+Bot or Not includes the checked-in practice-data overlap audit; historical practice
+F1 values remain in their original artifacts and are not independent performance
+claims here. Shard-grouped validation does not imply group-aware internal calibration.
+
+Skills such as C/C++ and Java are background claims, not evidence of a shipped
+lower-level graphics system. Do not invent experience, adoption, time savings,
+performance figures or work authorization to match a posting.

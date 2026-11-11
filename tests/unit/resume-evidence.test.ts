@@ -4,7 +4,11 @@ import { projectCatalog } from "@/app/components/projects/project-catalog";
 import { PUBLIC_PAGES } from "@/lib/seo";
 
 const resume = JSON.parse(readFileSync("docs/resume/resume.json", "utf8")) as {
-  projects: { title: string; href: string }[];
+  name: string;
+  contact: { label: string; href?: string }[];
+  education: { date: string; subtitle: string };
+  experience: { roles: { title: string; date: string }[] };
+  projects: { title: string; href: string; bullets: string[] }[];
 };
 const variants = JSON.parse(
   readFileSync("docs/resume/variants.json", "utf8"),
@@ -32,24 +36,60 @@ describe("application evidence destinations", () => {
       "software",
     ]);
     for (const variant of Object.values(variants)) {
+      expect(variant.projects).toHaveLength(4);
       expect(new Set(variant.projects).size).toBe(variant.projects.length);
       for (const title of variant.projects)
         expect(titles.has(title)).toBe(true);
       expect(variant.profile).toContain("McGill");
       expect(variant.profile).toContain("Summer 2027");
+      expect(variant.profile).toContain("software engineering internship");
     }
-    expect(variants.software.projects.slice(0, 2)).toEqual([
+    expect(variants.software.projects).toEqual([
+      "Grailed Plus",
+      "Discord Shoot Manager",
+      "Photo Node-Gallery",
+      "Elliot Mairet photography archive",
+    ]);
+    expect(variants.ml.projects).toEqual([
+      "Bot or Not",
+      "Grailed Plus",
+      "Photo Node-Gallery",
+      "Discord Shoot Manager",
+    ]);
+    expect(variants.interactive.projects).toEqual([
+      "bur1alrites",
+      "Photo Node-Gallery",
       "Grailed Plus",
       "Discord Shoot Manager",
     ]);
-    expect(variants.ml.projects.slice(0, 3)).toEqual([
-      "Grailed Plus",
-      "Bot or Not",
-      "Photo Node-Gallery",
+  });
+
+  it("preserves current contact details and owner-confirmed education and TVM progression", () => {
+    expect(resume.name).toBe("Dexter Young");
+    expect(resume.contact.map((item) => item.label)).toContain(
+      "+1 (438) 407-6487",
+    );
+    expect(resume.education.date).toBe("2024 – June 2028 (expected)");
+    expect(resume.education.subtitle).toContain("Music Technology");
+    expect(
+      resume.experience.roles.map(({ title, date }) => ({ title, date })),
+    ).toEqual([
+      { title: "Technical Director", date: "June 2026 – Present" },
+      { title: "Assistant Technical Director", date: "Mar. – May 2026" },
     ]);
-    expect(variants.interactive.projects.slice(0, 2)).toEqual([
-      "bur1alrites",
-      "Photo Node-Gallery",
-    ]);
+  });
+
+  it("keeps the ML overlap audit visible without reviving historical F1 claims", () => {
+    const project = resume.projects.find(({ title }) => title === "Bot or Not");
+    expect(project?.bullets).toHaveLength(2);
+    expect(project?.bullets[0]).toContain("shard-grouped validation");
+    expect(project?.bullets[0]).toContain("language-specific thresholds");
+    expect(project?.bullets[1]).toContain(
+      "timelines shared with training inputs",
+    );
+    expect(project?.bullets[1]).toContain(
+      "do not establish unseen-data performance",
+    );
+    expect(project?.bullets.join(" ")).not.toMatch(/0\.95238|1\.000/);
   });
 });
