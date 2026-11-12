@@ -29,7 +29,7 @@ export function AnimatedEditorialRuleHeading({
     <div
       ref={headingRef}
       className={cn(
-        "grid w-full grid-cols-[minmax(0,1fr)_fit-content(100%)_minmax(0,1fr)] items-center gap-3 px-5 sm:px-8 lg:px-12",
+        "grid w-full grid-cols-[minmax(0,1fr)_fit-content(100%)_minmax(0,1fr)] items-center gap-3 px-0 sm:px-8 lg:px-12",
         height === "section" ? "h-[4.5rem]" : "h-[4.15625rem]",
         className,
       )}

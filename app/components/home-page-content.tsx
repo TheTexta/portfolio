@@ -199,7 +199,7 @@ export default function HomePageContent() {
               <h1
                 className={cn(
                   BORDER_CONTAINER_TEXT_SCALE_CLASS,
-                  "object-center px-4 py-5 text-center font-display leading-[0.7705] font-semibold tracking-tighter max-sm:text-[clamp(3rem,15vw,4.5rem)] lg:py-8",
+                  "object-center px-2 py-4 text-center font-display leading-[0.7705] font-semibold tracking-tighter max-sm:text-[clamp(3rem,15vw,4.5rem)] lg:py-8",
                 )}
               >
                 Dexter Young
