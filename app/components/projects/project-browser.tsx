@@ -7,12 +7,10 @@ import {
   type KeyboardEvent,
   type RefObject,
   useCallback,
-  useEffect,
   useMemo,
   useRef,
-  useState,
 } from "react";
-import { flushSync } from "react-dom";
+import { useProjectBrowserNavigation } from "./use-project-browser-navigation";
 
 import {
   getAdjacentProjects,
@@ -41,9 +39,7 @@ import { useProjectRailMotion } from "@/app/components/projects/use-project-rail
 import styles from "@/app/components/projects/project-browser.module.css";
 import { getProjectHoverTransition } from "./project-hover-motion";
 
-const PROJECT_HASH_PREFIX = "#project-";
 const RAIL_ONE = projectCatalog;
-const VALID_PROJECT_IDS = new Set(projectCatalog.map((project) => project.id));
 const MOTION_EASE = [0.22, 1, 0.36, 1] as const;
 const MOTION_DURATION = 0.65;
 const SIDE_PREVIEW_VIEWPORT_WIDTH = 1024;
@@ -58,17 +54,6 @@ function getStandardTransition(
 ): Transition {
   return shouldReduceMotion ? { duration: 0 } : { duration, ease: MOTION_EASE };
 }
-
-type DocumentWithViewTransition = Document & {
-  startViewTransition?: (callback: () => void) => ViewTransition;
-};
-
-type ViewTransition = {
-  finished: Promise<void>;
-  ready: Promise<void>;
-  skipTransition: () => void;
-  updateCallbackDone: Promise<void>;
-};
 
 type RailProps = {
   projects: readonly ProjectDefinition[];
@@ -701,16 +686,6 @@ function FocusPreview({
   );
 }
 
-function readProjectHash(): ProjectId | null {
-  const value = window.location.hash;
-  if (!value.startsWith(PROJECT_HASH_PREFIX)) {
-    return null;
-  }
-
-  const projectId = value.slice(PROJECT_HASH_PREFIX.length) as ProjectId;
-  return VALID_PROJECT_IDS.has(projectId) ? projectId : null;
-}
-
 type ProjectBrowserProps = {
   onFocusChange?: (projectId: ProjectId | null) => void;
   embedded?: boolean;
@@ -720,26 +695,21 @@ export default function ProjectBrowser({
   onFocusChange,
   embedded = false,
 }: ProjectBrowserProps) {
-  const [focusedProjectId, setFocusedProjectId] = useState<ProjectId | null>(
-    null,
-  );
-  const [returnProjectId, setReturnProjectId] = useState<ProjectId | null>(
-    null,
-  );
-  const [touchInfoKey, setTouchInfoKey] = useState<string | null>(null);
-  const [mobileExpandedKey, setMobileExpandedKey] = useState<string | null>(
-    `mobile-table-${projectCatalog[0].id}-0`,
-  );
-  const activeViewTransitionRef = useRef<ViewTransition | null>(null);
-  const focusedProjectRef = useRef<ProjectId | null>(null);
-  const galleryRef = useRef<HTMLDivElement>(null);
+  const {
+    galleryRef,
+    focusedProjectId,
+    returnProjectId,
+    touchInfoKey,
+    setTouchInfoKey,
+    mobileExpandedKey,
+    setMobileExpandedKey,
+    openFocus,
+    closeFocus,
+    changeFocusedProject,
+  } = useProjectBrowserNavigation({ embedded, onFocusChange });
   const railAreaRef = useRef<HTMLDivElement>(null);
   const firstRailTrackRef = useRef<HTMLDivElement>(null);
   const firstRailGroupRef = useRef<HTMLDivElement>(null);
-  const railScrollYRef = useRef(0);
-  const lastFocusedCardKeyRef = useRef<string | null>(null);
-  const restoreRailRef = useRef(false);
-  const restoreRailFocusRef = useRef(false);
   const railMotion = useMemo(
     () =>
       [
@@ -760,231 +730,6 @@ export default function ProjectBrowser({
     rails: railMotion,
   });
 
-  const updateWithTransition = useCallback(
-    (callback: () => void, onFinished?: () => void) => {
-      const documentWithTransition = document as DocumentWithViewTransition;
-      const reducedMotion = window.matchMedia(
-        "(prefers-reduced-motion: reduce)",
-      ).matches;
-
-      if (
-        embedded ||
-        !documentWithTransition.startViewTransition ||
-        reducedMotion
-      ) {
-        callback();
-        onFinished?.();
-        return;
-      }
-
-      activeViewTransitionRef.current?.skipTransition();
-
-      const transition = documentWithTransition.startViewTransition(() => {
-        flushSync(callback);
-      });
-      activeViewTransitionRef.current = transition;
-
-      // `ready` rejects with AbortError when a newer interaction supersedes this
-      // transition. That is expected carousel behavior, not an application error.
-      void transition.ready.catch(() => undefined);
-      void transition.updateCallbackDone.catch(() => undefined);
-      void transition.finished
-        .catch(() => undefined)
-        .finally(() => {
-          if (activeViewTransitionRef.current === transition) {
-            activeViewTransitionRef.current = null;
-          }
-          onFinished?.();
-        });
-    },
-    [embedded],
-  );
-
-  useEffect(() => {
-    if (embedded) return;
-    const syncFromHash = () => {
-      const projectId = readProjectHash();
-      if (focusedProjectRef.current === projectId) {
-        return;
-      }
-
-      if (focusedProjectRef.current && !projectId) {
-        restoreRailRef.current = true;
-        restoreRailFocusRef.current = true;
-        const cardKey = lastFocusedCardKeyRef.current;
-        if (cardKey?.startsWith("mobile-table-")) setMobileExpandedKey(cardKey);
-      }
-
-      updateWithTransition(() => {
-        focusedProjectRef.current = projectId;
-        setFocusedProjectId(projectId);
-      });
-    };
-
-    syncFromHash();
-    window.addEventListener("hashchange", syncFromHash);
-    window.addEventListener("popstate", syncFromHash);
-
-    return () => {
-      window.removeEventListener("hashchange", syncFromHash);
-      window.removeEventListener("popstate", syncFromHash);
-    };
-  }, [embedded, updateWithTransition]);
-
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      if (focusedProjectId) {
-        if (!embedded) galleryRef.current?.scrollIntoView({ block: "start" });
-        galleryRef.current
-          ?.querySelector<HTMLElement>(".project-focus-view")
-          ?.focus({ preventScroll: true });
-        return;
-      }
-
-      if (!restoreRailRef.current) {
-        return;
-      }
-
-      restoreRailRef.current = false;
-      const sectionTarget = embedded
-        ? null
-        : document.getElementById(window.location.hash.slice(1));
-      if (sectionTarget) {
-        restoreRailFocusRef.current = false;
-        sectionTarget.scrollIntoView({ block: "start" });
-        if (!sectionTarget.contains(document.activeElement))
-          sectionTarget.focus({ preventScroll: true });
-        return;
-      }
-
-      if (!embedded) window.scrollTo({ top: railScrollYRef.current });
-
-      if (!restoreRailFocusRef.current) {
-        return;
-      }
-
-      restoreRailFocusRef.current = false;
-      const cardKey = lastFocusedCardKeyRef.current;
-      const trigger = cardKey
-        ? galleryRef.current?.querySelector<HTMLElement>(
-            `[data-card-key="${cardKey}"] [data-project-trigger]`,
-          )
-        : null;
-      if (trigger && trigger.getClientRects().length > 0) {
-        if (!embedded) {
-          trigger.scrollIntoView({
-            block: "nearest",
-            inline: "nearest",
-            behavior: "instant",
-          });
-        }
-        trigger.focus({ preventScroll: true });
-      } else {
-        galleryRef.current?.focus({ preventScroll: true });
-      }
-    });
-
-    return () => window.cancelAnimationFrame(frame);
-  }, [embedded, focusedProjectId]);
-
-  useEffect(() => {
-    onFocusChange?.(focusedProjectId);
-  }, [focusedProjectId, onFocusChange]);
-
-  useEffect(() => {
-    if (!touchInfoKey) {
-      return;
-    }
-
-    const dismiss = (event: globalThis.PointerEvent) => {
-      if (galleryRef.current?.contains(event.target as Node)) {
-        return;
-      }
-      setTouchInfoKey(null);
-    };
-
-    window.addEventListener("pointerdown", dismiss);
-    return () => window.removeEventListener("pointerdown", dismiss);
-  }, [touchInfoKey]);
-
-  const getLocationUrl = useCallback(() => {
-    return `${window.location.pathname}${window.location.search}`;
-  }, []);
-
-  const setProjectHash = useCallback(
-    (projectId: ProjectId, mode: "push" | "replace" = "push") => {
-      const nextUrl = `${getLocationUrl()}${PROJECT_HASH_PREFIX}${projectId}`;
-      if (!embedded) {
-        window.history[mode === "push" ? "pushState" : "replaceState"](
-          { projectId, projectFocus: true },
-          "",
-          nextUrl,
-        );
-      }
-      updateWithTransition(() => {
-        focusedProjectRef.current = projectId;
-        setFocusedProjectId(projectId);
-      });
-    },
-    [embedded, getLocationUrl, updateWithTransition],
-  );
-
-  const openFocus = useCallback(
-    (projectId: ProjectId, cardKey: string) => {
-      railScrollYRef.current = window.scrollY;
-      lastFocusedCardKeyRef.current = cardKey;
-      setTouchInfoKey(null);
-      setMobileExpandedKey(null);
-      const sourceCard = galleryRef.current?.querySelector<HTMLElement>(
-        `[data-card-key="${cardKey}"]`,
-      );
-      if (sourceCard && !embedded) {
-        sourceCard.style.viewTransitionName = `project-poster-${projectId}`;
-      }
-      setProjectHash(projectId);
-    },
-    [embedded, setProjectHash],
-  );
-
-  const closeFocus = useCallback(
-    (restoreFocus: boolean) => {
-      const nextUrl = getLocationUrl();
-      const projectId = focusedProjectRef.current;
-      const projectIndex = projectCatalog.findIndex(
-        (project) => project.id === projectId,
-      );
-      restoreRailRef.current = true;
-      restoreRailFocusRef.current = restoreFocus;
-
-      if (!embedded) window.history.replaceState({}, "", nextUrl);
-      updateWithTransition(
-        () => {
-          if (projectId && projectIndex !== -1) {
-            setReturnProjectId(projectId);
-            setMobileExpandedKey(
-              restoreFocus &&
-                lastFocusedCardKeyRef.current?.startsWith("mobile-table-")
-                ? lastFocusedCardKeyRef.current
-                : `mobile-table-${projectId}-${projectIndex}`,
-            );
-          }
-          focusedProjectRef.current = null;
-          setFocusedProjectId(null);
-          if (!embedded) window.scrollTo({ top: railScrollYRef.current });
-        },
-        () => setReturnProjectId(null),
-      );
-    },
-    [embedded, getLocationUrl, updateWithTransition],
-  );
-
-  const changeFocusedProject = useCallback(
-    (projectId: ProjectId) => {
-      setProjectHash(projectId, "replace");
-    },
-    [setProjectHash],
-  );
-
   const rails = useMemo(
     () => (
       <div ref={railAreaRef} className="py-2">
@@ -1001,7 +746,7 @@ export default function ProjectBrowser({
         />
       </div>
     ),
-    [openFocus, returnProjectId, touchInfoKey],
+    [openFocus, returnProjectId, touchInfoKey, setTouchInfoKey],
   );
 
   return (

@@ -39,6 +39,117 @@ async function expectHome(page: Page) {
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 }
 
+test("navigation cancels superseded transitions and keeps the latest hash and focus", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.addInitScript(() => {
+    const state = { started: 0, skipped: 0 };
+    Object.assign(window, { navigationTransitions: state });
+    Object.defineProperty(document, "startViewTransition", {
+      configurable: true,
+      value: (update: () => void) => {
+        state.started += 1;
+        // Native view-transition updates run asynchronously, outside React effects.
+        const updateCallbackDone = Promise.resolve().then(update);
+        let finish: () => void;
+        const finished = new Promise<void>((resolve) => {
+          finish = resolve;
+        });
+        return {
+          ready: Promise.reject(new DOMException("Superseded", "AbortError")),
+          updateCallbackDone,
+          finished,
+          skipTransition: () => {
+            state.skipped += 1;
+            finish();
+          },
+        };
+      },
+    });
+  });
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/portfolio?navigation=test#project-photo-graph");
+  await expect(page.locator(".project-focus-view")).toBeFocused();
+  // Dispatch consecutive hash navigations before waiting for transition completion.
+  await page.evaluate(() => {
+    window.history.replaceState({}, "", "#project-elliotmairet");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+    window.history.replaceState({}, "", "#project-grailed-plus");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  });
+  await expect(page).toHaveURL(/\?navigation=test#project-grailed-plus$/);
+  await expect(
+    page.getByRole("region", { name: "Grailed Plus focus view" }),
+  ).toBeFocused();
+  expect(
+    await page.evaluate(
+      () =>
+        (window as unknown as { navigationTransitions: { skipped: number } })
+          .navigationTransitions.skipped,
+    ),
+  ).toBeGreaterThanOrEqual(2);
+  await page
+    .getByRole("button", { name: "Close project focus", exact: true })
+    .press("Enter");
+  await expect(page).toHaveURL(/\/portfolio\?navigation=test$/);
+  await expect(page.locator("#projects")).toBeFocused();
+  expect(errors).toEqual([]);
+});
+
+test("embedded navigation leaves document history alone and restores its originating trigger", async ({
+  page,
+}, info) => {
+  await page.goto("/write-ups/portfolio-design");
+  const browser = page.getByRole("region", {
+    name: "Portfolio project browser example",
+    exact: true,
+  });
+  if (info.project.name === "mobile") {
+    const row = browser.getByRole("button", {
+      name: "Photo Node-Gallery",
+      exact: true,
+    });
+    if ((await row.getAttribute("aria-expanded")) !== "true") await row.click();
+  }
+  const trigger = browser.getByRole("button", {
+    name:
+      info.project.name === "mobile"
+        ? "Open Photo Node-Gallery focus view"
+        : "Show Photo Node-Gallery in focus view",
+    exact: true,
+  });
+  await trigger.focus();
+  const before = await page.evaluate(() => ({
+    href: location.href,
+    historyLength: history.length,
+  }));
+  await trigger.press("Enter");
+  await expect(browser.locator(".project-focus-view")).toBeFocused();
+  await browser.locator(".project-focus-view").press("ArrowRight");
+  const nextProject =
+    browserProjects[
+      (browserProjects.findIndex((project) => project.id === "photo-graph") +
+        1) %
+        browserProjects.length
+    ];
+  await expect(
+    browser.getByRole("region", {
+      name: `${nextProject.title} focus view`,
+      exact: true,
+    }),
+  ).toBeFocused();
+  await browser.locator(".project-focus-view").press("Escape");
+  await expect(trigger).toBeFocused();
+  expect(
+    await page.evaluate(() => ({
+      href: location.href,
+      historyLength: history.length,
+    })),
+  ).toEqual(before);
+});
+
 async function expectSection(page: Page, id: string) {
   await expect(page).toHaveURL(new RegExp(`#${id}$`));
   await expect(page.locator(".project-focus-view")).toHaveCount(0);

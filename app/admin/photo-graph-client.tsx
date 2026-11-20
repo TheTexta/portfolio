@@ -26,8 +26,6 @@ import type {
   AdminPhotoGraphNode,
   AdminPhotoGraphResponse,
   DeletePhotoGraphResponse,
-  PhotoGraphUploadResponse,
-  PhotoGraphUploadUrlResponse,
   SaveEdgeDefaultsResponse,
   SaveGraphDefaultsResponse,
 } from "@/lib/photo-graph/admin-types";
@@ -36,7 +34,7 @@ import {
   DEFAULT_PHOTO_GRAPH_RUNTIME_CONTROLS,
   PHOTO_GRAPH_RUNTIME_CONTROL_LIMITS,
 } from "@/lib/photo-graph/graph-controls";
-import { PHOTO_GRAPH_CACHE_CONTROL_SECONDS } from "@/lib/photo-graph/config";
+import { uploadPhotoGraphFiles } from "@/lib/photo-graph/browser-upload";
 import { featureFromRgb, rgbToHex } from "@/lib/photo-graph/feature-extraction";
 import { measureMeanRgb } from "@/lib/photo-graph/mean-rgb";
 import {
@@ -55,9 +53,6 @@ import { getBrowserSupabaseClient } from "@/lib/supabase/browser";
 import {
   PHOTO_GRAPH_UPLOAD_RECOVERY_KEY,
   readPhotoGraphUploadRecovery,
-  savePhotoGraphUploadRecovery,
-  clearPhotoGraphUploadRecovery,
-  runWithPhotoGraphUploadLock,
   type PhotoGraphUploadRecovery,
 } from "@/lib/photo-graph/upload-recovery";
 
@@ -881,314 +876,40 @@ export default function PhotoGraphAdminClient() {
     setStatusWithLog("Starting upload pipeline...", "info");
 
     try {
-      await runWithPhotoGraphUploadLock(navigator.locks, async () => {
-        // Re-read under the cross-tab lock: mounted React state can be stale.
-        let batch = readPhotoGraphUploadRecovery(localStorage);
-        if (!batch) {
-          if (!files.length)
-            throw new Error(
-              "This batch was completed in another tab. Select new files to upload.",
-            );
-          if (files.length > 100)
-            throw new Error("Select at most 100 images per upload batch.");
-          const uploadId = crypto.randomUUID();
-          // Fail before sending any files if durable browser storage is unavailable.
-          batch = { uploadId, uploads: [], phase: "uploading", files: {} };
-          savePhotoGraphUploadRecovery(localStorage, batch);
-          appendVerboseLog(
-            `Validated ${files.length} file(s) for upload.`,
-            "success",
-          );
-
-          for (let index = 0; index < files.length; index += 1) {
-            const file = files[index];
-
-            setStatusWithLog(
-              `Extracting image features (${index + 1}/${files.length}): ${file.name}`,
-            );
-            const featurePayload = await computeFeaturePayload(file);
-            appendVerboseLog(
-              `Feature extraction complete: ${file.name}.`,
-              "success",
-            );
-
-            const sha256 = Array.from(
-              new Uint8Array(
-                await crypto.subtle.digest("SHA-256", await file.arrayBuffer()),
-              ),
-            )
-              .map((byte) => byte.toString(16).padStart(2, "0"))
-              .join("");
-
-            setStatusWithLog(
-              `Requesting upload URL (${index + 1}/${files.length}): ${file.name}`,
-            );
-            const uploadUrlResponse = await fetch(
-              "/api/admin/photo-graph/upload-url",
-              {
-                method: "POST",
-                headers: {
-                  "content-type": "application/json",
-                },
-                body: JSON.stringify({
-                  filename: file.name,
-                  contentType: file.type,
-                  size: file.size,
-                  sha256,
-                }),
-              },
-            );
-
-            const uploadUrlBody =
-              await parseJsonOrThrow<PhotoGraphUploadUrlResponse>(
-                uploadUrlResponse,
-              );
-
-            if (!uploadUrlResponse.ok || !uploadUrlBody.ok) {
-              throw new Error(
-                uploadUrlBody.error ?? "Failed to get upload URL.",
-              );
-            }
-
-            setStatusWithLog(
-              `Uploading directly to ${uploadUrlBody.storageProvider === "r2" ? "R2" : "Supabase"} (${index + 1}/${files.length}): ${file.name}`,
-            );
-
-            batch.uploads.push({
-              storagePath: uploadUrlBody.objectPath,
-              ...(uploadUrlBody.storageProvider === "r2"
-                ? {
-                    storageProvider: "r2" as const,
-                    sourceSha256: sha256,
-                    sourceSize: file.size,
-                    contentType: file.type,
-                  }
-                : {}),
-              feature: {
-                rgb: featurePayload.rgb,
-                lab: featurePayload.lab,
-                hue: featurePayload.hue,
-                longSide: featurePayload.longSide,
-                colorV1: featurePayload.colorV1,
-              },
-              dimensions: featurePayload.dimensions,
-            });
-            batch.files![uploadUrlBody.objectPath] = {
-              name: file.name,
-              size: file.size,
-              sha256,
-            };
-            // Persist intent before bytes: a lost response must not lose the object.
-            savePhotoGraphUploadRecovery(localStorage, batch);
-            setPendingUpload({ ...batch });
-            if (uploadUrlBody.storageProvider === "r2") {
-              const response = await fetch(uploadUrlBody.signedUrl, {
-                method: "PUT",
-                headers: uploadUrlBody.headers ?? { "Content-Type": file.type },
-                body: file,
-              });
-              if (!response.ok)
-                throw new Error(
-                  `Direct R2 upload failed (${response.status}). Retry to confirm whether the original was received.`,
-                );
-            } else {
-              if (!uploadUrlBody.token)
-                throw new Error("Supabase upload token was missing.");
-              const { error: uploadError } = await supabase.storage
-                .from(uploadUrlBody.bucket)
-                .uploadToSignedUrl(
-                  uploadUrlBody.objectPath,
-                  uploadUrlBody.token,
-                  file,
-                  {
-                    cacheControl: PHOTO_GRAPH_CACHE_CONTROL_SECONDS,
-                    contentType: file.type,
-                  },
-                );
-
-              if (uploadError) {
-                throw new Error(
-                  uploadError.message ||
-                    `Direct upload failed for ${file.name}.`,
-                );
-              }
-            }
-
-            appendVerboseLog(
-              `Direct upload complete: ${file.name} -> ${uploadUrlBody.objectPath}.`,
-              "success",
-            );
-          }
-        }
-
-        if (!batch?.uploads.length)
-          throw new Error("No uploaded images to register.");
-
-        if (batch.phase === "uploading") {
-          const statusResponse = await fetch(
-            "/api/admin/photo-graph/upload-status",
-            {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({
-                items: batch.uploads.map((upload) => ({
-                  storagePath: upload.storagePath,
-                  ...(upload.storageProvider === "r2"
-                    ? {
-                        storageProvider: "r2",
-                        sourceSha256: upload.sourceSha256,
-                        sourceSize: upload.sourceSize,
-                        contentType: upload.contentType,
-                      }
-                    : {}),
-                })),
-              }),
-            },
-          );
-          const status = await parseJsonOrThrow<{
-            ok: boolean;
-            missing: string[];
-            error?: string;
-          }>(statusResponse);
-          if (!statusResponse.ok || !status.ok)
-            throw new Error(
-              status.error ?? "Unable to confirm uploaded images.",
-            );
-          for (const path of status.missing) {
-            const original = batch.files?.[path];
-            const file =
-              original &&
-              files.find(
-                (candidate) =>
-                  candidate.name === original.name &&
-                  candidate.size === original.size,
-              );
-            if (!file)
-              throw new Error(
-                `Reselect the original file ${original?.name ?? path}, then retry registration. Recovery metadata has been retained.`,
-              );
-            const sha256 = Array.from(
-              new Uint8Array(
-                await crypto.subtle.digest("SHA-256", await file.arrayBuffer()),
-              ),
-            )
-              .map((byte) => byte.toString(16).padStart(2, "0"))
-              .join("");
-            if (sha256 !== original.sha256)
-              throw new Error(
-                `The selected ${file.name} differs from the original. Select the original image.`,
-              );
-            const signedResponse = await fetch(
-              "/api/admin/photo-graph/upload-url",
-              {
-                method: "POST",
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify({
-                  filename: file.name,
-                  contentType: file.type,
-                  storagePath: path,
-                  size: file.size,
-                  sha256,
-                }),
-              },
-            );
-            const signed =
-              await parseJsonOrThrow<PhotoGraphUploadUrlResponse>(
-                signedResponse,
-              );
-            if (!signedResponse.ok || !signed.ok)
-              throw new Error(signed.error ?? "Unable to resume upload.");
-            const entry = batch.uploads.find(
-              (upload) => upload.storagePath === path,
-            );
-            if (
-              (signed.storageProvider ?? "supabase") !==
-              (entry?.storageProvider ?? "supabase")
-            ) {
-              throw new Error(
-                "The upload backend changed during recovery. Recovery metadata has been retained.",
-              );
-            }
-            if (signed.storageProvider === "r2") {
-              const response = await fetch(signed.signedUrl, {
-                method: "PUT",
-                headers: signed.headers ?? { "Content-Type": file.type },
-                body: file,
-              });
-              if (!response.ok)
-                throw new Error(
-                  `Direct R2 retry failed (${response.status}). Retry to confirm whether the original was received.`,
-                );
-            } else {
-              if (!signed.token)
-                throw new Error("Supabase upload token was missing.");
-              const { error } = await supabase.storage
-                .from(signed.bucket)
-                .uploadToSignedUrl(path, signed.token, file, {
-                  cacheControl: PHOTO_GRAPH_CACHE_CONTROL_SECONDS,
-                  contentType: file.type,
-                });
-              if (error)
-                throw new Error(
-                  `${error.message}. Retry to confirm whether the original was received.`,
-                );
-            }
-          }
-          // Seal before registration; retries must never append to a reserved batch.
-          batch.phase = "registering";
-          savePhotoGraphUploadRecovery(localStorage, batch);
-          setPendingUpload({ ...batch });
-        }
-
-        setStatusWithLog(
-          "Registering uploaded files and updating sparse neighborhoods...",
-        );
-
-        const registerResponse = await fetch("/api/admin/photo-graph/upload", {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({
-            uploadId: batch.uploadId,
-            uploads: batch.uploads,
-          }),
-        });
-
-        const registerBody =
-          await parseJsonOrThrow<PhotoGraphUploadResponse>(registerResponse);
-
-        if (!registerResponse.ok || !registerBody.ok) {
-          throw new Error(registerBody.error ?? "Upload registration failed.");
-        }
-
-        setCreatedIds(registerBody.createdIds);
-        setFiles([]);
-        if (registerBody.warning) {
-          setErrorMessage(registerBody.warning);
-        } else {
-          clearPhotoGraphUploadRecovery(localStorage, batch.uploadId);
-          setPendingUpload(null);
-        }
-
-        appendVerboseLog(
-          `Registered ${registerBody.createdIds.length} new node(s): ${registerBody.createdIds.join(", ")}.`,
-          "success",
-        );
-        appendVerboseLog(
-          `Server generated ${registerBody.edgeCount} persisted edge(s) using ${registerBody.edgeGenerationConfig.model}, ${registerBody.edgeGenerationConfig.neighborsPerNode} neighbors, and max distance ${formatModelDistance(registerBody.edgeGenerationConfig.maxDistance)}.`,
-          "success",
-        );
-
-        await fetchGraphNodes({
-          silent: true,
-        });
-
-        setStatusWithLog(
-          `Done. Added ${registerBody.createdIds.length} image(s) and updated the ${registerBody.edgeCount}-edge public snapshot.`,
-          "success",
-        );
+      const registerBody = await uploadPhotoGraphFiles(files, {
+        storage: localStorage,
+        locks: navigator.locks,
+        supabase,
+        computeFeatures: computeFeaturePayload,
+        onRecovery: setPendingUpload,
+        onProgress: ({ message, level = "info", logOnly }) => {
+          if (logOnly) appendVerboseLog(message, level);
+          else setStatusWithLog(message, level);
+        },
       });
+      setCreatedIds(registerBody.createdIds);
+      setFiles([]);
+      if (registerBody.warning) {
+        setErrorMessage(registerBody.warning);
+      }
+
+      appendVerboseLog(
+        `Registered ${registerBody.createdIds.length} new node(s): ${registerBody.createdIds.join(", ")}.`,
+        "success",
+      );
+      appendVerboseLog(
+        `Server generated ${registerBody.edgeCount} persisted edge(s) using ${registerBody.edgeGenerationConfig.model}, ${registerBody.edgeGenerationConfig.neighborsPerNode} neighbors, and max distance ${formatModelDistance(registerBody.edgeGenerationConfig.maxDistance)}.`,
+        "success",
+      );
+
+      await fetchGraphNodes({
+        silent: true,
+      });
+
+      setStatusWithLog(
+        `Done. Added ${registerBody.createdIds.length} image(s) and updated the ${registerBody.edgeCount}-edge public snapshot.`,
+        "success",
+      );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Upload failed unexpectedly.";

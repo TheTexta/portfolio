@@ -140,6 +140,11 @@ if the homepage is moved in a future change.
 
 ## Navigation
 
+`use-project-browser-navigation.ts` owns the project browser's hash/history,
+view-transition cancellation, and focus/scroll restoration. `ProjectBrowser`
+keeps rail layout and presentation; embedded browsers use the same navigation
+without changing document history or scroll position.
+
 The header identity, portfolio directory link, and Grailed Plus footer return to
 a reset `/portfolio` at the top. These home links intentionally use document
 navigation so an already-mounted project focus cannot survive a homepage reset.
@@ -645,6 +650,13 @@ graph endpoint were verified separately. Do not rotate shared server credentials
 or weaken RLS to address a stale local environment file.
 
 Each registration sends an immutable UUID `uploadId` with its image metadata.
+`lib/photo-graph/browser-upload.ts` owns the browser's durable v1 upload/retry
+protocol; the admin view owns feature extraction and editable UI. The upload
+route owns authentication, input validation and HTTP responses, delegating
+publication/commit/cleanup ordering to `lib/server/photo-graph-register-upload.ts`.
+`lib/photo-graph/upload-plan.ts` plans reserved destinations, scaling and sparse
+neighborhood changes without storage or database I/O.
+
 The journal reserves stable node IDs, and Storage copies retain the `_pending/`
 originals until nodes, relationships, settings, and the completed result commit
 in one database transaction. A revision check rejects a graph generated from
