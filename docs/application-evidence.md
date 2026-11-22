@@ -12,7 +12,7 @@ Jake-template build and PDF checks are documented in `docs/resume/README.md`.
 | Interactive media     | `/Dexter_Young_CV_interactive.pdf` | bur1alrites, Photo Graph, Grailed Plus and Discord Shoot Manager                              |
 
 The existing source documentation records the owner's confirmation of Summer
-2027 availability and expected June 2028 graduation. No finer availability dates,
+2027 availability and expected May 2028 graduation. No finer availability dates,
 work authorization or employer eligibility are inferred. Reconfirm those facts
 when completing an application with narrower requirements.
 

@@ -64,7 +64,7 @@ pdftotext public/Dexter_Young_CV.pdf -
 
 ## Fact and evidence boundaries
 
-The owner confirmed Summer 2027 availability, expected June 2028 graduation, and
+The owner confirmed Summer 2027 availability, expected May 2028 graduation, and
 the TVM progression: Assistant Technical Director in March–May 2026, then Technical
 Director from June 2026. Contact details match the current Jake-template source,
 not the superseded ReportLab JSON.

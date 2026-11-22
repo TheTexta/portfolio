@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { projectCatalog } from "@/app/components/projects/project-catalog";
 import { PUBLIC_PAGES } from "@/lib/seo";
+import { SITE_PROFILE } from "@/lib/site-config";
 
 const resume = JSON.parse(readFileSync("docs/resume/resume.json", "utf8")) as {
   name: string;
@@ -69,7 +70,8 @@ describe("application evidence destinations", () => {
     expect(resume.contact.map((item) => item.label)).toContain(
       "+1 (438) 407-6487",
     );
-    expect(resume.education.date).toBe("2024 – June 2028 (expected)");
+    expect(resume.education.date).toBe("2024 – May 2028 (expected)");
+    expect(SITE_PROFILE.description).toContain("expected graduation May 2028");
     expect(resume.education.subtitle).toContain("Music Technology");
     expect(
       resume.experience.roles.map(({ title, date }) => ({ title, date })),

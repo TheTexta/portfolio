@@ -32,7 +32,7 @@ export const PUBLIC_PAGES = {
     path: PROJECT_ROUTES.home,
     title: `${SITE_PROFILE.name} — Software Developer & Creative Technologist`,
     description: SITE_PROFILE.description,
-    lastModified: "2026-11-02",
+    lastModified: "2026-11-22",
     image: photoGraph,
   },
   photoGraph: {

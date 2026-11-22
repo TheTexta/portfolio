@@ -33,7 +33,8 @@ class ResumeRenderingTests(unittest.TestCase):
                 self.assertIn("+1 (438) 407-6487", document)
                 self.assertIn("June 2026 -- Present", document)
                 self.assertIn("Mar. -- May 2026", document)
-                self.assertIn("2024 -- June 2028 (expected)", document)
+                self.assertIn("2024 -- May 2028 (expected)", document)
+                self.assertIn("expected graduation May 2028", document)
                 previous = -1
                 for title in variant["projects"]:
                     position = document.index(r"\underline{" + title + "}")

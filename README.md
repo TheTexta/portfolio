@@ -608,7 +608,7 @@ The three résumé PDFs share editable JSON content and a reproducible Jake-temp
 LaTeX build under `docs/resume/`; see [`docs/resume/README.md`](docs/resume/README.md)
 for local Python/pdfLaTeX requirements and checks. Each variant selects four
 projects, and the portfolio's default download remains `/Dexter_Young_CV.pdf`.
-Confirmed availability is Summer 2027, with expected graduation June 2028. TVM
+Confirmed availability is Summer 2027, with expected graduation May 2028. TVM
 experience records the owner-confirmed progression from Assistant Technical
 Director (March–May 2026) to Technical Director (June 2026–Present).
 See `docs/portfolio-review-implementation.md` for the cross-repository findings
