@@ -111,6 +111,15 @@ redirects, and the removed preview's 404. Local pages still declare production
 canonical URLs. These smoke checks do not prove that Google can access or index
 the site, and do not modify Search Console or hosting settings.
 
+Public pages must emit exactly one canonical link inside `<head>`, with no extra
+canonical elsewhere in the HTML. Document-title checks use `<head>` so SVG
+accessibility titles do not cause false failures. Against `https://dextery.dev`
+only, the validator also follows HTTP and `www` redirect chains for the portfolio
+and Grailed Plus,
+requiring permanent HTTPS redirects that preserve the path and query and finish
+with HTTP 200 on the non-`www` canonical. Local checks never probe production
+hostname redirects. Offline regression tests cover both checks.
+
 Vercel's project domain settings explicitly redirect `www.dextery.dev` permanently
 to `dextery.dev` with HTTP 308, replacing the automatic temporary 307 redirect.
 When changing domain settings, verify the redirect preserves both path and query,
@@ -137,6 +146,16 @@ problems. Search appearance and indexing remain Google's decision. The existing
 preserved; Google's site-name documentation specifies domain-root placement for
 `WebSite` markup, so site-name eligibility should be checked against that routing
 if the homepage is moved in a future change.
+
+Search Console MCP audits work with read-only OAuth access, but submitting a
+sitemap requires the full `https://www.googleapis.com/auth/webmasters` scope.
+The 20 November 2026 submission attempt was rejected for insufficient OAuth
+scopes; owner permission on the property does not override the token's scope.
+Until reauthorised, submit the existing sitemap through the Search Console UI.
+Use the UI's **Test Live URL** and **Request indexing** for priority articles;
+the URL Inspection API reports recorded index status and cannot perform those
+actions. Do not use Google's restricted JobPosting/BroadcastEvent Indexing API
+to submit ordinary portfolio pages.
 
 ## Navigation
 
@@ -701,8 +720,9 @@ documentation caches and browser-test artifacts from CLI uploads. Inspect upload
 inputs with `vercel deploy --dry --json` before deploying. Build with
 `vercel deploy --prod --skip-domain`, validate the resulting deployment, then use
 `vercel promote <deployment-url> --yes` to switch the live domain. Retain the
-previous deployment URL for rollback. The reviewed release uses Next.js 16.4.3,
-React 19.3.1 and Sharp 0.35.5; compatibility holds and audit scope are documented
+previous deployment URL for rollback. The source pins Next.js 16.4.6,
+React 19.3.1 and Sharp 0.35.5; compatibility holds, the security patch and audit
+scope are documented
 in `docs/dependency-updates.md`.
 
 Run `npm run admin:validate-auth` to verify authorization, login, refresh, and

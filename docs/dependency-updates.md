@@ -2,7 +2,46 @@
 
 The owner expanded the review implementation to update every compatible portfolio
 package after a clean install identified a critical Next.js production advisory.
-This does not authorize a release, deployment or unrelated repository refresh.
+That original refresh did not authorise a release, deployment or unrelated
+repository refresh; the later security-patch authorisation is recorded below.
+
+## Security patch — 22 November 2026
+
+The owner subsequently authorised upgrading the affected portfolio dependency,
+committing the reviewed portfolio changes and pushing them. Next.js, `@next/mdx`
+and `eslint-config-next` are now pinned to **16.4.6**, replacing 16.4.3. Their
+Next-owned transitive packages are aligned in `package-lock.json`; React remains
+19.3.1 and unrelated dependency versions are unchanged. The table below retains
+the original 1 November baseline rather than describing this patch's Next version.
+
+The registry advisory check identified seven Next.js advisories affecting 16.4.3;
+16.4.6 is outside their affected ranges. After `npm install --ignore-scripts`,
+`npm audit --omit=dev` reports **zero findings**. The full audit reports **seven
+moderate development-only findings**, all through the TypeScript ESLint stack's
+minimatch dependency. These are retained separately from this targeted production
+security patch; no forced overrides or broad `npm audit fix` were applied.
+
+No page content, metadata copy, routing, authorisation or storage configuration is
+changed by this patch. A push and its local checks do not by themselves establish
+that Vercel has deployed the updated dependency.
+
+Local verification on Node 22.23.4 passed `npm run check` (one existing unused
+`MobileFavicon` lint warning), all 299 unit tests and the colour/edge validators,
+`npm run admin:validate-auth`, and `npm run build`. Running the SEO validator
+against that local production build passed all 72 checks for ordinary and
+Googlebot user agents. These checks do not prove Google indexing or constitute
+hosted deployment verification.
+
+The first complete desktop/mobile browser run recorded **289 passed, 25 skipped
+and four failures**. The failures were two stale assertions repeated in both
+projects: an expectation for the removed Contact navigation link and one that
+applied the homepage's fluid mobile type size to the deliberately larger inline
+frame example. Only the tests were corrected, preserving the committed UI. The
+entire affected `audit-fixes.spec.ts` file then passed **all 28 desktop/mobile
+tests**. The full suite was not rerun after those test-only corrections; hosted
+CI remains a separate verification gate. The first run also logged a palette
+teardown error during Elliot navigation; application lifecycle code was not
+changed in this patch.
 
 ## Tested target versions
 

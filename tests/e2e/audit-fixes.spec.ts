@@ -289,7 +289,7 @@ test("framed write-up titles stay readable on mobile and share larger-screen sca
         });
         await expect(
           example.getByText("Dexter Young", { exact: true }),
-        ).toHaveCSS("font-size", homepageSizes.get(width)!);
+        ).toHaveCSS("font-size", width < 1024 ? "72px" : "96px");
       }
     }
   }
@@ -316,16 +316,17 @@ for (const colorScheme of ["light", "dark"] as const) {
   });
 }
 
-test("Contact moves the next keyboard step to contact actions", async ({
+test("Contact deep links move the next keyboard step to contact actions", async ({
   page,
 }) => {
-  for (const hash of ["", "#project-photo-graph"]) {
+  for (const hash of ["#contact", "#project-photo-graph"]) {
     await page.goto(`/portfolio${hash}`);
-    const link = page
-      .getByRole("navigation", { name: "Site navigation" })
-      .getByRole("link", { name: "Contact", exact: true });
-    await link.focus();
-    await link.press("Enter");
+    if (hash !== "#contact") {
+      await expect(page.locator(".project-focus-view")).toBeVisible();
+      await page.evaluate(() => {
+        window.location.hash = "contact";
+      });
+    }
     await expect(page.locator("#contact")).toBeFocused();
     await page.keyboard.press("Tab");
     await expect(page.locator("#contact a").first()).toBeFocused();

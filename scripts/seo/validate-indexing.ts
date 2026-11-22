@@ -8,6 +8,12 @@ import {
 } from "@/app/components/projects/project-routes";
 import { absoluteUrl, PUBLIC_PAGES } from "@/lib/seo";
 import { SITE_ORIGIN } from "@/lib/site-config";
+import {
+  checkCanonicalRedirect,
+  checkPublicHtml,
+  decodeEntities,
+  inspectHtml,
+} from "./indexing-checks";
 
 const USER_AGENTS = {
   browser: "Mozilla/5.0 (compatible; PortfolioSEOSmokeCheck/1.0)",
@@ -40,114 +46,6 @@ const REDIRECTS = [
   ["/go/grailed-plus", PROJECT_ROUTES.grailedPlus],
   ["/projects/grailed-plus/experience", PROJECT_ROUTES.grailedPlusExperience],
 ] as const;
-
-function decodeEntities(value: string) {
-  return value.replace(
-    /&(#x[\da-f]+|#\d+|amp|quot|apos|lt|gt|nbsp);/gi,
-    (entity, name: string) => {
-      if (name.startsWith("#")) {
-        const code =
-          name[1].toLowerCase() === "x"
-            ? parseInt(name.slice(2), 16)
-            : parseInt(name.slice(1), 10);
-        return code > 0 && code <= 0x10ffff
-          ? String.fromCodePoint(code)
-          : entity;
-      }
-      const entities: Record<string, string> = {
-        amp: "&",
-        quot: '"',
-        apos: "'",
-        lt: "<",
-        gt: ">",
-        nbsp: " ",
-      };
-      return entities[name.toLowerCase()];
-    },
-  );
-}
-
-function attributes(tag: string) {
-  return Object.fromEntries(
-    [...tag.matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g)].map(
-      (match) => [
-        match[1].toLowerCase(),
-        decodeEntities(match[2] ?? match[3] ?? match[4]),
-      ],
-    ),
-  );
-}
-
-function readableText(html: string) {
-  return decodeEntities(html.replace(/<[^>]*>/g, " "))
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function inspectHtml(body: string) {
-  // Ignore script payloads, including Next.js's serialized component tree.
-  const html = body
-    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "")
-    .replace(/<!--[\s\S]*?-->/g, "");
-  const metas = [...html.matchAll(/<meta\b[^>]*>/gi)].map((match) =>
-    attributes(match[0]),
-  );
-  return {
-    titles: [...html.matchAll(/<title\b[^>]*>([\s\S]*?)<\/title>/gi)].map(
-      (match) => readableText(match[1]),
-    ),
-    descriptions: metas
-      .filter((meta) => meta.name?.toLowerCase() === "description")
-      .map((meta) => meta.content),
-    canonicals: [...html.matchAll(/<link\b[^>]*>/gi)]
-      .map((match) => attributes(match[0]))
-      .filter((link) =>
-        link.rel?.toLowerCase().split(/\s+/).includes("canonical"),
-      )
-      .map((link) => link.href),
-    robots: metas
-      .filter((meta) =>
-        ["robots", "googlebot"].includes(meta.name?.toLowerCase()),
-      )
-      .map((meta) => meta.content ?? ""),
-    headings: [...html.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi)].map((match) =>
-      readableText(match[1]),
-    ),
-    mainText: readableText(
-      html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i)?.[1] ?? "",
-    ),
-    links: [...html.matchAll(/<a\b[^>]*>/gi)]
-      .map((match) => attributes(match[0]).href)
-      .filter(Boolean),
-  };
-}
-
-function checkPublicHtml(body: string, response: Response, canonical: string) {
-  assert.equal(response.status, 200, "Expected HTTP 200 without redirect");
-  assert.match(response.headers.get("content-type") ?? "", /text\/html/i);
-  const html = inspectHtml(body);
-  assert.equal(html.titles.length, 1, "Expected one title");
-  assert.ok(html.titles[0], "Title is empty");
-  assert.equal(html.descriptions.length, 1, "Expected one meta description");
-  assert.ok(html.descriptions[0], "Description is empty");
-  assert.deepEqual(html.canonicals, [canonical], "Canonical URL mismatch");
-  for (const directive of [
-    ...html.robots,
-    response.headers.get("x-robots-tag") ?? "",
-  ]) {
-    assert.doesNotMatch(
-      directive,
-      /\b(?:noindex|none|unavailable_after)\b/i,
-      "Indexing is prohibited",
-    );
-  }
-  assert.ok(html.headings.some(Boolean), "Missing readable h1");
-  assert.ok(
-    html.mainText.length > 150,
-    "Missing substantive server-rendered content",
-  );
-  return html;
-}
 
 // Evaluate the emitted robots policy, including agent-specific groups and Allow overrides.
 function canCrawl(body: string, path: string, agent: string) {
@@ -246,14 +144,38 @@ async function main() {
     `Read-only SEO checks against ${base.origin}. Canonicals must use ${SITE_ORIGIN}.`,
   );
   for (const [profile, userAgent] of Object.entries(USER_AGENTS)) {
-    const get = async (path: string) => {
-      const response = await fetch(new URL(path, base), {
+    const request = (url: URL) =>
+      fetch(url, {
         headers: { "User-Agent": userAgent },
         redirect: "manual",
         signal: AbortSignal.timeout(20_000),
       });
+    const get = async (path: string) => {
+      const response = await request(new URL(path, base));
       return { response, body: await response.text() };
     };
+    if (base.origin === SITE_ORIGIN) {
+      for (const origin of [
+        "http://dextery.dev",
+        "http://www.dextery.dev",
+        "https://www.dextery.dev",
+      ]) {
+        for (const path of [
+          `${PROJECT_ROUTES.home}?seo-check=redirect`,
+          `${PROJECT_ROUTES.grailedPlus}?view=hero&seo-check=redirect`,
+        ]) {
+          await check(
+            `${profile}: ${origin}${path} canonical redirect chain`,
+            () =>
+              checkCanonicalRedirect(
+                new URL(path, origin),
+                new URL(path, SITE_ORIGIN),
+                request,
+              ),
+          );
+        }
+      }
+    }
     const titles = new Set<string>();
     const descriptions = new Set<string>();
     await check(`${profile}: robots policy`, async () => {
