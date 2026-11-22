@@ -9,6 +9,85 @@ and the position of `ProjectPreview`. Root `mdx-components.tsx` maps these to th
 shared article primitives. The shell only supplies site navigation, the reading
 column, and closing navigation.
 
+## Authoring
+
+Edit `app/write-ups/<project>/write-up.mdx`; its adjacent `page.tsx` owns the
+shared shell, metadata and data passed through `props`. Current routes cover
+Photo Graph, Elliot Mairêt, bur1alrites, Grailed Plus, TVM Discord Bot (displayed
+as Discord Shoot Manager), Bot or Not, and portfolio design.
+
+Use one `#` title followed by `##`/`###` sections. Contents links and shareable
+anchors are generated from those section headings; do not maintain another
+outline. Keep shared identity/URLs sourced from `props.project`. A minimal
+authoring pattern is:
+
+```mdx
+<header data-write-up-header>
+
+# {props.project.title}
+
+<ProjectMeta>
+  <ProjectDetails project={props.project} />
+  <nav aria-label={`${props.project.title} project links`}>
+    <a href={props.project.liveHref}>Visit site</a>
+    <a href={props.project.sourceHref}>View source</a>
+  </nav>
+</ProjectMeta>
+
+<Lead>{props.project.summary}</Lead>
+
+</header>
+
+<ProjectPreview projectId="elliotmairet" />
+
+## A design decision
+
+Explain the decision, with **emphasis** and supporting evidence.
+
+<Figure
+  src="/projects/example/detail.webp"
+  alt="Describe what the image shows"
+  width={1440}
+  height={900}
+  caption="Explain what this figure demonstrates."
+/>
+```
+
+The example preview ID and image path are illustrative; use the new project's
+real catalogue ID/assets. `Lead` can contain an authored introduction instead of
+the shared summary. `MediaPlaceholder` accepts a `caption` for unfinished local
+work. `Gallery` displays a photograph grid and `Comparison` displays a query with
+labelled ranked-result rows. Both are server components with real local image
+dimensions and HTML captions/labels rather than baked-in contact-sheet text.
+
+`Figure` uses the shared responsive image/caption component. Supply real dimensions
+to reserve space; captions are props to avoid MDX inserting paragraph spacing.
+Only trusted repository-owned MDX is compiled at build time; there is no remote
+MDX execution or CMS.
+
+For a new article, import its MDX into a `page.tsx` using `ProjectWriteUp` and
+pass `project` into the MDX component. The shell does not generate another title
+or introduction. Add the route to `project-routes.ts` and `writeUpHref` to
+`project-catalog.ts`; `showInBrowser: false` keeps write-up-only entries out of
+the visual browser while retaining About links, metadata and sitemap eligibility.
+See [navigation and previews](navigation-and-previews.md) for return paths,
+embedded-browser behavior and the cross-site navigation contract.
+
+### Mathematics
+
+`remark-math`/`rehype-katex` support `$\Delta E_{00}$` inline and `$$` on separate
+lines around display equations. Escape literal currency dollars as `\$`.
+Formula headings retain LaTeX source as plain text in the contents outline.
+The write-up layout imports local KaTeX CSS/fonts and allows display equations to
+scroll horizontally on narrow screens. Build-time rendering includes MathML;
+there is no client math runtime/CDN.
+
+The direct `katex` stylesheet dependency must match the renderer used by
+`rehype-katex`: `npm ls katex` should show one deduplicated version. The npm
+override aligns transitive plugins with the patched direct dependency; recheck
+compilation/rendering when changing it. Math syntax applies to authored MDX, not
+JavaScript expressions or `.tsx` strings inside inspectors.
+
 ## Direction contract
 
 THESIS: Explain how a project was built through plain text and accompanying
@@ -169,11 +248,12 @@ No production deployment was performed.
 
 ## Boundaries
 
-Photo Graph's full experience is not redesigned. Its write-up now follows six
-local worked-example demonstrations, with server-rendered defaults and shared
-comparison state. The 4 November extraction is separate from both the August
-benchmark and the live graph; no article region fetches the live API. See
-`photo-graph-walkthrough.md` for fixture and layout boundaries.
+Photo Graph's full experience is separate from its article. The write-up follows
+five engineering decisions with two linked page-local inspectors, server-rendered
+defaults and shared comparison state. The 4 November extraction is separate from
+both the August benchmark and the live graph. Only the opening graph preview
+requests the public API; the inspectors use frozen local data. See
+[the walkthrough](photo-graph-walkthrough.md) for fixture and layout boundaries.
 Elliot is a completed, indexable article with project structured data and a sitemap
 entry. Its three figures are screenshots of public views, not private admin data;
 capture provenance is in `public/projects/elliot-mairet/write-up/sources.json`.
@@ -186,9 +266,9 @@ an unaltered public-site screenshot. The hosted app and source checkout are unch
 
 Photo Graph's optional August methodology retains seven local review photographs.
 Historical `Gallery` and `Comparison` assets preserve their saved order in
-`gallery.json`; the new running example does not reuse their compressed pixels
-as descriptor inputs. All six new figures preserve aspect ratios and use the
-page's canvas in light and dark mode, with selectable labels and calculations.
+`gallery.json`; the frozen running example does not reuse their compressed pixels
+as descriptor inputs. Current inspectors preserve photograph aspect ratios and
+use the page's canvas in light and dark mode, with selectable labels/calculations.
 
 HTML previews opt into native interaction, disable the portfolio's click-to-launch
 hook, and send no referrer so the hosted site's portfolio-navigation bridge stays

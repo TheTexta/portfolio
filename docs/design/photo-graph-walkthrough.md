@@ -89,6 +89,36 @@ The generator is deliberate, not a build step. Its public README documents cache
 replay, browser-version sensitivity and refresh policy. No fixture was regenerated
 for this editorial change; originals and publication state remain untouched.
 
+### Local asset regeneration
+
+Run only when deliberately refreshing the corresponding evidence, not during
+ordinary installation or builds:
+
+```bash
+node --import tsx scripts/photo-graph/freeze-worked-example.ts
+```
+
+This requires installed Playwright Chromium, reads public originals and writes
+local generated assets. Keep the ignored original cache for exact replay. The
+[worked-example README](../../public/projects/photo-graph/worked-example/README.md)
+documents source mappings, checksums, raster/browser policy and explicit
+`--refresh` behavior. `fixture.json` holds the complete 4,950-pair matrix;
+that matrix stays out of the client hydration payload.
+
+The historical August gallery is a separate preparation path:
+
+```bash
+node scripts/photo-graph/prepare-write-up-media.mjs
+```
+
+It reads public transformed images and writes only local presentation assets,
+`sources.json` and `gallery.json` under `public/projects/photo-graph/write-up/`.
+It does not supply baseline descriptors or modify remote data/storage. The
+manifest records downloaded/prepared checksums. Legacy composites remain
+available but are not displayed. Commit prepared assets so static article
+content/builds need no media service; the opening interactive preview still
+requests its public graph service independently.
+
 ## Operational claims
 
 The article describes implemented upload behavior, not a new infrastructure

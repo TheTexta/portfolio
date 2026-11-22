@@ -64,9 +64,10 @@ October 30. No other project's originals were deleted.
 
 ## Historical cutover acceptance — 2026-10-15
 
-The initial production cutover migrated 102 referenced originals with full
-SHA-256 read-back verification. Additive SQL and all 102 R2 provider references
-were verified, alongside image routes, large-original transforms, private-path
+The initial production cutover migrated 102 referenced originals
+(1,250,719,633 source bytes) with full SHA-256 read-back verification.
+Additive SQL and all 102 R2 provider references were verified, alongside image
+routes, large-original transforms, private-path
 denial and Elliot/bur1alrites regressions. A follow-up authenticated R2 upload
 added node 128. The legacy doctor's credential workaround was a dated acceptance
 observation, not permission to change credentials or restore retired services.
@@ -101,6 +102,46 @@ upload committed node 128. The new published object matched its journal SHA-256
 and expected size on read-back, its 560px transform returned HTTP 200, and
 private staging was empty. The six pre-existing Supabase pending objects were
 subsequently deleted under the source-retirement approval recorded above.
+
+## Application configuration and diagnostics
+
+For admin sign-in, schema and browser recovery, see
+[Photo Graph administration](photo-graph-admin.md). Public media reads do not need
+R2 credentials. New R2 uploads require server-side settings:
+
+| Variable                           | Requirement                                                                  |
+| ---------------------------------- | ---------------------------------------------------------------------------- |
+| `PHOTO_GRAPH_MEDIA_WRITE_PROVIDER` | Set to `r2` to enable new R2 batches; missing defaults to legacy `supabase`. |
+| `PHOTO_GRAPH_R2_S3_ENDPOINT`       | Approved account endpoint checked by `lib/server/photo-graph-r2.ts`.         |
+| `PHOTO_GRAPH_R2_ACCESS_KEY_ID`     | Object Read & Write credential scoped only to the two Photo Graph buckets.   |
+| `PHOTO_GRAPH_R2_SECRET_ACCESS_KEY` | Matching server-only secret; never `NEXT_PUBLIC_*`.                          |
+
+The bucket names are `dextery-photo-graph` and `dextery-photo-graph-staging`.
+`PHOTO_GRAPH_IMAGE_BASE_PATH` must retain the canonical `photography-images`
+prefix for R2; validation fails closed otherwise. Existing unfinished Supabase
+batches retain their provider across deploys. The private staging bucket is not
+Worker-bound; its recorded PUT CORS permits dextery.dev, www.dextery.dev and
+localhost:3000 with the signed content-type/checksum/source-metadata headers
+described above. Do not broaden public access to fix upload failures.
+
+**Check R2 Access** under Manage Photos (POST
+`/api/admin/photo-graph/r2-diagnostic`) requires an authenticated administrator.
+Unlike the read-only doctor, it attempts a private staging PUT/HEAD/DELETE and
+checks a published canary. This is a write-capable diagnostic requiring approval,
+not a public health check. It reports failed stage/status without credentials and
+never registers a graph node. Inspect staging if it reports `cleanupPending: true`.
+**Retry R2 Cleanup** retries queued, unreferenced R2 deletions.
+
+The historical copier defaults to local manifest validation:
+
+```bash
+npm run photo-graph:copy:r2 -- --manifest <file>
+```
+
+The dry run reads the manifest and reports count/bytes/digest without copying.
+Only a separately approved `--copy` run requires `CLOUDFLARE_API_TOKEN` in the
+process environment. It reads originals, verifies destination bytes and refuses
+differing R2 objects. This is not permission to rerun the completed migration.
 
 ## Media locator seam
 
