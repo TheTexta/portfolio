@@ -71,6 +71,47 @@ test.afterEach(async ({ page }) =>
   expect(problems.get(page) ?? []).toEqual([]),
 );
 
+test("opening links distinguish live preview, frozen inspectors and saved selection evidence", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto(route);
+  const article = page.getByRole("article");
+  const header = article.locator("[data-write-up-header]");
+  await expect(
+    header.getByRole("link", { name: "Public source" }),
+  ).toHaveAttribute("href", "https://github.com/TheTexta/portfolio");
+  const evaluation = header.getByRole("link", {
+    name: "Saved evaluation",
+    exact: true,
+  });
+  await expect(evaluation).toHaveAttribute(
+    "href",
+    "#section-colour-model-comparison-and-review-method",
+  );
+  await expect(article).toContainText(
+    "The two inspectors use a frozen 4 November 2026 extraction",
+  );
+  await expect(article).toContainText(
+    "100 photographs and seven queries from August",
+  );
+  await expect(article).toContainText(
+    "Neither snapshot is a live catalogue count.",
+  );
+  await evaluation.click();
+  await expect(page).toHaveURL(
+    /\/write-ups\/photo-graph#section-colour-model-comparison-and-review-method$/,
+  );
+  await expect(
+    article.locator("#section-colour-model-comparison-and-review-method"),
+  ).toBeInViewport();
+  await expect(
+    article.getByRole("table", {
+      name: "Positive results among the first four judged candidates per query.",
+    }),
+  ).toContainText("25 / 28");
+});
+
 test("five engineering sections open with the real graph and exactly two supporting inspectors", async ({
   page,
 }) => {
@@ -129,6 +170,15 @@ test("default evidence remains readable without JavaScript or backend access", a
   await expect(rules(page).locator("[data-edge-count]")).toHaveText("252");
   expect((await edges(rules(page))).length).toBe(252);
   await expect(rules(page).locator("[data-node-id]")).toHaveCount(100);
+  await page
+    .getByRole("link", { name: "Saved evaluation", exact: true })
+    .click();
+  await expect(page).toHaveURL(
+    /#section-colour-model-comparison-and-review-method$/,
+  );
+  await expect(
+    page.locator("#section-colour-model-comparison-and-review-method"),
+  ).toBeInViewport();
   expect(backend).toEqual([]);
   await context.close();
 });

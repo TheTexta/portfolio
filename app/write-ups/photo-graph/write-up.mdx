@@ -10,16 +10,24 @@ import ProjectPreview from "@/app/components/projects/project-write-up-preview";
   <ProjectDetails project={props.project} />
   <nav aria-label={props.project.title + " project links"}>
     <a href={props.project.experienceHref}>Launch experience</a>
+    <a href={props.project.sourceHref}>Public source</a>
+    <a href="#section-colour-model-comparison-and-review-method">
+      Saved evaluation
+    </a>
   </nav>
 </ProjectMeta>
 
 <Lead>
   {
-    "An interactive photography archive that connects images through colour. I built the image-processing pipeline, neighbour-generation algorithm and graph interface, bringing an arrangement of printed photographs into a digital space."
+    "An interactive photography archive for following colour relationships instead of categories. I built the image-processing and sparse neighbour-generation pipeline, the graph interface and recoverable uploads, translating an arrangement of printed photographs into a digital space."
   }
 </Lead>
 
 </header>
+
+The preview below loads the live archive. The two inspectors use a frozen
+4 November 2026 extraction; the saved model-selection review covers 100 photographs
+and seven queries from August. Neither snapshot is a live catalogue count.
 
 <ProjectPreview projectId="photo-graph" />
 
@@ -89,9 +97,11 @@ I compared this baseline with a mean in Oklab, a 64-component Oklab histogram
 and a weighted palette compared using Earth Mover distance. The histogram and
 palette preserve more of an image's colour distribution, but neither outperformed
 mean LAB with CIEDE2000 on the top-four criterion in my small manual review.
-I retained the simpler representation for this archive. The review covered seven
-hand-picked queries, so I treat it as a model-selection aid; a stronger assessment
-would use new queries and separately collected judgments.
+In that August review, CIEDE2000 yielded **25 positive positions out of 28**,
+compared with **24 out of 28** for CIE76. These are counts within judged candidate
+sets, not archive-wide retrieval accuracy. I retained the simpler representation
+for this archive. The seven hand-picked queries informed model selection; a
+stronger assessment would use new queries and separately collected judgments.
 
 ### Colour-model comparison and review method
 
@@ -181,15 +191,15 @@ would use new queries and separately collected judgments.
 
 {<div className="my-4">
 
-<a href="https://github.com/TheTexta/portfolio/blob/main/public/projects/photo-graph/color-model-benchmark-v1.json">
+<a href="https://github.com/TheTexta/portfolio/blob/4ef4a2de9e668f896f0a4024518a09f6a8756fdf/public/projects/photo-graph/color-model-benchmark-v1.json">
   Saved benchmark
 </a>
 {" · "}
-<a href="https://github.com/TheTexta/portfolio/blob/main/scripts/photo-graph/color-benchmark-judgments-v1.json">
+<a href="https://github.com/TheTexta/portfolio/blob/4ef4a2de9e668f896f0a4024518a09f6a8756fdf/scripts/photo-graph/color-benchmark-judgments-v1.json">
   Judgments
 </a>
 {" · "}
-<a href="https://github.com/TheTexta/portfolio/blob/main/scripts/photo-graph/benchmark-color-models.ts">
+<a href="https://github.com/TheTexta/portfolio/blob/4ef4a2de9e668f896f0a4024518a09f6a8756fdf/scripts/photo-graph/benchmark-color-models.ts">
   Evaluation code
 </a>
 
@@ -210,6 +220,12 @@ the images. I select a sparse set of relationships:
 The neighbour limit applies to each photograph's selections. Its final number
 of links can be higher because other photographs can select it too. A connection
 therefore survives when either end chooses the other.
+
+The [sparse generator](https://github.com/TheTexta/portfolio/blob/4ef4a2de9e668f896f0a4024518a09f6a8756fdf/lib/photo-graph/sparse-edge-generation.ts)
+keeps those selections separate from the merged links. Its
+[boundary tests](https://github.com/TheTexta/portfolio/blob/4ef4a2de9e668f896f0a4024518a09f6a8756fdf/tests/unit/photo-graph-nomination-semantics.test.ts)
+check reverse selections, cutoff equality and isolated photographs rather than
+forcing every photograph into a connection.
 
 For colour difference d and cutoff τ, I calculate the link weight as:
 
@@ -274,6 +290,10 @@ the same. Nearby images may also be positioned together because of their other
 neighbours, so screen distance is only a visual expression of the graph's
 relationships.
 
+The optional 3D view renders the same precomputed relationships in another
+layout. It does not use a different similarity model or establish that viewers
+find more useful photographs.
+
 ## Updating the archive
 
 Adding a photograph can change the nearest neighbours of existing photographs
@@ -303,18 +323,34 @@ batch result are committed together in a database transaction.
   continues the same batch.
 </p>
 <p>
-  Object storage sits outside the database transaction. Originals are published
-  before registration, and source cleanup follows a successful commit. Recovery
-  objects are retained when an operation fails, while failed cleanup leaves the
-  journal available for another attempt.
+  Object storage sits outside the database transaction. For R2 uploads, the
+  server checks staged size, type and checksum metadata, then publishes and
+  verifies the copy before committing graph registration. Private staging
+  cleanup follows a successful commit. A publication or commit failure retains
+  the recovery source; failed cleanup leaves the journal available for another
+  attempt.
 </p>
 <p>
-  The registration tests cover rollback, rejection of stale generations and
-  replay without duplicate nodes. These checks address failures at different
-  points in the update, including a lost response after a successful commit.
+  The{" "}
+  <a href="https://github.com/TheTexta/portfolio/blob/4ef4a2de9e668f896f0a4024518a09f6a8756fdf/tests/unit/upload-route.test.ts#L107">
+    registration-order tests
+  </a>{" "}
+  check publication before commit and cleanup afterward. The{" "}
+  <a href="https://github.com/TheTexta/portfolio/blob/4ef4a2de9e668f896f0a4024518a09f6a8756fdf/tests/unit/upload-database.test.ts#L83">
+    database regressions
+  </a>{" "}
+  cover rollback, rejection of stale generations and replay without duplicate
+  nodes after a lost response. These are isolated adapter and database checks,
+  not a production recovery drill.
 </p>
 
    </div>}
+
+Upload recovery is not an archive backup. The previous Supabase originals were
+retired after R2 verification; a Supabase-only rollback requires reverse-copying
+and verifying every required R2 original. The
+[source-retirement record](https://github.com/TheTexta/portfolio/blob/4ef4a2de9e668f896f0a4024518a09f6a8756fdf/docs/photo-graph-r2-migration.md#owner-approved-source-retirement--2026-10-15)
+documents that boundary.
 
 The average-colour descriptor remains the clearest limitation. It can connect
 photographs with different distributions of colour and separate photographs
