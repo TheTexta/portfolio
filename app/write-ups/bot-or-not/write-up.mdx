@@ -173,7 +173,7 @@ explained here rather than retroactively relabelled as independent results.
 
 ### Overlap audit method
 
-The audit inspected checked-in inputs at revision
+The October 2026 audit inspected checked-in inputs at revision
 `5539649f4757570eab0c1bdc8d304597492d7aa4`. It compared SHA-256 fingerprints of
 sorted complete post-text lists, ignoring post order but preserving repeated
 occurrences. It did not normalise case or whitespace. A separate fingerprint
@@ -186,6 +186,23 @@ official shard 2 alone; 131 also matched the ID-stripped full payload. The
 historical reports name the same dataset IDs, but lack saved input checksums to
 establish historical-byte parity. These checks identify exact content reuse in
 the inspected files, not a reconstruction of the training run.
+
+### Later full-input audit
+
+**Local follow-up, reviewed November 23, 2026:** the later audit covers all six
+official shards and both practice files, including French shards 4 and 6 that
+were outside the earlier raw-content comparison. Against all same-language
+official inputs, it finds exact text-timeline matches for **252/275 English**
+and **164/171 French** practice accounts. Of the French matches, **131** also
+match the ID-stripped full profile/post payload, including timestamps and other
+non-ID fields; the English text matches are not identical full records.
+
+The later audit records input and label checksums in a sanitized local report.
+Those hashes identify its current inputs, not the April training bytes.
+This follow-up has not reproduced the saved scores or established independent
+performance. Its audit and split-guard source remain local; the public
+commit-pinned reports and tests above document the earlier revision, not this
+follow-up.
 
 ## Preventing overlap in future runs
 

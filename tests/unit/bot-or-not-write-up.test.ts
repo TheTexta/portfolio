@@ -113,6 +113,7 @@ describe("Bot or Not write-up", () => {
       article.indexOf("## Preventing overlap in future runs"),
     );
     expect(method).toContain("SHA-256");
+    expect(method).toContain("October 2026 audit");
     expect(method).toContain(revision);
     expect(method.replace(/\s+/g, " ")).toContain(
       "none were identical full records",
@@ -126,6 +127,34 @@ describe("Bot or Not write-up", () => {
     expect(prose).toContain(
       "These local safeguards postdate the pinned historical run and tests above",
     );
+  });
+
+  it("dates the later complete-input audit without presenting local source as published historical proof", () => {
+    const followUp = article
+      .slice(
+        article.indexOf("### Later full-input audit"),
+        article.indexOf("## Preventing overlap in future runs"),
+      )
+      .replace(/\s+/g, " ");
+    expect(followUp).toContain("reviewed November 23, 2026");
+    expect(followUp).toContain(
+      "all six official shards and both practice files",
+    );
+    expect(followUp).toContain("French shards 4 and 6");
+    expect(followUp).toContain("outside the earlier raw-content comparison");
+    expect(followUp).toContain("252/275 English");
+    expect(followUp).toContain("164/171 French");
+    expect(followUp).toContain("**131**");
+    expect(followUp).toContain("including timestamps and other non-ID fields");
+    expect(followUp).toContain(
+      "English text matches are not identical full records",
+    );
+    expect(followUp).toContain(
+      "Those hashes identify its current inputs, not the April training bytes",
+    );
+    expect(followUp).toContain("audit and split-guard source remain local");
+    expect(followUp).toContain("has not reproduced the saved scores");
+    expect(followUp).not.toContain("https://github.com");
   });
 
   it("explains alias guards and ends with an unexecuted independent-assessment protocol", () => {

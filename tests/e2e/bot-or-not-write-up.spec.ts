@@ -65,6 +65,25 @@ test("Bot or Not explains the classifier before scoped results and renders its e
       `https://github.com/TheTexta/bot-or-not-mcgill/blob/5539649f4757570eab0c1bdc8d304597492d7aa4/runs/20260404T162558Z-both-official-first-optimize/${directory}/practice-evaluation-report.json`,
     );
   }
+  await expect(
+    article.getByRole("heading", {
+      name: "Later full-input audit",
+      exact: true,
+    }),
+  ).toHaveAttribute("id", "section-later-full-input-audit");
+  await expect(article).toContainText("reviewed November 23, 2026");
+  await expect(article).toContainText(
+    "all six official shards and both practice files",
+  );
+  await expect(article).toContainText("252/275 English");
+  await expect(article).toContainText("164/171 French");
+  await expect(article).toContainText("Of the French matches, 131 also");
+  await expect(article).toContainText(
+    "audit and split-guard source remain local",
+  );
+  await expect(article).toContainText(
+    "Those hashes identify its current inputs, not the April training bytes",
+  );
   await expect(article).toContainText("That assessment has not been run.");
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",

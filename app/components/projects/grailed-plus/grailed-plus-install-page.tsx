@@ -68,7 +68,7 @@ const FEATURES = [
     eyebrow: "Search beyond Grailed",
     title: "Market compare",
     description:
-      "Compare candidates from eBay and Depop, then refine them locally with product and image similarity.",
+      "Compare candidates from eBay and Depop, then refine their order on-device. Marketplace retrieval uses network requests; eBay image search can send listing-image data through the gateway.",
   },
   {
     id: "pricing",
@@ -471,6 +471,18 @@ export default function GrailedPlusInstallPage({
                 Chrome extensions install on desktop. Open the Store now or
                 revisit this page on your computer.
               </span>
+            </p>
+            <p className="mt-4 text-sm leading-6 text-muted">
+              Built on{" "}
+              <a
+                href="https://github.com/RVRX/grailed-plus"
+                className="underline underline-offset-4"
+              >
+                RVRX/grailed-plus
+              </a>
+              ’s open-source price-history foundation. The maintained extension
+              and gateway source is private. These sample demos do not verify
+              the installed store version.
             </p>
           </div>
 

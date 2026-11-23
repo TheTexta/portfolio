@@ -15,13 +15,24 @@ test("Discord Shoot Manager explains the workflow before recovery and keeps its 
   await expect(header.locator("[data-write-up-lead]")).toContainText(
     "private production workspaces",
   );
-  await expect(header.getByRole("link")).toHaveCount(1);
+  await expect(header.getByRole("link")).toHaveCount(2);
   await expect(
     header.getByRole("link", { name: "Source and setup" }),
   ).toHaveAttribute(
     "href",
     "https://github.com/TheTexta/discord-shoot-manager",
   );
+  const evidence = header.getByRole("link", {
+    name: "Evidence and deployment scope",
+  });
+  await expect(evidence).toHaveAttribute(
+    "href",
+    "#section-testing-the-boundaries",
+  );
+  await evidence.click();
+  await expect(
+    article.locator("#section-testing-the-boundaries"),
+  ).toBeFocused();
   await expect(article.getByRole("heading", { level: 2 })).toHaveText([
     "Connecting membership with production",
     "Giving each shoot a lifecycle",
@@ -52,6 +63,27 @@ test("Discord Shoot Manager explains the workflow before recovery and keeps its 
   ).toHaveAttribute(
     "href",
     "https://github.com/TheTexta/discord-shoot-manager/actions/runs/40571855904",
+  );
+  const publishedSource =
+    "https://github.com/TheTexta/discord-shoot-manager/blob/6c0349605fc7e444019777eea56dbfb7e176c8d4";
+  await expect(
+    article.getByRole("link", { name: "persistence and recovery guide" }),
+  ).toHaveAttribute(
+    "href",
+    `${publishedSource}/docs/architecture/persistence-and-recovery.md`,
+  );
+  await expect(
+    article.getByRole("link", { name: "TVM deployment record" }),
+  ).toHaveAttribute("href", `${publishedSource}/docs/deployments/tvm.md`);
+  await expect(article).toContainText(
+    "e06dbf3 as deployed on November 2, 2026",
+  );
+  await expect(article).toContainText(
+    "new schedule text appears as entered, without timezone conversion",
+  );
+  await expect(article).toContainText("not established production enablement");
+  await expect(article).toContainText(
+    "fixture request counts, not measured production latency or operator time saved",
   );
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",

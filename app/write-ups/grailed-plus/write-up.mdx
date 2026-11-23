@@ -11,28 +11,35 @@ import RecordedComparison from "@/app/components/projects/grailed-plus/grailed-p
     <a href="https://chromewebstore.google.com/detail/grailed-plus/bgblnhmkbofpgmibnogimfheipedkegd">
       Chrome Web Store
     </a>
+    <a href="#section-demonstrating-the-product-and-evaluating-the-ranking">
+      Evidence and limitations
+    </a>
   </nav>
 </ProjectMeta>
 
 <Lead>
   {
-    "Cross-market comparison inside Grailed, combining listing metadata with on-device image matching while keeping preliminary results available."
+    "I extended Grailed Plus with cross-market comparison and local image matching, using a packaged worker for inference and a separate Node.js gateway for eBay retrieval. Metadata results appear first and remain usable when refinement fails or times out."
   }
 </Lead>
 
 </header>
+
+The maintained extension and gateway source is private. This article describes
+that implementation, not verified feature coverage of the current store package.
+The interactive demos use sample listings; the photo-only example replays
+recorded worker scores.
 
 Comparing resale listings means working with inconsistent information. The same
 item can appear under different titles, photographed against different backgrounds.
 Conversely, two items can look alike while differing in product type or brand.
 A useful comparison needs both the listing's description and its appearance.
 
-I extended Grailed Plus with cross-market comparison and local image matching,
-alongside price history, currency conversion and interface customization. Its
-price-history functionality originated in
+Its price-history functionality originated in
 [RVRX/grailed-plus](https://github.com/RVRX/grailed-plus). My comparison work
 centres on finding plausible candidates, refining their order and keeping the
-results usable when a slower stage fails.
+results usable when a slower stage fails. The prices provide asking-price
+context, not sold values, appraisals or match probabilities.
 
 ## Combining metadata and image similarity
 
@@ -81,8 +88,14 @@ Node.js gateway.
 
 The gateway keeps eBay API credentials out of the distributed extension and
 handles OAuth token reuse, category resolution, and text and image searches.
-Category resolution and image search supplement the text search. If either
-fails, text results remain available.
+Category resolution can fall back to unconstrained search; text and image
+search run as separate branches.
+
+For example, if text search finishes while image search reaches the request
+deadline, the gateway can return the completed text candidates with a partial
+outcome. Completed image candidates can likewise survive a text timeout.
+Unfinished work is cancelled, and deadline-truncated results are not cached.
+The useful result does not depend on every branch completing successfully.
 
 Local embedding inference and remote image search are separate operations.
 An eBay image query can send listing-image data through the gateway. Keeping
@@ -141,11 +154,24 @@ comparisons, and what it costs the browsing experience.
 
 ### Implementation scope
 
-The architecture and tests described here refer to the implementation reviewed
-in October 2026. The application source is private, and a particular Chrome Web
-Store package needs separate version verification. Firefox build support does
-not establish a Firefox store release.
+The source, demonstrations and distributed packages have separate evidence:
 
-Gateway tests use controlled inputs. Live marketplace compatibility and deployed
-access controls require their own checks; the sample-data demos and offline
-tests do not establish those properties.
+- **Maintained implementation:** the comparison rules, worker and gateway
+  failure cases described above have controlled regression tests. Those tests
+  do not verify live marketplace compatibility or deployed access controls.
+- **Recorded example:** the bundled photograph sequence uses real worker
+  scores with sample metadata. Its animation timing is authored, not measured
+  processing time. The other interactive demos simulate results and transitions.
+- **Dated rollout records:** the November 2, 2026 gateway rollout at `4845673`
+  checked health, invalid-admin denial and a controlled eBay text search. It did
+  not exercise remote-image acceptance or a complete live shopper workflow.
+  Hosted sample-demo revision and byte parity were checked separately.
+- **Store package:** a particular Chrome Web Store package still needs separate
+  version and feature verification. Firefox build support does not establish a
+  Firefox store release.
+
+A November 22 local gateway follow-up adds byte-bounded upstream response reads
+and controlled logging fields. It has offline verification, not deployment
+acceptance; its provisional endpoint limits still need representative
+response-size evidence. None of these implementation or demo checks establishes
+buyer adoption, time saved or improved ranking relevance.

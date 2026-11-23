@@ -8,6 +8,7 @@ import ShootLifecycle from "@/app/components/projects/discord-shoot-manager/shoo
   <ProjectDetails project={props.project} />
   <nav aria-label={`${props.project.title} project links`}>
     <a href={props.project.sourceHref}>Source and setup</a>
+    <a href="#section-testing-the-boundaries">Evidence and deployment scope</a>
   </nav>
 </ProjectMeta>
 
@@ -43,14 +44,18 @@ The production workflow has three main stages:
    an invitation in a shared channel.
 2. **Join.** Members can receive direct invitations or join by reacting to the
    announcement. The bot checks their eligibility before granting access and
-   updates participation when they leave. Scheduled call times appear in each
-   viewer’s local timezone.
+   updates participation when they leave.
 3. **Archive.** Closing a shoot moves its chat into the archive. Ordinary
    participants retain reading access without being able to continue posting,
    preserving the discussion without leaving every production permanently active.
    A shoot can also be reopened.
 
 <ShootLifecycle />
+
+The illustration shows the setup, reaction-join and archive workflow with
+synthetic members, not a recording of a deployed bot. Call-time formatting and
+invitation eligibility depend on the source and deployed version, distinguished
+in the [evidence below](#section-testing-the-boundaries).
 
 These transitions need more than channel creation commands. They need persistent
 records of the shoot, its participants and its intended state, so the workflow can
@@ -114,7 +119,7 @@ blindly creating another workspace.
 
 Not every missing resource should be recreated, however. A deleted shoot channel
 is reported as missing rather than silently replaced. The
-[persistence and recovery guide](https://github.com/TheTexta/discord-shoot-manager/blob/main/docs/architecture/persistence-and-recovery.md)
+[persistence and recovery guide](https://github.com/TheTexta/discord-shoot-manager/blob/6c0349605fc7e444019777eea56dbfb7e176c8d4/docs/architecture/persistence-and-recovery.md)
 describes these boundaries.
 
 ## Testing the boundaries
@@ -133,6 +138,21 @@ access, not merely whether a success message appeared. A
 [historical CI run](https://github.com/TheTexta/discord-shoot-manager/actions/runs/40571855904)
 passed the test and container jobs for the linked regression’s revision; it is not
 a live check of later deployments.
+
+The [TVM deployment record](https://github.com/TheTexta/discord-shoot-manager/blob/6c0349605fc7e444019777eea56dbfb7e176c8d4/docs/deployments/tvm.md)
+identifies runtime `e06dbf3` as deployed on November 2, 2026. The November 18
+source update adds literal date/time text and invite-only roles. Unchanged legacy
+timestamps retain Discord’s viewer-local display; new schedule text appears as
+entered, without timezone conversion. The later configuration, additive schedule
+migration and runtime rollout remain separate gates—not established production
+enablement.
+
+A November 20 [member-lookup regression](https://github.com/TheTexta/discord-shoot-manager/blob/6c0349605fc7e444019777eea56dbfb7e176c8d4/test/shoot-reliability.test.js#L98)
+uses a synthetic 22-participant fixture. Reusing fresh lookups within each pass
+reduces member-fetch calls from 63 to 21 for an open shoot and from 85 to 22 for
+an archived shoot. Lookups are refreshed on the next pass rather than caching
+permissions indefinitely. These are fixture request counts, not measured
+production latency or operator time saved.
 
 The application deliberately runs as one process with one SQLite database per
 Discord server. Its coordination does not support overlapping replicas. That

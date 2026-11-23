@@ -82,6 +82,46 @@ describe("write-up source and contribution copy", () => {
     expect(article).not.toMatch(/\[Place |\[Use a |TODO/);
   });
 
+  it("separates Discord's deployed runtime, later source and fixture request counts", async () => {
+    const article = await readFile(
+      new URL(
+        "../../app/write-ups/tvm-discord-bot/write-up.mdx",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const copy = article.replace(/\s+/g, " ");
+    const publishedSource =
+      "https://github.com/TheTexta/discord-shoot-manager/blob/6c0349605fc7e444019777eea56dbfb7e176c8d4";
+    expect(article).toContain(
+      'href="#section-testing-the-boundaries">Evidence and deployment scope',
+    );
+    expect(article).toContain(
+      `${publishedSource}/docs/architecture/persistence-and-recovery.md`,
+    );
+    expect(article).not.toContain(
+      "/blob/main/docs/architecture/persistence-and-recovery.md",
+    );
+    expect(article).toContain(`${publishedSource}/docs/deployments/tvm.md`);
+    expect(copy).toContain("`e06dbf3` as deployed on November 2, 2026");
+    expect(copy).toContain("November 18 source update");
+    expect(copy).toContain("literal date/time text and invite-only roles");
+    expect(copy).toContain("new schedule text appears as entered");
+    expect(copy).toContain("not established production enablement");
+    expect(article).toContain(
+      `${publishedSource}/test/shoot-reliability.test.js#L98`,
+    );
+    expect(copy).toContain("synthetic 22-participant fixture");
+    expect(copy).toContain("from 63 to 21");
+    expect(copy).toContain("from 85 to 22");
+    expect(copy).toContain(
+      "fixture request counts, not measured production latency or operator time saved",
+    );
+    expect(copy).not.toContain(
+      "Scheduled call times appear in each viewer’s local timezone",
+    );
+  });
+
   it("distinguishes Grailed Plus's authored comparison work from inherited price history and unmeasured demo claims", async () => {
     const article = await readFile(
       new URL("../../app/write-ups/grailed-plus/write-up.mdx", import.meta.url),
@@ -100,5 +140,64 @@ describe("write-up source and contribution copy", () => {
     );
     expect(copy).toContain("deterministic sample listings");
     expect(copy).toContain("not measured inference latency");
+  });
+
+  it("makes Grailed's private implementation and demo boundaries clear before the technical sections", async () => {
+    const article = await readFile(
+      new URL("../../app/write-ups/grailed-plus/write-up.mdx", import.meta.url),
+      "utf8",
+    );
+    const opening = article
+      .slice(0, article.indexOf("## Combining metadata and image similarity"))
+      .replace(/\s+/g, " ");
+    expect(opening).toContain("I extended Grailed Plus");
+    expect(opening).toContain("packaged worker");
+    expect(opening).toContain("separate Node.js gateway");
+    expect(opening).toContain(
+      "The maintained extension and gateway source is private",
+    );
+    expect(opening).toContain(
+      "not verified feature coverage of the current store package",
+    );
+    expect(opening).toContain("interactive demos use sample listings");
+    expect(opening).toContain("replays recorded worker scores");
+    expect(opening).toContain(
+      'href="#section-demonstrating-the-product-and-evaluating-the-ranking"',
+    );
+    expect(opening).not.toContain("View source");
+
+    const copy = article.replace(/\s+/g, " ");
+    expect(copy).toContain("Completed image candidates can likewise survive");
+    expect(copy).toContain("deadline-truncated results are not cached");
+    expect(copy).toContain(
+      "does not make the complete comparison workflow local",
+    );
+    expect(copy).toContain("November 2, 2026 gateway rollout at `4845673`");
+    expect(copy).toContain("November 22 local gateway follow-up");
+    expect(copy).toContain("offline verification, not deployment acceptance");
+    expect(copy).toContain("representative response-size evidence");
+    expect(copy).not.toContain("implementation reviewed in October 2026");
+  });
+
+  it("clarifies Grailed product provenance and remote processing without claiming store parity", async () => {
+    const page = await readFile(
+      new URL(
+        "../../app/components/projects/grailed-plus/grailed-plus-install-page.tsx",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const copy = page.replace(/\s+/g, " ");
+    expect(page).toContain('href="https://github.com/RVRX/grailed-plus"');
+    expect(copy).toContain("open-source price-history foundation");
+    expect(copy).toContain(
+      "The maintained extension and gateway source is private",
+    );
+    expect(copy).toContain(
+      "These sample demos do not verify the installed store version",
+    );
+    expect(copy).toContain(
+      "eBay image search can send listing-image data through the gateway",
+    );
   });
 });
