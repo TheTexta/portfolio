@@ -12,16 +12,13 @@ const wallPhoto = (page: Page) =>
     name: /^Printed photographs arranged across a bedroom wall/,
   });
 const edges = (scope: Locator) =>
-  scope
-    .locator("line[data-edge-source]")
-    .evaluateAll((lines) =>
-      lines
-        .map(
-          (line) =>
-            `${line.getAttribute("data-edge-source")}:${line.getAttribute("data-edge-target")}:${line.getAttribute("data-edge-weight")}`,
-        )
-        .sort(),
-    );
+  scope.locator("line[data-edge-source]").evaluateAll((lines) =>
+    lines.map((line) => ({
+      source: line.getAttribute("data-edge-source"),
+      target: line.getAttribute("data-edge-target"),
+      weight: Number(line.getAttribute("data-edge-weight")),
+    })),
+  );
 const points = (scope: Locator) =>
   scope
     .locator("circle")
@@ -257,11 +254,19 @@ test("rules change exact links and weights without moving positions or modifying
     .locator("dl")
     .allTextContents();
   const beforeEdges = await edges(graph);
-  expect(beforeEdges).toEqual(
-    fixture.defaultGraph.edges
-      .map((edge) => `${edge.source}:${edge.target}:${edge.weight}`)
-      .sort(),
+  const expectedEdges = fixture.defaultGraph.edges;
+  expect(beforeEdges.map(({ source, target }) => [source, target])).toEqual(
+    expectedEdges.map(({ source, target }) => [source, target]),
   );
+  // Production JSON-module compilation can round a weight by one binary64 step.
+  // Keep ordered endpoints/count exact and allow only machine-precision error.
+  beforeEdges.forEach(({ weight }, index) => {
+    const expected = expectedEdges[index].weight;
+    expect(Number.isFinite(weight)).toBe(true);
+    expect(Math.abs(weight - expected)).toBeLessThanOrEqual(
+      Number.EPSILON * Math.max(Math.abs(weight), Math.abs(expected)),
+    );
+  });
   const cutoff = graph.getByRole("slider", {
     name: "Colour-difference cutoff",
     exact: true,
