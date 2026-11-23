@@ -5,6 +5,8 @@ const projectHoverTransition = {
   ease: [0.22, 1, 0.36, 1],
 } as const;
 
+export const projectHoverCssTransition = `transform ${projectHoverTransition.duration}s cubic-bezier(${projectHoverTransition.ease.join(", ")})`;
+
 export function getProjectHoverTransition(
   shouldReduceMotion: boolean | null,
 ): Transition {

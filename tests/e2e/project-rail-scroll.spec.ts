@@ -34,6 +34,33 @@ async function trackX(page: Page) {
   });
 }
 
+async function expectPopupsMatchInteraction(page: Page) {
+  await expect
+    .poll(() =>
+      page.locator(".project-mini-view").evaluateAll((cards) => {
+        const finePointer = matchMedia(
+          "(hover: hover) and (pointer: fine)",
+        ).matches;
+        return cards
+          .map((card) => {
+            const info = card.querySelector<HTMLElement>(
+              ".project-mini-view-info",
+            )!;
+            const open =
+              info.classList.contains("project-mini-view-info--visible") ||
+              (finePointer && card.matches(":hover, :focus-within"));
+            return {
+              id: card.getAttribute("data-project-id"),
+              actual: new DOMMatrix(getComputedStyle(info).transform).m42,
+              expected: open ? 0 : info.getBoundingClientRect().height - 48,
+            };
+          })
+          .filter(({ actual, expected }) => Math.abs(actual - expected) > 1);
+      }),
+    )
+    .toEqual([]);
+}
+
 test.describe("desktop project rail scrolling", () => {
   test.beforeEach(({}, info) => {
     test.skip(
@@ -101,6 +128,29 @@ test.describe("desktop project rail scrolling", () => {
         coversRight: true,
       });
     }
+  });
+
+  test("fast scrolling never leaves recycled card popups stuck open", async ({
+    page,
+  }) => {
+    await openRail(page);
+    await expectPopupsMatchInteraction(page);
+
+    // Use real wheel input with a stationary pointer so DOM recycling also
+    // exercises the browser's hover boundary events.
+    for (const deltaX of [900, -1100]) {
+      for (let sample = 0; sample < 30; sample++) {
+        await page.mouse.wheel(deltaX, 0);
+      }
+      await expectPopupsMatchInteraction(page);
+    }
+    for (const deltaX of [6000, -9000, 11000, -5000, 7000, -4000]) {
+      await page.mouse.wheel(deltaX, 0);
+    }
+    await expectPopupsMatchInteraction(page);
+
+    await page.mouse.move(0, 0);
+    await expectPopupsMatchInteraction(page);
   });
 
   test("blends back to autoplay at the velocity threshold without adding momentum", async ({
@@ -235,6 +285,7 @@ test.describe("desktop project rail scrolling", () => {
   }) => {
     await openRail(page);
     await page.locator(".project-rail [data-project-trigger]").first().focus();
+    await expectPopupsMatchInteraction(page);
     const position = await trackX(page);
     expect(await wheel(page, 120)).toEqual({ movement: 0, prevented: false });
     await page.waitForTimeout(150);
@@ -246,11 +297,20 @@ test.describe("desktop project rail scrolling", () => {
       "transform",
       "none",
     );
+    await expect(page.locator(".project-mini-view-info").first()).toHaveCSS(
+      "transition-duration",
+      "0s",
+    );
+    await expectPopupsMatchInteraction(page);
     expect(await wheel(page, 120)).toEqual({ movement: 0, prevented: false });
     await page.emulateMedia({ reducedMotion: "no-preference" });
     await expect(page.locator(".project-rail-track")).not.toHaveCSS(
       "transform",
       "none",
+    );
+    await expect(page.locator(".project-mini-view-info").first()).toHaveCSS(
+      "transition-duration",
+      "0.28s",
     );
     expect((await wheel(page, -120)).movement).toBeCloseTo(120, 2);
   });
@@ -280,4 +340,31 @@ test("mobile keeps the project accordion rather than an animated scroll rail", a
     "transform",
     "none",
   );
+});
+
+test("touch rail popups only open after a tap and dismiss outside the browser", async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== "mobile", "Touch presentation only");
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.route("https://**/*", (route) => route.abort());
+  await page.goto("/portfolio#projects");
+  await expect(page.locator(".project-rail")).toBeVisible();
+  await expectPopupsMatchInteraction(page);
+
+  const card = page.locator(".project-mini-view").first();
+  const popup = card.locator(".project-mini-view-info");
+  await card.locator("[data-project-trigger]").tap();
+  await expect(popup).toHaveClass(/project-mini-view-info--visible/);
+  await expect(page.locator(".project-focus-view")).toHaveCount(0);
+  await expectPopupsMatchInteraction(page);
+
+  await page.getByRole("heading", { name: "Dexter Young", exact: true }).tap();
+  await expect(popup).not.toHaveClass(/project-mini-view-info--visible/);
+  await expectPopupsMatchInteraction(page);
+
+  await card.locator("[data-project-trigger]").tap();
+  await popup.tap();
+  await expect(page.locator(".project-focus-view")).toBeVisible();
 });

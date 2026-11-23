@@ -37,7 +37,7 @@ import {
 } from "@/app/components/ui/editorial";
 import { useProjectRailMotion } from "@/app/components/projects/use-project-rail-motion";
 import styles from "@/app/components/projects/project-browser.module.css";
-import { getProjectHoverTransition } from "./project-hover-motion";
+import { projectHoverCssTransition } from "./project-hover-motion";
 
 const RAIL_ONE = projectCatalog;
 const MOTION_EASE = [0.22, 1, 0.36, 1] as const;
@@ -90,11 +90,8 @@ function ProjectCard({
   onTouchInfoChange,
   onFocusProject,
 }: ProjectCardProps) {
-  const shouldReduceMotion = useReducedMotion();
-  const infoTransition = getProjectHoverTransition(shouldReduceMotion);
-
   return (
-    <motion.article
+    <article
       data-project-id={project.id}
       data-card-key={cardKey}
       className={cn(
@@ -106,15 +103,13 @@ function ProjectCard({
       style={
         {
           "--aspect": project.posterAspectRatio,
+          "--project-hover-transition": projectHoverCssTransition,
           viewTransitionName:
             returnProjectId === project.id
               ? `project-poster-${project.id}`
               : undefined,
         } as React.CSSProperties
       }
-      initial="closed"
-      animate={infoVisible ? "open" : "closed"}
-      whileHover="open"
     >
       <div className="project-mini-view-media relative size-full origin-center overflow-hidden border border-ink">
         <button
@@ -144,7 +139,7 @@ function ProjectCard({
           />
         </button>
 
-        <motion.a
+        <a
           href={getProjectHref(project)}
           role="button"
           tabIndex={infoVisible ? 0 : -1}
@@ -153,11 +148,6 @@ function ProjectCard({
             infoVisible &&
               "project-mini-view-info--visible pointer-events-auto",
           )}
-          variants={{
-            closed: { y: "calc(100% - 3rem)" },
-            open: { y: 0 },
-          }}
-          transition={infoTransition}
           aria-label={`View ${project.title} details`}
           onClick={(event) => {
             if (
@@ -205,9 +195,9 @@ function ProjectCard({
               </p>
             </div>
           </div>
-        </motion.a>
+        </a>
       </div>
-    </motion.article>
+    </article>
   );
 }
 

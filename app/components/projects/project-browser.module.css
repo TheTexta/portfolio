@@ -1,3 +1,27 @@
+.root :global(.project-mini-view-info) {
+  transform: translateY(calc(100% - 3rem));
+  transition: var(--project-hover-transition);
+}
+
+.root :global(.project-mini-view-info--visible) {
+  transform: translateY(0);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  /* Native state cannot latch open when the rail recycles a hovered card. */
+  .root
+    :global(.project-mini-view):is(:hover, :focus-within)
+    :global(.project-mini-view-info) {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root :global(.project-mini-view-info) {
+    transition: none;
+  }
+}
+
 .root :global(.project-focus-details) {
   container-type: inline-size;
 }
