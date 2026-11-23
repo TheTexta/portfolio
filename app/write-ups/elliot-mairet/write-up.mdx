@@ -14,11 +14,16 @@ import PaletteExtraction from "@/app/components/projects/elliot-mairet/palette-e
 
 <Lead>
   {
-    "A photography archive for Elliot Mairet, with an image index, large photograph views, colour-based discovery, and a private publishing workflow. I designed and developed the site; the photographs are Elliot's."
+    "I designed and developed Elliot Mairet's photography archive: a collection to scan, photographs to inspect at scale, and colour relationships to follow. The public archive and a recoverable private publishing workflow share one catalogue; the photographs are Elliot's."
   }
 </Lead>
 
 </header>
+
+The site is live. Screenshots use the [article reference downloaded on 2 November
+2026](/projects/elliot-mairet/write-up/sources.json), before the current MMCQ
+palettes and colour-neighbourhood homepage; the extraction illustration below
+uses the current model.
 
 <ProjectPreview projectId="elliotmairet" />
 
@@ -34,18 +39,19 @@ index lets you scan the collection before choosing an image.
   alt="Elliot Mairet's archive: a three-column index of colour and black-and-white photographs on a white page."
   width={1440}
   height={1000}
-  caption="The dense index supports scanning many photographs before opening one at scale."
+  caption="Earlier index, from the 2 November 2026 article reference: a dense view for scanning photographs before opening one at scale."
 />
 
 On an individual page, the photograph takes up most of the screen, with its
-five-colour palette below.
+extracted palette below. Controls use the actual number of swatches, rather than
+filling missing colours.
 
 <Figure
   src="/projects/elliot-mairet/write-up/photograph-figma.png"
   alt="A photograph of golden leaves against a blue sky, displayed above five colour swatches."
   width={1440}
   height={1000}
-  caption="A large photograph view with five palette swatches that also serve as navigation controls."
+  caption="Earlier photograph view, from the 2 November 2026 article reference. The five historical swatches also serve as navigation controls."
 />
 
 ## Navigating by colour
@@ -54,24 +60,47 @@ Each photograph starts with suggestions based on its overall palette. Selecting 
 swatch changes the suggestions to photographs with a nearby colour. This gives
 visitors another route through the archive without a separate search interface.
 
-A five-colour palette is extracted during upload and stored with the photograph.
-The example below follows a reduced-resolution colour sample into five groups
-and the resulting swatches.
+During upload, the [current analyser](https://github.com/TheTexta/elliotmairet/blob/aef9eb2cc1cde3b9c79e738fd27ed34ddc03c74a/lib/palette/analyse-buffer.ts)
+auto-orients the original and samples it at a maximum 256px longest side.
+Modified median cut (MMCQ) produces up to 64 candidates; selection favours
+supported, vibrant and perceptually distinct colours in OKLab. It returns **up
+to five genuine sampled swatches**. Flat or near-monochrome photographs can have
+fewer: no replacement colours are invented.
+
+The illustration uses that production sampler and analyser on the same golden-leaves
+original, frozen locally on 23 November 2026. Its five swatches remain in the
+model's selection order. Population weights are calculated separately by assigning
+every sampled pixel to its nearest selected swatch; they do not determine that order.
 
 <PaletteExtraction />
 
 Matching runs in the browser from cached palette data, so changing the selected
 colour does not need another server request. These are approximate colour
-relationships: they do not identify the same subject or location. When few close
-matches exist, the matcher relaxes its threshold to offer up to five candidates.
+relationships: they do not identify the same subject or location, and extraction
+alone does not establish that visitors find the suggestions useful.
 
 <Figure
   src="/projects/elliot-mairet/write-up/colour-navigation-figma.png"
   alt="The ochre palette swatch selected above a grid of photographs with warm brown and gold tones."
   width={1440}
   height={1000}
-  caption="Selecting the ochre swatch brings up photographs with similar colours."
+  caption="Earlier colour navigation, from the 2 November 2026 article reference: selecting a historical ochre swatch brings up related photographs."
 />
+
+## Composing the archive
+
+The current homepage groups photographs into recurring colour neighbourhoods.
+I use a deterministic [masonry planner](https://github.com/TheTexta/elliotmairet/blob/aef9eb2cc1cde3b9c79e738fd27ed34ddc03c74a/lib/photographs/plan-colour-masonry.ts)
+that balances palette relationships with uncropped image dimensions and patch
+area, rather than placing every warm photograph in one block. Mobile and desktop
+plans are rendered on the server, so hydration does not rearrange the archive.
+This is a generated composition, not a saved curatorial order: adding photographs
+can move existing ones.
+
+Pages and palette JSON are cached; admin changes invalidate the relevant cache
+tags. The browser reuses that palette data for colour matching while the homepage
+composition refreshes with catalogue updates. This separates layout and discovery
+from image analysis: selecting a colour does not rerun the extractor.
 
 ## Adding new work
 
@@ -81,24 +110,38 @@ into that workflow.
 
 An image can be accepted even if its publication response never reaches the
 browser. Restarting the entire upload could then create a second photograph. I
-separated preparation, file transfer, and publication in the [upload controller](https://github.com/TheTexta/elliotmairet/blob/68de57f5da69d535f3479db4ee20952f6f2f6123/lib/photographs/upload.ts).
+separated preparation, file transfer, and publication in the [upload controller](https://github.com/TheTexta/elliotmairet/blob/aef9eb2cc1cde3b9c79e738fd27ed34ddc03c74a/lib/photographs/upload.ts).
 After transfer, the controller retains the original paths and metadata so a retry
 resends the same publication request instead of uploading another object.
 
-The [retry regression tests](https://github.com/TheTexta/elliotmairet/blob/68de57f5da69d535f3479db4ee20952f6f2f6123/lib/photographs/upload.test.mjs)
+The [retry regression tests](https://github.com/TheTexta/elliotmairet/blob/aef9eb2cc1cde3b9c79e738fd27ed34ddc03c74a/lib/photographs/upload.test.mjs)
 simulate a lost or malformed response and assert that the next request has exactly
 the original publication payload, even if form values have changed. A separate
 case checks that a failed transfer restarts preparation rather than publishing an
 incomplete object. These tests isolate the client controller with request adapters;
 they do not exercise the storage and database services together.
 
-I used Next.js for the archive and photo routes, with React handling palette
-selection. The pages can be cached while colour matching runs in the browser.
-Supabase keeps photograph metadata and admin authentication together; Cloudflare
-R2 stores the originals. Elliot can manage photographs through the admin, while
-catalogue updates invalidate cached pages without a site deployment.
+Supabase holds photograph metadata and admin authentication; Cloudflare R2 stores
+the originals. The server validates image content and publishes metadata and
+palette data through the authenticated workflow. Elliot can add work without a
+site deployment.
+
+## Changing the palette model
+
+The earlier extractor used OKLab k-medoids; its [historical recording](/projects/elliot-mairet/palette-extraction/recording.json)
+remains unchanged. Replacing it meant changing stored palette data, not just
+deploying new code. At the **5 November 2026 palette-only checkpoint**, the
+[rollout record](https://github.com/TheTexta/elliotmairet/blob/aef9eb2cc1cde3b9c79e738fd27ed34ddc03c74a/docs/palette-extraction.md#production-catalogue-backfill--2026-11-05)
+documents 271 checksum-verified originals, unchanged photograph rows and original
+objects after the backfill, and preserved gallery ordering and column geometry at
+1440px and 390px. These checks describe that dated palette-only release, before
+the later colour-neighbourhood layout. Apply and exact rollback were rehearsed in
+isolated PostgreSQL, not by rolling production back.
+
+## What remains to learn
 
 The delivered archive connects a broad index, individual photographs, and palette
-navigation to one publishing workflow. The next question is how useful those
-approximate colour suggestions are to visitors; the implementation alone does not
-answer that.
+navigation to one publishing workflow. The remaining questions are where Elliot
+encounters friction while publishing and whether visitors find colour suggestions
+useful. The implementation, controller tests and controlled-change checks do not
+answer those questions; I have not measured them here.

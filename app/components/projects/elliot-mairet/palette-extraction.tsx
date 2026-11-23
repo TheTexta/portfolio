@@ -6,46 +6,18 @@ import AnimationPlayer from "@/app/components/ui/animation-player";
 import type { AnimationFrame } from "@/lib/animation/timeline";
 import {
   createPaletteRenderer,
+  layoutPaletteScene,
   PALETTE_LAYOUT,
   PALETTE_STAGES,
   palettePoseAt,
   PALETTE_DURATION,
   type PalettePose,
 } from "@/lib/elliot-mairet/palette-animation";
-import recording from "@/public/projects/elliot-mairet/palette-extraction/recording.json";
+import recording from "@/public/projects/elliot-mairet/palette-extraction/mmcq-v1/recording.json";
 
-const { width, height, photo, swatches } = PALETTE_LAYOUT;
-const rgb = (hex: string) =>
-  [1, 3, 5].map((offset) => parseInt(hex.slice(offset, offset + 2), 16));
-const counts = recording.palette.map(
-  (_, group) => recording.tiles.filter((tile) => tile.group === group).length,
-);
-const slots = recording.palette.map(() => 0);
-const tiles = recording.tiles.map((tile) => {
-  const slot = slots[tile.group]++;
-  const columns = Math.min(8, counts[tile.group]);
-  const rows = Math.ceil(counts[tile.group] / columns);
-  return {
-    ...tile,
-    rgb: rgb(tile.hex),
-    targetRgb: rgb(recording.palette[tile.group].hex),
-    sourceX:
-      photo.x + ((tile.x + 2) / recording.analysis.sampleWidth) * photo.width,
-    sourceY:
-      photo.y + ((tile.y + 2) / recording.analysis.sampleHeight) * photo.height,
-    groupX:
-      swatches.x +
-      tile.group * swatches.step +
-      swatches.size / 2 +
-      ((slot % columns) - (columns - 1) / 2) * 7,
-    groupY:
-      swatches.y +
-      swatches.height / 2 +
-      (Math.floor(slot / columns) - (rows - 1) / 2) * 7,
-    paletteX: swatches.x + tile.group * swatches.step + swatches.size / 2,
-    paletteY: swatches.y + swatches.height / 2,
-  };
-});
+const { width, height, photo } = PALETTE_LAYOUT;
+const { swatches, tiles } = layoutPaletteScene(recording);
+const stride = recording.analysis.displayedSampleStride;
 const mix = (from: number, to: number, amount: number) =>
   from + (to - from) * amount;
 
@@ -108,8 +80,8 @@ export default function PaletteExtraction() {
         );
         const size = mix(
           mix(
-            (photo.width * 4) / recording.analysis.sampleWidth,
-            5,
+            (photo.width * stride) / recording.analysis.sampleWidth,
+            tile.groupSize,
             pose.group,
           ),
           2,
@@ -127,7 +99,9 @@ export default function PaletteExtraction() {
           );
           const right = Math.round(
             (photo.x +
-              ((tile.x + 4) / recording.analysis.sampleWidth) * photo.width) *
+              (Math.min(tile.x + stride, recording.analysis.sampleWidth) /
+                recording.analysis.sampleWidth) *
+                photo.width) *
               scaleX,
           );
           const top = Math.round(
@@ -137,7 +111,9 @@ export default function PaletteExtraction() {
           );
           const bottom = Math.round(
             (photo.y +
-              ((tile.y + 4) / recording.analysis.sampleHeight) * photo.height) *
+              (Math.min(tile.y + stride, recording.analysis.sampleHeight) /
+                recording.analysis.sampleHeight) *
+                photo.height) *
               scaleY,
           );
           context.fillRect(left, top, right - left, bottom - top);
@@ -166,7 +142,7 @@ export default function PaletteExtraction() {
   return (
     <figure
       className="my-10"
-      aria-label="Five-colour extraction from Elliot Mairet’s photograph"
+      aria-label={`${recording.palette.length}-swatch MMCQ extraction from Elliot Mairet’s photograph`}
     >
       <AnimationPlayer
         label="Colour extraction"
@@ -206,7 +182,7 @@ export default function PaletteExtraction() {
           />
           <ol
             ref={palette}
-            aria-label="Extracted palette, ordered by colour-group weight"
+            aria-label="Extracted palette, in production selection order"
             className="absolute m-0 flex justify-between [&&]:list-none [&&]:p-0 [&&>li]:m-0"
             style={{
               left: `${(swatches.x / width) * 100}%`,
@@ -239,8 +215,9 @@ export default function PaletteExtraction() {
         </div>
       </AnimationPlayer>
       <figcaption className="mt-3 text-[0.8125rem] leading-relaxed text-muted">
-        Real five-colour OKLab extraction; sample grouping and timing are
-        illustrative.{" "}
+        Current MMCQ model, frozen 23 November 2026: {recording.palette.length}{" "}
+        genuine swatches in selection order, not weight order. Sample grouping
+        and timing are illustrative, not solver steps or measured latency.{" "}
         <a
           href={recording.photograph.pageUrl}
           className="text-ink underline underline-offset-4"

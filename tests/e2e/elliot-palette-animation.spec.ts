@@ -1,8 +1,10 @@
 import { expect, test } from "@playwright/test";
-import recording from "../../public/projects/elliot-mairet/palette-extraction/recording.json";
+import recording from "../../public/projects/elliot-mairet/palette-extraction/mmcq-v1/recording.json";
+
+const figureName = `${recording.palette.length}-swatch MMCQ extraction from Elliot Mairet’s photograph`;
 
 for (const reducedMotion of ["no-preference", "reduce"] as const) {
-  test(`Elliot's extraction loops and snaps to three real stages (${reducedMotion})`, async ({
+  test(`Elliot's current MMCQ illustration loops and snaps to three explanatory stages (${reducedMotion})`, async ({
     page,
     context,
   }, info) => {
@@ -15,7 +17,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto("/write-ups/elliot-mairet");
     const figure = page.getByRole("figure", {
-      name: "Five-colour extraction from Elliot Mairet’s photograph",
+      name: figureName,
     });
     await figure.scrollIntoViewIfNeeded();
     const player = figure.locator("[data-animation-player]");
@@ -37,7 +39,17 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
       ),
     ).toBe(true);
     const sourceBox = await photograph.boundingBox();
-    await expect(figure.locator("ol > li")).toHaveCount(5);
+    await expect(
+      figure.getByRole("list", {
+        name: "Extracted palette, in production selection order",
+      }),
+    ).toBeAttached();
+    await expect(figure.locator("ol > li")).toHaveCount(
+      recording.palette.length,
+    );
+    await expect(figure.locator("figcaption")).toContainText(
+      "not solver steps or measured latency",
+    );
     await expect(figure.locator("iframe")).toHaveCount(0);
 
     if (reducedMotion === "no-preference") {
@@ -165,12 +177,15 @@ test.describe("without JavaScript", () => {
     await context.route("https://**/*", (route) => route.abort());
     await page.goto("/write-ups/elliot-mairet");
     const figure = page.getByRole("figure", {
-      name: "Five-colour extraction from Elliot Mairet’s photograph",
+      name: figureName,
     });
     await figure.scrollIntoViewIfNeeded();
     await expect(figure.locator("img")).toBeVisible();
     await expect(figure.locator("ol")).toHaveCSS("opacity", "1");
-    await expect(figure.locator("li")).toHaveCount(5);
+    await expect(figure.locator("li")).toHaveCount(recording.palette.length);
+    expect(await figure.locator("li").allTextContents()).toEqual(
+      recording.palette.map(({ hex }) => hex),
+    );
     await expect(figure.getByRole("slider")).toBeDisabled();
     await figure.screenshot({ path: info.outputPath("no-javascript.png") });
   });
@@ -181,12 +196,12 @@ test("a failed photograph leaves its palette and explanation visible without sta
   context,
 }) => {
   await context.route("https://**/*", (route) => route.abort());
-  await context.route("**/palette-extraction/photograph.webp", (route) =>
+  await context.route(`**${recording.photograph.asset}`, (route) =>
     route.abort(),
   );
   await page.goto("/write-ups/elliot-mairet");
   const figure = page.getByRole("figure", {
-    name: "Five-colour extraction from Elliot Mairet’s photograph",
+    name: figureName,
   });
   await figure.scrollIntoViewIfNeeded();
   await expect(figure.getByRole("status")).toContainText(
@@ -194,5 +209,5 @@ test("a failed photograph leaves its palette and explanation visible without sta
   );
   await expect(figure.getByRole("slider")).toBeDisabled();
   await expect(figure.locator("ol")).toHaveCSS("opacity", "1");
-  await expect(figure.locator("li")).toHaveCount(5);
+  await expect(figure.locator("li")).toHaveCount(recording.palette.length);
 });

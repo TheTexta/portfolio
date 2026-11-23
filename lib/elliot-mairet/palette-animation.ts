@@ -12,6 +12,80 @@ export const PALETTE_LAYOUT = {
   photo: { x: 72, y: 12, width: 528, height: 352 },
   swatches: { x: 56, y: 464, width: 560, height: 32, size: 80, step: 120 },
 } as const;
+
+/** Equal-size navigation swatches retain production selection order. */
+export function paletteSwatchLayout(count: number) {
+  if (!Number.isInteger(count) || count < 1 || count > 5)
+    throw new Error("A palette must contain one to five swatches.");
+  const { swatches, width } = PALETTE_LAYOUT;
+  const rowWidth = swatches.size + (count - 1) * swatches.step;
+  return { ...swatches, x: (width - rowWidth) / 2, width: rowWidth };
+}
+
+type SceneRecording = {
+  analysis: {
+    sampleWidth: number;
+    sampleHeight: number;
+    displayedSampleStride: number;
+  };
+  palette: { hex: string }[];
+  tiles: { x: number; y: number; hex: string; group: number }[];
+};
+
+/** Pure geometry shared by the canvas and variable-count layout regressions. */
+export function layoutPaletteScene(recording: SceneRecording) {
+  const { photo } = PALETTE_LAYOUT;
+  const swatches = paletteSwatchLayout(recording.palette.length);
+  const {
+    sampleWidth,
+    sampleHeight,
+    displayedSampleStride: stride,
+  } = recording.analysis;
+  const rgb = (hex: string) =>
+    [1, 3, 5].map((offset) => parseInt(hex.slice(offset, offset + 2), 16));
+  const counts = recording.palette.map(
+    (_, group) => recording.tiles.filter((tile) => tile.group === group).length,
+  );
+  const slots = recording.palette.map(() => 0);
+  const tiles = recording.tiles.map((tile) => {
+    const count = counts[tile.group];
+    const slot = slots[tile.group]++;
+    // Fit even a one-colour image's entire display sample below the photograph.
+    const columns = Math.ceil(Math.sqrt((count * swatches.size) / 112));
+    const rows = Math.ceil(count / columns);
+    const spacing = Math.min(
+      7,
+      (swatches.size - 6) / Math.max(1, columns - 1),
+      106 / Math.max(1, rows - 1),
+    );
+    const paletteX =
+      swatches.x + tile.group * swatches.step + swatches.size / 2;
+    const paletteY = swatches.y + swatches.height / 2;
+    return {
+      ...tile,
+      rgb: rgb(tile.hex),
+      targetRgb: rgb(recording.palette[tile.group].hex),
+      sourceX:
+        photo.x +
+        ((tile.x + Math.min(stride / 2, sampleWidth - tile.x - 1)) /
+          sampleWidth) *
+          photo.width,
+      sourceY:
+        photo.y +
+        ((tile.y + Math.min(stride / 2, sampleHeight - tile.y - 1)) /
+          sampleHeight) *
+          photo.height,
+      groupX: paletteX + ((slot % columns) - (columns - 1) / 2) * spacing,
+      groupY:
+        paletteY + (Math.floor(slot / columns) - (rows - 1) / 2) * spacing,
+      groupSize: Math.min(5, spacing * 0.8),
+      paletteX,
+      paletteY,
+    };
+  });
+  return { swatches, tiles };
+}
+
 export type PalettePose = { sample: number; group: number; palette: number };
 const ease = (value: number) => 1 - (1 - Math.max(0, Math.min(1, value))) ** 3;
 const anchors: Record<string, PalettePose> = {
