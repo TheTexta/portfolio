@@ -211,3 +211,103 @@ test("a failed photograph leaves its palette and explanation visible without sta
   await expect(figure.locator("ol")).toHaveCSS("opacity", "1");
   await expect(figure.locator("li")).toHaveCount(recording.palette.length);
 });
+
+test("article return navigation makes queued palette resizes inert and remounts playback safely", async ({
+  page,
+  context,
+}) => {
+  await context.route("https://**/*", (route) => route.abort());
+  await context.route("**/api/photo-graph/graph", (route) =>
+    route.fulfill({ json: { nodes: [], links: [] } }),
+  );
+  await page.addInitScript(() => {
+    type Pending = {
+      target: Element;
+      disconnected: boolean;
+      deliver: () => void;
+    };
+    const pending: Pending[] = [];
+    const NativeResizeObserver = window.ResizeObserver;
+    // Keep native delivery while mounted, but retain one callback so the test
+    // can deterministically deliver already-queued work after route teardown.
+    window.ResizeObserver = class extends NativeResizeObserver {
+      private tracked?: Pending;
+      private readonly deliver: () => void;
+      constructor(callback: ResizeObserverCallback) {
+        super(callback);
+        this.deliver = () => callback([], this);
+      }
+      observe(target: Element, options?: ResizeObserverOptions) {
+        super.observe(target, options);
+        if (target.hasAttribute("data-palette-scene") && !this.tracked) {
+          this.tracked = {
+            target,
+            disconnected: false,
+            deliver: this.deliver,
+          };
+          pending.push(this.tracked);
+        }
+      }
+      disconnect() {
+        super.disconnect();
+        if (this.tracked) this.tracked.disconnected = true;
+      }
+    };
+    Object.assign(window, {
+      flushInactivePaletteResizes: () => {
+        const inactive = pending.filter(
+          ({ target, disconnected }) => disconnected || !target.isConnected,
+        );
+        inactive.forEach(({ deliver }) => deliver());
+        return {
+          delivered: inactive.length,
+          disconnected: inactive.filter(({ disconnected }) => disconnected)
+            .length,
+        };
+      },
+    });
+  });
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  for (const reducedMotion of ["no-preference", "reduce"] as const) {
+    await page.emulateMedia({ reducedMotion });
+    await page.goto("/write-ups/elliot-mairet");
+    const figure = page.getByRole("figure", { name: figureName });
+    const range = figure.getByRole("slider", {
+      name: "Colour extraction timeline",
+    });
+    await figure.scrollIntoViewIfNeeded();
+    await expect(range).toBeEnabled();
+    const viewport = page.viewportSize()!;
+    await page.setViewportSize({
+      ...viewport,
+      width: viewport.width - 1,
+    });
+    await page.getByRole("link", { name: "Index", exact: true }).press("Enter");
+    await expect(page).toHaveURL(/\/portfolio#projects$/);
+    await expect(figure).toHaveCount(0);
+    const flushed = await page.evaluate(() =>
+      (
+        window as unknown as {
+          flushInactivePaletteResizes: () => {
+            delivered: number;
+            disconnected: number;
+          };
+        }
+      ).flushInactivePaletteResizes(),
+    );
+    expect(flushed.delivered).toBeGreaterThan(0);
+    expect(flushed.disconnected).toBeGreaterThan(0);
+    await page.goBack();
+    await expect(page).toHaveURL(/\/write-ups\/elliot-mairet$/);
+    await figure.scrollIntoViewIfNeeded();
+    await expect(range).toBeEnabled();
+    await range.press("End");
+    await expect(figure.locator("[data-palette-scene]")).toHaveAttribute(
+      "data-palette-progress",
+      "1",
+    );
+    await expect(figure.locator("ol")).toHaveCSS("opacity", "1");
+  }
+  expect(errors).toEqual([]);
+});

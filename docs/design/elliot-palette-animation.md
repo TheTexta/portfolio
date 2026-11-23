@@ -65,11 +65,20 @@ latency. The visible caption makes this distinction.
 - The shared player adds its smooth 450ms return. The source photograph stays
   fixed; there are no scores, invented fill swatches or completion check marks.
 
+Sample and moving frames use the same pure rectangle calculation. Each tile
+retains its clipped source width, height and geometric centre, including the
+partial right/bottom blocks; both dimensions interpolate independently toward
+the group size and then the final palette point. Beginning motion therefore
+does not expand clipped rectangles into full-stride squares.
+
 The three stage anchors remain 0, 2000 and 4500ms. Selecting an anchor shows its
 settled pose until the next stage; interrupted transitions capture the actual
 current pose. Rendering updates one responsive canvas and the palette, not React
 state every frame. Device pixel ratio is capped at two. Visibility, keyboard
 controls, stage snapping, user pause and reduced motion remain owned by the player.
+The canvas layout effect captures stable DOM elements and disposes the renderer
+and resize observer synchronously before ref teardown. Disposed or detached
+callbacks are inert, including resize work already queued during navigation.
 
 The layout uses the actual nonempty count (one to five). Short palettes are
 centred without placeholder swatches; group spacing and tile size keep even a
@@ -121,8 +130,12 @@ credentials, database access, media migration or storage write. Historical
 regeneration is disabled; `--check` protects its known bytes instead.
 
 Unit coverage includes provenance, order independent of weights, historical
-immutability, sample geometry, one/two/five-swatch layouts, bounded dense groups,
-continuous/interrupted poses, stage selection and reduced motion. Browser
+immutability, clipped-edge rectangle continuity, pixel-aligned sample geometry,
+one/two/five-swatch layouts, bounded dense groups, continuous/interrupted poses,
+stage selection and reduced motion. Browser
 coverage checks autoplay/reset, keyboard selection, gapless sampling, selection
 order, desktop/mobile overflow, image failure and the no-JavaScript fallback.
+The navigation regression retains a native observer's callback, explicitly
+delivers it after article return-link teardown, and checks playback after going
+back, with ordinary and reduced motion.
 These are illustration regressions, not visitor usefulness or client-task results.

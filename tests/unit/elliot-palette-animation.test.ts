@@ -10,6 +10,7 @@ import {
   PALETTE_STAGES,
   paletteSwatchLayout,
   palettePoseAt,
+  paletteTileRectAt,
   type PalettePose,
 } from "@/lib/elliot-mairet/palette-animation";
 import historical from "@/public/projects/elliot-mairet/palette-extraction/recording.json";
@@ -153,6 +154,87 @@ describe("Elliot's frozen current-model extraction", () => {
       expect(tile.hex).toMatch(/^#[a-f0-9]{6}$/);
       expect(tile.group).toBeGreaterThanOrEqual(0);
       expect(tile.group).toBeLessThan(recording.palette.length);
+    }
+  });
+
+  it("keeps full and partial source rectangles continuous as grouping or palette motion begins", () => {
+    const { photo } = PALETTE_LAYOUT;
+    const { tiles } = layoutPaletteScene(recording);
+    const sample: PalettePose = { sample: 1, group: 0, palette: 0 };
+    const epsilon = 1e-10;
+    for (const [x, y] of [
+      [0, 0],
+      [252, 0],
+      [0, 168],
+      [252, 168],
+    ]) {
+      const tile = tiles.find((tile) => tile.x === x && tile.y === y)!;
+      const rect = paletteTileRectAt(tile, sample);
+      const left = photo.x + (x / 256) * photo.width;
+      const right = photo.x + (Math.min(x + 12, 256) / 256) * photo.width;
+      const top = photo.y + (y / 171) * photo.height;
+      const bottom = photo.y + (Math.min(y + 12, 171) / 171) * photo.height;
+      expect(rect.x).toBeCloseTo(left, 12);
+      expect(rect.y).toBeCloseTo(top, 12);
+      expect(rect.width).toBeCloseTo(right - left, 12);
+      expect(rect.height).toBeCloseTo(bottom - top, 12);
+      expect(tile.sourceX).toBeCloseTo((left + right) / 2, 12);
+      expect(tile.sourceY).toBeCloseTo((top + bottom) / 2, 12);
+      for (const pose of [
+        { ...sample, group: epsilon },
+        { ...sample, palette: epsilon },
+      ]) {
+        const moving = paletteTileRectAt(tile, pose);
+        for (const dimension of ["x", "y", "width", "height"] as const)
+          expect(Math.abs(moving[dimension] - rect[dimension])).toBeLessThan(
+            1e-6,
+          );
+      }
+      const grouped = paletteTileRectAt(tile, { ...sample, group: 1 });
+      expect(grouped.width).toBeCloseTo(tile.groupSize, 12);
+      expect(grouped.height).toBeCloseTo(tile.groupSize, 12);
+      const settled = paletteTileRectAt(tile, {
+        sample: 1,
+        group: 1,
+        palette: 1,
+      });
+      expect(settled.width).toBe(2);
+      expect(settled.height).toBe(2);
+      expect(settled.x + settled.width / 2).toBeCloseTo(tile.paletteX, 12);
+      expect(settled.y + settled.height / 2).toBeCloseTo(tile.paletteY, 12);
+    }
+  });
+
+  it("keeps shared sample edges pixel-aligned at mobile and fractional canvas scales", () => {
+    const { tiles } = layoutPaletteScene(recording);
+    const rects = new Map(
+      tiles.map((tile) => [
+        `${tile.x},${tile.y}`,
+        paletteTileRectAt(tile, { sample: 1, group: 0, palette: 0 }),
+      ]),
+    );
+    for (const clientWidth of [304, 326, 358, 620, 672]) {
+      for (const dpr of [1, 1.5, 2]) {
+        const scaleX = Math.round(clientWidth * dpr) / PALETTE_LAYOUT.width;
+        const scaleY =
+          Math.round(
+            ((clientWidth * PALETTE_LAYOUT.height) / PALETTE_LAYOUT.width) *
+              dpr,
+          ) / PALETTE_LAYOUT.height;
+        for (const tile of tiles) {
+          const rect = rects.get(`${tile.x},${tile.y}`)!;
+          const nextColumn = rects.get(`${tile.x + 12},${tile.y}`);
+          const nextRow = rects.get(`${tile.x},${tile.y + 12}`);
+          if (nextColumn)
+            expect(Math.round((rect.x + rect.width) * scaleX)).toBe(
+              Math.round(nextColumn.x * scaleX),
+            );
+          if (nextRow)
+            expect(Math.round((rect.y + rect.height) * scaleY)).toBe(
+              Math.round(nextRow.y * scaleY),
+            );
+        }
+      }
     }
   });
 

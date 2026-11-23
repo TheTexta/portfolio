@@ -61,20 +61,19 @@ export function layoutPaletteScene(recording: SceneRecording) {
     const paletteX =
       swatches.x + tile.group * swatches.step + swatches.size / 2;
     const paletteY = swatches.y + swatches.height / 2;
+    const sourceWidth =
+      (Math.min(stride, sampleWidth - tile.x) / sampleWidth) * photo.width;
+    const sourceHeight =
+      (Math.min(stride, sampleHeight - tile.y) / sampleHeight) * photo.height;
     return {
       ...tile,
       rgb: rgb(tile.hex),
       targetRgb: rgb(recording.palette[tile.group].hex),
-      sourceX:
-        photo.x +
-        ((tile.x + Math.min(stride / 2, sampleWidth - tile.x - 1)) /
-          sampleWidth) *
-          photo.width,
+      sourceX: photo.x + (tile.x / sampleWidth) * photo.width + sourceWidth / 2,
       sourceY:
-        photo.y +
-        ((tile.y + Math.min(stride / 2, sampleHeight - tile.y - 1)) /
-          sampleHeight) *
-          photo.height,
+        photo.y + (tile.y / sampleHeight) * photo.height + sourceHeight / 2,
+      sourceWidth,
+      sourceHeight,
       groupX: paletteX + ((slot % columns) - (columns - 1) / 2) * spacing,
       groupY:
         paletteY + (Math.floor(slot / columns) - (rows - 1) / 2) * spacing,
@@ -87,6 +86,36 @@ export function layoutPaletteScene(recording: SceneRecording) {
 }
 
 export type PalettePose = { sample: number; group: number; palette: number };
+type PaletteTile = ReturnType<typeof layoutPaletteScene>["tiles"][number];
+const mix = (from: number, to: number, amount: number) =>
+  from + (to - from) * amount;
+
+/** Sample and moving frames share the same clipped rectangle, including its
+ * geometric centre (which need not be the sampled pixel's location). */
+export function paletteTileRectAt(tile: PaletteTile, pose: PalettePose) {
+  const x = mix(
+    mix(tile.sourceX, tile.groupX, pose.group),
+    tile.paletteX,
+    pose.palette,
+  );
+  const y = mix(
+    mix(tile.sourceY, tile.groupY, pose.group),
+    tile.paletteY,
+    pose.palette,
+  );
+  const width = mix(
+    mix(tile.sourceWidth, tile.groupSize, pose.group),
+    2,
+    pose.palette,
+  );
+  const height = mix(
+    mix(tile.sourceHeight, tile.groupSize, pose.group),
+    2,
+    pose.palette,
+  );
+  return { x: x - width / 2, y: y - height / 2, width, height };
+}
+
 const ease = (value: number) => 1 - (1 - Math.max(0, Math.min(1, value))) ** 3;
 const anchors: Record<string, PalettePose> = {
   sample: { sample: 1, group: 0, palette: 0 },

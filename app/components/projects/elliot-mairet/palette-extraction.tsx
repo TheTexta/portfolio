@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import AnimationPlayer from "@/app/components/ui/animation-player";
 import type { AnimationFrame } from "@/lib/animation/timeline";
 import {
@@ -10,6 +10,7 @@ import {
   PALETTE_LAYOUT,
   PALETTE_STAGES,
   palettePoseAt,
+  paletteTileRectAt,
   PALETTE_DURATION,
   type PalettePose,
 } from "@/lib/elliot-mairet/palette-animation";
@@ -17,7 +18,6 @@ import recording from "@/public/projects/elliot-mairet/palette-extraction/mmcq-v
 
 const { width, height, photo } = PALETTE_LAYOUT;
 const { swatches, tiles } = layoutPaletteScene(recording);
-const stride = recording.analysis.displayedSampleStride;
 const mix = (from: number, to: number, amount: number) =>
   from + (to - from) * amount;
 
@@ -36,13 +36,17 @@ export default function PaletteExtraction() {
     [],
   );
 
-  useEffect(() => {
-    const element = root.current!;
-    const surface = canvas.current!;
+  useLayoutEffect(() => {
+    const element = root.current;
+    const surface = canvas.current;
+    const paletteElement = palette.current;
+    if (!element || !surface || !paletteElement) return;
     const context = surface.getContext("2d");
     if (!context) return; // The server-rendered photograph/palette stay usable.
+    let disposed = false;
     let pose = palettePoseAt(PALETTE_DURATION);
     const draw = (next: PalettePose) => {
+      if (disposed || !element.isConnected) return;
       pose = next;
       if (!imageReady.current) return;
       context.setTransform(
@@ -54,7 +58,7 @@ export default function PaletteExtraction() {
         0,
       );
       context.clearRect(0, 0, width, height);
-      palette.current!.style.opacity = String(pose.palette);
+      paletteElement.style.opacity = String(pose.palette);
       element.dataset.sampleProgress = String(pose.sample);
       element.dataset.groupProgress = String(pose.group);
       element.dataset.paletteProgress = String(pose.palette);
@@ -68,61 +72,24 @@ export default function PaletteExtraction() {
       // and other fractional canvas scales, not just the explicit 1px gap.
       if (sampling) context.resetTransform();
       for (const tile of tiles) {
-        const x = mix(
-          mix(tile.sourceX, tile.groupX, pose.group),
-          tile.paletteX,
-          pose.palette,
-        );
-        const y = mix(
-          mix(tile.sourceY, tile.groupY, pose.group),
-          tile.paletteY,
-          pose.palette,
-        );
-        const size = mix(
-          mix(
-            (photo.width * stride) / recording.analysis.sampleWidth,
-            tile.groupSize,
-            pose.group,
-          ),
-          2,
-          pose.palette,
-        );
+        const rect = paletteTileRectAt(tile, pose);
         context.fillStyle =
           pose.palette === 0
             ? tile.hex
             : `rgb(${tile.rgb.map((channel, index) => Math.round(mix(channel, tile.targetRgb[index], pose.palette))).join(" ")})`;
         if (sampling) {
-          const left = Math.round(
-            (photo.x +
-              (tile.x / recording.analysis.sampleWidth) * photo.width) *
-              scaleX,
-          );
-          const right = Math.round(
-            (photo.x +
-              (Math.min(tile.x + stride, recording.analysis.sampleWidth) /
-                recording.analysis.sampleWidth) *
-                photo.width) *
-              scaleX,
-          );
-          const top = Math.round(
-            (photo.y +
-              (tile.y / recording.analysis.sampleHeight) * photo.height) *
-              scaleY,
-          );
-          const bottom = Math.round(
-            (photo.y +
-              (Math.min(tile.y + stride, recording.analysis.sampleHeight) /
-                recording.analysis.sampleHeight) *
-                photo.height) *
-              scaleY,
-          );
+          const left = Math.round(rect.x * scaleX);
+          const right = Math.round((rect.x + rect.width) * scaleX);
+          const top = Math.round(rect.y * scaleY);
+          const bottom = Math.round((rect.y + rect.height) * scaleY);
           context.fillRect(left, top, right - left, bottom - top);
-        } else context.fillRect(x - size / 2, y - size / 2, size, size);
+        } else context.fillRect(rect.x, rect.y, rect.width, rect.height);
       }
       context.globalAlpha = 1;
     };
     renderer.current = createPaletteRenderer(draw);
     const resize = () => {
+      if (disposed || !element.isConnected) return;
       const scale = Math.min(devicePixelRatio || 1, 2);
       surface.width = Math.round(element.clientWidth * scale);
       surface.height = Math.round(
@@ -134,8 +101,11 @@ export default function PaletteExtraction() {
     observer.observe(element);
     resize();
     return () => {
-      observer.disconnect();
+      // Layout cleanup precedes DOM/ref teardown; queued observer/frame callbacks
+      // still close over stable elements and become inert immediately.
+      disposed = true;
       renderer.current = null;
+      observer.disconnect();
     };
   }, []);
 
