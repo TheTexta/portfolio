@@ -69,6 +69,7 @@ const projectCatalogDefinition = [
     technologies: ["Next.js", "D3", "Supabase"],
     writeUpHref: PROJECT_ROUTES.photoGraph,
     experienceHref: PROJECT_ROUTES.photoGraphExperience,
+    sourceHref: "https://github.com/TheTexta/portfolio",
     posterSrc: "/projects/posters/photo-graph.webp",
     posterWidth: 3306,
     posterHeight: 1859,

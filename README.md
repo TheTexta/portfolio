@@ -6,7 +6,8 @@ photography, design and creative-technology projects.
 ## Features
 
 - Interactive project browser with embedded previews and shared project metadata.
-- Seven MDX engineering write-ups, with local figures and interactive examples.
+- Seven MDX engineering write-ups, with version-scoped evidence and local
+  interactive examples.
 - Photo Graph: colour-based photograph browsing in 2D, an optional standalone 3D
   view, and authenticated administration with recoverable uploads.
 - Grailed Plus product page and recorded comparison demo; downloadable CV variants.
@@ -62,7 +63,8 @@ are in the [development guide](docs/development.md#tests).
 
 - [Development, configuration, tests and deployment](docs/development.md)
 - [Write-up authoring and design](docs/design/project-write-ups.md),
-  [navigation and previews](docs/design/navigation-and-previews.md)
+  [navigation and previews](docs/design/navigation-and-previews.md),
+  [versioned Elliot palette example](docs/design/elliot-palette-animation.md)
 - [Photo Graph viewer](docs/design/photo-graph-viewer.md),
   [admin and maintenance safety](docs/photo-graph-admin.md),
   [R2 migration and rollback constraints](docs/photo-graph-r2-migration.md)

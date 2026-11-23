@@ -193,7 +193,7 @@ describe("Bot or Not write-up", () => {
     expect(project.summary).not.toMatch(/reproducible|0\.95238|1\.000/);
     expect(project.outcome).toContain("independent assessment pending");
     expect(PUBLIC_PAGES.botOrNot.description).toBe(project.summary);
-    expect(PUBLIC_PAGES.botOrNot.lastModified).toBe("2026-11-04");
+    expect(PUBLIC_PAGES.botOrNot.lastModified).toBe("2026-11-23");
     expect(project.writeUpHref).toBe("/write-ups/bot-or-not");
     expect(project.showInBrowser).toBe(false);
   });

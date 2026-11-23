@@ -16,6 +16,36 @@ The existing source documentation records the owner's confirmation of Summer
 work authorization or employer eligibility are inferred. Reconfirm those facts
 when completing an application with narrower requirements.
 
+## Write-up evidence boundaries
+
+The 23 November 2026 editorial update makes the existing four software case
+studies easier to inspect without adding projects or claiming new user outcomes.
+Native evidence links retain the existing article headings and routes. The
+following distinctions are part of the public content contract, not a blanket
+verification badge:
+
+| Project               | Defensible claim and artifact                                                                                               | Evidence scope                                                                                                                           | Remaining boundary                                                                                                                                                                      |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Grailed Plus          | Progressive metadata/image comparison, explained through the engineering article and labelled recorded/sample-data examples | Recorded worker scores and deterministic interface examples; maintained application/gateway source is private                            | A particular store package, hosted sample demo and private release are different artifacts. Installed-package parity, buyer relevance and representative latency need separate evidence |
+| Discord Shoot Manager | Authored roster/production workflows, with the linked lost-confirmation regression and its historical CI                    | Public source/test revision and synthetic lifecycle illustration; deployment notes identify the November 2 `e06dbf3` runtime             | Newer schedule/invitation source is not proof of deployment. Bot setup checks do not establish ordinary-user permissions across all channels                                            |
+| Photo Graph           | Colour descriptors, sparse relationships and recoverable archive updates, with public source and the saved August review    | Seven hand-picked queries in the saved 100-photo experiment; separate November 4 frozen worked example and live opening preview          | 25/28 versus 24/28 are judged model-selection positions, not full-archive accuracy. New independent judgments and physical-device/screen-reader acceptance remain separate              |
+| Elliot Mairet         | Colour-led archive and publication retry workflow; a versioned current-model extraction example                             | MMCQ output from pinned source/input bytes; explanatory grouping/timing; the original k-medoids snapshot is retained as historical       | Up to five genuine swatches, with selection order distinct from population weights. The 271-photo rollout count is dated November 5, not a live archive count or adoption measure       |
+| Bot or Not            | Historical competition pipeline plus a separately dated current-input overlap audit                                         | Original practice reports and earlier audit remain unchanged; later local audit includes all six official shards and both practice files | Current hashes do not recover historical training bytes. Unpublished local safeguards and overlapping practice F1 do not establish independent predictive performance                   |
+
+No new installed-extension demonstration, Discord test-server recording, client
+study, independent relevance assessment or accessibility certification is implied
+by this editorial release. The unfamiliar-reader task below remains prepared
+until real observations are recorded.
+
+### Preserved owner decisions
+
+The About paragraphs remain verbatim and Discord Shoot Manager/Bot or Not remain
+write-up-only. In particular, About's “open-source” description of Grailed Plus is
+preserved; the article/product surface separately explains its upstream foundation
+and private maintained implementation. That clarification does not eliminate the
+possible ambiguity in the protected About wording. Any exception to that copy
+requires an explicit owner decision.
+
 ## GitHub presentation (REC09)
 
 A fresh signed-out Chromium visit on 1 November 2026 showed the bio

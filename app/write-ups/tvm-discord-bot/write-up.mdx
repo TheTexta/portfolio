@@ -129,7 +129,7 @@ failures reproducible without production member data.
 
 The [lost-confirmation regression](https://github.com/TheTexta/discord-shoot-manager/blob/045de1ed714677147e6a8b74efe57f8619a70dee/test/roster-preview.test.js#L167)
 deliberately makes confirmation delivery fail after a roster replacement has been
-accepted. It checks that the saved roster remains intact, reconciliation is
+accepted. It checks that the accepted roster version remains saved, reconciliation is
 scheduled once, and the same confirmation cannot apply the replacement again.
 
 Other tests cover stale and concurrent confirmations, permission boundaries and

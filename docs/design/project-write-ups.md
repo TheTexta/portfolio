@@ -65,6 +65,27 @@ to reserve space; captions are props to avoid MDX inserting paragraph spacing.
 Only trusted repository-owned MDX is compiled at build time; there is no remote
 MDX execution or CMS.
 
+### Contribution and evidence
+
+Open with the problem, the author's contribution and the delivered capability,
+not an inventory of technologies. Keep upstream work and client-owned content
+attributed. The existing project-link row can include a native link to a
+consequential evidence section; use the generated `section-...` anchor rather
+than adding another outline, panel or client-side navigation system.
+
+Distinguish recorded output, explanatory motion, fictional regression tests,
+historical deployment acceptance and current release coverage. Name the relevant
+date/revision and limitation beside the claim. A live preview does not make every
+article example live, and a local implementation does not establish deployment.
+Keep historical experiments and immutable recording assets intact when featuring
+a newer version. The current evidence boundaries are recorded in
+[application evidence](../application-evidence.md#write-up-evidence-boundaries).
+
+The 23 November editorial pass preserves the About paragraphs, write-up-only
+Discord/Bot or Not entries, article/experience URLs, heading anchors and shared
+frame. It does not introduce a mobile contents control, new project cards,
+another design system or additional user-study/performance results.
+
 For a new article, import its MDX into a `page.tsx` using `ProjectWriteUp` and
 pass `project` into the MDX component. The shell does not generate another title
 or introduction. Add the route to `project-routes.ts` and `writeUpHref` to
