@@ -450,8 +450,7 @@ export default function GrailedPlusLiveDemo({
       )}
       {feature === "market-compare" ? (
         <p id={descriptionId} className="mt-3 text-xs leading-5 text-muted">
-          Recorded MobileCLIP-S1 comparison · sample metadata. No live search or
-          model download.{" "}
+          A recorded example using sample listings—not a live search.{" "}
           <a
             href={`${RECORDED_DEMO_PATH}photo-credits.html`}
             target="_blank"

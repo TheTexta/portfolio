@@ -144,6 +144,71 @@ test("the shared clock waits for visibility and freezes offscreen; message valid
 });
 
 for (const reducedMotion of ["no-preference", "reduce"] as const) {
+  test(`landing links animate accessibly and the footer matches the header (${reducedMotion})`, async ({
+    page,
+    context,
+  }, info) => {
+    await context.route("https://**/*", (route) => route.abort());
+    await page.emulateMedia({ reducedMotion });
+    await page.goto("/grailed-plus");
+    const links = page.locator(
+      '.product-landing-hero a[href^="#feature-"], .product-landing-hero a[href="/write-ups/grailed-plus"]',
+    );
+    await expect(links).toHaveCount(5);
+    const underlineScale = (link: ReturnType<typeof page.locator>) =>
+      link.evaluate(
+        (node) => new DOMMatrix(getComputedStyle(node, "::after").transform).a,
+      );
+    for (const link of await links.all()) {
+      expect(await underlineScale(link)).toBe(0);
+      if (info.project.name === "desktop") {
+        await link.hover();
+        await expect.poll(() => underlineScale(link)).toBe(1);
+        await page.mouse.move(0, 0);
+        await expect.poll(() => underlineScale(link)).toBe(0);
+      }
+      await link.focus();
+      await expect(link).toBeFocused();
+      await expect(link).toHaveCSS("outline-style", "solid");
+      await expect.poll(() => underlineScale(link)).toBe(1);
+      const transitionDuration = await link.evaluate((node) =>
+        parseFloat(getComputedStyle(node, "::after").transitionDuration),
+      );
+      if (reducedMotion === "reduce") {
+        expect(transitionDuration).toBeLessThan(0.001);
+      } else {
+        expect(transitionDuration).toBe(0.24);
+      }
+      await link.evaluate((node) => (node as HTMLElement).blur());
+      await expect.poll(() => underlineScale(link)).toBe(0);
+    }
+    const footer = page.locator(".product-landing > footer");
+    const header = page.getByRole("navigation", {
+      name: "Grailed Plus page navigation",
+    });
+    const headerHeight = await header.evaluate(
+      (node) => node.getBoundingClientRect().height,
+    );
+    expect(
+      await footer.evaluate((node) => node.getBoundingClientRect().height),
+    ).toBe(headerHeight);
+    await expect(footer).toHaveCSS("flex-direction", "row");
+    await expect(
+      page.locator("#feature-market-compare p").filter({
+        hasText: "A recorded example using sample listings—not a live search.",
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Photo credits", exact: true }),
+    ).toHaveAttribute(
+      "href",
+      "/projects/grailed-plus/recorded-demo/photo-credits.html",
+    );
+    await footer.screenshot({
+      path: info.outputPath(`footer-${reducedMotion}.png`),
+    });
+  });
+
   test(`comparison playback labels and focus outlines fit inside the clipped frame (${reducedMotion})`, async ({
     page,
     context,

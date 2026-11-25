@@ -15,6 +15,7 @@ import { PROJECT_ROUTES } from "@/app/components/projects/project-routes";
 import { EditorialContainer, SiteHeader } from "@/app/components/ui/editorial";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
 import { cn } from "@/lib/cn";
+import styles from "./grailed-plus-install-page.module.css";
 
 type GrailedPlusInstallPageProps = {
   googleAdsSendTo?: string;
@@ -96,8 +97,10 @@ const FEATURES = [
   },
 ] as const;
 
-const heroFeatureLinkClass =
-  "font-medium text-ink underline decoration-rule underline-offset-4 transition-colors hover:text-action-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current focus-visible:outline-solid";
+const heroFeatureLinkClass = cn(
+  styles.textLink,
+  "font-medium text-ink transition-colors hover:text-action-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current focus-visible:outline-solid",
+);
 
 const heroItemClass =
   "animate-[editorial-enter_700ms_cubic-bezier(0.16,1,0.3,1)_both]";
@@ -454,7 +457,7 @@ export default function GrailedPlusInstallPage({
             >
               <a
                 href={PROJECT_ROUTES.grailedPlusWriteUp}
-                className="mr-3 underline underline-offset-4"
+                className={cn(styles.textLink, "mr-3")}
               >
                 Engineering case study
               </a>
@@ -606,7 +609,7 @@ export default function GrailedPlusInstallPage({
 
           <EditorialContainer
             as="footer"
-            className="flex min-h-8 flex-col gap-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between"
+            className="flex min-h-8 items-center justify-between gap-3 text-sm"
           >
             <p className="text-muted">Grailed Plus for Chrome</p>
             <a

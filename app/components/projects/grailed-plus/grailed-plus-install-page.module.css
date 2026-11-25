@@ -1,0 +1,31 @@
+.textLink {
+  position: relative;
+  display: inline-block;
+  text-decoration: none;
+}
+
+.textLink::before,
+.textLink::after {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0.15em;
+  height: 1px;
+  background: currentColor;
+  pointer-events: none;
+  content: "";
+}
+
+.textLink::before {
+  opacity: 0.35;
+}
+
+.textLink::after {
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--motion-state) var(--ease-out-quint);
+}
+
+.textLink:hover::after,
+.textLink:focus-visible::after {
+  transform: scaleX(1);
+}
