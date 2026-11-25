@@ -26,6 +26,9 @@ cycle through all seven articles in catalogue order, skipping entries without an
 article. Standalone experiences return to their article/product page.
 Grailed Plus install links retain the product page in history and reset their
 busy state after browser-cache restoration; tracking remains separate.
+The Grailed Plus product page scrolls freely without section snapping. Its opening
+description links each feature phrase directly to the corresponding detailed
+showcase, without a separate feature-link list.
 
 Desktop horizontal trackpad gestures over homepage cards move the rail directly
 in either direction with native trackpad momentum. Autoplay eases back in as
@@ -83,18 +86,34 @@ scrollbars without disabling wheel, touch or keyboard scrolling. Grailed Plus's
 hero retains its fixed 1280px viewport; canvas and narrow-screen static launch
 panels are separate.
 
-Control-enabled embedded graphs expose a keyboard photograph selector, an open
-action and connected-photo buttons synchronized with canvas selection; closing
-inspection restores its trigger. Labels identify archive ID/orientation, not
-subject descriptions. Subject descriptions and a real screen-reader assessment
-remain outstanding; the standalone canvas does not have this selector.
+Control-enabled Photo Graph views share one native **Browse photographs**
+disclosure, photograph selector, explicit Open action and connected-photo buttons
+outside the 2D/3D renderers. In the standalone experience its entry appears on
+keyboard focus or when graph settings are expanded; the resting canvas has no
+additional visible chrome. Selection does not move the standalone camera or open
+inspection. Embedded selection retains its existing 2D recentering; previews that
+disable graph controls still omit browsing.
+Expanded settings and browsing sit beside each other where they fit, or use
+separate bounded scroll areas on narrow screens, so neither covers the other's
+focused controls.
+
+Inspection uses a native modal dialog. Closing returns to its valid browser
+trigger, current selector/entry, or graph region; canvas-origin inspection returns
+to the graph rather than unrelated settings. Focus return skips controls clipped
+by their scroll area after a resize or rotation. Escape belongs to the native select,
+open disclosure or inspector rather than also activating surrounding project
+navigation. Known descriptions reuse identity-verified article text; other images
+explicitly report unavailable subject descriptions. VoiceOver/Safari and real iOS
+assessment remain manual acceptance checks, not claims established by Chromium.
 
 ## Recorded examples and checks
 
 - [Animation player](animation-player.md): seekable shared playback, stage snapping,
   selection/reset transitions and pause/resume for DOM/SVG/canvas/iframe scenes.
 - [Grailed Plus recording](grailed-plus-recorded-demo.md): bundled real MobileCLIP-S1
-  results with five photographs, sample-listing disclosure and photo credits.
+  results with five photographs, a sample-data note and photo credits.
+  Other sample listings are identified in frame descriptions rather than a
+  separate disclaimer banner.
   The demo remains inert until its readiness handshake; refresh deliberately with
   `npm run grailed-plus:sync-demo` from the portfolio repository root, using
   `../grailed-plus` as the default adjacent extension source.

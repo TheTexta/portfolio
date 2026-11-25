@@ -56,7 +56,7 @@ export default function PhotoGraphControls({
 
   return (
     <div
-      className={`w-[min(18rem,calc(100%-1rem))] border select-none data-[reserve-navigation=true]:w-[min(18rem,calc(100%-4.25rem))] data-[reserve-reset=true]:w-[min(18rem,calc(100%-9.25rem))] ${photoGraphControlsPositionClass} ${photoGraphPanelClass}`}
+      className={`${styles.settingsPanel} w-[min(18rem,calc(100%-1rem))] border select-none data-[reserve-navigation=true]:w-[min(18rem,calc(100%-4.25rem))] data-[reserve-reset=true]:w-[min(18rem,calc(100%-9.25rem))] ${photoGraphControlsPositionClass} ${photoGraphPanelClass}`}
       data-reserve-navigation={reserveNavigationSpace || undefined}
       data-reserve-reset={reserveResetSpace || undefined}
     >

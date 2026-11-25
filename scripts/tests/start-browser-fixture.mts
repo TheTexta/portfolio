@@ -1,7 +1,15 @@
 import { spawn } from "node:child_process";
 import { createHmac } from "node:crypto";
 import { once } from "node:events";
-import { cp, mkdir, mkdtemp, rm, symlink } from "node:fs/promises";
+import {
+  cp,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { createServer } from "node:http";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -70,6 +78,7 @@ const fixture = await mkdtemp(join(root, ".tmp", "browser-tests-"));
 for (const path of [
   "app",
   "lib",
+  "types",
   "mdx-components.tsx",
   "next.config.ts",
   "proxy.ts",
@@ -82,6 +91,24 @@ for (const path of [
 }
 for (const path of ["node_modules", "public"])
   await symlink(join(root, path), join(fixture, path), "dir");
+// The development-only badge can cover real bottom-left controls. Disable it
+// only in this disposable copy; keep the application's own config unchanged.
+const configPath = join(fixture, "next.config.ts");
+const config = await readFile(configPath, "utf8");
+const fixtureConfig = config.replace(
+  "const nextConfig: NextConfig = {",
+  "const nextConfig: NextConfig = {\n  devIndicators: false,",
+);
+if (fixtureConfig === config)
+  throw new Error("Missing fixture Next config anchor");
+await writeFile(configPath, fixtureConfig);
+// Exercise embedded/data-replacement states without shipping a public test route.
+const keyboardFixture = join(fixture, "app/test-fixtures/photo-graph-keyboard");
+await mkdir(keyboardFixture, { recursive: true });
+await cp(
+  join(root, "tests/fixtures/photo-graph-keyboard-page.tsx"),
+  join(keyboardFixture, "page.tsx"),
+);
 const child = spawn(
   process.execPath,
   [

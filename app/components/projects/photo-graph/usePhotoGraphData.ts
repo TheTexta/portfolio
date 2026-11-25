@@ -19,7 +19,7 @@ type PhotoGraphDataResult = {
   loadStatus: PhotoGraphLoadStatus;
 };
 
-type PhotoGraphLoadStatus = "loading" | "ready" | "empty" | "error";
+export type PhotoGraphLoadStatus = "loading" | "ready" | "empty" | "error";
 
 const EMPTY_GRAPH_DATA_RESULT: PhotoGraphDataResult = {
   graphData: {

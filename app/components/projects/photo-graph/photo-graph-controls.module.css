@@ -7,6 +7,62 @@
   height: auto;
 }
 
+.standaloneBrowser:not([open]):not(:focus-within)[data-revealed="false"] {
+  position: absolute;
+  width: 1px;
+  max-width: none;
+  height: 1px;
+  margin: -1px;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.browserContent {
+  max-height: min(
+    60svh,
+    24rem,
+    calc(var(--photo-graph-height) - 7rem - env(safe-area-inset-bottom))
+  );
+}
+
+.browserDock[data-mode-message="true"] .browserContent {
+  max-height: min(
+    60svh,
+    24rem,
+    calc(var(--photo-graph-height) - 12rem - env(safe-area-inset-bottom))
+  );
+}
+
+/* Both interfaces stay operable: adjacent columns when they fit, otherwise
+   separate bounded scroll areas above and below one another. */
+.shell[data-settings-open="true"][data-controls-columns="true"] .browserDock {
+  left: 19rem;
+  max-width: calc(100% - 19.5rem);
+}
+
+.shell[data-settings-open="true"][data-controls-columns="false"]
+  .settingsPanel {
+  max-height: calc(
+    var(--photo-graph-height) - 5rem - env(safe-area-inset-bottom)
+  );
+}
+
+.shell[data-settings-open="true"][data-browser-open="true"][data-controls-columns="false"]
+  .settingsPanel {
+  max-height: calc(
+    (var(--photo-graph-height) - 2rem - env(safe-area-inset-bottom)) / 2
+  );
+}
+
+.shell[data-settings-open="true"][data-browser-open="true"][data-controls-columns="false"]
+  .browserContent {
+  max-height: calc(
+    (var(--photo-graph-height) - 2rem - env(safe-area-inset-bottom)) / 2 - 3rem
+  );
+}
+
 .shell output {
   white-space: nowrap;
 }

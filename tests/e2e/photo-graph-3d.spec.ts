@@ -71,6 +71,59 @@ async function openSettings(page: Page) {
     .click();
 }
 
+async function selectBrowserPhotograph(page: Page) {
+  const entry = page.locator("summary", { hasText: "Browse photographs" });
+  await entry.focus();
+  await entry.press("Enter");
+  await page
+    .getByLabel("Select a photograph", { exact: true })
+    .selectOption("related");
+  return entry.locator("..").elementHandle();
+}
+
+test("one semantic browser survives both renderers with selection, disclosure and focus intact", async ({
+  page,
+}) => {
+  await page.goto(experience);
+  await openSettings(page);
+  const browser = await selectBrowserPhotograph(page);
+  const select = page.getByLabel("Select a photograph", { exact: true });
+  const requests = graphRequests.get(page)!.length;
+  for (const threeD of [true, false, true]) {
+    await toggle(page).focus();
+    await toggle(page).press("Space");
+    await expect(
+      mode(page, threeD ? "3d" : "2d")
+        .locator("canvas")
+        .first(),
+    ).toBeVisible();
+    await expect(toggle(page)).toBeFocused();
+    expect(
+      await browser!.evaluate(
+        (element) =>
+          element.isConnected && (element as HTMLDetailsElement).open,
+      ),
+    ).toBe(true);
+    await expect(select).toHaveValue("related");
+    await expect(
+      page.getByLabel("Select a photograph", { exact: true }),
+    ).toHaveCount(1);
+  }
+  await select.focus();
+  await page
+    .getByRole("button", { name: "Open selected photograph", exact: true })
+    .press("Enter");
+  await expect(
+    page.getByRole("dialog", { name: "Inspect photograph related" }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("button", { name: "Open selected photograph", exact: true }),
+  ).toBeFocused();
+  expect(graphRequests.get(page)).toHaveLength(requests);
+  expect(errors.get(page)).toEqual([]);
+});
+
 async function enable3D(page: Page) {
   await page.goto(experience);
   await expect(mode(page, "2d").locator("canvas").first()).toBeVisible();
@@ -955,6 +1008,12 @@ test("3D photographs inspect through the shared overlay and settings survive swi
   ).not.toHaveAttribute("aria-disabled", "true");
   await page.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);
+  await expect(
+    page.getByRole("region", {
+      name: "Interactive photograph graph",
+      exact: true,
+    }),
+  ).toBeFocused();
   await openSettings(page);
   await toggle(page).uncheck();
   await expect(mode(page, "2d").locator("canvas").first()).toBeVisible();
@@ -2151,6 +2210,7 @@ test("context loss restores 2D with an accessible explanation and a retry", asyn
   page,
 }) => {
   const initialRequests = await enable3D(page);
+  const browser = await selectBrowserPhotograph(page);
   await page
     .getByRole("button", { name: "Close graph controls", exact: true })
     .click();
@@ -2159,6 +2219,19 @@ test("context loss restores 2D with an accessible explanation and a retry", asyn
   await expect(
     page.getByText(/3D is unavailable on this device/),
   ).toBeVisible();
+  expect(await browser!.evaluate((element) => element.isConnected)).toBe(true);
+  await expect(
+    page.getByLabel("Select a photograph", { exact: true }),
+  ).toHaveValue("related");
+  await page.setViewportSize({ width: 844, height: 390 });
+  const disclosure = page.locator("details");
+  const disclosureBounds = (await disclosure.boundingBox())!;
+  const statusBounds = (await page.getByRole("status").boundingBox())!;
+  expect(disclosureBounds.y).toBeGreaterThanOrEqual(0);
+  expect(disclosureBounds.y + disclosureBounds.height).toBeLessThanOrEqual(
+    statusBounds.y,
+  );
+  expect(statusBounds.y + statusBounds.height).toBeLessThanOrEqual(390);
   await openSettings(page);
   await expect(toggle(page)).not.toBeChecked();
   await toggle(page).check();
@@ -2319,6 +2392,7 @@ test("unsupported WebGL falls back without breaking graph controls", async ({
   });
   await page.goto(experience);
   await openSettings(page);
+  const browser = await selectBrowserPhotograph(page);
   await expect(toggle(page)).toBeEnabled();
   // Failure can reset the checkbox before check() verifies its checked state.
   await toggle(page).click();
@@ -2327,6 +2401,10 @@ test("unsupported WebGL falls back without breaking graph controls", async ({
   });
   await expect(toggle(page)).not.toBeChecked();
   await expect(mode(page, "2d").locator("canvas").first()).toBeVisible();
+  expect(await browser!.evaluate((element) => element.isConnected)).toBe(true);
+  await expect(
+    page.getByLabel("Select a photograph", { exact: true }),
+  ).toHaveValue("related");
   await expect(
     page.getByRole("slider", { name: "Repel strength", exact: true }),
   ).toBeEnabled();
@@ -2339,6 +2417,7 @@ test("a failed lazy chunk retains 2D and reports how to retry", async ({
   await context.route("**/*PhotoGraph3DRenderer*", (route) => route.abort());
   await page.goto(experience);
   await openSettings(page);
+  const browser = await selectBrowserPhotograph(page);
   await expect(toggle(page)).toBeEnabled();
   // A fast import rejection can restore 2D before the click finishes.
   await toggle(page).click();
@@ -2347,6 +2426,10 @@ test("a failed lazy chunk retains 2D and reports how to retry", async ({
   });
   await expect(toggle(page)).not.toBeChecked();
   await expect(mode(page, "2d").locator("canvas").first()).toBeVisible();
+  expect(await browser!.evaluate((element) => element.isConnected)).toBe(true);
+  await expect(
+    page.getByLabel("Select a photograph", { exact: true }),
+  ).toHaveValue("related");
 });
 
 test("turning off 3D during its download ignores the stale completion", async ({
@@ -2364,12 +2447,21 @@ test("turning off 3D during its download ignores the stale completion", async ({
   try {
     await page.goto(experience);
     await openSettings(page);
+    const browser = await selectBrowserPhotograph(page);
     await expect(toggle(page)).toBeEnabled();
     const initialRequests = graphRequests.get(page)!.length;
     await toggle(page).check();
     await expect(
       page.getByText("Loading 3D view…", { exact: true }),
     ).toBeVisible();
+    await page.getByLabel("Select a photograph", { exact: true }).focus();
+    expect(await browser!.evaluate((element) => element.isConnected)).toBe(
+      true,
+    );
+    await expect(
+      page.getByLabel("Select a photograph", { exact: true }),
+    ).toHaveValue("related");
+    await toggle(page).focus();
     await toggle(page).uncheck();
     release();
     await expect(mode(page, "2d").locator("canvas").first()).toBeVisible();
@@ -2380,6 +2472,44 @@ test("turning off 3D during its download ignores the stale completion", async ({
     });
     expect(graphRequests.get(page)).toHaveLength(initialRequests);
     expect(errors.get(page)).toEqual([]);
+  } finally {
+    release();
+  }
+});
+
+test("completing a delayed 3D import does not replace or defocus the browser", async ({
+  context,
+  page,
+}) => {
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await context.route("**/*PhotoGraph3DRenderer*", async (route) => {
+    await held;
+    await route.continue();
+  });
+  try {
+    await page.goto(experience);
+    await openSettings(page);
+    const browser = await selectBrowserPhotograph(page);
+    const initialRequests = graphRequests.get(page)!.length;
+    await toggle(page).check();
+    await expect(
+      page.getByText("Loading 3D view…", { exact: true }),
+    ).toBeVisible();
+    const select = page.getByLabel("Select a photograph", { exact: true });
+    await select.focus();
+    release();
+    await expect(mode(page, "3d").locator("canvas")).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(select).toBeFocused();
+    await expect(select).toHaveValue("related");
+    expect(await browser!.evaluate((element) => element.isConnected)).toBe(
+      true,
+    );
+    expect(graphRequests.get(page)).toHaveLength(initialRequests);
   } finally {
     release();
   }

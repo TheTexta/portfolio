@@ -123,7 +123,7 @@ export default function AnimationPlayer({
     <div ref={root} data-animation-player aria-label={label}>
       {children}
       <div
-        className="group/playback relative flex min-h-11 items-center gap-2"
+        className="group/playback relative flex min-h-11 items-center gap-2 p-1.5 pb-4"
         role="group"
         aria-label={`${label} playback`}
       >

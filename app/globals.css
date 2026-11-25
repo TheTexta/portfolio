@@ -128,15 +128,7 @@ html.dark {
   }
 }
 
-html:has(.product-landing) {
-  scroll-snap-type: y proximity;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  html:has(.product-landing) {
-    scroll-snap-type: none;
-  }
-
   .product-landing *,
   .product-landing *::before,
   .product-landing *::after {

@@ -179,7 +179,7 @@ describe("write-up source and contribution copy", () => {
     expect(copy).not.toContain("implementation reviewed in October 2026");
   });
 
-  it("clarifies Grailed product provenance and remote processing without claiming store parity", async () => {
+  it("keeps remote-processing disclosure without the removed product banner", async () => {
     const page = await readFile(
       new URL(
         "../../app/components/projects/grailed-plus/grailed-plus-install-page.tsx",
@@ -188,12 +188,12 @@ describe("write-up source and contribution copy", () => {
       "utf8",
     );
     const copy = page.replace(/\s+/g, " ");
-    expect(page).toContain('href="https://github.com/RVRX/grailed-plus"');
-    expect(copy).toContain("open-source price-history foundation");
-    expect(copy).toContain(
+    expect(page).not.toContain('href="https://github.com/RVRX/grailed-plus"');
+    expect(copy).not.toContain("open-source price-history foundation");
+    expect(copy).not.toContain(
       "The maintained extension and gateway source is private",
     );
-    expect(copy).toContain(
+    expect(copy).not.toContain(
       "These sample demos do not verify the installed store version",
     );
     expect(copy).toContain(

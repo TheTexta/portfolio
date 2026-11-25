@@ -58,6 +58,8 @@ show the playback affordance without requiring hover. The native range has a
 44px hit area, discrete stage indices and an accessible stage label. Arrow keys
 select adjacent stages, Home/End choose the first/last stage and Space
 pauses/resumes. There are no visible percentages.
+The playback row reserves space beneath the rail for stage labels and insets the
+controls so their square focus outlines remain visible inside clipped media frames.
 
 Autoplay runs only when ready, the document is visible and at least half the
 player intersects the viewport. Offscreen/hidden/BFCache time is not counted;

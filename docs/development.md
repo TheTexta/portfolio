@@ -79,6 +79,8 @@ npm run test:e2e
   application under disposable `.tmp/`, use test-only Supabase settings and a
   local Auth stub, and intercept relevant backend/media requests. They do not
   load `.env.local`.
+  The disposable copy disables Next.js's development badge so it cannot cover
+  real controls; the application's own configuration is unchanged.
 
 Browser fixtures default to port 3107 and refuse to reuse an existing server.
 If occupied, use `PORTFOLIO_TEST_PORT=3157 npm run test:e2e` rather than stopping

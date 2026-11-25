@@ -5,9 +5,14 @@
 At `/projects/photo-graph/experience`, open graph controls and enable **3D**.
 The default remains 2D; homepage, article and admin previews remain 2D. The mode
 choice lasts only while the experience is mounted. The standalone route retains
-compact controls and an icon-only return link, not a photograph-browser panel.
-The embedded keyboard selector is described in
+compact controls and an icon-only return link. Its focus-revealed photograph browser
+works in both modes and survives renderer loading/fallback without resetting
+selection. Shared keyboard browsing is described in
 [navigation and previews](navigation-and-previews.md#loading-controls-and-scrolling).
+
+The loading screen shows a thin, square-edged indeterminate bar beneath
+**Loading photographs**. It fades away after the first prepared 2D graph frame;
+reduced motion uses a static indicator and an immediate reveal.
 
 In 3D, photographs are camera-facing rectangles in an XYZ force simulation:
 
@@ -87,4 +92,14 @@ not production services. Crowded-scene cases zoom a foreground photograph with
 and retained texture memory, then reset/upgrade without repeated requests.
 Other cases cover nearest-neighbour GPU samplers, mid-drag Shift changes
 with/without damping, cancelled gestures, touch navigation and responsive controls.
+`tests/e2e/photo-graph-keyboard.spec.ts` covers native keyboard browsing, modal
+focus recovery, local graph replacement, opt-outs and responsive disclosure
+states using intercepted graph/image fixtures. Its embedded test route exists
+only in the disposable browser fixture, never in the deployed application.
+`tests/e2e/photo-graph-keyboard-layout.spec.ts` checks both-open settings/browsing
+hit targets in short viewports and visible focus recovery after resizing an open
+inspector, in both renderers. Narrow-view theme checks retain the existing
+system-theme behavior rather than expecting manual theme overrides.
+`tests/e2e/photo-graph-loading.spec.ts` checks the loading bar and reveal in light,
+dark and reduced-motion modes on desktop and mobile.
 See [test setup](../development.md#tests).

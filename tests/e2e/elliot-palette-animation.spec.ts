@@ -168,6 +168,76 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
   });
 }
 
+test("late resize callbacks are harmless after leaving the extraction", async ({
+  page,
+  context,
+}) => {
+  await context.route("https://**/*", (route) => route.abort());
+  await context.route("**/api/photo-graph/graph", (route) =>
+    route.fulfill({ json: { nodes: [], links: [] } }),
+  );
+  await page.addInitScript(() => {
+    const NativeResizeObserver = window.ResizeObserver;
+    const pending: (() => boolean)[] = [];
+    Object.assign(window, {
+      replayPaletteResizes: () => pending.map((callback) => callback()),
+    });
+    window.ResizeObserver = class extends NativeResizeObserver {
+      private readonly replay: () => void;
+      constructor(callback: ResizeObserverCallback) {
+        super(callback);
+        this.replay = () => callback([], this);
+      }
+      observe(target: Element, options?: ResizeObserverOptions) {
+        if (target.matches("[data-palette-scene]")) {
+          const canvas = target.querySelector("canvas")!;
+          // Retain a delivery even after disconnect, as if it was already queued.
+          pending.push(() => {
+            const { width, height } = canvas;
+            this.replay();
+            return canvas.width === width && canvas.height === height;
+          });
+        }
+        super.observe(target, options);
+      }
+    };
+  });
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/write-ups/elliot-mairet");
+  const figure = page.getByRole("figure", {
+    name: figureName,
+  });
+  await figure.scrollIntoViewIfNeeded();
+  await expect(figure.getByRole("slider")).toBeEnabled();
+  await expect(figure.locator("[data-palette-scene]")).toHaveAttribute(
+    "data-palette-progress",
+    "1",
+  );
+  await page.getByRole("link", { name: "Index", exact: true }).click();
+  await expect(page).toHaveURL(/\/portfolio#projects$/);
+  await expect(figure).toHaveCount(0);
+  const unchanged = await page.evaluate(() =>
+    (
+      window as typeof window & {
+        replayPaletteResizes: () => boolean[];
+      }
+    ).replayPaletteResizes(),
+  );
+  expect(unchanged.length).toBeGreaterThan(0);
+  expect(unchanged.every(Boolean)).toBe(true);
+
+  await page.goBack();
+  await figure.scrollIntoViewIfNeeded();
+  const range = figure.getByRole("slider");
+  await expect(range).toBeEnabled();
+  await range.press("Home");
+  await expect(figure.locator("ol")).toHaveCSS("opacity", "0");
+  await range.press("End");
+  await expect(figure.locator("ol")).toHaveCSS("opacity", "1");
+  expect(errors).toEqual([]);
+});
+
 test.describe("without JavaScript", () => {
   test.use({ javaScriptEnabled: false });
   test("the photograph and real palette remain meaningful", async ({

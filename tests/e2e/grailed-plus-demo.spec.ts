@@ -6,6 +6,64 @@ const analysisEnd = timeline.stages[0].durationMs;
 const reorderEnd = analysisEnd + timeline.stages[1].durationMs;
 const duration = reorderEnd + timeline.stages[2].durationMs;
 
+for (const colorScheme of ["light", "dark"] as const) {
+  test(`feature navigation stays in the description and the showcase scrolls freely (${colorScheme})`, async ({
+    page,
+    context,
+  }, info) => {
+    await context.route("https://**/*", (route) => route.abort());
+    await page.emulateMedia({ colorScheme, reducedMotion: "no-preference" });
+    await page.goto("/grailed-plus");
+    const description = page.locator(
+      '.product-landing-hero p:has(a[href="#feature-pricing"])',
+    );
+    await expect(description.locator("a")).toHaveText([
+      "Market compare",
+      "price intelligence",
+      "local currency",
+      "dark mode",
+    ]);
+    await expect(
+      page.getByRole("list", { name: "Grailed Plus features", exact: true }),
+    ).toHaveCount(0);
+    await expect(page.locator("html")).toHaveCSS("scroll-snap-type", "none");
+    for (const feature of await page.locator("#features article").all()) {
+      await expect(feature).toHaveCSS("scroll-snap-type", "none");
+      await expect(feature).toHaveCSS("scroll-snap-align", "none");
+    }
+    await description.screenshot({
+      path: info.outputPath(`inline-features-${colorScheme}.png`),
+    });
+    const pricing = description.getByRole("link", {
+      name: "price intelligence",
+      exact: true,
+    });
+    await pricing.focus();
+    await expect(pricing).toHaveCSS("outline-style", "solid");
+    await pricing.press("Enter");
+    await expect(page).toHaveURL(/#feature-pricing$/);
+    await expect(
+      page.locator("#feature-pricing").getByRole("heading", {
+        name: "Pricing insights",
+        exact: true,
+      }),
+    ).toBeInViewport();
+    const position = await page.locator("#feature-pricing").evaluate(
+      (section) =>
+        new Promise<number>((resolve) => {
+          const target = Math.round(
+            section.getBoundingClientRect().top + scrollY + 87,
+          );
+          scrollTo({ top: target, behavior: "instant" });
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => resolve(target)),
+          );
+        }),
+    );
+    await expect.poll(() => page.evaluate(() => scrollY)).toBe(position);
+  });
+}
+
 test("the shared clock waits for visibility and freezes offscreen; message validation remains intact", async ({
   page,
   context,
@@ -86,6 +144,73 @@ test("the shared clock waits for visibility and freezes offscreen; message valid
 });
 
 for (const reducedMotion of ["no-preference", "reduce"] as const) {
+  test(`comparison playback labels and focus outlines fit inside the clipped frame (${reducedMotion})`, async ({
+    page,
+    context,
+  }, info) => {
+    await context.route("https://**/*", (route) => route.abort());
+    await page.emulateMedia({ reducedMotion, colorScheme: "dark" });
+    await page.goto("/grailed-plus#feature-market-compare");
+    const section = page.locator("#feature-market-compare");
+    const playback = section.getByRole("group", {
+      name: "Image comparison playback",
+      exact: true,
+    });
+    const range = playback.getByRole("slider", {
+      name: "Image comparison timeline",
+    });
+    await range.scrollIntoViewIfNeeded();
+    await expect(range).toBeEnabled();
+    await range.focus();
+    const rowBounds = (await playback.boundingBox())!;
+    for (const label of ["Analysis", "Reordering", "Complete"]) {
+      const text = playback.getByText(label, { exact: true });
+      await expect(text).toHaveCSS("opacity", "1");
+      const bounds = (await text.boundingBox())!;
+      expect(bounds.y + bounds.height).toBeLessThanOrEqual(
+        rowBounds.y + rowBounds.height,
+      );
+    }
+    const outline = await range.evaluate((input) => {
+      const track = input.parentElement!;
+      const frame = track.closest("[data-animation-player]")!;
+      const bounds = track.getBoundingClientRect();
+      const clip = frame.getBoundingClientRect();
+      const style = getComputedStyle(track);
+      const extent = Math.max(
+        0,
+        parseFloat(style.outlineWidth) + parseFloat(style.outlineOffset),
+      );
+      return {
+        left: bounds.left - extent - clip.left,
+        right: clip.right - bounds.right - extent,
+      };
+    });
+    expect(outline.left).toBeGreaterThanOrEqual(0);
+    expect(outline.right).toBeGreaterThanOrEqual(0);
+    if (reducedMotion === "no-preference") {
+      const button = playback.getByRole("button");
+      await button.focus();
+      const inset = await button.evaluate((button) => {
+        const bounds = button.getBoundingClientRect();
+        const clip = button
+          .closest("[data-animation-player]")!
+          .getBoundingClientRect();
+        const style = getComputedStyle(button);
+        return (
+          bounds.left -
+          parseFloat(style.outlineWidth) -
+          parseFloat(style.outlineOffset) -
+          clip.left
+        );
+      });
+      expect(inset).toBeGreaterThanOrEqual(0);
+    }
+    await playback.screenshot({
+      path: info.outputPath(`playback-unclipped-${reducedMotion}.png`),
+    });
+  });
+
   test(`write-up loops, seeks and renders all three real recorded stages (${reducedMotion})`, async ({
     page,
     context,
@@ -180,7 +305,14 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
       Reflect.set(window, "savedRows", rows);
     });
     const source = demo.locator(".gp-demo__comparison-source");
-    const sourceBox = await source.boundingBox();
+    // Compare inside the iframe: screenshots can scroll the host article when
+    // the taller playback row is brought into view.
+    const sourceBounds = () =>
+      source.evaluate((node) => {
+        const { x, y, width, height } = node.getBoundingClientRect();
+        return { x, y, width, height };
+      });
+    const sourceBox = await sourceBounds();
     const box = (await range.boundingBox())!;
     await range.click({
       position: { x: box.width * 0.44, y: box.height / 2 },
@@ -207,7 +339,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
     await expect(player).toHaveAttribute("data-time", String(reorderEnd));
     await expect(range).toHaveValue("2");
     await expect.poll(ids).toEqual(recording.refined.map((r) => r.id));
-    expect(await source.boundingBox()).toEqual(sourceBox);
+    expect(await sourceBounds()).toEqual(sourceBox);
     await expect
       .poll(() =>
         demo

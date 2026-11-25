@@ -407,7 +407,9 @@ export default function GrailedPlusLiveDemo({
           ref={iframeRef}
           src={demoUrl}
           title={title}
-          aria-describedby={descriptionId}
+          aria-describedby={
+            feature === "market-compare" ? descriptionId : undefined
+          }
           loading={eager ? "eager" : "lazy"}
           referrerPolicy="strict-origin"
           sandbox="allow-scripts allow-same-origin"
@@ -434,15 +436,6 @@ export default function GrailedPlusLiveDemo({
 
   return (
     <div>
-      {feature !== "market-compare" ? (
-        <p
-          id={descriptionId}
-          className="border-b border-ink px-3 py-2 text-xs leading-5 text-muted"
-        >
-          Interactive demo using sample listings. Scores, timestamps and state
-          changes are illustrative; no live marketplace query is performed.
-        </p>
-      ) : null}
       {feature === "market-compare" ? (
         <AnimationPlayer
           stages={comparisonTimeline.stages}

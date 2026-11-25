@@ -337,12 +337,13 @@ test("Contact deep links move the next keyboard step to contact actions", async 
   }
 });
 
-test("every marketplace demo discloses sample data before interaction", async ({
+test("marketplace demos omit the removed banner and retain recording credits", async ({
   page,
 }) => {
   await page.goto("/grailed-plus");
   const notes = page.getByText(/Interactive demo using sample listings/);
-  await expect(notes).toHaveCount(4);
+  await expect(notes).toHaveCount(0);
+  await expect(page.getByText(/Built on.*RVRX\/grailed-plus/)).toHaveCount(0);
   const recordingNote = page.getByText(
     "Recorded MobileCLIP-S1 comparison · sample metadata.",
   );
@@ -351,9 +352,9 @@ test("every marketplace demo discloses sample data before interaction", async ({
     "No live search or model download.",
   );
   for (const frame of await page
-    .locator('iframe[title*="sample listings"]')
+    .locator('iframe[title*="sample listings"]:not([src*="recorded-demo/"])')
     .all()) {
-    await expect(frame).toHaveAttribute("aria-describedby", /.+/);
+    await expect(frame).not.toHaveAttribute("aria-describedby");
   }
   await expect(
     page.getByRole("link", { name: "Engineering case study", exact: true }),
@@ -464,7 +465,7 @@ for (const failure of ["failed HEAD", "delayed frame load"] as const) {
   });
 }
 
-test("full graph uses an icon-only return link without a photograph browser", async ({
+test("full graph keeps its icon-only return link and reveals keyboard browsing on focus", async ({
   page,
   context,
 }) => {
@@ -494,11 +495,14 @@ test("full graph uses an icon-only return link without a photograph browser", as
   });
   await expect(graph.locator("canvas").first()).toBeVisible();
   await expect(page.getByRole("status")).toHaveCount(0);
-  await expect(
-    page.getByText("Browse photographs", { exact: true }),
-  ).toHaveCount(0);
-  await expect(graph.locator("details")).toHaveCount(0);
-  await expect(page.getByLabel("Select a photograph")).toHaveCount(0);
+  const browse = graph.locator("summary", { hasText: "Browse photographs" });
+  await expect(graph.locator("details")).toHaveCount(1);
+  await expect(page.getByLabel("Select a photograph")).toHaveCount(1);
+  await expect(graph.locator("details")).toHaveCSS("width", "1px");
+  await browse.focus();
+  await expect(browse).toBeFocused();
+  await expect(browse).toHaveCSS("outline-style", "solid");
+  expect((await browse.boundingBox())!.width).toBeGreaterThan(100);
   const returnLink = page.getByRole("link", {
     name: "Return to project write up",
     exact: true,

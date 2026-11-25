@@ -1,13 +1,7 @@
 "use client";
 
 import { Download, X } from "lucide-react";
-import {
-  type RefObject,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ControlAnchor, ControlButton } from "@/app/components/ui/control";
 import { getPhotographDescription } from "@/lib/photo-graph/descriptions";
@@ -24,17 +18,17 @@ import { buildInspectFilename, convertSizeToMb, isAbortError } from "./utils";
 
 type PhotoGraphInspectOverlayProps = {
   target: InspectTarget | null;
-  returnFocusRef?: RefObject<HTMLElement | null>;
+  restoreFocus: () => void;
   onCloseComplete: () => void;
 };
 
 export default function PhotoGraphInspectOverlay({
   target,
-  returnFocusRef,
+  restoreFocus,
   onCloseComplete,
 }: PhotoGraphInspectOverlayProps) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const restoreFocusRef = useRef(restoreFocus);
   const [inspectOverlayOpen, setInspectOverlayOpen] = useState(false);
   const [displayUrl, setDisplayUrl] = useState<string | null>(null);
   const [inspectMetadata, setInspectMetadata] =
@@ -42,10 +36,12 @@ export default function PhotoGraphInspectOverlay({
   const requestClose = useCallback(() => {
     setInspectOverlayOpen(false);
   }, []);
+  useEffect(() => {
+    restoreFocusRef.current = restoreFocus;
+  }, [restoreFocus]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    const returnFocusElement = returnFocusRef?.current;
 
     if (!target) {
       if (dialog?.open) {
@@ -56,11 +52,6 @@ export default function PhotoGraphInspectOverlay({
       setInspectMetadata(null);
       return;
     }
-
-    previousFocusRef.current =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
 
     setInspectOverlayOpen(false);
     setDisplayUrl(target.previewUrl);
@@ -86,17 +77,9 @@ export default function PhotoGraphInspectOverlay({
         dialog.close();
       }
 
-      const previousFocus = previousFocusRef.current;
-      const focusTarget =
-        previousFocus?.isConnected && previousFocus !== document.body
-          ? previousFocus
-          : returnFocusElement?.isConnected
-            ? returnFocusElement
-            : null;
-      focusTarget?.focus({ preventScroll: true });
-      previousFocusRef.current = null;
+      restoreFocusRef.current();
     };
-  }, [returnFocusRef, target]);
+  }, [target]);
 
   useEffect(() => {
     if (!target) {
@@ -219,6 +202,13 @@ export default function PhotoGraphInspectOverlay({
     <dialog
       ref={dialogRef}
       aria-label={`Inspect photograph ${target.id}`}
+      onKeyDown={(event) => {
+        if (["Escape", "ArrowLeft", "ArrowRight"].includes(event.key)) {
+          // Do not let a containing project carousel consume modal keys.
+          // Native Escape still dispatches cancel on this dialog.
+          event.stopPropagation();
+        }
+      }}
       onCancel={(event) => {
         event.preventDefault();
         requestClose();

@@ -364,9 +364,9 @@ for (const reducedMotion of ["reduce", "no-preference"] as const) {
     for (const label of [
       "Explore features",
       "Market compare",
-      "Price intelligence",
-      "Custom currency",
-      "Dark mode",
+      "price intelligence",
+      "local currency",
+      "dark mode",
     ]) {
       await page.goto("/grailed-plus");
       const link = page.getByRole("link", { name: label, exact: true });
@@ -417,7 +417,7 @@ test("Grailed Plus overview preview links open the full product destination", as
     ).toHaveAttribute("data-preview-navigation-ready", "true");
     await page
       .frameLocator('iframe[title="Grailed Plus product hero preview"]')
-      .getByRole("link", { name: "Price intelligence", exact: true })
+      .getByRole("link", { name: "price intelligence", exact: true })
       .click();
     await expect(page).toHaveURL(/\/grailed-plus#feature-pricing$/);
     await expectSection(page, "feature-pricing");

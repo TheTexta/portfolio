@@ -96,12 +96,8 @@ const FEATURES = [
   },
 ] as const;
 
-const HERO_FEATURE_LINKS = [
-  { href: "#feature-market-compare", label: "Market compare" },
-  { href: "#feature-pricing", label: "Price intelligence" },
-  { href: "#feature-currency", label: "Custom currency" },
-  { href: "#feature-dark-mode", label: "Dark mode" },
-] as const;
+const heroFeatureLinkClass =
+  "font-medium text-ink underline decoration-rule underline-offset-4 transition-colors hover:text-action-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current focus-visible:outline-solid";
 
 const heroItemClass =
   "animate-[editorial-enter_700ms_cubic-bezier(0.16,1,0.3,1)_both]";
@@ -406,28 +402,26 @@ export default function GrailedPlusInstallPage({
                 "mt-8 max-w-xl text-base leading-7 text-muted [animation-delay:140ms] sm:text-lg sm:leading-8",
               )}
             >
-              Market context, local currency, and a native-feeling dark mode,
-              directly inside the pages you already browse.
+              <a
+                href="#feature-market-compare"
+                className={heroFeatureLinkClass}
+              >
+                Market compare
+              </a>
+              ,{" "}
+              <a href="#feature-pricing" className={heroFeatureLinkClass}>
+                price intelligence
+              </a>
+              ,{" "}
+              <a href="#feature-currency" className={heroFeatureLinkClass}>
+                local currency
+              </a>
+              , and a native-feeling{" "}
+              <a href="#feature-dark-mode" className={heroFeatureLinkClass}>
+                dark mode
+              </a>
+              , directly inside the pages you already browse.
             </p>
-
-            <ul
-              className={cn(
-                heroItemClass,
-                "mt-8 flex flex-wrap gap-x-5 gap-y-2 border-y border-ink py-4 text-xs font-semibold tracking-[0.14em] uppercase [animation-delay:210ms]",
-              )}
-              aria-label="Grailed Plus features"
-            >
-              {HERO_FEATURE_LINKS.map((feature) => (
-                <li key={feature.href}>
-                  <a
-                    href={feature.href}
-                    className="inline-flex min-h-11 items-center underline-offset-4 transition-opacity hover:underline hover:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
-                  >
-                    {feature.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
 
             <div
               className={cn(
@@ -471,18 +465,6 @@ export default function GrailedPlusInstallPage({
                 Chrome extensions install on desktop. Open the Store now or
                 revisit this page on your computer.
               </span>
-            </p>
-            <p className="mt-4 text-sm leading-6 text-muted">
-              Built on{" "}
-              <a
-                href="https://github.com/RVRX/grailed-plus"
-                className="underline underline-offset-4"
-              >
-                RVRX/grailed-plus
-              </a>
-              ’s open-source price-history foundation. The maintained extension
-              and gateway source is private. These sample demos do not verify
-              the installed store version.
             </p>
           </div>
 
@@ -543,7 +525,7 @@ export default function GrailedPlusInstallPage({
                   <article
                     key={feature.id}
                     id={`feature-${feature.id}`}
-                    className="grid snap-y snap-mandatory snap-start gap-10 border-t border-ink py-16 sm:py-20 lg:grid-cols-12 lg:gap-12 lg:py-28"
+                    className="grid gap-10 border-t border-ink py-16 sm:py-20 lg:grid-cols-12 lg:gap-12 lg:py-28"
                   >
                     <div
                       className={cn(

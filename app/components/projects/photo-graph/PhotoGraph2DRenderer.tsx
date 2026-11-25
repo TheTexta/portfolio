@@ -18,7 +18,6 @@ import {
   sortPhotoGraphNodesForRender,
 } from "@/lib/photo-graph/force-graph";
 
-import PhotoGraphBrowser from "./PhotoGraphBrowser";
 import {
   GRAPH_CONFIG,
   PHOTO_GRAPH_ALPHA_DECAY,
@@ -139,11 +138,10 @@ function fitGraphToWeightedCenter(
 
 type Props = PhotoGraphRendererProps & {
   fitToCanvas: boolean;
-  showBrowser: boolean;
-  selectedPhotoId: string | null;
-  onSelect: (id: string) => void;
+  browseFocusRequest: { id: string; sequence: number } | null;
   snapshot: PhotoGraphViewSnapshot | null;
   onSaveSnapshot: (snapshot: PhotoGraphViewSnapshot) => void;
+  onReady: (data: PhotoGraphData) => void;
 };
 
 export default function PhotoGraph2DRenderer({
@@ -153,13 +151,12 @@ export default function PhotoGraph2DRenderer({
   dimensions,
   reducedMotion,
   fitToCanvas = false,
-  showBrowser,
-  selectedPhotoId,
-  onSelect,
+  browseFocusRequest,
   onInspect,
   snapshot,
   onSaveSnapshot,
   resetViewKey,
+  onReady,
 }: Props) {
   const restoredSnapshot = useMemo(
     () => (snapshot?.data === sourceData ? snapshot : null),
@@ -174,6 +171,7 @@ export default function PhotoGraph2DRenderer({
   const rootRef = useRef<HTMLDivElement>(null);
   const graphMountedRef = useRef(false);
   const preparedGraphDataRef = useRef<PhotoGraphData>(EMPTY_PHOTO_GRAPH_DATA);
+  const reportedReadyDataRef = useRef<PhotoGraphData | null>(null);
   const reducedMotionRef = useRef(reducedMotion);
   const connectionIntroStartedRef = useRef(false);
   const connectionIntroRunningRef = useRef(false);
@@ -194,6 +192,26 @@ export default function PhotoGraph2DRenderer({
   const [preparedGraphData, setPreparedGraphData] = useState<PhotoGraphData>(
     EMPTY_PHOTO_GRAPH_DATA,
   );
+  const lastBrowseSequence = useRef(0);
+  useEffect(() => {
+    if (
+      !browseFocusRequest ||
+      browseFocusRequest.sequence === lastBrowseSequence.current ||
+      !graphMounted
+    )
+      return;
+    const node = preparedGraphData.nodes.find(
+      (candidate) => candidate.id === browseFocusRequest.id,
+    );
+    if (!node || !Number.isFinite(node.x) || !Number.isFinite(node.y)) return;
+    lastBrowseSequence.current = browseFocusRequest.sequence;
+    fgRef.current?.centerAt(node.x, node.y, reducedMotion ? 0 : 250);
+  }, [
+    browseFocusRequest,
+    graphMounted,
+    preparedGraphData.nodes,
+    reducedMotion,
+  ]);
   useEffect(() => {
     const graph = fgRef.current;
     if (
@@ -413,6 +431,17 @@ export default function PhotoGraph2DRenderer({
     fgRef.current?.resumeAnimation();
   }, []);
 
+  const handleRenderFramePost = useCallback(() => {
+    if (
+      preparedGraphData !== graphData ||
+      !preparedGraphData.nodes.length ||
+      reportedReadyDataRef.current === sourceData
+    )
+      return;
+    reportedReadyDataRef.current = sourceData;
+    onReady(sourceData);
+  }, [graphData, preparedGraphData, sourceData, onReady]);
+
   const handleRenderFramePre = useCallback(() => {
     handleGraphReady();
 
@@ -545,6 +574,7 @@ export default function PhotoGraph2DRenderer({
         // Photo nodes repaint asynchronously as images load in.
         autoPauseRedraw={false}
         onRenderFramePre={handleRenderFramePre}
+        onRenderFramePost={handleRenderFramePost}
         nodeCanvasObjectMode={() => "replace"}
         nodeCanvasObject={nodeCanvasObject}
         nodePointerAreaPaint={nodePointerAreaPaint}
@@ -560,19 +590,6 @@ export default function PhotoGraph2DRenderer({
         onZoom={handleZoom}
         onZoomEnd={handleZoomEnd}
       />
-      {showBrowser && (
-        <PhotoGraphBrowser
-          graph={graphData}
-          selectedId={selectedPhotoId}
-          onSelect={(node) => {
-            onSelect(node.id);
-            if (Number.isFinite(node.x) && Number.isFinite(node.y)) {
-              fgRef.current?.centerAt(node.x, node.y, reducedMotion ? 0 : 250);
-            }
-          }}
-          onOpen={onInspect}
-        />
-      )}
     </div>
   );
 }

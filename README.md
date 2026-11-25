@@ -9,7 +9,7 @@ photography, design and creative-technology projects.
 - Seven MDX engineering write-ups, with version-scoped evidence and local
   interactive examples.
 - Photo Graph: colour-based photograph browsing in 2D, an optional standalone 3D
-  view, and authenticated administration with recoverable uploads.
+  view, keyboard browsing, and authenticated administration with recoverable uploads.
 - Grailed Plus product page and recorded comparison demo; downloadable CV variants.
 
 ## Run locally
