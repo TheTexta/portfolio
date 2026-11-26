@@ -209,6 +209,9 @@ export default function PhotoGraphCanvas({
     const container = containerRef.current;
     if (!container) return;
     const update = (width: number, height: number) => {
+      // Retained previews can be display:none. Keep their last real viewport so
+      // hiding them does not reset camera fitting or enqueue 1px image demand.
+      if (width <= 0 || height <= 0) return;
       const next = {
         width: Math.max(1, Math.round(width)),
         height: Math.max(1, Math.round(height)),

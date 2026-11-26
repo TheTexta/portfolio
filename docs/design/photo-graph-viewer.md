@@ -46,6 +46,11 @@ the same payload, links and provider-aware media URLs. If force settings changed
 in the other mode, the returning renderer settles/fits the changed layout rather
 than freezing old coordinates.
 
+Retained 2D renderers pause canvas/simulation and any unfinished connection intro
+when CSS-hidden, offscreen or in a hidden document. Reappearing resumes the same
+renderer, camera and selection without reheating or refetching. Hidden previews
+retain their last non-zero viewport rather than refitting to a 1px canvas.
+
 Only the standalone route opts in with `allow3D`; no persisted coordinates,
 database settings, feature model or media migration are added. Three.js and
 `react-force-graph-3d` load only on activation. Switching modes does not refetch
@@ -57,6 +62,10 @@ initialization/import failure or context loss restores 2D with a retry explanati
 
 These are implementation limits, not measured performance claims:
 
+- 2D images use one five-request queue for initial thumbnails and later upgrades.
+  Initial prioritized photographs load at no more than 192px before larger
+  visible-image requests begin. Pending upgrades deduplicate by photograph and
+  never cancel an active thumbnail; demand is rechecked before upgrades.
 - Bounded image concurrency; screen-projected texture demand, limited to a
   3840px longest side and the GPU's limit.
 - 48 MiB retained RGBA texture budget. Small background photographs do not reduce
@@ -102,4 +111,6 @@ inspector, in both renderers. Narrow-view theme checks retain the existing
 system-theme behavior rather than expecting manual theme overrides.
 `tests/e2e/photo-graph-loading.spec.ts` checks the loading bar and reveal in light,
 dark and reduced-motion modes on desktop and mobile.
+`tests/e2e/photo-graph-performance.spec.ts` checks retained-canvas suspension,
+document visibility, interrupted intros and bounded thumbnail-first requests.
 See [test setup](../development.md#tests).

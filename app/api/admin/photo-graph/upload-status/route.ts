@@ -13,6 +13,8 @@ import { getPhotoGraphStorageBucket } from "@/lib/supabase/config";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const STATUS_CONCURRENCY = 5;
+
 type StatusItem = {
   storagePath: string;
   storageProvider?: "r2";
@@ -86,38 +88,61 @@ export async function POST(request: NextRequest) {
     let storage:
       | ReturnType<ReturnType<typeof getServiceRoleSupabase>["storage"]["from"]>
       | undefined;
-    const present: string[] = [];
-    const missing: string[] = [];
-    for (const item of items) {
+    const checkItem = async (item: StatusItem) => {
       if (item.storageProvider === "r2") {
         const head = await photoGraphR2StagedObjectStatus(item.storagePath);
         if (!head) {
-          missing.push(item.storagePath);
+          return "missing";
         } else if (
           head.ContentLength === item.sourceSize &&
           head.ContentType === item.contentType &&
           head.Metadata?.sourcesha256 === item.sourceSha256 &&
           head.Metadata?.expectedsize === String(item.sourceSize)
         ) {
-          present.push(item.storagePath);
+          return "present";
         } else {
           throw new Error("R2 upload metadata does not match the saved batch.");
         }
-        continue;
       }
       storage ??= getServiceRoleSupabase().storage.from(
         getPhotoGraphStorageBucket(),
       );
       const { data, error } = await storage.info(item.storagePath);
-      if (!error && data) present.push(item.storagePath);
+      if (!error && data) return "present";
       else if (
         error &&
         (("status" in error && error.status === 404) ||
           ("code" in error && error.code === "NoSuchKey"))
       )
-        missing.push(item.storagePath);
+        return "missing";
       else throw new Error("Storage could not confirm upload status.");
-    }
+    };
+    const statuses: string[] = [];
+    let nextIndex = 0;
+    let failed = false;
+    await Promise.all(
+      Array.from(
+        { length: Math.min(STATUS_CONCURRENCY, items.length) },
+        async () => {
+          while (!failed && nextIndex < items.length) {
+            const index = nextIndex++;
+            try {
+              statuses[index] = await checkItem(items[index]);
+            } catch {
+              // Stop scheduling, but settle every started check before returning.
+              failed = true;
+            }
+          }
+        },
+      ),
+    );
+    if (failed) throw new Error("Storage could not confirm upload status.");
+    const present = items
+      .filter((_, index) => statuses[index] === "present")
+      .map((item) => item.storagePath);
+    const missing = items
+      .filter((_, index) => statuses[index] === "missing")
+      .map((item) => item.storagePath);
     return NextResponse.json(
       { ok: true, present, missing },
       { headers: { "cache-control": "private, no-store" } },

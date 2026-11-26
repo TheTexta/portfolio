@@ -14,6 +14,7 @@ import {
 } from "@/app/components/projects/photo-graph/imageOptimizer";
 
 import { GRAPH_CONFIG } from "./config";
+import { createPhotoGraphImageQueue } from "./image-request-queue";
 import type {
   GraphTransform,
   PhotoGraphInstance,
@@ -50,6 +51,11 @@ export function usePhotoGraphImages({
   const errorLogRef = useRef<Set<string>>(new Set());
   const inFlightRef = useRef<Map<string, InFlightImageRequest>>(new Map());
   const initialViewAppliedRef = useRef(false);
+  const initialPhaseRef = useRef<"waiting" | "loading" | "ready">("waiting");
+  const imageQueueRef = useRef<ReturnType<
+    typeof createPhotoGraphImageQueue
+  > | null>(null);
+  const dimensionsRef = useRef(dimensions);
   const transformRef = useRef<GraphTransform>({
     k: GRAPH_CONFIG.initialZoom,
     x: 0,
@@ -193,16 +199,10 @@ export function usePhotoGraphImages({
     [applyLoadedImage, logNodeImageError],
   );
 
-  const requestNodeImage = useCallback(
-    (node: PhotoGraphNode, targetWidth: number) => {
-      void loadNodeImage(node, targetWidth);
-    },
-    [loadNodeImage],
-  );
-
   const isNodeVisible = useCallback(
     (node: PhotoGraphNode) => {
       const graph = fgRef.current;
+      const dimensions = dimensionsRef.current;
       if (!graph || !dimensions.width || !dimensions.height) {
         return true;
       }
@@ -220,7 +220,34 @@ export function usePhotoGraphImages({
         y - halfHeight <= dimensions.height + bufferY
       );
     },
-    [dimensions.height, dimensions.width, fgRef],
+    [fgRef],
+  );
+
+  const loadQueuedImage = useCallback(
+    async (node: PhotoGraphNode, requestedWidth: number) => {
+      const queue = imageQueueRef.current;
+      if (!queue) return;
+      const upgrading = initialPhaseRef.current === "ready";
+      if (upgrading && !isNodeVisible(node)) return;
+      const targetWidth = upgrading ? getNodeTargetWidth(node) : requestedWidth;
+      if (!node.image) {
+        await loadNodeImage(
+          node,
+          Math.min(targetWidth, GRAPH_CONFIG.initialImageMaxWidth),
+        );
+      }
+      // Recheck demand after the thumbnail resolves: zoom/visibility may change
+      // while this slot is waiting on the network.
+      if (
+        imageQueueRef.current === queue &&
+        initialPhaseRef.current === "ready" &&
+        node.image &&
+        isNodeVisible(node)
+      ) {
+        await loadNodeImage(node, getNodeTargetWidth(node));
+      }
+    },
+    [getNodeTargetWidth, isNodeVisible, loadNodeImage],
   );
 
   const queueNodes = useCallback(
@@ -228,19 +255,22 @@ export function usePhotoGraphImages({
       nextNodes: PhotoGraphNode[],
       resolveWidth: (node: PhotoGraphNode) => number,
     ) => {
-      for (const node of nextNodes) {
-        requestNodeImage(node, resolveWidth(node));
-      }
+      const queue = imageQueueRef.current;
+      return queue
+        ? nextNodes.map((node) => queue.enqueue(node, resolveWidth(node)))
+        : [];
     },
-    [requestNodeImage],
+    [],
   );
 
   const queueVisibleImages = useCallback(() => {
+    if (initialPhaseRef.current !== "ready") return;
     queueNodes(nodes.filter(isNodeVisible), getNodeTargetWidth);
   }, [getNodeTargetWidth, isNodeVisible, nodes, queueNodes]);
 
   const getInitialLoadQueue = useCallback(() => {
     const graph = fgRef.current;
+    const dimensions = dimensionsRef.current;
     if (!graph || !dimensions.width || !dimensions.height) {
       return nodes.slice(0, GRAPH_CONFIG.initialImageFallbackCount);
     }
@@ -270,10 +300,15 @@ export function usePhotoGraphImages({
     return prioritizedVisibleNodes.length
       ? prioritizedVisibleNodes
       : nodes.slice(0, GRAPH_CONFIG.initialImageFallbackCount);
-  }, [dimensions.height, dimensions.width, fgRef, isNodeVisible, nodes]);
+  }, [fgRef, isNodeVisible, nodes]);
+
+  useEffect(() => {
+    dimensionsRef.current = dimensions;
+  }, [dimensions]);
 
   useEffect(() => {
     initialViewAppliedRef.current = false;
+    initialPhaseRef.current = "waiting";
     errorLogRef.current = new Set();
     transformRef.current = {
       k: GRAPH_CONFIG.initialZoom,
@@ -291,17 +326,26 @@ export function usePhotoGraphImages({
       node.loadedWidth = undefined;
     }
 
+    const queue = createPhotoGraphImageQueue(
+      loadQueuedImage,
+      GRAPH_CONFIG.imageConcurrency,
+    );
+    imageQueueRef.current = queue;
     const requests = inFlightRef.current;
     return () => {
+      queue.dispose();
+      if (imageQueueRef.current === queue) imageQueueRef.current = null;
       for (const request of requests.values()) request.controller.abort();
       requests.clear();
     };
-  }, [nodes]);
+  }, [nodes, loadQueuedImage]);
 
   useEffect(() => {
     const graph = fgRef.current;
+    const queue = imageQueueRef.current;
     if (
       !graph ||
+      !queue ||
       !nodes.length ||
       !dimensions.width ||
       !dimensions.height ||
@@ -310,18 +354,27 @@ export function usePhotoGraphImages({
       return;
     }
 
-    initialViewAppliedRef.current = true;
     const zoom = initialView?.zoom ?? GRAPH_CONFIG.initialZoom;
-    graph.centerAt(initialView?.camera.x ?? 0, initialView?.camera.y ?? 0, 0);
-    graph.zoom(zoom, 0);
     transformRef.current = {
       k: zoom,
       x: 0,
       y: 0,
     };
+    // Camera setters emit zoom-end callbacks synchronously. Keep those callbacks
+    // behind the initial phase before requesting any larger images.
+    graph.centerAt(initialView?.camera.x ?? 0, initialView?.camera.y ?? 0, 0);
+    graph.zoom(zoom, 0);
 
     const frame = window.requestAnimationFrame(() => {
-      queueNodes(getInitialLoadQueue(), getInitialNodeTargetWidth);
+      initialViewAppliedRef.current = true;
+      initialPhaseRef.current = "loading";
+      void Promise.all(
+        queueNodes(getInitialLoadQueue(), getInitialNodeTargetWidth),
+      ).then(() => {
+        if (imageQueueRef.current !== queue) return;
+        initialPhaseRef.current = "ready";
+        queueVisibleImages();
+      });
     });
 
     return () => {
@@ -335,6 +388,7 @@ export function usePhotoGraphImages({
     getInitialNodeTargetWidth,
     nodes,
     queueNodes,
+    queueVisibleImages,
     initialView,
   ]);
 

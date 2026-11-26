@@ -50,12 +50,16 @@ are in the [development guide](docs/development.md#tests).
 ## Architecture and design
 
 - Next.js 16 App Router, React 19, TypeScript and Tailwind CSS v4.
+- Homepage content/layout stays server-rendered; small client islands own motion,
+  section focus and the shared project-browser/header state.
 - `app/` holds routes and UI; `lib/` holds domain/server logic; `public/` holds
   committed assets. Project identity and routes are shared under
   `app/components/projects/`, rather than repeated per view.
 - Monochrome, editorial, square-edged UI; project media provides the colour.
   Shared motion respects reduced-motion preferences.
 - Photo Graph separates versioned colour/graph processing from its renderers.
+  Retained 2D previews pause offscreen, and thumbnail-first image loading uses a
+  bounded request queue.
   Supabase supplies metadata/Auth; provider-aware media delivery supports R2 and
   legacy Supabase paths. Privileged operations stay server-side.
 

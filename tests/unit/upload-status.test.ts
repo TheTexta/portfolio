@@ -122,3 +122,132 @@ it("rejects invalid R2 metadata before using privileged clients", async () => {
   ).toBe(400);
   expect(mocks.r2Head).not.toHaveBeenCalled();
 });
+
+it("bounds concurrent status checks and preserves input order", async () => {
+  const items = Array.from({ length: 12 }, (_, index) => ({
+    ...r2Item,
+    storagePath: `staging/aaaaaaaa-aaaa-4aaa-8aaa-${String(index).padStart(12, "0")}.png`,
+  }));
+  const pending = new Map<string, (value: unknown) => void>();
+  mocks.r2Head.mockImplementation(
+    (key: string) =>
+      new Promise((resolve) => {
+        pending.set(key, resolve);
+      }),
+  );
+  const response = POST(request({ items }));
+  await vi.waitFor(() => expect(mocks.r2Head).toHaveBeenCalledTimes(5));
+
+  // Free one slot out of order; the next item need not wait for its whole group.
+  pending.get(items[4].storagePath)!(null);
+  await vi.waitFor(() => expect(mocks.r2Head).toHaveBeenCalledTimes(6));
+  expect(mocks.r2Head).not.toHaveBeenCalledWith(items[6].storagePath);
+
+  for (let index = 0; index < items.length; index++) {
+    if (index === 4) continue;
+    await vi.waitFor(() =>
+      expect(pending.has(items[index].storagePath)).toBe(true),
+    );
+    pending.get(items[index].storagePath)!(
+      index % 2 === 0
+        ? null
+        : {
+            ContentLength: 123,
+            ContentType: "image/png",
+            Metadata: {
+              sourcesha256: r2Item.sourceSha256,
+              expectedsize: "123",
+            },
+          },
+    );
+  }
+  expect(await (await response).json()).toEqual({
+    ok: true,
+    present: items
+      .filter((_, index) => index % 2 !== 0)
+      .map((item) => item.storagePath),
+    missing: items
+      .filter((_, index) => index % 2 === 0)
+      .map((item) => item.storagePath),
+  });
+});
+
+it("settles in-flight checks and stops scheduling after an ambiguous failure", async () => {
+  const items = Array.from({ length: 8 }, (_, index) => ({
+    ...r2Item,
+    storagePath: `staging/aaaaaaaa-aaaa-4aaa-8aaa-${String(index).padStart(12, "0")}.png`,
+  }));
+  const pending: {
+    resolve: (value: null) => void;
+    reject: (error: Error) => void;
+  }[] = [];
+  mocks.r2Head.mockImplementation(
+    () =>
+      new Promise((resolve, reject) => {
+        pending.push({ resolve, reject });
+      }),
+  );
+  let settled = false;
+  const response = POST(request({ items })).then((value) => {
+    settled = true;
+    return value;
+  });
+  await vi.waitFor(() => expect(pending).toHaveLength(5));
+  pending[0].reject(new Error("Storage unavailable"));
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  expect(mocks.r2Head).toHaveBeenCalledTimes(5);
+  expect(settled).toBe(false);
+  pending.slice(1).forEach(({ resolve }) => resolve(null));
+  expect((await response).status).toBe(503);
+  expect(mocks.r2Head).toHaveBeenCalledTimes(5);
+});
+
+it.each(["r2", "supabase"] as const)(
+  "shares the concurrency budget across providers and stops both on %s failure",
+  async (failingProvider) => {
+    const items = Array.from({ length: 8 }, (_, index) => {
+      const filename = `aaaaaaaa-aaaa-4aaa-8aaa-${String(index).padStart(12, "0")}.png`;
+      return index % 2 === 0
+        ? { ...r2Item, storagePath: `staging/${filename}` }
+        : { storagePath: `photography-images/_pending/${filename}` };
+    });
+    const pending: {
+      provider: "r2" | "supabase";
+      resolve: (value: unknown) => void;
+      reject: (error: Error) => void;
+    }[] = [];
+    let active = 0;
+    let maximum = 0;
+    const defer = (provider: "r2" | "supabase") => {
+      maximum = Math.max(maximum, ++active);
+      return new Promise((resolve, reject) => {
+        pending.push({ provider, resolve, reject });
+      }).finally(() => active--);
+    };
+    mocks.r2Head.mockImplementation(() => defer("r2"));
+    mocks.info.mockImplementation(() => defer("supabase"));
+    let settled = false;
+    const response = POST(request({ items })).then((value) => {
+      settled = true;
+      return value;
+    });
+    await vi.waitFor(() => expect(pending).toHaveLength(5));
+    const failing = pending.find(
+      ({ provider }) => provider === failingProvider,
+    )!;
+    failing.reject(new Error("Ambiguous storage failure"));
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    expect(pending).toHaveLength(5);
+    expect(settled).toBe(false);
+    pending.forEach((entry) => {
+      if (entry !== failing)
+        entry.resolve(
+          entry.provider === "r2" ? null : { error: { status: 404 } },
+        );
+    });
+    expect((await response).status).toBe(503);
+    expect(active).toBe(0);
+    expect(maximum).toBe(5);
+    expect(pending).toHaveLength(5);
+  },
+);

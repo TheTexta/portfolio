@@ -52,6 +52,7 @@ const ForceGraph2D = dynamic(
 );
 
 const EMPTY_PHOTO_GRAPH_DATA: PhotoGraphData = { nodes: [], links: [] };
+const CONNECTION_INTRO_DURATION = 1.3;
 
 type ConnectionIntroAnchor = {
   node: PhotoGraphNode;
@@ -170,6 +171,7 @@ export default function PhotoGraph2DRenderer({
   const fgRef = useRef<PhotoGraphInstance | undefined>(undefined);
   const rootRef = useRef<HTMLDivElement>(null);
   const graphMountedRef = useRef(false);
+  const renderActiveRef = useRef(false);
   const preparedGraphDataRef = useRef<PhotoGraphData>(EMPTY_PHOTO_GRAPH_DATA);
   const reportedReadyDataRef = useRef<PhotoGraphData | null>(null);
   const reducedMotionRef = useRef(reducedMotion);
@@ -177,6 +179,7 @@ export default function PhotoGraph2DRenderer({
   const connectionIntroRunningRef = useRef(false);
   const connectionIntroAnchorRef = useRef<ConnectionIntroAnchor | null>(null);
   const connectionRevealProgressRef = useRef(0);
+  const connectionIntroElapsedRef = useRef(0);
   const connectionRevealAnimationRef = useRef<ReturnType<
     typeof animate
   > | null>(null);
@@ -270,10 +273,78 @@ export default function PhotoGraph2DRenderer({
     setGraphMounted(true);
   }, []);
 
+  const suspendConnectionIntro = useCallback(() => {
+    const animation = connectionRevealAnimationRef.current;
+    if (!animation) return;
+    connectionRevealAnimationRef.current = null;
+    // Motion's pause freezes time but keeps its RAF driver alive. Stop the
+    // driver and retain elapsed time so resuming follows the same easing curve.
+    animation.stop();
+    connectionIntroElapsedRef.current = animation.time;
+  }, []);
+
+  const resumeConnectionIntro = useCallback(() => {
+    if (
+      !renderActiveRef.current ||
+      !connectionIntroRunningRef.current ||
+      connectionRevealAnimationRef.current
+    )
+      return;
+    const animation = animate(connectionRevealProgress, [0, 1], {
+      duration: CONNECTION_INTRO_DURATION,
+      delay: -connectionIntroElapsedRef.current,
+      ease: [0.22, 1, 0.36, 1],
+    });
+    connectionRevealAnimationRef.current = animation;
+    animation.then(() => {
+      if (connectionRevealAnimationRef.current !== animation) return;
+      releaseConnectionIntroAnchor();
+      connectionIntroRunningRef.current = false;
+      connectionRevealAnimationRef.current = null;
+    });
+  }, [connectionRevealProgress, releaseConnectionIntroAnchor]);
+
+  useEffect(() => {
+    const graph = fgRef.current;
+    const root = rootRef.current;
+    if (!graphMounted || !graph || !root) return;
+    let intersecting = false;
+    const syncActivity = () => {
+      const active = intersecting && !document.hidden;
+      renderActiveRef.current = active;
+      if (active) {
+        resumeConnectionIntro();
+        graph.resumeAnimation();
+      } else {
+        suspendConnectionIntro();
+        graph.pauseAnimation();
+      }
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      intersecting = entry.isIntersecting && entry.intersectionRatio > 0;
+      syncActivity();
+    });
+    observer.observe(root);
+    document.addEventListener("visibilitychange", syncActivity);
+    // The dynamic graph bootstraps readiness in its first frame. Suspend after
+    // that frame, not inside its callback (the library schedules its next RAF
+    // after invoking callbacks).
+    syncActivity();
+    return () => {
+      renderActiveRef.current = false;
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", syncActivity);
+      suspendConnectionIntro();
+      graph.pauseAnimation();
+    };
+  }, [graphMounted, resumeConnectionIntro, suspendConnectionIntro]);
+
   useEffect(() => {
     reducedMotionRef.current = reducedMotion;
     if (reducedMotion) {
       connectionRevealAnimationRef.current?.stop();
+      connectionRevealAnimationRef.current = null;
+      connectionIntroElapsedRef.current = 0;
       releaseConnectionIntroAnchor();
       connectionIntroRunningRef.current = false;
       connectionRevealProgress.set(1);
@@ -326,6 +397,9 @@ export default function PhotoGraph2DRenderer({
       preparedGraphDataRef.current = graphData;
       connectionIntroStartedRef.current = Boolean(restoredSnapshot);
       connectionRevealAnimationRef.current?.stop();
+      connectionRevealAnimationRef.current = null;
+      connectionIntroElapsedRef.current = 0;
+      connectionIntroRunningRef.current = false;
       connectionRevealProgress.set(
         reducedMotionRef.current || restoredSnapshot ? 1 : 0,
       );
@@ -358,12 +432,12 @@ export default function PhotoGraph2DRenderer({
   useEffect(() => {
     const unsubscribe = connectionRevealProgress.on("change", (value) => {
       connectionRevealProgressRef.current = value;
-      fgRef.current?.resumeAnimation();
     });
 
     return () => {
       unsubscribe();
       connectionRevealAnimationRef.current?.stop();
+      connectionRevealAnimationRef.current = null;
     };
   }, [connectionRevealProgress]);
 
@@ -423,14 +497,6 @@ export default function PhotoGraph2DRenderer({
     linkColor,
   });
 
-  const handleEngineTick = useCallback(() => {
-    if (!connectionIntroRunningRef.current) {
-      return;
-    }
-
-    fgRef.current?.resumeAnimation();
-  }, []);
-
   const handleRenderFramePost = useCallback(() => {
     if (
       preparedGraphData !== graphData ||
@@ -444,6 +510,7 @@ export default function PhotoGraph2DRenderer({
 
   const handleRenderFramePre = useCallback(() => {
     handleGraphReady();
+    if (!renderActiveRef.current) return;
 
     if (!fitToCanvas || fitToCanvasAppliedRef.current || !fgRef.current) {
       // The intro can still run in embedded canvases that keep their own camera.
@@ -518,19 +585,10 @@ export default function PhotoGraph2DRenderer({
     connectionIntroStartedRef.current = true;
     connectionIntroRunningRef.current = true;
     connectionRevealAnimationRef.current?.stop();
+    connectionRevealAnimationRef.current = null;
+    connectionIntroElapsedRef.current = 0;
     connectionRevealProgress.set(0);
-    connectionRevealAnimationRef.current = animate(
-      connectionRevealProgress,
-      1,
-      {
-        duration: 1.3,
-        ease: [0.22, 1, 0.36, 1],
-      },
-    );
-    connectionRevealAnimationRef.current.then(() => {
-      releaseConnectionIntroAnchor();
-      connectionIntroRunningRef.current = false;
-    });
+    resumeConnectionIntro();
     graph.d3ReheatSimulation();
   }, [
     dimensions.height,
@@ -539,8 +597,8 @@ export default function PhotoGraph2DRenderer({
     handleGraphReady,
     preparedGraphData.links.length,
     preparedGraphData.nodes,
-    releaseConnectionIntroAnchor,
     connectionRevealProgress,
+    resumeConnectionIntro,
   ]);
 
   return (
@@ -585,7 +643,6 @@ export default function PhotoGraph2DRenderer({
         showPointerCursor={showPointerCursor}
         onNodeClick={onInspect}
         onNodeDrag={() => setInteracted(true)}
-        onEngineTick={handleEngineTick}
         onEngineStop={queueVisibleImages}
         onZoom={handleZoom}
         onZoomEnd={handleZoomEnd}

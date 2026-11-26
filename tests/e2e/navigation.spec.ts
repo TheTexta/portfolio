@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
   browserProjects,
+  getAdjacentProjects,
   projectCatalog,
 } from "../../app/components/projects/project-catalog";
 import {
@@ -168,6 +169,23 @@ async function expectSection(page: Page, id: string) {
     .toBeLessThan(2);
 }
 
+test("direct section links focus their target without stealing descendant focus", async ({
+  page,
+}) => {
+  for (const id of ["about", "contact"]) {
+    await page.goto(`/portfolio#${id}`);
+    const section = page.locator(`#${id}`);
+    await expect(section).toBeFocused();
+    const link = section.getByRole("link").first();
+    await link.focus();
+    await page.evaluate(() => {
+      window.dispatchEvent(new Event("hashchange"));
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    await expect(link).toBeFocused();
+  }
+});
+
 test("article return links do not highlight section targets", async ({
   page,
 }) => {
@@ -236,6 +254,27 @@ test("directory home and projects links reset the focused homepage", async ({
   }
 });
 
+test("the homepage directory follows project changes and resets on close", async ({
+  page,
+}, info) => {
+  test.skip(info.project.name === "mobile", "Directory is desktop-only");
+  const { next } = getAdjacentProjects("photo-graph");
+  await page.goto("/portfolio#project-photo-graph");
+  const directory = page.locator('main > header [aria-label="Directory"]');
+  await expect(
+    directory.getByRole("link", { name: "photo-graph", exact: true }),
+  ).toHaveAttribute("href", PROJECT_ROUTES.photoGraph);
+  await page.locator(".project-focus-view").press("ArrowRight");
+  await expect(
+    directory.getByRole("link", { name: next.id, exact: true }),
+  ).toHaveAttribute("href", next.writeUpHref!);
+  await page.locator(".project-focus-view").press("Escape");
+  await expect(
+    directory.getByRole("link", { name: "portfolio", exact: true }),
+  ).toHaveAttribute("href", PROJECT_ROUTES.home);
+  await expect(directory.getByRole("link")).toHaveCount(1);
+});
+
 for (const reducedMotion of ["reduce", "no-preference"] as const) {
   test(`About link leaves project focus at the requested section with ${reducedMotion} motion`, async ({
     page,
@@ -258,11 +297,24 @@ for (const project of writeUps) {
   test(`${project.title} write-up returns to its project, the index, and home`, async ({
     page,
   }) => {
+    const openWriteUp = async () => {
+      const focusView = page.getByRole("region", {
+        name: `${project.title} focus view`,
+        exact: true,
+      });
+      // Deep-link initialization restores focus/scroll in a RAF. Wait for that
+      // before activating the link through native keyboard navigation.
+      await expect(focusView).toBeFocused();
+      const link = focusView.getByRole("link", {
+        name: "write up",
+        exact: true,
+      });
+      await link.focus();
+      await expect(link).toBeFocused();
+      await page.keyboard.press("Enter");
+    };
     await page.goto(`/portfolio#project-${project.id}`);
-    await page
-      .getByRole("region", { name: `${project.title} focus view` })
-      .getByRole("link", { name: "write up", exact: true })
-      .click();
+    await openWriteUp();
     await expect(page).toHaveURL(new RegExp(`${project.writeUpHref}$`));
     await page
       .getByRole("link", { name: "Back to projects", exact: true })
@@ -271,10 +323,7 @@ for (const project of writeUps) {
     await expect(
       page.getByRole("region", { name: `${project.title} focus view` }),
     ).toBeVisible();
-    await page
-      .getByRole("region", { name: `${project.title} focus view` })
-      .getByRole("link", { name: "write up", exact: true })
-      .click();
+    await openWriteUp();
     await page.getByRole("link", { name: "Index", exact: true }).click();
     await expectSection(page, "projects");
     await page.goBack();

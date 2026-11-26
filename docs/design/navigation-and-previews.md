@@ -20,6 +20,14 @@ focus. About/Contact/Projects anchors close focus and retain their target sectio
 not an old rail scroll position. Arrival targets suppress an outline without
 removing keyboard focus or individual controls' visible focus indicators.
 
+The homepage composes static sections and content on the server. Its local
+`HomePageInteractions` provider accepts server-rendered children; only directory/
+browser state, section-focus listeners and motion wrappers live in its client
+module. This adds no DOM wrapper or changes to navigation semantics.
+Native About/Contact hash changes also reconcile the current router entry without
+adding history or scrolling again, preventing a pending project-hash restore
+from overwriting the section destination.
+
 Write-up **Index** links return to the list; **Back to projects** returns to that
 article's project, or About for write-up-only entries. Closing previous/next links
 cycle through all seven articles in catalogue order, skipping entries without an

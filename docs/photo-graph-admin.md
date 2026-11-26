@@ -83,6 +83,9 @@ transaction, so publication and cleanup still need recovery.
 
 **Retry registration** checks originals through the independently authorized
 `upload-status` endpoint and resumes received bytes after reload/lost responses.
+Independent storage checks run with at most five requests in flight. Results keep
+input order; an ambiguous failure stops new checks and waits for started checks
+before returning an error, never treating uncertainty as confirmed absence.
 For a missing original, reselect the file: recovery verifies SHA-256 and signs
 the exact pending path without overwriting an existing object. Select never-
 attempted images afterward. Do not clear browser storage while registration is
